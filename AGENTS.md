@@ -14,3 +14,6 @@ The TUI runs fullscreen with colorful borders. Press `Ctrl+M` to open the connec
 
 ## Test Info
 `ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
+
+## Maintenance
+Keep `README.md`, `TODO.md`, and `AGENTS.md` in sync when changes are made to the project or development workflow.

@@ -7,48 +7,9 @@ import (
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
-
-var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-	cursorStyle  = focusedStyle
-	noCursor     = lipgloss.NewStyle()
-	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("63"))
-	chipInactive = chipStyle.Copy().Foreground(lipgloss.Color("240"))
-)
-
-// connectionItem implements list.DefaultItem interface for connection names.
-type connectionItem struct{ title string }
-
-func (c connectionItem) FilterValue() string { return c.title }
-func (c connectionItem) Title() string       { return c.title }
-func (c connectionItem) Description() string { return "" }
-
-type topicItem struct {
-	title  string
-	active bool
-}
-
-func (t topicItem) FilterValue() string { return t.title }
-func (t topicItem) Title() string       { return t.title }
-func (t topicItem) Description() string {
-	if t.active {
-		return "enabled"
-	}
-	return "disabled"
-}
-
-type payloadItem struct{ topic, payload string }
-
-func (p payloadItem) FilterValue() string { return p.topic }
-func (p payloadItem) Title() string       { return p.topic }
-func (p payloadItem) Description() string { return p.payload }
 
 type statusMessage string
 
@@ -65,6 +26,23 @@ func listenStatus(ch chan string) tea.Cmd {
 	}
 }
 
+func (m *model) saveCurrent() {
+	if m.activeConn == "" {
+		return
+	}
+	m.saved[m.activeConn] = connectionData{Topics: m.topics, Payloads: m.payloads}
+}
+
+func (m *model) restoreState(name string) {
+	if data, ok := m.saved[name]; ok {
+		m.topics = data.Topics
+		m.payloads = data.Payloads
+	} else {
+		m.topics = []topicItem{}
+		m.payloads = make(map[string]string)
+	}
+}
+
 func (m *model) appendHistory(topic, payload, kind, logText string) {
 	text := payload
 	if kind == "log" {
@@ -75,128 +53,6 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	m.history.Select(len(items) - 1)
 }
 
-type historyItem struct {
-	topic   string
-	payload string
-	kind    string // pub, sub, log
-}
-
-func (h historyItem) FilterValue() string { return h.payload }
-func (h historyItem) Title() string {
-	var label string
-	color := lipgloss.Color("63")
-	switch h.kind {
-	case "sub":
-		label = "SUB"
-		color = lipgloss.Color("205")
-	case "pub":
-		label = "PUB"
-		color = lipgloss.Color("63")
-	default:
-		label = "LOG"
-		color = lipgloss.Color("240")
-	}
-	return lipgloss.NewStyle().Foreground(color).Render(fmt.Sprintf("%s %s: %s", label, h.topic, h.payload))
-}
-func (h historyItem) Description() string { return "" }
-
-type appMode int
-
-const (
-	modeClient appMode = iota
-	modeConnections
-	modeEditConnection
-	modeConfirmDelete
-	modeTopics
-	modePayloads
-)
-
-type model struct {
-	mqttClient    *MQTTClient
-	connection    string
-	history       list.Model
-	topicInput    textinput.Model
-	messageInput  textarea.Model
-	payloads      map[string]string
-	topics        []topicItem
-	topicsList    list.Model
-	payloadList   list.Model
-	focusIndex    int
-	selectedTopic int
-
-	statusChan chan string
-
-	width  int
-	height int
-
-	mode        appMode
-	connections Connections
-	connForm    *connectionForm
-	deleteIndex int
-}
-
-func initialModel(conns *Connections) model {
-	ti := textinput.New()
-	ti.Placeholder = "Enter Topic"
-	ti.Focus()
-	ti.CharLimit = 32
-	ti.Prompt = "> "
-	ti.Cursor.Style = cursorStyle
-	ti.TextStyle = focusedStyle
-	ti.Width = 40
-
-	ta := textarea.New()
-	ta.Placeholder = "Enter Message"
-	ta.CharLimit = 10000
-	ta.Prompt = "> "
-	ta.Blur()
-	ta.Cursor.Style = noCursor
-	ta.SetWidth(80)
-	ta.SetHeight(4)
-	ta.FocusedStyle.CursorLine = focusedStyle
-	ta.BlurredStyle.CursorLine = blurredStyle
-
-	var connModel Connections
-	if conns != nil {
-		connModel = *conns
-	} else {
-		connModel = NewConnectionsModel()
-		connModel.LoadProfiles("")
-	}
-	connModel.ConnectionsList.SetShowStatusBar(false)
-	items := []list.Item{}
-	for _, p := range connModel.Profiles {
-		items = append(items, connectionItem{title: p.Name})
-	}
-	connModel.ConnectionsList.SetItems(items)
-
-	hist := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	hist.SetShowStatusBar(false)
-	hist.SetShowPagination(false)
-	statusChan := make(chan string, 10)
-
-	return model{
-		history:       hist,
-		payloads:      make(map[string]string),
-		topicInput:    ti,
-		messageInput:  ta,
-		topics:        []topicItem{},
-		topicsList:    list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		payloadList:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		focusIndex:    0,
-		selectedTopic: -1,
-		statusChan:    statusChan,
-		mode:          modeClient,
-		connections:   connModel,
-		width:         0,
-		height:        0,
-	}
-}
-
-func (m model) Init() tea.Cmd {
-	return tea.EnableMouseCellMotion
-}
-
 func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -205,8 +61,21 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 		return m, listenStatus(m.statusChan)
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+c", "q":
+		case "ctrl+d":
+			m.saveCurrent()
 			return m, tea.Quit
+		case "ctrl+c":
+			if len(m.history.Items()) > 0 {
+				idx := m.history.Index()
+				if idx >= 0 {
+					hi := m.history.Items()[idx].(historyItem)
+					text := hi.payload
+					if hi.kind != "log" {
+						text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
+					}
+					clipboard.WriteAll(text)
+				}
+			}
 		case "tab":
 			switch m.focusIndex {
 			case 0:
@@ -265,18 +134,6 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 					m.selectedTopic = len(m.topics) - 1
 				}
 			}
-		case "ctrl+y":
-			if len(m.history.Items()) > 0 {
-				idx := m.history.Index()
-				if idx >= 0 {
-					hi := m.history.Items()[idx].(historyItem)
-					text := hi.payload
-					if hi.kind != "log" {
-						text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
-					}
-					clipboard.WriteAll(text)
-				}
-			}
 		default:
 			if m.focusIndex > 1 {
 				switch msg.String() {
@@ -287,6 +144,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 						items = append(items, connectionItem{title: p.Name})
 					}
 					m.connections.ConnectionsList.SetItems(items)
+					m.saveCurrent()
 					m.mode = modeConnections
 				case "ctrl+t":
 					items := []list.Item{}
@@ -309,7 +167,8 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 		}
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
-			return m, nil
+			m.history, cmd = m.history.Update(msg)
+			return m, tea.Batch(cmd, listenStatus(m.statusChan))
 		}
 		if m.focusIndex == 2 {
 			row := 4
@@ -366,6 +225,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
 					} else {
 						m.mqttClient = client
+						m.activeConn = p.Name
+						m.restoreState(p.Name)
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 						m.connection = "Connected to " + brokerURL
 						m.mode = modeClient
@@ -403,6 +264,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
 				} else {
 					m.mqttClient = client
+					m.activeConn = p.Name
+					m.restoreState(p.Name)
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connection = "Connected to " + brokerURL
 					m.mode = modeClient
@@ -434,7 +297,6 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 			m.connForm = nil
 			return m, nil
 		case "enter":
-			// save
 			p := m.connForm.Profile()
 			if m.connForm.index >= 0 {
 				m.connections.EditConnection(m.connForm.index, p)
@@ -565,104 +427,5 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updatePayloads(msg)
 	default:
 		return m, nil
-	}
-}
-
-func (m model) viewClient() string {
-	header := borderStyle.Copy().Width(m.width - 4).Render("GoEmqutiti - MQTT Client")
-	info := borderStyle.Copy().Width(m.width - 4).Render("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads")
-	conn := borderStyle.Copy().Width(m.width - 4).Render("Connection: " + m.connection)
-
-	var chips []string
-	for i, t := range m.topics {
-		st := chipStyle
-		if !t.active {
-			st = chipInactive
-		}
-		if m.focusIndex == 2 && i == m.selectedTopic {
-			st = st.Copy().BorderForeground(lipgloss.Color("212"))
-		}
-		chips = append(chips, st.Render(t.title))
-	}
-	topicsBox := borderStyle.Copy().Width(m.width - 4).Render(lipgloss.JoinHorizontal(lipgloss.Top, chips...))
-
-	m.history.SetSize(m.width-4, m.height/3)
-	m.history.Title = "History (ctrl+y copy)"
-	messagesBox := borderStyle.Copy().Width(m.width - 4).Height(m.height / 3).Render(m.history.View())
-
-	inputs := lipgloss.JoinVertical(lipgloss.Left,
-		"Topic:\n"+m.topicInput.View(),
-		"Message:\n"+m.messageInput.View(),
-	)
-	inputsBox := borderStyle.Copy().Width(m.width - 4).Render(inputs)
-
-	var payloadLines []string
-	for topic, payload := range m.payloads {
-		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
-	}
-	payloadHelp := "Stored Payloads (press 'p' to manage):"
-	payloadBox := borderStyle.Copy().Width(m.width - 4).Render(payloadHelp + "\n" + strings.Join(payloadLines, "\n"))
-
-	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
-	return lipgloss.NewStyle().Width(m.width).Height(m.height).Padding(1, 1).Render(content)
-}
-
-func (m model) viewConnections() string {
-	listView := m.connections.ConnectionsList.View()
-	help := "[enter] connect  [a]dd [e]dit [d]elete  [esc] back"
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
-}
-
-func (m model) viewForm() string {
-	if m.connForm == nil {
-		return ""
-	}
-	listView := m.connections.ConnectionsList.View()
-	formView := m.connForm.View()
-	left := borderStyle.Copy().Width(m.width/2 - 2).Render(listView)
-	right := borderStyle.Copy().Width(m.width/2 - 2).Render(formView)
-	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
-}
-
-func (m model) viewConfirmDelete() string {
-	var name string
-	if m.deleteIndex >= 0 && m.deleteIndex < len(m.connections.Profiles) {
-		name = m.connections.Profiles[m.deleteIndex].Name
-	}
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	return border.Render(fmt.Sprintf("Delete connection '%s'? [y/n]", name))
-}
-
-func (m model) viewTopics() string {
-	listView := m.topicsList.View()
-	help := "[space] toggle  [d]elete  [esc] back"
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
-}
-
-func (m model) viewPayloads() string {
-	listView := m.payloadList.View()
-	help := "[enter] load  [d]elete  [esc] back"
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
-}
-
-func (m model) View() string {
-	switch m.mode {
-	case modeClient:
-		return m.viewClient()
-	case modeConnections:
-		return m.viewConnections()
-	case modeEditConnection:
-		return m.viewForm()
-	case modeConfirmDelete:
-		return m.viewConfirmDelete()
-	case modeTopics:
-		return m.viewTopics()
-	case modePayloads:
-		return m.viewPayloads()
-	default:
-		return ""
 	}
 }

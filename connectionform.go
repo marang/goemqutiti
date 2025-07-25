@@ -234,7 +234,9 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 		} else {
 			f.fields[i].Blur()
 		}
-		f.fields[i].Update(msg)
+	}
+	if len(f.fields) > 0 {
+		f.fields[f.focus].Update(msg)
 	}
 	return f, cmd
 }

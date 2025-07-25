@@ -10,10 +10,11 @@ import (
 )
 
 type MQTTClient struct {
-	Client mqtt.Client
+	Client     mqtt.Client
+	StatusChan chan string
 }
 
-func NewMQTTClient(p Profile) (*MQTTClient, error) {
+func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	opts.AddBroker(brokerURL)
@@ -52,9 +53,15 @@ func NewMQTTClient(p Profile) (*MQTTClient, error) {
 	}
 	opts.OnConnect = func(client mqtt.Client) {
 		log.Println("Connected to MQTT broker")
+		if statusChan != nil {
+			statusChan <- "Connected to MQTT broker"
+		}
 	}
 	opts.OnConnectionLost = func(client mqtt.Client, err error) {
 		log.Printf("Connection lost: %v", err)
+		if statusChan != nil {
+			statusChan <- fmt.Sprintf("Connection lost: %v", err)
+		}
 	}
 
 	client := mqtt.NewClient(opts)
@@ -62,7 +69,7 @@ func NewMQTTClient(p Profile) (*MQTTClient, error) {
 		return nil, fmt.Errorf("failed to connect: %w", token.Error())
 	}
 
-	return &MQTTClient{Client: client}, nil
+	return &MQTTClient{Client: client, StatusChan: statusChan}, nil
 }
 
 func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {

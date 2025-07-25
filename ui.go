@@ -5,7 +5,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -48,6 +50,56 @@ func (p payloadItem) FilterValue() string { return p.topic }
 func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
+type statusMessage string
+
+func listenStatus(ch chan string) tea.Cmd {
+	return func() tea.Msg {
+		if ch == nil {
+			return nil
+		}
+		msg, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return statusMessage(msg)
+	}
+}
+
+func (m *model) appendHistory(topic, payload, kind, logText string) {
+	text := payload
+	if kind == "log" {
+		text = logText
+	}
+	items := append(m.history.Items(), historyItem{topic: topic, payload: text, kind: kind})
+	m.history.SetItems(items)
+	m.history.Select(len(items) - 1)
+}
+
+type historyItem struct {
+	topic   string
+	payload string
+	kind    string // pub, sub, log
+}
+
+func (h historyItem) FilterValue() string { return h.payload }
+func (h historyItem) Title() string {
+	var label string
+	color := lipgloss.Color("63")
+	switch h.kind {
+	case "sub":
+		label = "SUB"
+		color = lipgloss.Color("205")
+	case "pub":
+		label = "PUB"
+		color = lipgloss.Color("63")
+	default:
+		label = "LOG"
+		color = lipgloss.Color("240")
+	}
+	return lipgloss.NewStyle().Foreground(color).Render(fmt.Sprintf("%s %s: %s", label, h.topic, h.payload))
+}
+func (h historyItem) Description() string { return "" }
+
 type appMode int
 
 const (
@@ -62,15 +114,17 @@ const (
 type model struct {
 	mqttClient    *MQTTClient
 	connection    string
-	messages      []string
+	history       list.Model
 	topicInput    textinput.Model
-	messageInput  textinput.Model
+	messageInput  textarea.Model
 	payloads      map[string]string
 	topics        []topicItem
 	topicsList    list.Model
 	payloadList   list.Model
 	focusIndex    int
 	selectedTopic int
+
+	statusChan chan string
 
 	width  int
 	height int
@@ -91,14 +145,16 @@ func initialModel(conns *Connections) model {
 	ti.TextStyle = focusedStyle
 	ti.Width = 40
 
-	mi := textinput.New()
-	mi.Placeholder = "Enter Message"
-	mi.CharLimit = 128
-	mi.Prompt = "> "
-	mi.Blur()
-	mi.Cursor.Style = noCursor
-	mi.TextStyle = blurredStyle
-	mi.Width = 80
+	ta := textarea.New()
+	ta.Placeholder = "Enter Message"
+	ta.CharLimit = 10000
+	ta.Prompt = "> "
+	ta.Blur()
+	ta.Cursor.Style = noCursor
+	ta.SetWidth(80)
+	ta.SetHeight(4)
+	ta.FocusedStyle.CursorLine = focusedStyle
+	ta.BlurredStyle.CursorLine = blurredStyle
 
 	var connModel Connections
 	if conns != nil {
@@ -114,16 +170,22 @@ func initialModel(conns *Connections) model {
 	}
 	connModel.ConnectionsList.SetItems(items)
 
+	hist := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	hist.SetShowStatusBar(false)
+	hist.SetShowPagination(false)
+	statusChan := make(chan string, 10)
+
 	return model{
-		messages:      make([]string, 0),
+		history:       hist,
 		payloads:      make(map[string]string),
 		topicInput:    ti,
-		messageInput:  mi,
+		messageInput:  ta,
 		topics:        []topicItem{},
 		topicsList:    list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		payloadList:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		focusIndex:    0,
 		selectedTopic: -1,
+		statusChan:    statusChan,
 		mode:          modeClient,
 		connections:   connModel,
 		width:         0,
@@ -138,6 +200,9 @@ func (m model) Init() tea.Cmd {
 func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case statusMessage:
+		m.appendHistory("", string(msg), "log", string(msg))
+		return m, listenStatus(m.statusChan)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
@@ -173,7 +238,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				topic := strings.TrimSpace(m.topicInput.Value())
 				if topic != "" {
 					m.topics = append(m.topics, topicItem{title: topic, active: true})
-					m.messages = append(m.messages, fmt.Sprintf("Subscribed to topic: %s", topic))
+					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
 				}
 			} else if m.focusIndex == 1 {
@@ -181,7 +246,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				for _, t := range m.topics {
 					if t.active {
 						m.payloads[t.title] = payload
-						m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", t.title, payload))
+						m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 						pl := payloadItem{topic: t.title, payload: payload}
 						items := append(m.payloadList.Items(), pl)
 						m.payloadList.SetItems(items)
@@ -200,10 +265,22 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 					m.selectedTopic = len(m.topics) - 1
 				}
 			}
+		case "ctrl+y":
+			if len(m.history.Items()) > 0 {
+				idx := m.history.Index()
+				if idx >= 0 {
+					hi := m.history.Items()[idx].(historyItem)
+					text := hi.payload
+					if hi.kind != "log" {
+						text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
+					}
+					clipboard.WriteAll(text)
+				}
+			}
 		default:
 			if m.focusIndex > 1 {
 				switch msg.String() {
-				case "m":
+				case "ctrl+m":
 					m.connections.LoadProfiles("")
 					items := []list.Item{}
 					for _, p := range m.connections.Profiles {
@@ -211,7 +288,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 					}
 					m.connections.ConnectionsList.SetItems(items)
 					m.mode = modeConnections
-				case "t":
+				case "ctrl+t":
 					items := []list.Item{}
 					for _, tpc := range m.topics {
 						items = append(items, topicItem{title: tpc.title, active: tpc.active})
@@ -219,7 +296,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 					m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 					m.topicsList.Title = "Topics"
 					m.mode = modeTopics
-				case "p":
+				case "ctrl+p":
 					items := []list.Item{}
 					for topic, payload := range m.payloads {
 						items = append(items, payloadItem{topic: topic, payload: payload})
@@ -230,12 +307,44 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				}
 			}
 		}
+	case tea.MouseMsg:
+		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
+			return m, nil
+		}
+		if m.focusIndex == 2 {
+			row := 4
+			if msg.Y == row {
+				x := msg.X - 2
+				cum := 0
+				for i, t := range m.topics {
+					chip := chipStyle.Render(t.title)
+					if !t.active {
+						chip = chipInactive.Render(t.title)
+					}
+					w := lipgloss.Width(chip)
+					if x >= cum && x < cum+w {
+						m.selectedTopic = i
+						if msg.Type == tea.MouseLeft {
+							m.topics[i].active = !m.topics[i].active
+						} else if msg.Type == tea.MouseRight {
+							m.topics = append(m.topics[:i], m.topics[i+1:]...)
+							if i >= len(m.topics) {
+								m.selectedTopic = len(m.topics) - 1
+							}
+						}
+						break
+					}
+					cum += w
+				}
+			}
+		}
 	}
 
 	m.topicInput, cmd = m.topicInput.Update(msg)
-	m.messageInput, _ = m.messageInput.Update(msg)
+	var cmdMsg tea.Cmd
+	m.messageInput, cmdMsg = m.messageInput.Update(msg)
 
-	return m, cmd
+	return m, tea.Batch(cmd, cmdMsg, listenStatus(m.statusChan))
 }
 
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
@@ -252,9 +361,9 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					if envPassword != "" {
 						p.Password = envPassword
 					}
-					client, err := NewMQTTClient(p)
+					client, err := NewMQTTClient(p, m.statusChan)
 					if err != nil {
-						m.messages = append(m.messages, fmt.Sprintf("Failed to connect: %v", err))
+						m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
 					} else {
 						m.mqttClient = client
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -289,9 +398,9 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if envPassword != "" {
 					p.Password = envPassword
 				}
-				client, err := NewMQTTClient(p)
+				client, err := NewMQTTClient(p, m.statusChan)
 				if err != nil {
-					m.messages = append(m.messages, fmt.Sprintf("Failed to connect: %v", err))
+					m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
 				} else {
 					m.mqttClient = client
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -308,7 +417,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		}
 	}
 	m.connections.ConnectionsList, cmd = m.connections.ConnectionsList.Update(msg)
-	return m, cmd
+	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
 func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
@@ -344,7 +453,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	}
 	f, cmd := m.connForm.Update(msg)
 	m.connForm = &f
-	return m, cmd
+	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
 func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
@@ -363,7 +472,7 @@ func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 			m.mode = modeConnections
 		}
 	}
-	return m, nil
+	return m, listenStatus(m.statusChan)
 }
 
 func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
@@ -394,7 +503,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		}
 	}
 	m.topicsList, cmd = m.topicsList.Update(msg)
-	return m, cmd
+	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
 func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
@@ -429,7 +538,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 		}
 	}
 	m.payloadList, cmd = m.payloadList.Update(msg)
-	return m, cmd
+	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -461,7 +570,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m model) viewClient() string {
 	header := borderStyle.Copy().Width(m.width - 4).Render("GoEmqutiti - MQTT Client")
-	info := borderStyle.Copy().Width(m.width - 4).Render("Press 'm' to manage connections")
+	info := borderStyle.Copy().Width(m.width - 4).Render("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads")
 	conn := borderStyle.Copy().Width(m.width - 4).Render("Connection: " + m.connection)
 
 	var chips []string
@@ -477,8 +586,9 @@ func (m model) viewClient() string {
 	}
 	topicsBox := borderStyle.Copy().Width(m.width - 4).Render(lipgloss.JoinHorizontal(lipgloss.Top, chips...))
 
-	msgLines := strings.Join(m.messages, "\n")
-	messagesBox := borderStyle.Copy().Width(m.width - 4).Height(m.height / 3).Render(msgLines)
+	m.history.SetSize(m.width-4, m.height/3)
+	m.history.Title = "History (ctrl+y copy)"
+	messagesBox := borderStyle.Copy().Width(m.width - 4).Height(m.height / 3).Render(m.history.View())
 
 	inputs := lipgloss.JoinVertical(lipgloss.Left,
 		"Topic:\n"+m.topicInput.View(),
@@ -526,7 +636,7 @@ func (m model) viewConfirmDelete() string {
 
 func (m model) viewTopics() string {
 	listView := m.topicsList.View()
-	help := "[enter] toggle  [d]elete  [esc] back"
+	help := "[space] toggle  [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
 }

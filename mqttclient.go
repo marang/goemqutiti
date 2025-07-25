@@ -11,10 +11,10 @@ type MQTTClient struct {
 	Client mqtt.Client
 }
 
-func NewMQTTClient(broker, clientId, username string, password string) (*MQTTClient, error) {
+func NewMQTTClient(broker, clientID, username string, password string) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(broker)
-	opts.SetClientID(clientId)
+	opts.SetClientID(clientID)
 	opts.SetUsername(username)
 
 	// Convert password to string only when setting it in the options

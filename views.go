@@ -8,9 +8,9 @@ import (
 )
 
 func (m model) viewClient() string {
-	header := borderStyle.Copy().Width(m.width - 4).Render("GoEmqutiti - MQTT Client")
-	info := borderStyle.Copy().Width(m.width - 4).Render("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads")
-	conn := borderStyle.Copy().Width(m.width - 4).Render("Connection: " + m.connection)
+	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4)
+	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4)
+	conn := legendBox(m.connection, "Connection", m.width-4)
 
 	var chips []string
 	for i, t := range m.topics {
@@ -23,23 +23,20 @@ func (m model) viewClient() string {
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsBox := borderStyle.Copy().Width(m.width - 4).Render("Topics:\n" + lipgloss.JoinHorizontal(lipgloss.Top, chips...))
+	topicsBox := legendBox(lipgloss.JoinHorizontal(lipgloss.Top, chips...), "Topics", m.width-4)
 
-	messagesBox := legendBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
+	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
 
-	inputs := lipgloss.JoinVertical(lipgloss.Left,
-		"Topic:\n"+m.topicInput.View(),
-		"Message:\n"+m.messageInput.View(),
-	)
-	inputsBox := borderStyle.Copy().Width(m.width - 4).Render(inputs)
+	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-4)
+	messageBox := legendBox(m.messageInput.View(), "Message", m.width-4)
+
+	inputsBox := lipgloss.JoinVertical(lipgloss.Left, topicBox, messageBox)
 
 	var payloadLines []string
 	for topic, payload := range m.payloads {
 		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
 	}
-	payloadHelp := "Stored Payloads (press Ctrl+P to manage):"
-	payloadBox := borderStyle.Copy().Width(m.width - 4).Render(payloadHelp + "\n" + strings.Join(payloadLines, "\n"))
-
+	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4)
 	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
 	return lipgloss.NewStyle().Width(m.width).Height(m.height).Padding(1, 1).Render(content)
 }

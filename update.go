@@ -102,7 +102,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 			if m.focusIndex == 2 && len(m.topics) > 0 {
 				m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
 			}
-		case "ctrl+s":
+		case "ctrl+s", "ctrl+enter":
 			if m.focusIndex == 1 {
 				payload := m.messageInput.Value()
 				for _, t := range m.topics {
@@ -174,6 +174,19 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 			m.history, cmd = m.history.Update(msg)
 			return m, tea.Batch(cmd, listenStatus(m.statusChan))
 		}
+		if msg.Type == tea.MouseLeft {
+			if msg.Y > m.height-8 {
+				m.focusIndex = 1
+				m.topicInput.Blur()
+				m.messageInput.Focus()
+			} else if msg.Y > m.height-14 {
+				m.focusIndex = 0
+				m.topicInput.Focus()
+				m.messageInput.Blur()
+			} else {
+				m.focusIndex = 2
+			}
+		}
 		if m.focusIndex == 2 {
 			row := 4
 			if msg.Y == row {
@@ -189,7 +202,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 						m.selectedTopic = i
 						if msg.Type == tea.MouseLeft {
 							m.topics[i].active = !m.topics[i].active
-						} else if msg.Type == tea.MouseRight {
+						} else if msg.Type == tea.MouseMiddle {
 							m.topics = append(m.topics[:i], m.topics[i+1:]...)
 							if i >= len(m.topics) {
 								m.selectedTopic = len(m.topics) - 1

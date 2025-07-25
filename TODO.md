@@ -46,7 +46,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ---
 
 ## **3. General Features**
-- [ ] Implement keyboard shortcuts for navigation and actions.
+ - [ ] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
 - [ ] Add error handling for failed connections or invalid inputs.
 - [ ] Persist all data securely between application runs.
 - [ ] Support dynamic updates from the MQTT broker (real-time message logging).

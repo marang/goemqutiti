@@ -1,0 +1,39 @@
+# Binaries for programs and plugins
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when run with -coverprofile flag.
+*.out
+
+# Dependency directories (remove this line if you commit dependencies)
+/vendor/
+/bin/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+*.tmp
+*~
+
+# Log files
+*.log
+
+# Environment variables
+.env
+
+# Keyring files (if any exist)
+.keyring
+
+# User-specific configuration files
+.emqutiti/config.toml
+
+app.log

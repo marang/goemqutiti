@@ -60,40 +60,10 @@ func main() {
 		log.Fatalf("Failed to load configuration: %v", err)
 	}
 
-	// Find the default profile
-	var profile Profile
-	for _, p := range config.Profiles {
-		if p.Name == config.DefaultProfileName {
-			profile = p
-			break
-		}
-	}
-
-	if profile.Name == "" {
-		log.Fatalf("Default profile '%s' not found", config.DefaultProfileName)
-	}
-
-	// Override password with environment variable if set
-	envPassword := os.Getenv("MQTT_PASSWORD")
-	var password string
-	if envPassword != "" {
-		password = envPassword
-	} else {
-		password = profile.Password // Already []byte, no conversion needed
-	}
-
-	// Initialize MQTT client
-	profile.Password = password
-	mqttClient, err := NewMQTTClient(profile)
-	if err != nil {
-		log.Fatalf("Failed to connect to MQTT broker: %v", err)
-	}
-	defer mqttClient.Client.Disconnect(250)
-
-	// Start Bubble Tea UI
+	// Start Bubble Tea UI without connecting. The user can choose a profile
+	// from the connection manager once the program starts.
 	initial := initialModel(config)
-	brokerURL := fmt.Sprintf("%s://%s:%d", profile.Schema, profile.Host, profile.Port)
-	initial.connection = "Connected to " + brokerURL
+	initial.mode = modeConnections
 	p := tea.NewProgram(initial)
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Error running program: %v", err)

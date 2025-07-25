@@ -1,6 +1,6 @@
 # GoEmqutiti
 
-GoEmqutiti is a terminal based MQTT client built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). It connects to a broker defined in `~/.emqutiti/config.toml` and provides a simple interface for publishing and subscribing to messages.
+GoEmqutiti is a terminal based MQTT client built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). It loads connection profiles from `~/.emqutiti/config.toml` and lets you choose which broker to connect to at runtime.
 
 ## Installation
 
@@ -21,7 +21,7 @@ This will produce a `goemqutiti` binary in the current directory.
 
 ## Usage
 
-Run the built binary (or use `go run .`) to start the TUI application. The UI is fullscreen and features a colorful connection manager accessible with the `m` key. Profiles expose all common connection options inspired by the EMQX MQTT client:
+Run the built binary (or use `go run .`) to start the TUI application. On startup the connection manager is shown so you can select which profile to use. The manager can also be opened at any time with the `m` key. Profiles expose all common connection options inspired by the EMQX MQTT client:
 
 ```bash
 ./goemqutiti

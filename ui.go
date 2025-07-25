@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -151,6 +152,24 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				m.connForm = &f
 				m.mode = modeEditConnection
 			}
+		case "enter":
+			i := m.connections.ConnectionsList.Index()
+			if i >= 0 && i < len(m.connections.Profiles) {
+				p := m.connections.Profiles[i]
+				envPassword := os.Getenv("MQTT_PASSWORD")
+				if envPassword != "" {
+					p.Password = envPassword
+				}
+				client, err := NewMQTTClient(p)
+				if err != nil {
+					m.messages = append(m.messages, fmt.Sprintf("Failed to connect: %v", err))
+				} else {
+					m.mqttClient = client
+					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					m.connection = "Connected to " + brokerURL
+					m.mode = modeClient
+				}
+			}
 		case "d":
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 {
@@ -239,7 +258,7 @@ func (m model) viewClient() string {
 
 func (m model) viewConnections() string {
 	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	return border.Render(m.connections.ConnectionsList.View() + "\n[a]dd [e]dit [d]elete  [esc] back")
+	return border.Render(m.connections.ConnectionsList.View() + "\n[enter] connect  [a]dd [e]dit [d]elete  [esc] back")
 }
 
 func (m model) viewForm() string {

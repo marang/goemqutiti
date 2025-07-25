@@ -13,8 +13,8 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
   - [ ] `messages_log.go` (Messages log section)
   - [ ] `payloads.go` (Stored payloads section)
   - [ ] `status.go` (Status bar: focus, shortcuts, etc.)
-- [ ] Implement responsiveness using `tea.WindowSizeMsg`.
-- [ ] Use `lipgloss` for styling and layout constraints.
+  - [ ] Implement responsiveness using `tea.WindowSizeMsg`.
+  - [x] Use `lipgloss` for styling and layout constraints.
 - [ ] Ensure sections stack vertically and resize gracefully.
 
 ---
@@ -22,23 +22,25 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ## **2. Connection Manager**
 ### **Secure Storage**
 - [x] Integrate Linux keyring using [`zalando/go-keyring`](https://github.com/zalando/go-keyring).
-- [ ] Store sensitive fields (e.g., passwords) in the keyring.
+- [x] Store sensitive fields (e.g., passwords) in the keyring.
 - [ ] Update `config.toml` to reference keyring entries (e.g., `password = "keyring:<service>/<username>"`).
 - [ ] Prompt user to unlock the keyring on application startup.
 - [ ] Handle cases where the keyring is unavailable or inaccessible.
 
 ### **CRUD Operations**
-- [ ] Add new connections with full MQTT configuration options.
-- [ ] Edit existing connections.
-- [ ] Delete connections.
-- [ ] Load connections from the configuration file and keyring on startup.
-- [ ] Save connections to the configuration file and keyring when modified.
+- [x] Add new connections with full MQTT configuration options.
+- [x] Edit existing connections.
+- [x] Delete connections.
+- [x] Load connections from the configuration file and keyring on startup.
+- [x] Save connections to the configuration file and keyring when modified.
 
 ### **UI Components**
-- [ ] Display a selectable list of connections using `bubbles/list`.
+- [x] Display a selectable list of connections using `bubbles/list`.
+- [x] Provide a menu option to open the connection manager.
 - [ ] Highlight the active connection in the list.
 - [ ] Show connection status (connected/disconnected).
-- [ ] Provide a form for adding/editing connections using `bubbles/textinput`.
+- [x] Provide a form for adding/editing connections using `bubbles/textinput`.
+- [x] Support advanced connection options (keep alive, clean session, TLS, LWT, etc.).
 
 ---
 

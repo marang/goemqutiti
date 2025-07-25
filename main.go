@@ -83,15 +83,17 @@ func main() {
 	}
 
 	// Initialize MQTT client
-	mqttClient, err := NewMQTTClient(profile.Broker, profile.ClientID, profile.Username, password)
+	profile.Password = password
+	mqttClient, err := NewMQTTClient(profile)
 	if err != nil {
 		log.Fatalf("Failed to connect to MQTT broker: %v", err)
 	}
 	defer mqttClient.Client.Disconnect(250)
 
 	// Start Bubble Tea UI
-	initial := initialModel()
-	initial.connection = "Connected to " + profile.Broker
+	initial := initialModel(config)
+	brokerURL := fmt.Sprintf("%s://%s:%d", profile.Schema, profile.Host, profile.Port)
+	initial.connection = "Connected to " + brokerURL
 	p := tea.NewProgram(initial)
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Error running program: %v", err)

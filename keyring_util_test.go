@@ -1,51 +1,37 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"testing"
 
 	"github.com/zalando/go-keyring"
 )
 
-// ExampleGet demonstrates retrieving a password from the real keyring.
-func ExampleSet() {
-	// Define test data
-	service := "ExampleService"
-	username := "exampleuser"
-	password := "examplepassword"
+func TestKeyring(t *testing.T) {
+	service := "TestService"
+	username := "testuser"
+	password := "testpassword"
 
-	// Pre-store a password in the real keyring
-	err := keyring.Set(service, username, password)
-	if err != nil {
-		fmt.Println("Setup Error:", err)
-		os.Exit(1)
+	if err := keyring.Set(service, username, password); err != nil {
+		t.Fatal("setup error:", err)
 	}
 
-	fmt.Println("Set Password for user", username)
+	t.Cleanup(func() {
+		_ = keyring.Delete(service, username)
+	})
 
-	// Retrieve the password from the real keyring
 	retrievedPassword, err := keyring.Get(service, username)
 	if err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+		t.Fatal("get error:", err)
+	}
+	if retrievedPassword != password {
+		t.Fatalf("expected %q, got %q", password, retrievedPassword)
 	}
 
-	fmt.Println("Retrieved Password:", retrievedPassword)
-
-	// Clean up: Remove the password from the keyring after the test
-
-	if err = keyring.Delete(service, username); err != nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+	if err := keyring.Delete(service, username); err != nil {
+		t.Fatal("delete error:", err)
 	}
 
-	// Retrieve the password from the real keyring
-	if retrievedPassword, err = keyring.Get(service, username); retrievedPassword != "" || err == nil {
-		fmt.Println("Error:", err)
-		os.Exit(1)
+	if _, err := keyring.Get(service, username); err == nil {
+		t.Fatal("expected error retrieving deleted password")
 	}
-
-	// Output:
-	// Set Password for user exampleuser
-	// Retrieved Password: examplepassword
 }

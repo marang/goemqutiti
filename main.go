@@ -54,15 +54,9 @@ func main() {
 	// Set log output to file
 	log.SetOutput(logFile)
 
-	// Load configuration
-	config, err := LoadFromConfig("")
-	if err != nil {
-		log.Fatalf("Failed to load configuration: %v", err)
-	}
-
 	// Start Bubble Tea UI without connecting. The user can choose a profile
 	// from the connection manager once the program starts.
-	initial := initialModel(config)
+	initial := initialModel(nil)
 	initial.mode = modeConnections
 	p := tea.NewProgram(initial)
 	if _, err := p.Run(); err != nil {

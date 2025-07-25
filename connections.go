@@ -210,7 +210,10 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 		if strings.HasPrefix(password, "keyring:") {
 			keyringPassword, err := retrievePasswordFromKeyring(password)
 			if err != nil {
-				return nil, err
+				// Do not fail if the keyring entry is missing
+				fmt.Println("Warning:", err)
+				connections.Profiles[i].Password = ""
+				continue
 			}
 			// Update the password in the profile
 			connections.Profiles[i].Password = keyringPassword
@@ -218,4 +221,16 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 	}
 
 	return &connections, nil
+}
+
+// LoadProfiles updates c with profiles from the config file. It logs errors but
+// leaves c unchanged on failure.
+func (c *Connections) LoadProfiles(filePath string) {
+	loaded, err := LoadFromConfig(filePath)
+	if err != nil {
+		fmt.Println("Warning:", err)
+		return
+	}
+	c.DefaultProfileName = loaded.DefaultProfileName
+	c.Profiles = loaded.Profiles
 }

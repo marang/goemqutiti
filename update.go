@@ -102,15 +102,8 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 			if m.focusIndex == 2 && len(m.topics) > 0 {
 				m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
 			}
-		case "enter", " ":
-			if m.focusIndex == 0 {
-				topic := strings.TrimSpace(m.topicInput.Value())
-				if topic != "" {
-					m.topics = append(m.topics, topicItem{title: topic, active: true})
-					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
-					m.topicInput.SetValue("")
-				}
-			} else if m.focusIndex == 1 {
+		case "ctrl+s":
+			if m.focusIndex == 1 {
 				payload := m.messageInput.Value()
 				for _, t := range m.topics {
 					if t.active {
@@ -122,6 +115,15 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 					}
 				}
 				m.messageInput.SetValue("")
+			}
+		case "enter":
+			if m.focusIndex == 0 {
+				topic := strings.TrimSpace(m.topicInput.Value())
+				if topic != "" {
+					m.topics = append(m.topics, topicItem{title: topic, active: true})
+					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
+					m.topicInput.SetValue("")
+				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
 			}
@@ -152,6 +154,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 						items = append(items, topicItem{title: tpc.title, active: tpc.active})
 					}
 					m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+					m.topicsList.DisableQuitKeybindings()
 					m.topicsList.Title = "Topics"
 					m.mode = modeTopics
 				case "ctrl+p":
@@ -160,6 +163,7 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 						items = append(items, payloadItem{topic: topic, payload: payload})
 					}
 					m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+					m.payloadList.DisableQuitKeybindings()
 					m.payloadList.Title = "Payloads"
 					m.mode = modePayloads
 				}

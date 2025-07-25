@@ -58,6 +58,7 @@ func NewConnectionsModel() Connections {
 	connectionList.Title = "Connections"
 	// Ensure items are visible by setting a reasonable default size
 	connectionList.SetSize(30, 10)
+	connectionList.DisableQuitKeybindings()
 
 	return Connections{
 		ConnectionsList: connectionList,

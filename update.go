@@ -53,17 +53,43 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	m.history.Select(len(items) - 1)
 }
 
-func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) setFocus(id string) {
+	for i, name := range m.focusOrder {
+		if f, ok := m.focusMap[name]; ok && f != nil {
+			if name == id {
+				f.Focus()
+				m.focusIndex = i
+			} else {
+				f.Blur()
+			}
+		} else if name == id {
+			m.focusIndex = i
+		}
+	}
+}
+
+func (m *model) focusFromMouse(y int) {
+	cy := y + m.viewport.YOffset - 1
+	if cy >= m.elemPos["message"] {
+		m.setFocus("message")
+	} else if cy >= m.elemPos["topic"] {
+		m.setFocus("topic")
+	} else {
+		m.setFocus("topics")
+	}
+}
+
+func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case statusMessage:
 		m.appendHistory("", string(msg), "log", string(msg))
-		return m, listenStatus(m.statusChan)
+		return listenStatus(m.statusChan)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
 			m.saveCurrent()
-			return m, tea.Quit
+			return tea.Quit
 		case "ctrl+c":
 			if len(m.history.Items()) > 0 {
 				idx := m.history.Index()
@@ -79,20 +105,16 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 		case "tab":
 			switch m.focusIndex {
 			case 0:
-				m.topicInput.Blur()
-				m.messageInput.Focus()
-				m.focusIndex = 1
+				m.setFocus("message")
 			case 1:
-				m.messageInput.Blur()
-				m.focusIndex = 2
+				m.setFocus("topics")
 				if len(m.topics) > 0 {
 					m.selectedTopic = 0
 				} else {
 					m.selectedTopic = -1
 				}
 			default:
-				m.focusIndex = 0
-				m.topicInput.Focus()
+				m.setFocus("topic")
 			}
 		case "left":
 			if m.focusIndex == 2 && len(m.topics) > 0 {
@@ -172,20 +194,9 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
 			m.history, cmd = m.history.Update(msg)
-			return m, tea.Batch(cmd, listenStatus(m.statusChan))
 		}
 		if msg.Type == tea.MouseLeft {
-			if msg.Y > m.height-8 {
-				m.focusIndex = 1
-				m.topicInput.Blur()
-				m.messageInput.Focus()
-			} else if msg.Y > m.height-14 {
-				m.focusIndex = 0
-				m.topicInput.Focus()
-				m.messageInput.Blur()
-			} else {
-				m.focusIndex = 2
-			}
+			m.focusFromMouse(msg.Y)
 		}
 		if m.focusIndex == 2 {
 			row := 4
@@ -219,13 +230,15 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	m.topicInput, cmd = m.topicInput.Update(msg)
 	var cmdMsg tea.Cmd
 	m.messageInput, cmdMsg = m.messageInput.Update(msg)
+	var vpCmd tea.Cmd
+	m.viewport, vpCmd = m.viewport.Update(msg)
 
 	var histCmd tea.Cmd
 	if m.focusIndex > 1 {
 		m.history, histCmd = m.history.Update(msg)
 	}
 
-	return m, tea.Batch(cmd, cmdMsg, histCmd, listenStatus(m.statusChan))
+	return tea.Batch(cmd, cmdMsg, histCmd, vpCmd, listenStatus(m.statusChan))
 }
 
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
@@ -425,7 +438,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -434,22 +447,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.topicInput.Width = msg.Width - 6
 		m.messageInput.SetWidth(msg.Width - 6)
 		m.history.SetSize(msg.Width-4, msg.Height/3)
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height
 		return m, nil
 	}
 
 	switch m.mode {
 	case modeClient:
-		return m.updateClient(msg)
+		cmd := m.updateClient(msg)
+		return m, cmd
 	case modeConnections:
-		return m.updateConnections(msg)
+		nm, cmd := m.updateConnections(msg)
+		*m = nm
+		return m, cmd
 	case modeEditConnection:
-		return m.updateForm(msg)
+		nm, cmd := m.updateForm(msg)
+		*m = nm
+		return m, cmd
 	case modeConfirmDelete:
-		return m.updateConfirmDelete(msg)
+		nm, cmd := m.updateConfirmDelete(msg)
+		*m = nm
+		return m, cmd
 	case modeTopics:
-		return m.updateTopics(msg)
+		nm, cmd := m.updateTopics(msg)
+		*m = nm
+		return m, cmd
 	case modePayloads:
-		return m.updatePayloads(msg)
+		nm, cmd := m.updatePayloads(msg)
+		*m = nm
+		return m, cmd
 	default:
 		return m, nil
 	}

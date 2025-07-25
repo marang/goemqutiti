@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -77,6 +78,11 @@ type connectionData struct {
 	Payloads map[string]string
 }
 
+type focusable interface {
+	Focus() tea.Cmd
+	Blur()
+}
+
 type model struct {
 	mqttClient *MQTTClient
 
@@ -103,6 +109,11 @@ type model struct {
 	connections Connections
 	connForm    *connectionForm
 	deleteIndex int
+
+	viewport   viewport.Model
+	elemPos    map[string]int
+	focusMap   map[string]focusable
+	focusOrder []string
 }
 
 func initialModel(conns *Connections) model {
@@ -150,8 +161,11 @@ func initialModel(conns *Connections) model {
 	topicsList.DisableQuitKeybindings()
 	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	payloadList.DisableQuitKeybindings()
+	vp := viewport.New(0, 0)
 
-	return model{
+	order := []string{"topic", "message", "topics"}
+
+	m := model{
 		history:       hist,
 		payloads:      make(map[string]string),
 		topicInput:    ti,
@@ -166,8 +180,16 @@ func initialModel(conns *Connections) model {
 		connections:   connModel,
 		width:         0,
 		height:        0,
+		viewport:      vp,
+		elemPos:       map[string]int{},
+		focusOrder:    order,
 		saved:         make(map[string]connectionData),
 	}
+	m.focusMap = map[string]focusable{
+		"topic":   &m.topicInput,
+		"message": &m.messageInput,
+	}
+	return m
 }
 
 func (m model) Init() tea.Cmd {

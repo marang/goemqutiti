@@ -7,7 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func (m model) viewClient() string {
+func (m *model) viewClient() string {
 	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4)
 	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4)
 	conn := legendBox(m.connection, "Connection", m.width-4)
@@ -38,7 +38,22 @@ func (m model) viewClient() string {
 	}
 	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4)
 	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
-	return lipgloss.NewStyle().Width(m.width).Height(m.height).Padding(1, 1).Render(content)
+
+	y := 1
+	y += lipgloss.Height(header)
+	y += lipgloss.Height(info)
+	y += lipgloss.Height(conn)
+	y += lipgloss.Height(topicsBox)
+	y += lipgloss.Height(messagesBox)
+	m.elemPos["topic"] = y
+	y += lipgloss.Height(topicBox)
+	m.elemPos["message"] = y
+
+	box := lipgloss.NewStyle().Width(m.width).Padding(1, 1).Render(content)
+	m.viewport.SetContent(box)
+	m.viewport.Width = m.width
+	m.viewport.Height = m.height
+	return m.viewport.View()
 }
 
 func (m model) viewConnections() string {
@@ -82,7 +97,7 @@ func (m model) viewPayloads() string {
 	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
 }
 
-func (m model) View() string {
+func (m *model) View() string {
 	switch m.mode {
 	case modeClient:
 		return m.viewClient()

@@ -55,6 +55,8 @@ type Connections struct {
 func NewConnectionsModel() Connections {
 	connectionList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	connectionList.Title = "Connections"
+	// Ensure items are visible by setting a reasonable default size
+	connectionList.SetSize(30, 10)
 
 	return Connections{
 		ConnectionsList: connectionList,

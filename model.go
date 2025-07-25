@@ -143,7 +143,13 @@ func initialModel(conns *Connections) model {
 	hist := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	hist.SetShowStatusBar(false)
 	hist.SetShowPagination(false)
+	hist.DisableQuitKeybindings()
 	statusChan := make(chan string, 10)
+
+	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	topicsList.DisableQuitKeybindings()
+	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	payloadList.DisableQuitKeybindings()
 
 	return model{
 		history:       hist,
@@ -151,8 +157,8 @@ func initialModel(conns *Connections) model {
 		topicInput:    ti,
 		messageInput:  ta,
 		topics:        []topicItem{},
-		topicsList:    list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		payloadList:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		topicsList:    topicsList,
+		payloadList:   payloadList,
 		focusIndex:    0,
 		selectedTopic: -1,
 		statusChan:    statusChan,

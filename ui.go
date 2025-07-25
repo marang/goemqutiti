@@ -45,6 +45,9 @@ type model struct {
 	subscribed   bool
 	focusIndex   int
 
+	width  int
+	height int
+
 	mode        appMode
 	connections Connections
 	connForm    *connectionForm
@@ -92,6 +95,8 @@ func initialModel(conns *Connections) model {
 		focusIndex:   0,
 		mode:         modeClient,
 		connections:  connModel,
+		width:        0,
+		height:       0,
 	}
 }
 
@@ -147,6 +152,31 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if m.connections.ConnectionsList.FilterState() == list.Filtering {
+			switch msg.String() {
+			case "enter":
+				i := m.connections.ConnectionsList.Index()
+				if i >= 0 && i < len(m.connections.Profiles) {
+					p := m.connections.Profiles[i]
+					envPassword := os.Getenv("MQTT_PASSWORD")
+					if envPassword != "" {
+						p.Password = envPassword
+					}
+					client, err := NewMQTTClient(p)
+					if err != nil {
+						m.messages = append(m.messages, fmt.Sprintf("Failed to connect: %v", err))
+					} else {
+						m.mqttClient = client
+						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+						m.connection = "Connected to " + brokerURL
+						m.mode = modeClient
+					}
+				}
+			case "esc":
+				m.mode = modeClient
+			}
+			break
+		}
 		switch msg.String() {
 		case "esc":
 			m.mode = modeClient
@@ -246,6 +276,14 @@ func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
+		return m, nil
+	}
+
 	switch m.mode {
 	case modeClient:
 		return m.updateClient(msg)
@@ -261,30 +299,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) viewClient() string {
-	var b strings.Builder
+	header := borderStyle.Copy().Width(m.width - 2).Render("GoEmqutiti - MQTT Client")
+	info := borderStyle.Copy().Width(m.width - 2).Render("Press 'm' to manage connections")
+	conn := borderStyle.Copy().Width(m.width - 2).Render("Connection: " + m.connection)
 
-	b.WriteString(borderStyle.Render("GoEmqutiti - MQTT Client"))
-	b.WriteString("\nPress 'm' to manage connections\n")
-	b.WriteString("Connection: " + m.connection + "\n")
-	b.WriteString("\nMessages:\n")
-	for _, msg := range m.messages {
-		b.WriteString("- " + msg + "\n")
-	}
+	msgLines := strings.Join(m.messages, "\n")
+	messagesBox := borderStyle.Copy().Width(m.width - 2).Height(m.height / 3).Render(msgLines)
 
-	b.WriteString("\nTopic:\n" + borderStyle.Render(m.topicInput.View()))
-	b.WriteString("\nMessage:\n" + borderStyle.Render(m.messageInput.View()))
+	inputs := lipgloss.JoinVertical(lipgloss.Left,
+		"Topic:\n"+m.topicInput.View(),
+		"Message:\n"+m.messageInput.View(),
+	)
+	inputsBox := borderStyle.Copy().Width(m.width - 2).Render(inputs)
 
-	b.WriteString("\nStored Payloads:\n")
+	var payloadLines []string
 	for topic, payload := range m.payloads {
-		b.WriteString(fmt.Sprintf("- %s: %s\n", topic, payload))
+		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
 	}
+	payloadBox := borderStyle.Copy().Width(m.width - 2).Render("Stored Payloads:\n" + strings.Join(payloadLines, "\n"))
 
-	return b.String()
+	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, messagesBox, inputsBox, payloadBox)
+	return lipgloss.NewStyle().Width(m.width).Height(m.height).Padding(1, 1).Render(content)
 }
 
 func (m model) viewConnections() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	return border.Render(m.connections.ConnectionsList.View() + "\n[enter] connect  [a]dd [e]dit [d]elete  [esc] back")
+	listView := m.connections.ConnectionsList.View()
+	help := "[enter] connect  [a]dd [e]dit [d]elete  [esc] back"
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
 }
 
 func (m model) viewForm() string {

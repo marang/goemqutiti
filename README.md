@@ -44,15 +44,18 @@ Passwords can be stored securely using the operating system keyring. You may als
 
 In the interface:
 
- - **Tab** switches between the topic and message fields.
- - **Enter** subscribes to a topic when the topic field is focused.
- - **Ctrl+S** publishes the message currently in the editor.
+- **Tab** switches between the topic and message fields.
+- **Enter** subscribes to a topic when the topic field is focused.
+- **Ctrl+S** publishes the message currently in the editor.
+- **Ctrl+Enter** also publishes the current message.
 - **Ctrl+M** opens the connection manager where you can add, edit or delete MQTT profiles.
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.
 - **Esc** navigates back within menus without quitting.
 - **Ctrl+D** exits the program.
+- Left-click a topic chip to toggle it and middle-click to remove it.
+- Clicking on any pane or input field focuses it.
 
 ## License
 

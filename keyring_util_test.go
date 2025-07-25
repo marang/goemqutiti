@@ -1,3 +1,5 @@
+//go:build manual
+
 package main
 
 import (
@@ -8,7 +10,7 @@ import (
 )
 
 // ExampleGet demonstrates retrieving a password from the real keyring.
-func ExampleSet() {
+func ExampleSet_manual() {
 	// Define test data
 	service := "ExampleService"
 	username := "exampleuser"

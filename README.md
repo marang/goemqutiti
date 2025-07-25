@@ -21,7 +21,7 @@ This will produce a `goemqutiti` binary in the current directory.
 
 ## Usage
 
-Run the built binary (or use `go run .`) to start the TUI application:
+Run the built binary (or use `go run .`) to start the TUI application. The UI is fullscreen and features a colorful connection manager accessible with the `m` key. Profiles expose all common connection options inspired by the EMQX MQTT client:
 
 ```bash
 ./goemqutiti
@@ -46,8 +46,11 @@ In the interface:
 
 - **Tab** switches between the topic and message fields.
 - **Enter** subscribes to a topic the first time and publishes messages afterwards.
+- **m** opens the connection manager where you can add, edit or delete MQTT profiles.
 - **Ctrl+C** or **q** exits the program.
 
 ## License
 
 This project is licensed under the terms of the MIT License. See [LICENSE](LICENSE) for details.
+
+Additional notes for repository contributors are available in [Agent.md](Agent.md).

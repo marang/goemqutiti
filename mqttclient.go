@@ -1,8 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
+	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
@@ -11,18 +13,43 @@ type MQTTClient struct {
 	Client mqtt.Client
 }
 
-func NewMQTTClient(broker, clientID, username string, password string) (*MQTTClient, error) {
+func NewMQTTClient(p Profile) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(broker)
-	opts.SetClientID(clientID)
-	opts.SetUsername(username)
+	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+	opts.AddBroker(brokerURL)
+	opts.SetClientID(p.ClientID)
+	opts.SetUsername(p.Username)
 
-	// Convert password to string only when setting it in the options
-	if len(password) > 0 {
-		opts.SetPassword(password)
+	if len(p.Password) > 0 {
+		opts.SetPassword(p.Password)
 	}
 
-	opts.SetCleanSession(true)
+	if p.MQTTVersion != "" {
+		var ver uint
+		fmt.Sscan(p.MQTTVersion, &ver)
+		if ver != 0 {
+			opts.SetProtocolVersion(ver)
+		}
+	}
+	if p.ConnectTimeout > 0 {
+		opts.SetConnectTimeout(time.Duration(p.ConnectTimeout) * time.Second)
+	}
+	if p.KeepAlive > 0 {
+		opts.SetKeepAlive(time.Duration(p.KeepAlive) * time.Second)
+	}
+	opts.SetAutoReconnect(p.AutoReconnect)
+	if p.CleanStart {
+		opts.SetCleanSession(true)
+	} else {
+		opts.SetCleanSession(false)
+	}
+	if p.LastWillEnabled && p.LastWillTopic != "" {
+		opts.SetWill(p.LastWillTopic, p.LastWillPayload, byte(p.LastWillQos), p.LastWillRetain)
+	}
+
+	if p.SSL {
+		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: true})
+	}
 	opts.OnConnect = func(client mqtt.Client) {
 		log.Println("Connected to MQTT broker")
 	}

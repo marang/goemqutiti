@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -15,7 +15,22 @@ var (
 	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 	cursorStyle  = focusedStyle
 	noCursor     = lipgloss.NewStyle()
-	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.NormalBorder()).Padding(0, 1)
+	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+)
+
+// connectionItem implements list.DefaultItem interface for connection names.
+type connectionItem struct{ title string }
+
+func (c connectionItem) FilterValue() string { return c.title }
+func (c connectionItem) Title() string       { return c.title }
+func (c connectionItem) Description() string { return "" }
+
+type appMode int
+
+const (
+	modeClient appMode = iota
+	modeConnections
+	modeEditConnection
 )
 
 type model struct {
@@ -27,9 +42,13 @@ type model struct {
 	payloads     map[string]string
 	subscribed   bool
 	focusIndex   int
+
+	mode        appMode
+	connections Connections
+	connForm    *connectionForm
 }
 
-func initialModel() model {
+func initialModel(conns *Connections) model {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
 	ti.Focus()
@@ -48,31 +67,42 @@ func initialModel() model {
 	mi.TextStyle = blurredStyle
 	mi.Width = 80
 
+	var connModel Connections
+	if conns != nil {
+		connModel = *conns
+	} else {
+		connModel = NewConnectionsModel()
+	}
+	connModel.ConnectionsList.SetShowStatusBar(false)
+	items := []list.Item{}
+	for _, p := range connModel.Profiles {
+		items = append(items, connectionItem{title: p.Name})
+	}
+	connModel.ConnectionsList.SetItems(items)
+
 	return model{
 		messages:     make([]string, 0),
 		payloads:     make(map[string]string),
 		topicInput:   ti,
 		messageInput: mi,
 		focusIndex:   0,
+		mode:         modeClient,
+		connections:  connModel,
 	}
 }
 
 func (m model) Init() tea.Cmd {
-	// return nil
 	return tea.EnableMouseCellMotion
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
-
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c", "q":
 			return m, tea.Quit
 		case "tab":
-			log.Printf("tab event %v", msg)
-
 			if m.focusIndex == 0 {
 				m.topicInput.Blur()
 				m.messageInput.Focus()
@@ -92,17 +122,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.payloads[topic] = payload
 				m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", topic, payload))
 			}
+		case "m":
+			m.mode = modeConnections
 		}
-
-		// case tea.MouseMsg:
-		// 	switch msg.Action {
-		// 	case tea.MouseActionPress:
-		// 		log.Printf("Mouse Press: button=%v at (%d, %d)", msg.Button, msg.X, msg.Y)
-		// 	case tea.MouseActionRelease:
-		// 		log.Printf("Mouse Release: button=%v at (%d, %d)", msg.Button, msg.X, msg.Y)
-		// 	case tea.MouseActionMotion:
-		// 		log.Printf("Mouse Move to (%d, %d)", msg.X, msg.Y)
-		// 	}
 	}
 
 	m.topicInput, cmd = m.topicInput.Update(msg)
@@ -111,10 +133,93 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.mode = modeClient
+		case "a":
+			f := newConnectionForm(Profile{}, -1)
+			m.connForm = &f
+			m.mode = modeEditConnection
+		case "e":
+			i := m.connections.ConnectionsList.Index()
+			if i >= 0 && i < len(m.connections.Profiles) {
+				f := newConnectionForm(m.connections.Profiles[i], i)
+				m.connForm = &f
+				m.mode = modeEditConnection
+			}
+		case "d":
+			i := m.connections.ConnectionsList.Index()
+			if i >= 0 {
+				m.connections.DeleteConnection(i)
+				items := []list.Item{}
+				for _, p := range m.connections.Profiles {
+					items = append(items, connectionItem{title: p.Name})
+				}
+				m.connections.ConnectionsList.SetItems(items)
+			}
+		}
+	}
+	m.connections.ConnectionsList, cmd = m.connections.ConnectionsList.Update(msg)
+	return m, cmd
+}
+
+func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
+	if m.connForm == nil {
+		return m, nil
+	}
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.mode = modeConnections
+			m.connForm = nil
+			return m, nil
+		case "enter":
+			// save
+			p := m.connForm.Profile()
+			if m.connForm.index >= 0 {
+				m.connections.EditConnection(m.connForm.index, p)
+			} else {
+				m.connections.AddConnection(p)
+			}
+			items := []list.Item{}
+			for _, pr := range m.connections.Profiles {
+				items = append(items, connectionItem{title: pr.Name})
+			}
+			m.connections.ConnectionsList.SetItems(items)
+			m.mode = modeConnections
+			m.connForm = nil
+			return m, nil
+		}
+	}
+	f, cmd := m.connForm.Update(msg)
+	m.connForm = &f
+	return m, cmd
+}
+
+func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch m.mode {
+	case modeClient:
+		return m.updateClient(msg)
+	case modeConnections:
+		return m.updateConnections(msg)
+	case modeEditConnection:
+		return m.updateForm(msg)
+	default:
+		return m, nil
+	}
+}
+
+func (m model) viewClient() string {
 	var b strings.Builder
 
-	b.WriteString("GoEmqutiti - MQTT Client\n")
+	b.WriteString(borderStyle.Render("GoEmqutiti - MQTT Client"))
+	b.WriteString("\nPress 'm' to manage connections\n")
 	b.WriteString("Connection: " + m.connection + "\n")
 	b.WriteString("\nMessages:\n")
 	for _, msg := range m.messages {
@@ -130,4 +235,29 @@ func (m model) View() string {
 	}
 
 	return b.String()
+}
+
+func (m model) viewConnections() string {
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+	return border.Render(m.connections.ConnectionsList.View() + "\n[a]dd [e]dit [d]elete  [esc] back")
+}
+
+func (m model) viewForm() string {
+	if m.connForm == nil {
+		return ""
+	}
+	return m.connForm.View()
+}
+
+func (m model) View() string {
+	switch m.mode {
+	case modeClient:
+		return m.viewClient()
+	case modeConnections:
+		return m.viewConnections()
+	case modeEditConnection:
+		return m.viewForm()
+	default:
+		return ""
+	}
 }

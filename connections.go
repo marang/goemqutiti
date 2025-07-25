@@ -15,11 +15,31 @@ import (
 )
 
 type Profile struct {
-	Name     string `toml:"name"`
-	Broker   string `toml:"broker"`
-	ClientID string `toml:"client_id"`
-	Username string `toml:"username"`
-	Password string `toml:"password"`
+	Name                string `toml:"name"`
+	Schema              string `toml:"schema"`
+	Host                string `toml:"host"`
+	Port                int    `toml:"port"`
+	ClientID            string `toml:"client_id"`
+	Username            string `toml:"username"`
+	Password            string `toml:"password"`
+	SSL                 bool   `toml:"ssl_tls"`
+	MQTTVersion         string `toml:"mqtt_version"`
+	ConnectTimeout      int    `toml:"connect_timeout"`
+	KeepAlive           int    `toml:"keep_alive"`
+	AutoReconnect       bool   `toml:"auto_reconnect"`
+	ReconnectPeriod     int    `toml:"reconnect_period"`
+	CleanStart          bool   `toml:"clean_start"`
+	SessionExpiry       int    `toml:"session_expiry_interval"`
+	ReceiveMaximum      int    `toml:"receive_maximum"`
+	MaximumPacketSize   int    `toml:"maximum_packet_size"`
+	TopicAliasMaximum   int    `toml:"topic_alias_maximum"`
+	RequestResponseInfo bool   `toml:"request_response_info"`
+	RequestProblemInfo  bool   `toml:"request_problem_info"`
+	LastWillEnabled     bool   `toml:"last_will_enabled"`
+	LastWillTopic       string `toml:"last_will_topic"`
+	LastWillQos         int    `toml:"last_will_qos"`
+	LastWillRetain      bool   `toml:"last_will_retain"`
+	LastWillPayload     string `toml:"last_will_payload"`
 }
 
 // Connections manages the state and logic for handling connections.
@@ -77,18 +97,23 @@ func (m Connections) View() string {
 }
 
 // AddConnection adds a new connection to the list and saves it to config.toml and keyring.
-func (m *Connections) AddConnection(name, broker, clientID, username, password string) {
-	m.Profiles = append(m.Profiles, Profile{Name: name, Broker: broker, ClientID: clientID, Username: username, Password: "keyring:emqutiti-" + name + "/" + username})
+func (m *Connections) AddConnection(p Profile) {
+	plain := p.Password
+	keyref := "keyring:emqutiti-" + p.Name + "/" + p.Username
+	p.Password = keyref
+	m.Profiles = append(m.Profiles, p)
 	m.saveConfigToFile()
-	m.savePasswordToKeyring(name, username, password)
+	m.savePasswordToKeyring(p.Name, p.Username, plain)
 }
 
 // EditConnection updates an existing connection and saves changes to config.toml and keyring.
-func (m *Connections) EditConnection(index int, name, broker, clientID, username, password string) {
+func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
-		m.Profiles[index] = Profile{Name: name, Broker: broker, ClientID: clientID, Username: username, Password: "keyring:emqutiti-" + name + "/" + username}
+		plain := p.Password
+		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+		m.Profiles[index] = p
 		m.saveConfigToFile()
-		m.savePasswordToKeyring(name, username, password)
+		m.savePasswordToKeyring(p.Name, p.Username, plain)
 	}
 }
 
@@ -102,19 +127,13 @@ func (m *Connections) DeleteConnection(index int) {
 
 // saveConfigToFile writes the current connections to the config.toml file using BurntSushi/toml.
 func (m *Connections) saveConfigToFile() {
-	config := map[string]Profile{}
-	for _, conn := range m.Profiles {
-		config[conn.Name] = Profile{
-			Name:     conn.Name,
-			Broker:   conn.Broker,
-			ClientID: conn.ClientID,
-			Username: conn.Username,
-			Password: "keyring:emqutiti-" + conn.Name + "/" + conn.Username,
-		}
-	}
+	cf := struct {
+		DefaultProfileName string    `toml:"default_profile"`
+		Profiles           []Profile `toml:"profiles"`
+	}{DefaultProfileName: m.DefaultProfileName, Profiles: m.Profiles}
 
 	var buf bytes.Buffer
-	if err := toml.NewEncoder(&buf).Encode(config); err != nil {
+	if err := toml.NewEncoder(&buf).Encode(cf); err != nil {
 		fmt.Println("Error encoding TOML:", err)
 		return
 	}

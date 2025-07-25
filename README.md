@@ -46,11 +46,20 @@ In the interface:
 
 - **Tab** switches between the topic and message fields.
 - **Enter** subscribes to a topic the first time and publishes messages afterwards.
-- **m** opens the connection manager where you can add, edit or delete MQTT profiles.
-- **Ctrl+C** or **q** exits the program.
+- **Ctrl+M** opens the connection manager where you can add, edit or delete MQTT profiles.
+- **Ctrl+T** manages subscribed topics.
+- **Ctrl+P** manages stored payloads.
+- **Ctrl+C** copies the currently selected history entry.
+- **Ctrl+D** exits the program.
 
 ## License
 
 This project is licensed under the terms of the MIT License. See [LICENSE](LICENSE) for details.
+
+## Testing
+
+Unit tests can be run with `go test ./...`. The example `ExampleSet_manual` in
+`keyring_util_test.go` interacts with the real system keyring and is excluded
+from automated runs. Execute it manually when a keyring is available.
 
 Additional notes for repository contributors are available in [Agent.md](Agent.md).

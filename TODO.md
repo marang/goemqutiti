@@ -13,6 +13,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
   - [ ] `messages_log.go` (Messages log section)
   - [ ] `payloads.go` (Stored payloads section)
   - [ ] `status.go` (Status bar: focus, shortcuts, etc.)
+  - [x] UI code split into multiple files for easier maintenance
   - [ ] Implement responsiveness using `tea.WindowSizeMsg`.
   - [x] Use `lipgloss` for styling and layout constraints.
 - [ ] Ensure sections stack vertically and resize gracefully.
@@ -71,4 +72,5 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ## **Notes**
 - Prioritize modularization and secure storage as the foundation for the application.
 - Regularly update this TODO list as tasks are completed or new requirements emerge.
+- Keep the documentation in `README.md`, `TODO.md`, and `AGENTS.md` aligned with the current implementation.
 

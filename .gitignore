@@ -37,3 +37,7 @@
 .emqutiti/config.toml
 
 app.log
+
+# Ignore built binary
+goemqutiti
+

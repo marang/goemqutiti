@@ -8,8 +8,74 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type formField interface {
+	Focus()
+	Blur()
+	Update(msg tea.Msg) tea.Cmd
+	View() string
+	Value() string
+}
+
+type textField struct{ textinput.Model }
+
+func newTextField(value, placeholder string) *textField {
+	ti := textinput.New()
+	ti.Placeholder = placeholder
+	ti.SetValue(value)
+	return &textField{ti}
+}
+
+func (t *textField) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	t.Model, cmd = t.Model.Update(msg)
+	return cmd
+}
+
+func (t *textField) Value() string { return t.Model.Value() }
+
+type checkField struct {
+	value   bool
+	focused bool
+}
+
+func newCheckField(val bool) *checkField { return &checkField{value: val} }
+
+func (c *checkField) Focus() { c.focused = true }
+func (c *checkField) Blur()  { c.focused = false }
+
+func (c *checkField) Update(msg tea.Msg) tea.Cmd {
+	switch m := msg.(type) {
+	case tea.KeyMsg:
+		if m.String() == " " {
+			c.value = !c.value
+		}
+	case tea.MouseMsg:
+		if m.Type == tea.MouseLeft {
+			c.value = !c.value
+		}
+	}
+	return nil
+}
+
+func (c *checkField) View() string {
+	box := "[ ]"
+	if c.value {
+		box = "[x]"
+	}
+	if c.focused {
+		return focusedStyle.Render(box)
+	}
+	return box
+}
+
+func (c *checkField) Value() string { return fmt.Sprintf("%v", c.value) }
+
+func (t *textField) Focus()       { t.Model.Focus() }
+func (t *textField) Blur()        { t.Model.Blur() }
+func (t *textField) View() string { return t.Model.View() }
+
 type connectionForm struct {
-	inputs []textinput.Model
+	fields []formField
 	focus  int
 	index  int // -1 for new
 }
@@ -43,7 +109,7 @@ const (
 )
 
 func newConnectionForm(p Profile, idx int) connectionForm {
-	fields := []string{
+	values := []string{
 		p.Name,
 		p.Schema,
 		p.Host,
@@ -51,26 +117,26 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		p.ClientID,
 		p.Username,
 		p.Password,
-		fmt.Sprintf("%v", p.SSL),
+		"", // placeholder for checkbox
 		p.MQTTVersion,
 		fmt.Sprintf("%d", p.ConnectTimeout),
 		fmt.Sprintf("%d", p.KeepAlive),
-		fmt.Sprintf("%v", p.AutoReconnect),
+		"", // checkbox
 		fmt.Sprintf("%d", p.ReconnectPeriod),
-		fmt.Sprintf("%v", p.CleanStart),
+		"", // checkbox
 		fmt.Sprintf("%d", p.SessionExpiry),
 		fmt.Sprintf("%d", p.ReceiveMaximum),
 		fmt.Sprintf("%d", p.MaximumPacketSize),
 		fmt.Sprintf("%d", p.TopicAliasMaximum),
-		fmt.Sprintf("%v", p.RequestResponseInfo),
-		fmt.Sprintf("%v", p.RequestProblemInfo),
-		fmt.Sprintf("%v", p.LastWillEnabled),
+		"", // checkbox
+		"", // checkbox
+		"", // checkbox
 		p.LastWillTopic,
 		fmt.Sprintf("%d", p.LastWillQos),
-		fmt.Sprintf("%v", p.LastWillRetain),
+		"", // checkbox
 		p.LastWillPayload,
 	}
-	inputs := make([]textinput.Model, len(fields))
+
 	placeholders := []string{
 		"Name",
 		"Schema",
@@ -79,35 +145,57 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Client ID",
 		"Username",
 		"Password",
-		"SSL/TLS (true/false)",
+		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout",
 		"Keep Alive",
-		"Auto Reconnect (true/false)",
+		"Auto Reconnect",
 		"Reconnect Period",
-		"Clean Start (true/false)",
+		"Clean Start",
 		"Session Expiry",
 		"Receive Maximum",
 		"Maximum Packet Size",
 		"Topic Alias Maximum",
-		"Request Response Info (true/false)",
-		"Request Problem Info (true/false)",
-		"Use Last Will (true/false)",
+		"Request Response Info",
+		"Request Problem Info",
+		"Use Last Will",
 		"Last Will Topic",
 		"Last Will QoS",
-		"Last Will Retain (true/false)",
+		"Last Will Retain",
 		"Last Will Payload",
 	}
-	for i := range inputs {
-		ti := textinput.New()
-		ti.Placeholder = placeholders[i]
-		ti.SetValue(fields[i])
-		if i == 0 {
-			ti.Focus()
-		}
-		inputs[i] = ti
+
+	fields := make([]formField, len(values))
+	boolIndices := map[int]bool{
+		idxSSL:           true,
+		idxAutoReconnect: true,
+		idxCleanStart:    true,
+		idxRequestResp:   true,
+		idxRequestProb:   true,
+		idxWillEnable:    true,
+		idxWillRetain:    true,
 	}
-	return connectionForm{inputs: inputs, focus: 0, index: idx}
+
+	boolValues := []bool{
+		p.SSL,
+		p.AutoReconnect,
+		p.CleanStart,
+		p.RequestResponseInfo,
+		p.RequestProblemInfo,
+		p.LastWillEnabled,
+		p.LastWillRetain,
+	}
+	bi := 0
+	for i := range fields {
+		if boolIndices[i] {
+			fields[i] = newCheckField(boolValues[bi])
+			bi++
+		} else {
+			fields[i] = newTextField(values[i], placeholders[i])
+		}
+	}
+	fields[0].Focus()
+	return connectionForm{fields: fields, focus: 0, index: idx}
 }
 
 func (f connectionForm) Init() tea.Cmd {
@@ -126,20 +214,27 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 				f.focus++
 			}
 			if f.focus < 0 {
-				f.focus = len(f.inputs) - 1
+				f.focus = len(f.fields) - 1
 			}
-			if f.focus >= len(f.inputs) {
+			if f.focus >= len(f.fields) {
 				f.focus = 0
 			}
 		}
-	}
-	for i := range f.inputs {
-		if i == f.focus {
-			f.inputs[i].Focus()
-		} else {
-			f.inputs[i].Blur()
+	case tea.MouseMsg:
+		if msg.Type == tea.MouseLeft {
+			// crude calculation: rows correspond to field order
+			if msg.Y >= 1 && msg.Y-1 < len(f.fields) {
+				f.focus = msg.Y - 1
+			}
 		}
-		f.inputs[i], _ = f.inputs[i].Update(msg)
+	}
+	for i := range f.fields {
+		if i == f.focus {
+			f.fields[i].Focus()
+		} else {
+			f.fields[i].Blur()
+		}
+		f.fields[i].Update(msg)
 	}
 	return f, cmd
 }
@@ -174,7 +269,7 @@ func (f connectionForm) View() string {
 		"Last Will Retain",
 		"Last Will Payload",
 	}
-	for i, in := range f.inputs {
+	for i, in := range f.fields {
 		s += fmt.Sprintf("%s: %s\n", labels[i], in.View())
 	}
 	s += "\nPress Enter to save or Esc to cancel"
@@ -182,8 +277,8 @@ func (f connectionForm) View() string {
 }
 
 func (f connectionForm) Profile() Profile {
-	vals := make([]string, len(f.inputs))
-	for i, in := range f.inputs {
+	vals := make([]string, len(f.fields))
+	for i, in := range f.fields {
 		vals[i] = in.Value()
 	}
 	p := Profile{}

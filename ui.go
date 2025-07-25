@@ -32,6 +32,7 @@ const (
 	modeClient appMode = iota
 	modeConnections
 	modeEditConnection
+	modeConfirmDelete
 )
 
 type model struct {
@@ -47,6 +48,7 @@ type model struct {
 	mode        appMode
 	connections Connections
 	connForm    *connectionForm
+	deleteIndex int
 }
 
 func initialModel(conns *Connections) model {
@@ -73,6 +75,7 @@ func initialModel(conns *Connections) model {
 		connModel = *conns
 	} else {
 		connModel = NewConnectionsModel()
+		connModel.LoadProfiles("")
 	}
 	connModel.ConnectionsList.SetShowStatusBar(false)
 	items := []list.Item{}
@@ -124,6 +127,12 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", topic, payload))
 			}
 		case "m":
+			m.connections.LoadProfiles("")
+			items := []list.Item{}
+			for _, p := range m.connections.Profiles {
+				items = append(items, connectionItem{title: p.Name})
+			}
+			m.connections.ConnectionsList.SetItems(items)
 			m.mode = modeConnections
 		}
 	}
@@ -173,12 +182,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		case "d":
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 {
-				m.connections.DeleteConnection(i)
-				items := []list.Item{}
-				for _, p := range m.connections.Profiles {
-					items = append(items, connectionItem{title: p.Name})
-				}
-				m.connections.ConnectionsList.SetItems(items)
+				m.deleteIndex = i
+				m.mode = modeConfirmDelete
 			}
 		}
 	}
@@ -221,6 +226,25 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	return m, cmd
 }
 
+func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "y":
+			m.connections.DeleteConnection(m.deleteIndex)
+			items := []list.Item{}
+			for _, p := range m.connections.Profiles {
+				items = append(items, connectionItem{title: p.Name})
+			}
+			m.connections.ConnectionsList.SetItems(items)
+			m.mode = modeConnections
+		case "n", "esc":
+			m.mode = modeConnections
+		}
+	}
+	return m, nil
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch m.mode {
 	case modeClient:
@@ -229,6 +253,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateConnections(msg)
 	case modeEditConnection:
 		return m.updateForm(msg)
+	case modeConfirmDelete:
+		return m.updateConfirmDelete(msg)
 	default:
 		return m, nil
 	}
@@ -268,6 +294,15 @@ func (m model) viewForm() string {
 	return m.connForm.View()
 }
 
+func (m model) viewConfirmDelete() string {
+	var name string
+	if m.deleteIndex >= 0 && m.deleteIndex < len(m.connections.Profiles) {
+		name = m.connections.Profiles[m.deleteIndex].Name
+	}
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+	return border.Render(fmt.Sprintf("Delete connection '%s'? [y/n]", name))
+}
+
 func (m model) View() string {
 	switch m.mode {
 	case modeClient:
@@ -276,6 +311,8 @@ func (m model) View() string {
 		return m.viewConnections()
 	case modeEditConnection:
 		return m.viewForm()
+	case modeConfirmDelete:
+		return m.viewConfirmDelete()
 	default:
 		return ""
 	}

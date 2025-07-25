@@ -26,6 +26,7 @@ type Profile struct {
 	MQTTVersion         string `toml:"mqtt_version"`
 	ConnectTimeout      int    `toml:"connect_timeout"`
 	KeepAlive           int    `toml:"keep_alive"`
+	QoS                 int    `toml:"qos"`
 	AutoReconnect       bool   `toml:"auto_reconnect"`
 	ReconnectPeriod     int    `toml:"reconnect_period"`
 	CleanStart          bool   `toml:"clean_start"`

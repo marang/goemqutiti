@@ -226,6 +226,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 		return m, nil
 	}
 	var cmd tea.Cmd
+	m.connections.ConnectionsList, _ = m.connections.ConnectionsList.Update(msg)
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -333,7 +334,11 @@ func (m model) viewForm() string {
 	if m.connForm == nil {
 		return ""
 	}
-	return m.connForm.View()
+	listView := m.connections.ConnectionsList.View()
+	formView := m.connForm.View()
+	left := borderStyle.Copy().Width(m.width/2 - 2).Render(listView)
+	right := borderStyle.Copy().Width(m.width/2 - 2).Render(formView)
+	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 }
 
 func (m model) viewConfirmDelete() string {

@@ -18,10 +18,13 @@ type formField interface {
 
 type textField struct{ textinput.Model }
 
-func newTextField(value, placeholder string) *textField {
+func newTextField(value, placeholder string, opts ...bool) *textField {
 	ti := textinput.New()
 	ti.Placeholder = placeholder
 	ti.SetValue(value)
+	if len(opts) > 0 && opts[0] {
+		ti.EchoMode = textinput.EchoPassword
+	}
 	return &textField{ti}
 }
 
@@ -37,6 +40,57 @@ type checkField struct {
 	value   bool
 	focused bool
 }
+
+type selectField struct {
+	options []string
+	index   int
+	focused bool
+}
+
+func newSelectField(val string, opts []string) *selectField {
+	idx := 0
+	for i, o := range opts {
+		if o == val {
+			idx = i
+			break
+		}
+	}
+	return &selectField{options: opts, index: idx}
+}
+
+func (s *selectField) Focus() { s.focused = true }
+func (s *selectField) Blur()  { s.focused = false }
+
+func (s *selectField) Update(msg tea.Msg) tea.Cmd {
+	if !s.focused {
+		return nil
+	}
+	if km, ok := msg.(tea.KeyMsg); ok {
+		switch km.String() {
+		case "left", "h":
+			s.index--
+		case "right", "l", " ":
+			s.index++
+		}
+		if s.index < 0 {
+			s.index = len(s.options) - 1
+		}
+		if s.index >= len(s.options) {
+			s.index = 0
+		}
+	}
+	return nil
+}
+
+func (s *selectField) View() string {
+	val := s.options[s.index]
+	if s.focused {
+		return focusedStyle.Render(val)
+	}
+	return val
+}
+
+func (s *selectField) Value() string { return s.options[s.index] }
 
 func newCheckField(val bool) *checkField { return &checkField{value: val} }
 
@@ -92,6 +146,7 @@ const (
 	idxMQTTVersion
 	idxConnectTimeout
 	idxKeepAlive
+	idxQoS
 	idxAutoReconnect
 	idxReconnectPeriod
 	idxCleanStart
@@ -109,6 +164,10 @@ const (
 )
 
 func newConnectionForm(p Profile, idx int) connectionForm {
+	pwKey := ""
+	if p.Name != "" && p.Username != "" {
+		pwKey = fmt.Sprintf("keyring:emqutiti-%s/%s", p.Name, p.Username)
+	}
 	values := []string{
 		p.Name,
 		p.Schema,
@@ -116,11 +175,12 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		fmt.Sprintf("%d", p.Port),
 		p.ClientID,
 		p.Username,
-		p.Password,
+		"",
 		"", // placeholder for checkbox
 		p.MQTTVersion,
 		fmt.Sprintf("%d", p.ConnectTimeout),
 		fmt.Sprintf("%d", p.KeepAlive),
+		fmt.Sprintf("%d", p.QoS),
 		"", // checkbox
 		fmt.Sprintf("%d", p.ReconnectPeriod),
 		"", // checkbox
@@ -144,15 +204,16 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Port",
 		"Client ID",
 		"Username",
-		"Password",
+		pwKey,
 		"SSL/TLS",
 		"MQTT Version",
-		"Connect Timeout",
-		"Keep Alive",
+		"Connect Timeout (s)",
+		"Keep Alive (s)",
+		"QoS",
 		"Auto Reconnect",
-		"Reconnect Period",
+		"Reconnect Period (s)",
 		"Clean Start",
-		"Session Expiry",
+		"Session Expiry (s)",
 		"Receive Maximum",
 		"Maximum Packet Size",
 		"Topic Alias Maximum",
@@ -176,6 +237,13 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		idxWillRetain:    true,
 	}
 
+	selectOptions := map[int][]string{
+		idxSchema:      {"tcp", "ssl", "ws", "wss"},
+		idxMQTTVersion: {"3", "4", "5"},
+		idxQoS:         {"0", "1", "2"},
+		idxWillQos:     {"0", "1", "2"},
+	}
+
 	boolValues := []bool{
 		p.SSL,
 		p.AutoReconnect,
@@ -190,6 +258,14 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		if boolIndices[i] {
 			fields[i] = newCheckField(boolValues[bi])
 			bi++
+			continue
+		}
+		if opts, ok := selectOptions[i]; ok {
+			fields[i] = newSelectField(values[i], opts)
+			continue
+		}
+		if i == idxPassword {
+			fields[i] = newTextField(values[i], placeholders[i], true)
 		} else {
 			fields[i] = newTextField(values[i], placeholders[i])
 		}
@@ -207,12 +283,15 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "tab", "shift+tab":
-			if msg.String() == "shift+tab" {
-				f.focus--
-			} else {
-				f.focus++
+		case "tab", "shift+tab", "up", "down", "k", "j":
+			step := 0
+			switch msg.String() {
+			case "shift+tab", "up", "k":
+				step = -1
+			default:
+				step = 1
 			}
+			f.focus += step
 			if f.focus < 0 {
 				f.focus = len(f.fields) - 1
 			}
@@ -254,12 +333,13 @@ func (f connectionForm) View() string {
 		"Password",
 		"SSL/TLS",
 		"MQTT Version",
-		"Connect Timeout",
-		"Keep Alive",
+		"Connect Timeout (s)",
+		"Keep Alive (s)",
+		"QoS",
 		"Auto Reconnect",
-		"Reconnect Period",
+		"Reconnect Period (s)",
 		"Clean Start",
-		"Session Expiry",
+		"Session Expiry (s)",
 		"Receive Maximum",
 		"Maximum Packet Size",
 		"Topic Alias Maximum",
@@ -272,7 +352,11 @@ func (f connectionForm) View() string {
 		"Last Will Payload",
 	}
 	for i, in := range f.fields {
-		s += fmt.Sprintf("%s: %s\n", labels[i], in.View())
+		label := labels[i]
+		if i == f.focus {
+			label = focusedStyle.Render(label)
+		}
+		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	s += "\nPress Enter to save or Esc to cancel"
 	return border.Render(s)
@@ -295,6 +379,7 @@ func (f connectionForm) Profile() Profile {
 	p.MQTTVersion = vals[idxMQTTVersion]
 	fmt.Sscan(vals[idxConnectTimeout], &p.ConnectTimeout)
 	fmt.Sscan(vals[idxKeepAlive], &p.KeepAlive)
+	fmt.Sscan(vals[idxQoS], &p.QoS)
 	fmt.Sscan(vals[idxAutoReconnect], &p.AutoReconnect)
 	fmt.Sscan(vals[idxReconnectPeriod], &p.ReconnectPeriod)
 	fmt.Sscan(vals[idxCleanStart], &p.CleanStart)

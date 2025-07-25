@@ -7,4 +7,4 @@
 The TUI runs fullscreen with colorful borders. Press `m` to open the connection manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring.
 
 ## Test Info
-`ExampleSet` in `keyring_util_test.go` requires a real keyring and is renamed to `ExampleSet_manual`. It does not run during `go test ./...` and can be executed manually if needed.
+`ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.

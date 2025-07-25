@@ -17,6 +17,8 @@ var (
 	cursorStyle  = focusedStyle
 	noCursor     = lipgloss.NewStyle()
 	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("63"))
+	chipInactive = chipStyle.Copy().Foreground(lipgloss.Color("240"))
 )
 
 // connectionItem implements list.DefaultItem interface for connection names.
@@ -26,6 +28,26 @@ func (c connectionItem) FilterValue() string { return c.title }
 func (c connectionItem) Title() string       { return c.title }
 func (c connectionItem) Description() string { return "" }
 
+type topicItem struct {
+	title  string
+	active bool
+}
+
+func (t topicItem) FilterValue() string { return t.title }
+func (t topicItem) Title() string       { return t.title }
+func (t topicItem) Description() string {
+	if t.active {
+		return "enabled"
+	}
+	return "disabled"
+}
+
+type payloadItem struct{ topic, payload string }
+
+func (p payloadItem) FilterValue() string { return p.topic }
+func (p payloadItem) Title() string       { return p.topic }
+func (p payloadItem) Description() string { return p.payload }
+
 type appMode int
 
 const (
@@ -33,6 +55,8 @@ const (
 	modeConnections
 	modeEditConnection
 	modeConfirmDelete
+	modeTopics
+	modePayloads
 )
 
 type model struct {
@@ -42,7 +66,9 @@ type model struct {
 	topicInput   textinput.Model
 	messageInput textinput.Model
 	payloads     map[string]string
-	subscribed   bool
+	topics       []topicItem
+	topicsList   list.Model
+	payloadList  list.Model
 	focusIndex   int
 
 	width  int
@@ -92,6 +118,9 @@ func initialModel(conns *Connections) model {
 		payloads:     make(map[string]string),
 		topicInput:   ti,
 		messageInput: mi,
+		topics:       []topicItem{},
+		topicsList:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		payloadList:  list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		focusIndex:   0,
 		mode:         modeClient,
 		connections:  connModel,
@@ -122,14 +151,25 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				m.focusIndex = 0
 			}
 		case "enter":
-			if !m.subscribed {
-				m.messages = append(m.messages, fmt.Sprintf("Subscribed to topic: %s", m.topicInput.Value()))
-				m.subscribed = true
+			if m.focusIndex == 0 {
+				topic := strings.TrimSpace(m.topicInput.Value())
+				if topic != "" {
+					m.topics = append(m.topics, topicItem{title: topic, active: true})
+					m.messages = append(m.messages, fmt.Sprintf("Subscribed to topic: %s", topic))
+					m.topicInput.SetValue("")
+				}
 			} else {
-				topic := m.topicInput.Value()
 				payload := m.messageInput.Value()
-				m.payloads[topic] = payload
-				m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", topic, payload))
+				for _, t := range m.topics {
+					if t.active {
+						m.payloads[t.title] = payload
+						m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", t.title, payload))
+						pl := payloadItem{topic: t.title, payload: payload}
+						items := append(m.payloadList.Items(), pl)
+						m.payloadList.SetItems(items)
+					}
+				}
+				m.messageInput.SetValue("")
 			}
 		case "m":
 			m.connections.LoadProfiles("")
@@ -139,6 +179,22 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 			}
 			m.connections.ConnectionsList.SetItems(items)
 			m.mode = modeConnections
+		case "t":
+			items := []list.Item{}
+			for _, tpc := range m.topics {
+				items = append(items, topicItem{title: tpc.title, active: tpc.active})
+			}
+			m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.topicsList.Title = "Topics"
+			m.mode = modeTopics
+		case "p":
+			items := []list.Item{}
+			for topic, payload := range m.payloads {
+				items = append(items, payloadItem{topic: topic, payload: payload})
+			}
+			m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.payloadList.Title = "Payloads"
+			m.mode = modePayloads
 		}
 	}
 
@@ -276,6 +332,72 @@ func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	return m, nil
 }
 
+func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.mode = modeClient
+		case "d":
+			i := m.topicsList.Index()
+			if i >= 0 && i < len(m.topics) {
+				m.topics = append(m.topics[:i], m.topics[i+1:]...)
+				items := []list.Item{}
+				for _, t := range m.topics {
+					items = append(items, t)
+				}
+				m.topicsList.SetItems(items)
+			}
+		case "enter", " ":
+			i := m.topicsList.Index()
+			if i >= 0 && i < len(m.topics) {
+				m.topics[i].active = !m.topics[i].active
+				items := m.topicsList.Items()
+				items[i] = m.topics[i]
+				m.topicsList.SetItems(items)
+			}
+		}
+	}
+	m.topicsList, cmd = m.topicsList.Update(msg)
+	return m, cmd
+}
+
+func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.mode = modeClient
+		case "d":
+			i := m.payloadList.Index()
+			if i >= 0 {
+				items := m.payloadList.Items()
+				if i < len(items) {
+					pi := items[i].(payloadItem)
+					delete(m.payloads, pi.topic)
+					items = append(items[:i], items[i+1:]...)
+					m.payloadList.SetItems(items)
+				}
+			}
+		case "enter":
+			i := m.payloadList.Index()
+			if i >= 0 {
+				items := m.payloadList.Items()
+				if i < len(items) {
+					pi := items[i].(payloadItem)
+					m.topicInput.SetValue(pi.topic)
+					m.messageInput.SetValue(pi.payload)
+					m.mode = modeClient
+				}
+			}
+		}
+	}
+	m.payloadList, cmd = m.payloadList.Update(msg)
+	return m, cmd
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -294,32 +416,46 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateForm(msg)
 	case modeConfirmDelete:
 		return m.updateConfirmDelete(msg)
+	case modeTopics:
+		return m.updateTopics(msg)
+	case modePayloads:
+		return m.updatePayloads(msg)
 	default:
 		return m, nil
 	}
 }
 
 func (m model) viewClient() string {
-	header := borderStyle.Copy().Width(m.width - 2).Render("GoEmqutiti - MQTT Client")
-	info := borderStyle.Copy().Width(m.width - 2).Render("Press 'm' to manage connections")
-	conn := borderStyle.Copy().Width(m.width - 2).Render("Connection: " + m.connection)
+	header := borderStyle.Copy().Width(m.width - 4).Render("GoEmqutiti - MQTT Client")
+	info := borderStyle.Copy().Width(m.width - 4).Render("Press 'm' to manage connections")
+	conn := borderStyle.Copy().Width(m.width - 4).Render("Connection: " + m.connection)
+
+	var chips []string
+	for _, t := range m.topics {
+		st := chipStyle
+		if !t.active {
+			st = chipInactive
+		}
+		chips = append(chips, st.Render(t.title))
+	}
+	topicsBox := borderStyle.Copy().Width(m.width - 4).Render(strings.Join(chips, " "))
 
 	msgLines := strings.Join(m.messages, "\n")
-	messagesBox := borderStyle.Copy().Width(m.width - 2).Height(m.height / 3).Render(msgLines)
+	messagesBox := borderStyle.Copy().Width(m.width - 4).Height(m.height / 3).Render(msgLines)
 
 	inputs := lipgloss.JoinVertical(lipgloss.Left,
 		"Topic:\n"+m.topicInput.View(),
 		"Message:\n"+m.messageInput.View(),
 	)
-	inputsBox := borderStyle.Copy().Width(m.width - 2).Render(inputs)
+	inputsBox := borderStyle.Copy().Width(m.width - 4).Render(inputs)
 
 	var payloadLines []string
 	for topic, payload := range m.payloads {
 		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
 	}
-	payloadBox := borderStyle.Copy().Width(m.width - 2).Render("Stored Payloads:\n" + strings.Join(payloadLines, "\n"))
+	payloadBox := borderStyle.Copy().Width(m.width - 4).Render("Stored Payloads:\n" + strings.Join(payloadLines, "\n"))
 
-	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, messagesBox, inputsBox, payloadBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
 	return lipgloss.NewStyle().Width(m.width).Height(m.height).Padding(1, 1).Render(content)
 }
 
@@ -350,6 +486,20 @@ func (m model) viewConfirmDelete() string {
 	return border.Render(fmt.Sprintf("Delete connection '%s'? [y/n]", name))
 }
 
+func (m model) viewTopics() string {
+	listView := m.topicsList.View()
+	help := "[enter] toggle  [d]elete  [esc] back"
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
+}
+
+func (m model) viewPayloads() string {
+	listView := m.payloadList.View()
+	help := "[enter] load  [d]elete  [esc] back"
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
+}
+
 func (m model) View() string {
 	switch m.mode {
 	case modeClient:
@@ -360,6 +510,10 @@ func (m model) View() string {
 		return m.viewForm()
 	case modeConfirmDelete:
 		return m.viewConfirmDelete()
+	case modeTopics:
+		return m.viewTopics()
+	case modePayloads:
+		return m.viewPayloads()
 	default:
 		return ""
 	}

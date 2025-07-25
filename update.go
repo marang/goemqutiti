@@ -203,7 +203,12 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 	var cmdMsg tea.Cmd
 	m.messageInput, cmdMsg = m.messageInput.Update(msg)
 
-	return m, tea.Batch(cmd, cmdMsg, listenStatus(m.statusChan))
+	var histCmd tea.Cmd
+	if m.focusIndex > 1 {
+		m.history, histCmd = m.history.Update(msg)
+	}
+
+	return m, tea.Batch(cmd, cmdMsg, histCmd, listenStatus(m.statusChan))
 }
 
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
@@ -409,6 +414,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
+		m.topicInput.Width = msg.Width - 6
+		m.messageInput.SetWidth(msg.Width - 6)
+		m.history.SetSize(msg.Width-4, msg.Height/3)
 		return m, nil
 	}
 

@@ -122,7 +122,7 @@ func initialModel(conns *Connections) model {
 	ta.Blur()
 	ta.Cursor.Style = noCursor
 	ta.SetWidth(80)
-	ta.SetHeight(4)
+	ta.SetHeight(6)
 	ta.FocusedStyle.CursorLine = focusedStyle
 	ta.BlurredStyle.CursorLine = blurredStyle
 

@@ -73,6 +73,7 @@ func initialModel(conns *Connections) model {
 		connModel = *conns
 	} else {
 		connModel = NewConnectionsModel()
+		connModel.LoadProfiles("")
 	}
 	connModel.ConnectionsList.SetShowStatusBar(false)
 	items := []list.Item{}
@@ -124,6 +125,12 @@ func (m model) updateClient(msg tea.Msg) (model, tea.Cmd) {
 				m.messages = append(m.messages, fmt.Sprintf("Published to %s: %s", topic, payload))
 			}
 		case "m":
+			m.connections.LoadProfiles("")
+			items := []list.Item{}
+			for _, p := range m.connections.Profiles {
+				items = append(items, connectionItem{title: p.Name})
+			}
+			m.connections.ConnectionsList.SetItems(items)
 			m.mode = modeConnections
 		}
 	}

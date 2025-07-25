@@ -25,7 +25,6 @@ func (m model) viewClient() string {
 	}
 	topicsBox := borderStyle.Copy().Width(m.width - 4).Render("Topics:\n" + lipgloss.JoinHorizontal(lipgloss.Top, chips...))
 
-	m.history.SetSize(m.width-4, m.height/3)
 	messagesBox := legendBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
 
 	inputs := lipgloss.JoinVertical(lipgloss.Left,

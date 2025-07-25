@@ -50,6 +50,7 @@ In the interface:
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.
+- **Esc** navigates back within menus without quitting.
 - **Ctrl+D** exits the program.
 
 ## License

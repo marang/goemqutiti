@@ -8,9 +8,9 @@ import (
 )
 
 func (m *model) viewClient() string {
-	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4)
-	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4)
-	conn := legendBox(m.connection, "Connection", m.width-4)
+	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4, false)
+	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4, false)
+	conn := legendBox(m.connection, "Connection", m.width-4, false)
 
 	var chips []string
 	for i, t := range m.topics {
@@ -23,12 +23,12 @@ func (m *model) viewClient() string {
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsBox := legendBox(lipgloss.JoinHorizontal(lipgloss.Top, chips...), "Topics", m.width-4)
+	topicsBox := legendBox(lipgloss.JoinHorizontal(lipgloss.Top, chips...), "Topics", m.width-4, m.focusIndex == 2)
 
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
 
-	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-4)
-	messageBox := legendBox(m.messageInput.View(), "Message", m.width-4)
+	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-4, m.focusIndex == 0)
+	messageBox := legendBox(m.messageInput.View(), "Message", m.width-4, m.focusIndex == 1)
 
 	inputsBox := lipgloss.JoinVertical(lipgloss.Left, topicBox, messageBox)
 
@@ -36,7 +36,7 @@ func (m *model) viewClient() string {
 	for topic, payload := range m.payloads {
 		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
 	}
-	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4)
+	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4, false)
 	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
 
 	y := 1

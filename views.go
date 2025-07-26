@@ -41,7 +41,7 @@ func (m *model) viewClient() string {
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsFocused := m.focusOrder[m.focusIndex] == "topics" || m.focusOrder[m.focusIndex] == "topic"
+	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
 	topicsContent := lipgloss.JoinVertical(lipgloss.Left, m.topicInput.View(), wrapChips(chips, m.width-4))
@@ -55,7 +55,6 @@ func (m *model) viewClient() string {
 
 	y := 1
 	m.elemPos["topics"] = y
-	m.elemPos["topic"] = y
 	y += lipgloss.Height(topicsBox)
 	m.elemPos["message"] = y
 	y += lipgloss.Height(messageBox)

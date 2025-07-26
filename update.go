@@ -149,6 +149,16 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
+			} else if m.focusIndex > 1 {
+				// Ctrl+M sends the same code as enter, so treat enter as the connection shortcut when not editing fields
+				m.connections.LoadProfiles("")
+				items := []list.Item{}
+				for _, p := range m.connections.Profiles {
+					items = append(items, connectionItem{title: p.Name})
+				}
+				m.connections.ConnectionsList.SetItems(items)
+				m.saveCurrent()
+				m.mode = modeConnections
 			}
 		case "d":
 			if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {

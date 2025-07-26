@@ -17,15 +17,22 @@ var (
 	chipInactive = chipStyle.Copy().Foreground(lipgloss.Color("240"))
 )
 
-func legendBox(content, label string, width int) string {
-	return legendStyledBox(content, label, width, borderStyle)
+func legendBox(content, label string, width int, focused bool) string {
+	color := lipgloss.Color("63")
+	if focused {
+		color = lipgloss.Color("205")
+	}
+	return legendStyledBox(content, label, width, color)
 }
 
 func legendGreenBox(content, label string, width int) string {
-	return legendStyledBox(content, label, width, greenBorder)
+	return legendStyledBox(content, label, width, lipgloss.Color("34"))
 }
 
-func legendStyledBox(content, label string, width int, style lipgloss.Style) string {
+func legendStyledBox(content, label string, width int, color lipgloss.Color) string {
+	if width < lipgloss.Width(label)+4 {
+		width = lipgloss.Width(label) + 4
+	}
 	b := lipgloss.RoundedBorder()
 	top := b.TopLeft + " " + label + " " + strings.Repeat(b.Top, width-lipgloss.Width(label)-3) + b.TopRight
 	bottom := b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight
@@ -34,5 +41,5 @@ func legendStyledBox(content, label string, width int, style lipgloss.Style) str
 		lines[i] = b.Left + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l) + b.Right
 	}
 	middle := strings.Join(lines, "\n")
-	return style.Render(top + "\n" + middle + "\n" + bottom)
+	return lipgloss.NewStyle().Foreground(color).Render(top + "\n" + middle + "\n" + bottom)
 }

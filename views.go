@@ -29,9 +29,7 @@ func wrapChips(chips []string, width int) string {
 }
 
 func (m *model) viewClient() string {
-	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4, false)
-	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4, false)
-	conn := legendBox(m.connection, "Connection", m.width-4, false)
+	infoLine := infoStyle.Render("Info: Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads. " + m.connection)
 
 	var chips []string
 	for i, t := range m.topics {
@@ -58,12 +56,9 @@ func (m *model) viewClient() string {
 		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
 	}
 	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4, false)
-	content := lipgloss.JoinVertical(lipgloss.Left, header, info, conn, topicsBox, messagesBox, inputsBox, payloadBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messagesBox, inputsBox, payloadBox)
 
 	y := 1
-	y += lipgloss.Height(header)
-	y += lipgloss.Height(info)
-	y += lipgloss.Height(conn)
 	m.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
 	y += lipgloss.Height(messagesBox)
@@ -74,8 +69,8 @@ func (m *model) viewClient() string {
 	box := lipgloss.NewStyle().Width(m.width).Padding(1, 1).Render(content)
 	m.viewport.SetContent(box)
 	m.viewport.Width = m.width
-	m.viewport.Height = m.height
-	return m.viewport.View()
+	m.viewport.Height = m.height - 1
+	return lipgloss.JoinVertical(lipgloss.Left, infoLine, m.viewport.View())
 }
 
 func (m model) viewConnections() string {

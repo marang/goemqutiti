@@ -101,9 +101,12 @@ func (m *model) focusFromMouse(y int) tea.Cmd {
 		}
 	}
 	if chosen != "" {
-		return m.setFocus(chosen)
+		if chosen != m.focusOrder[m.focusIndex] {
+			return m.setFocus(chosen)
+		}
+		return nil
 	}
-	if len(m.focusOrder) > 0 {
+	if len(m.focusOrder) > 0 && m.focusOrder[m.focusIndex] != m.focusOrder[0] {
 		return m.setFocus(m.focusOrder[0])
 	}
 	return nil
@@ -314,11 +317,13 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				cmds = append(cmds, hCmd)
 			}
 		}
+		var off int
 		if msg.Type == tea.MouseLeft {
+			off = m.viewport.YOffset
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusOrder[m.focusIndex] == "topics" {
-			m.handleTopicsClick(msg)
+			m.handleTopicsClick(msg, off)
 		}
 	}
 
@@ -348,12 +353,13 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 // handleTopicsClick processes mouse events within the topics area. The
 // coordinates are relative to the entire viewport, so we subtract the info
 // line and box border to get chip positions.
-func (m *model) handleTopicsClick(msg tea.MouseMsg) {
+func (m *model) handleTopicsClick(msg tea.MouseMsg, off int) {
 	// Mouse coordinates are relative to the entire viewport. Account for
 	// the viewport padding and the "Topics" box border so Y=0 aligns with
 	// the first chip row.
 	start := m.elemPos["topics"] + 2
-	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-4)
+	y := msg.Y + off - start
+	idx := m.topicAtPosition(msg.X-2, y, m.width-4)
 	if idx < 0 {
 		return
 	}

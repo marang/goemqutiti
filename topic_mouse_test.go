@@ -127,3 +127,34 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 		}
 	}
 }
+
+func TestMouseToggleWithScroll(t *testing.T) {
+	m := initialModel(nil)
+	// Small height so we need to scroll to reach later rows
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
+	setupManyTopics(m, 30)
+	m.viewClient()
+	// Scroll viewport to show around row 6
+	scroll := m.elemPos["topics"] + 2 + 6*lipgloss.Height(chipStyle.Render("test"))
+	m.viewport.SetYOffset(scroll)
+	if m.viewport.YOffset != scroll {
+		t.Fatalf("expected YOffset %d got %d", scroll, m.viewport.YOffset)
+	}
+
+	// Choose a chip on row 7 (0-based index -> row 7 => start index 6*3)
+	idx := 6 * 3
+	x, y := chipCoords(m, idx)
+	start := m.elemPos["topics"] + 2
+	// Convert chip coord to viewport coordinate
+	yInView := y - m.viewport.YOffset + start
+	for offset := 0; offset < 3; offset++ {
+		before := m.topics[idx].active
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: yInView + offset})
+		if m.selectedTopic != idx {
+			t.Fatalf("expected selected %d got %d (yInView %d off %d)", idx, m.selectedTopic, yInView, offset)
+		}
+		if m.topics[idx].active == before {
+			t.Fatalf("offset %d did not toggle topic %d", offset, idx)
+		}
+	}
+}

@@ -349,7 +349,10 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 // coordinates are relative to the entire viewport, so we subtract the info
 // line and box border to get chip positions.
 func (m *model) handleTopicsClick(msg tea.MouseMsg) {
-	start := m.elemPos["topics"] + 1
+	// Mouse coordinates are relative to the entire viewport. Account for
+	// the viewport padding and the "Topics" box border so Y=0 aligns with
+	// the first chip row.
+	start := m.elemPos["topics"] + 2
 	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-4)
 	if idx < 0 {
 		return

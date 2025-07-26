@@ -10,7 +10,7 @@ import (
 func chipCoords(m *model, idx int) (int, int) {
 	width := m.width - 4
 	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH + 1
+	rowSpacing := chipH
 
 	curX := 0
 	rowTop := 0
@@ -74,6 +74,26 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 		}
 		if m.topics[6].active == before {
 			t.Fatalf("offset %d did not toggle topic 6", offset)
+		}
+	}
+}
+
+func TestMouseToggleFourthRowTopic(t *testing.T) {
+	m := initialModel(nil)
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
+	setupTopics(m)
+	m.viewClient()
+	// topic index 8 resides on the fourth row
+	x, y := chipCoords(m, 8)
+	start := m.elemPos["topics"] + 1
+	for offset := 0; offset < 3; offset++ {
+		before := m.topics[8].active
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		if m.selectedTopic != 8 {
+			t.Fatalf("expected selected topic 8, got %d", m.selectedTopic)
+		}
+		if m.topics[8].active == before {
+			t.Fatalf("offset %d did not toggle topic 8", offset)
 		}
 	}
 }

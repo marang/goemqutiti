@@ -262,11 +262,12 @@ func (m *model) removeTopic(index int) {
 }
 
 func (m *model) topicAtPosition(x, y, width int) int {
-	// Each rendered chip has a height of three lines with one blank line
-	// separating rows. Translate the mouse Y coordinate into this grid to
-	// locate the clicked chip accurately.
+	// Chips render with a height of three lines. When wrapped to the next
+	// row there is no extra blank line inserted, so rows are spaced by the
+	// chip height alone. Map the mouse coordinates into this grid to locate
+	// the clicked chip.
 	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH + 1
+	rowSpacing := chipH
 
 	curX := 0
 	rowTop := 0

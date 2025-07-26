@@ -12,6 +12,19 @@ import (
 
 type statusMessage string
 
+func listenMessages(ch chan MQTTMessage) tea.Cmd {
+	return func() tea.Msg {
+		if ch == nil {
+			return nil
+		}
+		msg, ok := <-ch
+		if !ok {
+			return nil
+		}
+		return msg
+	}
+}
+
 func listenStatus(ch chan string) tea.Cmd {
 	return func() tea.Msg {
 		if ch == nil {
@@ -99,6 +112,9 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	case statusMessage:
 		m.appendHistory("", string(msg), "log", string(msg))
 		return listenStatus(m.statusChan)
+	case MQTTMessage:
+		m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
+		return listenMessages(m.mqttClient.MessageChan)
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
@@ -252,6 +268,9 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	}
 
 	cmds = append(cmds, listenStatus(m.statusChan))
+	if m.mqttClient != nil {
+		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
+	}
 	return tea.Batch(cmds...)
 }
 

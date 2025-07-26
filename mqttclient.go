@@ -9,9 +9,15 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+type MQTTMessage struct {
+	Topic   string
+	Payload string
+}
+
 type MQTTClient struct {
-	Client     mqtt.Client
-	StatusChan chan string
+	Client      mqtt.Client
+	StatusChan  chan string
+	MessageChan chan MQTTMessage
 }
 
 func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
@@ -68,12 +74,17 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 		}
 	}
 
+	msgChan := make(chan MQTTMessage, 20)
+	opts.SetDefaultPublishHandler(func(client mqtt.Client, m mqtt.Message) {
+		msgChan <- MQTTMessage{Topic: m.Topic(), Payload: string(m.Payload())}
+	})
+
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {
 		return nil, fmt.Errorf("failed to connect: %w", token.Error())
 	}
 
-	return &MQTTClient{Client: client, StatusChan: statusChan}, nil
+	return &MQTTClient{Client: client, StatusChan: statusChan, MessageChan: msgChan}, nil
 }
 
 func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {

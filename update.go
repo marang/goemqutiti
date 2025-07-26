@@ -350,7 +350,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 // line and box border to get chip positions.
 func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 	start := m.elemPos["topics"] + 1
-	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
+	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-4)
 	if idx < 0 {
 		return
 	}

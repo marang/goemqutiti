@@ -9,7 +9,11 @@ import (
 
 func chipCoords(m *model, idx int) (int, int) {
 	width := m.width - 4
-	curX, curY := 0, 0
+	chipH := lipgloss.Height(chipStyle.Render("test"))
+	rowSpacing := chipH + 1
+
+	curX := 0
+	rowTop := 0
 	for i, t := range m.topics {
 		chip := chipStyle.Render(t.title)
 		if !t.active {
@@ -17,11 +21,11 @@ func chipCoords(m *model, idx int) (int, int) {
 		}
 		w := lipgloss.Width(chip)
 		if curX+w > width && curX > 0 {
-			curY++
+			rowTop += rowSpacing
 			curX = 0
 		}
 		if i == idx {
-			return curX, curY
+			return curX, rowTop
 		}
 		curX += w
 	}
@@ -42,12 +46,15 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	m.viewClient()
 	x, y := chipCoords(m, 0)
 	start := m.elemPos["topics"] + 1
-	_, _ = m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start})
-	if m.selectedTopic != 0 {
-		t.Fatalf("expected selected topic 0, got %d", m.selectedTopic)
-	}
-	if m.topics[0].active {
-		t.Fatalf("topic 0 not toggled")
+	for offset := 0; offset < 3; offset++ {
+		activeBefore := m.topics[0].active
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		if m.selectedTopic != 0 {
+			t.Fatalf("expected selected topic 0, got %d", m.selectedTopic)
+		}
+		if m.topics[0].active == activeBefore {
+			t.Fatalf("click offset %d did not toggle topic", offset)
+		}
 	}
 }
 
@@ -59,11 +66,14 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
 	start := m.elemPos["topics"] + 1
-	_, _ = m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start})
-	if m.selectedTopic != 6 {
-		t.Fatalf("expected selected topic 6, got %d", m.selectedTopic)
-	}
-	if m.topics[6].active {
-		t.Fatalf("topic 6 not toggled")
+	for offset := 0; offset < 3; offset++ {
+		before := m.topics[6].active
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		if m.selectedTopic != 6 {
+			t.Fatalf("expected selected topic 6, got %d", m.selectedTopic)
+		}
+		if m.topics[6].active == before {
+			t.Fatalf("offset %d did not toggle topic 6", offset)
+		}
 	}
 }

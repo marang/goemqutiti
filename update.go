@@ -53,11 +53,14 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	m.history.Select(len(items) - 1)
 }
 
-func (m *model) setFocus(id string) {
+func (m *model) setFocus(id string) tea.Cmd {
+	var cmds []tea.Cmd
 	for i, name := range m.focusOrder {
 		if f, ok := m.focusMap[name]; ok && f != nil {
 			if name == id {
-				f.Focus()
+				if c := f.Focus(); c != nil {
+					cmds = append(cmds, c)
+				}
 				m.focusIndex = i
 			} else {
 				f.Blur()
@@ -66,17 +69,29 @@ func (m *model) setFocus(id string) {
 			m.focusIndex = i
 		}
 	}
+	if len(cmds) > 0 {
+		return tea.Batch(cmds...)
+	}
+	return nil
 }
 
-func (m *model) focusFromMouse(y int) {
+func (m *model) focusFromMouse(y int) tea.Cmd {
 	cy := y + m.viewport.YOffset - 1
-	if cy >= m.elemPos["message"] {
-		m.setFocus("message")
-	} else if cy >= m.elemPos["topic"] {
-		m.setFocus("topic")
-	} else {
-		m.setFocus("topics")
+	chosen := ""
+	maxPos := -1
+	for _, id := range m.focusOrder {
+		if pos, ok := m.elemPos[id]; ok && cy >= pos && pos > maxPos {
+			chosen = id
+			maxPos = pos
+		}
 	}
+	if chosen != "" {
+		return m.setFocus(chosen)
+	}
+	if len(m.focusOrder) > 0 {
+		return m.setFocus(m.focusOrder[0])
+	}
+	return nil
 }
 
 func (m *model) updateClient(msg tea.Msg) tea.Cmd {
@@ -102,11 +117,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					clipboard.WriteAll(text)
 				}
 			}
-		case "tab":
+		case "tab", "shift+tab":
 			if len(m.focusOrder) > 0 {
-				next := (m.focusIndex + 1) % len(m.focusOrder)
+				step := 1
+				if msg.String() == "shift+tab" {
+					step = -1
+				}
+				next := (m.focusIndex + step + len(m.focusOrder)) % len(m.focusOrder)
 				id := m.focusOrder[next]
-				m.setFocus(id)
+				cmd = tea.Batch(cmd, m.setFocus(id))
 				if id == "topics" {
 					if len(m.topics) > 0 {
 						m.selectedTopic = 0
@@ -145,7 +164,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
 					// Move focus to the message input for convenience
-					m.setFocus("message")
+					cmd = tea.Batch(cmd, m.setFocus("message"))
 				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
@@ -205,7 +224,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			m.history, cmd = m.history.Update(msg)
 		}
 		if msg.Type == tea.MouseLeft {
-			m.focusFromMouse(msg.Y)
+			cmd = tea.Batch(cmd, m.focusFromMouse(msg.Y))
 		}
 		if m.focusIndex == 2 {
 			row := 4

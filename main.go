@@ -58,7 +58,7 @@ func main() {
 	// from the connection manager once the program starts.
 	initial := initialModel(nil)
 	initial.mode = modeConnections
-	p := tea.NewProgram(&initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
+	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Error running program: %v", err)
 	}

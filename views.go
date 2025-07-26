@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -13,7 +14,9 @@ func wrapChips(chips []string, width int) string {
 	for _, c := range chips {
 		cw := lipgloss.Width(c)
 		if cur+cw > width && len(row) > 0 {
-			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, row...))
+			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+			line = strings.TrimRightFunc(line, unicode.IsSpace)
+			lines = append(lines, line)
 			row = []string{c}
 			cur = cw
 		} else {
@@ -22,7 +25,9 @@ func wrapChips(chips []string, width int) string {
 		}
 	}
 	if len(row) > 0 {
-		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, row...))
+		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")
 }

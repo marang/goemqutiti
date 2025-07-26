@@ -140,6 +140,7 @@ const (
 	idxHost
 	idxPort
 	idxClientID
+	idxIDSuffix
 	idxUsername
 	idxPassword
 	idxSSL
@@ -174,6 +175,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		p.Host,
 		fmt.Sprintf("%d", p.Port),
 		p.ClientID,
+		"", // checkbox for rand suffix
 		p.Username,
 		"",
 		"", // placeholder for checkbox
@@ -203,6 +205,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Host",
 		"Port",
 		"Client ID",
+		"Random ID suffix",
 		"Username",
 		pwKey,
 		"SSL/TLS",
@@ -235,6 +238,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		idxRequestProb:   true,
 		idxWillEnable:    true,
 		idxWillRetain:    true,
+		idxIDSuffix:      true,
 	}
 
 	selectOptions := map[int][]string{
@@ -245,6 +249,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 	}
 
 	boolValues := []bool{
+		p.RandomIDSuffix,
 		p.SSL,
 		p.AutoReconnect,
 		p.CleanStart,
@@ -329,6 +334,7 @@ func (f connectionForm) View() string {
 		"Host",
 		"Port",
 		"Client ID",
+		"Random ID suffix",
 		"Username",
 		"Password",
 		"SSL/TLS",
@@ -394,5 +400,6 @@ func (f connectionForm) Profile() Profile {
 	fmt.Sscan(vals[idxWillQos], &p.LastWillQos)
 	fmt.Sscan(vals[idxWillRetain], &p.LastWillRetain)
 	p.LastWillPayload = vals[idxWillPayload]
+	fmt.Sscan(vals[idxIDSuffix], &p.RandomIDSuffix)
 	return p
 }

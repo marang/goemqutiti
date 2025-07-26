@@ -18,7 +18,11 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	opts.AddBroker(brokerURL)
-	opts.SetClientID(p.ClientID)
+	cid := p.ClientID
+	if p.RandomIDSuffix {
+		cid = fmt.Sprintf("%s-%d", cid, time.Now().UnixNano())
+	}
+	opts.SetClientID(cid)
 	opts.SetUsername(p.Username)
 
 	if len(p.Password) > 0 {

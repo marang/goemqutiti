@@ -43,6 +43,7 @@ func (m *model) viewClient() string {
 	y += lipgloss.Height(header)
 	y += lipgloss.Height(info)
 	y += lipgloss.Height(conn)
+	m.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
 	y += lipgloss.Height(messagesBox)
 	m.elemPos["topic"] = y

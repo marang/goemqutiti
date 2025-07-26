@@ -2,6 +2,7 @@ package main
 
 import (
 	"strings"
+	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
 )
@@ -39,8 +40,10 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
 	}
-	// Ensure the box is wide enough for the content
+	// Ensure the box is wide enough for the content while
+	// ignoring trailing whitespace that might come from inputs
 	for _, l := range strings.Split(content, "\n") {
+		l = strings.TrimRightFunc(l, unicode.IsSpace)
 		if w := lipgloss.Width(l) + 2; w > width {
 			width = w
 		}
@@ -57,6 +60,7 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 
 	lines := strings.Split(content, "\n")
 	for i, l := range lines {
+		l = strings.TrimRightFunc(l, unicode.IsSpace)
 		side := color
 		if i == len(lines)-1 {
 			side = cy

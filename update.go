@@ -472,9 +472,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
 		m.topicInput.Width = msg.Width - 6
 		m.messageInput.SetWidth(msg.Width - 6)
-		m.history.SetSize(msg.Width-4, msg.Height/3)
+		m.history.SetSize(msg.Width-4, (msg.Height-1)/3)
 		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height
+		m.viewport.Height = msg.Height - 1
 		return m, nil
 	}
 

@@ -153,7 +153,10 @@ func initialModel(conns *Connections) *model {
 	}
 	connModel.ConnectionsList.SetItems(items)
 
-	hist := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	histDelegate := list.NewDefaultDelegate()
+	histDelegate.ShowDescription = false
+	histDelegate.SetSpacing(0)
+	hist := list.New([]list.Item{}, histDelegate, 0, 0)
 	hist.SetShowStatusBar(false)
 	hist.SetShowPagination(false)
 	hist.DisableQuitKeybindings()

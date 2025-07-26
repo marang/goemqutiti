@@ -138,8 +138,11 @@ func initialModel(conns *Connections) *model {
 	ta.CharLimit = 10000
 	ta.ShowLineNumbers = false
 	ta.SetPromptFunc(0, func(i int) string {
-		return fmt.Sprintf(">%d ", i+1)
+		return fmt.Sprintf("%d> ", i+1)
 	})
+	promptColor := lipgloss.Color("240")
+	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
+	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.Blur()
 	ta.Cursor.Style = noCursor
 	// Set width once the WindowSizeMsg arrives

@@ -49,5 +49,15 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lines[i] = lipgloss.NewStyle().Background(lipgloss.Color("236")).Render(l)
 		}
 	}
+	border := " "
+	if _, ok := d.m.selectedHistory[index]; ok {
+		border = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Render("┃")
+	}
+	if index == d.m.history.Index() {
+		border = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render("┃")
+	}
+	for i, l := range lines {
+		lines[i] = border + " " + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l)
+	}
 	fmt.Fprint(w, strings.Join(lines, "\n"))
 }

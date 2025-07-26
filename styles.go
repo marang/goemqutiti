@@ -13,7 +13,7 @@ var (
 	noCursor     = lipgloss.NewStyle()
 	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
 	greenBorder  = borderStyle.BorderForeground(lipgloss.Color("34"))
-	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("63")).Faint(true)
+	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("63")).Faint(true).Inline(true)
 	chipInactive = chipStyle.Foreground(lipgloss.Color("240"))
 	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).PaddingLeft(1)
 )

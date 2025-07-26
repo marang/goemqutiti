@@ -455,7 +455,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
-func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -469,7 +469,7 @@ func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 			m.mode = m.prevMode
 		}
 	}
-	return m, listenStatus(m.statusChan)
+	return *m, listenStatus(m.statusChan)
 }
 
 func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {

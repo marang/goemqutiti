@@ -86,17 +86,19 @@ type focusable interface {
 type model struct {
 	mqttClient *MQTTClient
 
-	connection    string
-	activeConn    string
-	history       list.Model
-	topicInput    textinput.Model
-	messageInput  textarea.Model
-	payloads      map[string]string
-	topics        []topicItem
-	topicsList    list.Model
-	payloadList   list.Model
-	focusIndex    int
-	selectedTopic int
+	connection      string
+	activeConn      string
+	history         list.Model
+	topicInput      textinput.Model
+	messageInput    textarea.Model
+	payloads        map[string]string
+	topics          []topicItem
+	topicsList      list.Model
+	payloadList     list.Model
+	focusIndex      int
+	selectedTopic   int
+	selectedHistory map[int]struct{}
+	selectionAnchor int
 
 	saved map[string]connectionData
 
@@ -157,10 +159,9 @@ func initialModel(conns *Connections) *model {
 	}
 	connModel.ConnectionsList.SetItems(items)
 
-	histDelegate := list.NewDefaultDelegate()
-	histDelegate.ShowDescription = false
-	histDelegate.SetSpacing(0)
-	hist := list.New([]list.Item{}, histDelegate, 0, 0)
+	hDel := historyDelegate{}
+	hist := list.New([]list.Item{}, hDel, 0, 0)
+	hist.SetShowTitle(false)
 	hist.SetShowStatusBar(false)
 	hist.SetShowPagination(false)
 	hist.DisableQuitKeybindings()
@@ -175,30 +176,34 @@ func initialModel(conns *Connections) *model {
 	order := []string{"topic", "message", "history", "topics"}
 
 	m := &model{
-		history:       hist,
-		payloads:      make(map[string]string),
-		topicInput:    ti,
-		messageInput:  ta,
-		topics:        []topicItem{},
-		topicsList:    topicsList,
-		payloadList:   payloadList,
-		focusIndex:    0,
-		selectedTopic: -1,
-		statusChan:    statusChan,
-		mode:          modeClient,
-		connections:   connModel,
-		width:         0,
-		height:        0,
-		viewport:      vp,
-		elemPos:       map[string]int{},
-		focusOrder:    order,
-		saved:         make(map[string]connectionData),
-		prevMode:      modeClient,
+		history:         hist,
+		payloads:        make(map[string]string),
+		topicInput:      ti,
+		messageInput:    ta,
+		topics:          []topicItem{},
+		topicsList:      topicsList,
+		payloadList:     payloadList,
+		focusIndex:      0,
+		selectedTopic:   -1,
+		statusChan:      statusChan,
+		mode:            modeClient,
+		connections:     connModel,
+		width:           0,
+		height:          0,
+		viewport:        vp,
+		elemPos:         map[string]int{},
+		focusOrder:      order,
+		saved:           make(map[string]connectionData),
+		selectedHistory: make(map[int]struct{}),
+		selectionAnchor: -1,
+		prevMode:        modeClient,
 	}
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topicInput,
 		"message": &m.messageInput,
 	}
+	hDel.m = m
+	m.history.SetDelegate(hDel)
 	return m
 }
 

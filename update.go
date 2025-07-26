@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 
 	"github.com/atotto/clipboard"
@@ -121,7 +122,26 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			m.saveCurrent()
 			return tea.Quit
 		case "ctrl+c":
-			if len(m.history.Items()) > 0 {
+			if len(m.selectedHistory) > 0 {
+				var idxs []int
+				for i := range m.selectedHistory {
+					idxs = append(idxs, i)
+				}
+				sort.Ints(idxs)
+				var parts []string
+				items := m.history.Items()
+				for _, i := range idxs {
+					if i >= 0 && i < len(items) {
+						hi := items[i].(historyItem)
+						txt := hi.payload
+						if hi.kind != "log" {
+							txt = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
+						}
+						parts = append(parts, txt)
+					}
+				}
+				clipboard.WriteAll(strings.Join(parts, "\n"))
+			} else if len(m.history.Items()) > 0 {
 				idx := m.history.Index()
 				if idx >= 0 {
 					hi := m.history.Items()[idx].(historyItem)
@@ -130,6 +150,42 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 						text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
 					}
 					clipboard.WriteAll(text)
+				}
+			}
+		case "space":
+			if m.focusOrder[m.focusIndex] == "history" {
+				idx := m.history.Index()
+				if idx >= 0 {
+					if _, ok := m.selectedHistory[idx]; ok {
+						delete(m.selectedHistory, idx)
+					} else {
+						m.selectedHistory[idx] = struct{}{}
+					}
+					m.selectionAnchor = idx
+				}
+			}
+		case "shift+up":
+			if m.focusOrder[m.focusIndex] == "history" {
+				if m.selectionAnchor == -1 {
+					m.selectionAnchor = m.history.Index()
+					m.selectedHistory[m.selectionAnchor] = struct{}{}
+				}
+				if m.history.Index() > 0 {
+					m.history.CursorUp()
+					idx := m.history.Index()
+					m.updateSelectionRange(idx)
+				}
+			}
+		case "shift+down":
+			if m.focusOrder[m.focusIndex] == "history" {
+				if m.selectionAnchor == -1 {
+					m.selectionAnchor = m.history.Index()
+					m.selectedHistory[m.selectionAnchor] = struct{}{}
+				}
+				if m.history.Index() < len(m.history.Items())-1 {
+					m.history.CursorDown()
+					idx := m.history.Index()
+					m.updateSelectionRange(idx)
 				}
 			}
 		case "tab", "shift+tab":
@@ -156,6 +212,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		case "right":
 			if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
 				m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
+			}
+		case "up", "down":
+			if m.focusOrder[m.focusIndex] == "history" {
+				m.selectedHistory = map[int]struct{}{}
+				m.selectionAnchor = -1
 			}
 		case "ctrl+s", "ctrl+enter":
 			if m.focusIndex == 1 {
@@ -479,14 +540,26 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.statusChan))
 }
 
+func (m *model) updateSelectionRange(idx int) {
+	start := m.selectionAnchor
+	end := idx
+	if start > end {
+		start, end = end, start
+	}
+	m.selectedHistory = map[int]struct{}{}
+	for i := start; i <= end; i++ {
+		m.selectedHistory[i] = struct{}{}
+	}
+}
+
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
-		m.topicInput.Width = msg.Width - 6
-		m.messageInput.SetWidth(msg.Width - 6)
+		m.topicInput.Width = msg.Width - 4
+		m.messageInput.SetWidth(msg.Width - 4)
 		m.history.SetSize(msg.Width-4, (msg.Height-1)/3)
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height - 1

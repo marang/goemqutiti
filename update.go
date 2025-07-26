@@ -8,7 +8,6 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type statusMessage string
@@ -149,34 +148,30 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					if t.active {
 						m.payloads[t.title] = payload
 						m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
-						pl := payloadItem{topic: t.title, payload: payload}
-						items := append(m.payloadList.Items(), pl)
-						m.payloadList.SetItems(items)
+						if m.mqttClient != nil {
+							m.mqttClient.Publish(t.title, 0, false, payload)
+						}
 					}
 				}
-				m.messageInput.SetValue("")
 			}
 		case "enter":
 			if m.focusIndex == 0 {
 				topic := strings.TrimSpace(m.topicInput.Value())
-				if topic != "" {
+				if topic != "" && !m.hasTopic(topic) {
 					m.topics = append(m.topics, topicItem{title: topic, active: true})
+					if m.mqttClient != nil {
+						m.mqttClient.Subscribe(topic, 0, nil)
+					}
 					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
-					// Move focus to the message input for convenience
 					cmds = append(cmds, m.setFocus("message"))
 				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
-				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
+				m.toggleTopic(m.selectedTopic)
 			}
 		case "d":
 			if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
-				m.topics = append(m.topics[:m.selectedTopic], m.topics[m.selectedTopic+1:]...)
-				if len(m.topics) == 0 {
-					m.selectedTopic = -1
-				} else if m.selectedTopic >= len(m.topics) {
-					m.selectedTopic = len(m.topics) - 1
-				}
+				m.removeTopic(m.selectedTopic)
 			}
 		default:
 			switch msg.String() {
@@ -219,29 +214,14 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusIndex == 2 {
-			row := m.elemPos["topics"] + 1
-			if msg.Y == row {
-				x := msg.X - 2
-				cum := 0
-				for i, t := range m.topics {
-					chip := chipStyle.Render(t.title)
-					if !t.active {
-						chip = chipInactive.Render(t.title)
-					}
-					w := lipgloss.Width(chip)
-					if x >= cum && x < cum+w {
-						m.selectedTopic = i
-						if msg.Type == tea.MouseLeft {
-							m.topics[i].active = !m.topics[i].active
-						} else if msg.Type == tea.MouseMiddle {
-							m.topics = append(m.topics[:i], m.topics[i+1:]...)
-							if i >= len(m.topics) {
-								m.selectedTopic = len(m.topics) - 1
-							}
-						}
-						break
-					}
-					cum += w
+			start := m.elemPos["topics"] + 1
+			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
+			if idx >= 0 {
+				m.selectedTopic = idx
+				if msg.Type == tea.MouseLeft {
+					m.toggleTopic(idx)
+				} else if msg.Type == tea.MouseRight {
+					m.removeTopic(idx)
 				}
 			}
 		}
@@ -408,7 +388,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "d":
 			i := m.topicsList.Index()
 			if i >= 0 && i < len(m.topics) {
-				m.topics = append(m.topics[:i], m.topics[i+1:]...)
+				m.removeTopic(i)
 				items := []list.Item{}
 				for _, t := range m.topics {
 					items = append(items, t)
@@ -418,7 +398,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "enter", " ":
 			i := m.topicsList.Index()
 			if i >= 0 && i < len(m.topics) {
-				m.topics[i].active = !m.topics[i].active
+				m.toggleTopic(i)
 				items := m.topicsList.Items()
 				items[i] = m.topics[i]
 				m.topicsList.SetItems(items)

@@ -9,21 +9,21 @@ import (
 
 func wrapChips(chips []string, width int) string {
 	var lines []string
-	line := ""
+	var row []string
 	cur := 0
 	for _, c := range chips {
 		cw := lipgloss.Width(c)
-		if cur+cw > width && line != "" {
-			lines = append(lines, line)
-			line = c
+		if cur+cw > width && len(row) > 0 {
+			lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, row...))
+			row = []string{c}
 			cur = cw
 		} else {
-			line += c
+			row = append(row, c)
 			cur += cw
 		}
 	}
-	if line != "" {
-		lines = append(lines, line)
+	if len(row) > 0 {
+		lines = append(lines, lipgloss.JoinHorizontal(lipgloss.Top, row...))
 	}
 	return strings.Join(lines, "\n")
 }
@@ -51,12 +51,7 @@ func (m *model) viewClient() string {
 
 	inputsBox := lipgloss.JoinVertical(lipgloss.Left, topicBox, messageBox)
 
-	var payloadLines []string
-	for topic, payload := range m.payloads {
-		payloadLines = append(payloadLines, fmt.Sprintf("- %s: %s", topic, payload))
-	}
-	payloadBox := legendBox(strings.Join(payloadLines, "\n"), "Payloads", m.width-4, false)
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messagesBox, inputsBox, payloadBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messagesBox, inputsBox)
 
 	y := 1
 	m.elemPos["topics"] = y

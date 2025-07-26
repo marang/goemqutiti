@@ -39,12 +39,20 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 		width = lipgloss.Width(label) + 4
 	}
 	b := lipgloss.RoundedBorder()
-	top := b.TopLeft + " " + label + " " + strings.Repeat(b.Top, width-lipgloss.Width(label)-4) + b.TopRight
-	bottom := b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight
+	cy := lipgloss.Color("51")
+	top := lipgloss.NewStyle().Foreground(color).Render(b.TopLeft+" "+label+" "+strings.Repeat(b.Top, width-lipgloss.Width(label)-4)) +
+		lipgloss.NewStyle().Foreground(cy).Render(b.TopRight)
+	bottom := lipgloss.NewStyle().Foreground(cy).Render(b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight)
 	lines := strings.Split(content, "\n")
 	for i, l := range lines {
-		lines[i] = b.Left + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l) + b.Right
+		side := color
+		if i == len(lines)-1 {
+			side = cy
+		}
+		left := lipgloss.NewStyle().Foreground(color).Render(b.Left)
+		right := lipgloss.NewStyle().Foreground(side).Render(b.Right)
+		lines[i] = left + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l) + right
 	}
 	middle := strings.Join(lines, "\n")
-	return lipgloss.NewStyle().Foreground(color).Render(top + "\n" + middle + "\n" + bottom)
+	return top + "\n" + middle + "\n" + bottom
 }

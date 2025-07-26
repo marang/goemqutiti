@@ -44,12 +44,12 @@ func (m *model) viewClient() string {
 	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
-	topicsBox := legendBox(wrapChips(chips, m.width-6), "Topics", m.width-4, topicsFocused)
+	topicsBox := legendBox(wrapChips(chips, m.width-4), "Topics", m.width-2, topicsFocused)
 
-	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4, historyFocused)
+	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
 
-	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-4, m.focusIndex == 0)
-	messageBox := legendBox(m.messageInput.View(), "Message", m.width-4, m.focusIndex == 1)
+	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, m.focusIndex == 0)
+	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, m.focusIndex == 1)
 
 	inputsBox := lipgloss.JoinVertical(lipgloss.Left, topicBox, messageBox)
 

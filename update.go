@@ -307,14 +307,14 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			}
 		}
 	case tea.MouseMsg:
-		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
+		if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
 			if m.focusOrder[m.focusIndex] == "history" {
 				var hCmd tea.Cmd
 				m.history, hCmd = m.history.Update(msg)
 				cmds = append(cmds, hCmd)
 			}
 		}
-		if msg.Type == tea.MouseLeft {
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusOrder[m.focusIndex] == "topics" {

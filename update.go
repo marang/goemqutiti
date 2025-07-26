@@ -178,7 +178,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			}
 		default:
 			switch msg.String() {
-			case "ctrl+m":
+			case "ctrl+b":
 				m.connections.LoadProfiles("")
 				items := []list.Item{}
 				for _, p := range m.connections.Profiles {
@@ -324,7 +324,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 {
 				name := m.connections.Profiles[i].Name
-				m.startConfirm(fmt.Sprintf("Delete connection '%s'? [y/n]", name), func() {
+				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), func() {
 					m.connections.DeleteConnection(i)
 					items := []list.Item{}
 					for _, p := range m.connections.Profiles {

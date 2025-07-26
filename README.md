@@ -1,6 +1,6 @@
 # GoEmqutiti
 
-GoEmqutiti is a terminal based MQTT client built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). It loads connection profiles from `~/.emqutiti/config.toml` and lets you choose which broker to connect to at runtime.
+GoEmqutiti is a terminal based MQTT client built with [Bubble Tea](https://github.com/charmbracelet/bubbletea). It loads broker profiles from `~/.emqutiti/config.toml` and lets you choose which broker to connect to at runtime.
 
 ## Installation
 
@@ -21,13 +21,13 @@ This will produce a `goemqutiti` binary in the current directory.
 
 ## Usage
 
-Run the built binary (or use `go run .`) to start the TUI application. On startup the connection manager is shown so you can select which profile to use. The manager can also be opened at any time with the `m` key. Profiles expose all common connection options inspired by the EMQX MQTT client:
+Run the built binary (or use `go run .`) to start the TUI application. On startup the broker manager is shown so you can select which profile to use. The manager can also be opened at any time with the `Ctrl+B`. Profiles expose all common connection options inspired by the EMQX MQTT client:
 
 ```bash
 ./goemqutiti
 ```
 
-The client expects a configuration file at `~/.emqutiti/config.toml` describing connection profiles. A minimal configuration looks like:
+The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. A minimal configuration looks like:
 
 ```toml
 default_profile = "local"
@@ -48,7 +48,7 @@ In the interface:
 - **Enter** subscribes to a topic when the topic field is focused.
 - **Ctrl+S** publishes the message currently in the editor.
 - **Ctrl+Enter** also publishes the current message.
-- **Ctrl+M** opens the connection manager where you can add, edit or delete MQTT profiles.
+- **Ctrl+B** opens the broker manager where you can add, edit or delete MQTT profiles.
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.

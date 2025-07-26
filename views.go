@@ -33,7 +33,7 @@ func wrapChips(chips []string, width int) string {
 }
 
 func (m *model) viewClient() string {
-	infoLine := infoStyle.Render("Info: Press Ctrl+B for brokers, Ctrl+T topics, Ctrl+P payloads. " + m.connection)
+	infoLine := infoStyle.Render("Info: Enter subscribes, Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads. " + m.connection)
 
 	var chips []string
 	for i, t := range m.topics {

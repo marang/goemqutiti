@@ -103,18 +103,17 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 			}
 		case "tab":
-			switch m.focusIndex {
-			case 0:
-				m.setFocus("message")
-			case 1:
-				m.setFocus("topics")
-				if len(m.topics) > 0 {
-					m.selectedTopic = 0
-				} else {
-					m.selectedTopic = -1
+			if len(m.focusOrder) > 0 {
+				next := (m.focusIndex + 1) % len(m.focusOrder)
+				id := m.focusOrder[next]
+				m.setFocus(id)
+				if id == "topics" {
+					if len(m.topics) > 0 {
+						m.selectedTopic = 0
+					} else {
+						m.selectedTopic = -1
+					}
 				}
-			default:
-				m.setFocus("topic")
 			}
 		case "left":
 			if m.focusIndex == 2 && len(m.topics) > 0 {
@@ -145,6 +144,8 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					m.topics = append(m.topics, topicItem{title: topic, active: true})
 					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
+					// Move focus to the message input for convenience
+					m.setFocus("message")
 				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
@@ -159,36 +160,34 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 			}
 		default:
-			if m.focusIndex > 1 {
-				switch msg.String() {
-				case "ctrl+m":
-					m.connections.LoadProfiles("")
-					items := []list.Item{}
-					for _, p := range m.connections.Profiles {
-						items = append(items, connectionItem{title: p.Name})
-					}
-					m.connections.ConnectionsList.SetItems(items)
-					m.saveCurrent()
-					m.mode = modeConnections
-				case "ctrl+t":
-					items := []list.Item{}
-					for _, tpc := range m.topics {
-						items = append(items, topicItem{title: tpc.title, active: tpc.active})
-					}
-					m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
-					m.topicsList.DisableQuitKeybindings()
-					m.topicsList.Title = "Topics"
-					m.mode = modeTopics
-				case "ctrl+p":
-					items := []list.Item{}
-					for topic, payload := range m.payloads {
-						items = append(items, payloadItem{topic: topic, payload: payload})
-					}
-					m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
-					m.payloadList.DisableQuitKeybindings()
-					m.payloadList.Title = "Payloads"
-					m.mode = modePayloads
+			switch msg.String() {
+			case "ctrl+m":
+				m.connections.LoadProfiles("")
+				items := []list.Item{}
+				for _, p := range m.connections.Profiles {
+					items = append(items, connectionItem{title: p.Name})
 				}
+				m.connections.ConnectionsList.SetItems(items)
+				m.saveCurrent()
+				m.mode = modeConnections
+			case "ctrl+t":
+				items := []list.Item{}
+				for _, tpc := range m.topics {
+					items = append(items, topicItem{title: tpc.title, active: tpc.active})
+				}
+				m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+				m.topicsList.DisableQuitKeybindings()
+				m.topicsList.Title = "Topics"
+				m.mode = modeTopics
+			case "ctrl+p":
+				items := []list.Item{}
+				for topic, payload := range m.payloads {
+					items = append(items, payloadItem{topic: topic, payload: payload})
+				}
+				m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+				m.payloadList.DisableQuitKeybindings()
+				m.payloadList.Title = "Payloads"
+				m.mode = modePayloads
 			}
 		}
 	case tea.MouseMsg:

@@ -283,3 +283,14 @@ func (m *model) startConfirm(prompt string, action func()) {
 	m.prevMode = m.mode
 	m.mode = modeConfirmDelete
 }
+
+func (m *model) subscribeActiveTopics() {
+	if m.mqttClient == nil {
+		return
+	}
+	for _, t := range m.topics {
+		if t.active {
+			m.mqttClient.Subscribe(t.title, 0, nil)
+		}
+	}
+}

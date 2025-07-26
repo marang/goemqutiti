@@ -37,6 +37,11 @@ func (p payloadItem) FilterValue() string { return p.topic }
 func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
+type chipBound struct {
+	x, y int
+	w, h int
+}
+
 type historyItem struct {
 	topic   string
 	payload string
@@ -118,6 +123,7 @@ type model struct {
 
 	viewport   viewport.Model
 	elemPos    map[string]int
+	chipBounds []chipBound
 	focusMap   map[string]focusable
 	focusOrder []string
 }
@@ -199,6 +205,7 @@ func initialModel(conns *Connections) *model {
 		height:          0,
 		viewport:        vp,
 		elemPos:         map[string]int{},
+		chipBounds:      []chipBound{},
 		focusOrder:      order,
 		saved:           saved,
 		selectedHistory: make(map[int]struct{}),
@@ -261,29 +268,11 @@ func (m *model) removeTopic(index int) {
 	}
 }
 
-func (m *model) topicAtPosition(x, y, width int) int {
-	// Each rendered chip has a height of three lines with one blank line
-	// separating rows. Translate the mouse Y coordinate into this grid to
-	// locate the clicked chip accurately.
-	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH + 1
-
-	curX := 0
-	rowTop := 0
-	for i, t := range m.topics {
-		chip := chipStyle.Render(t.title)
-		if !t.active {
-			chip = chipInactive.Render(t.title)
-		}
-		w := lipgloss.Width(chip)
-		if curX+w > width && curX > 0 {
-			rowTop += rowSpacing
-			curX = 0
-		}
-		if y >= rowTop && y < rowTop+chipH && x >= curX && x < curX+w {
+func (m *model) topicAtPosition(x, y int) int {
+	for i, b := range m.chipBounds {
+		if x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h {
 			return i
 		}
-		curX += w
 	}
 	return -1
 }

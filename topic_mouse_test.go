@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -8,28 +9,11 @@ import (
 )
 
 func chipCoords(m *model, idx int) (int, int) {
-	width := m.width - 4
-	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH + 1
-
-	curX := 0
-	rowTop := 0
-	for i, t := range m.topics {
-		chip := chipStyle.Render(t.title)
-		if !t.active {
-			chip = chipInactive.Render(t.title)
-		}
-		w := lipgloss.Width(chip)
-		if curX+w > width && curX > 0 {
-			rowTop += rowSpacing
-			curX = 0
-		}
-		if i == idx {
-			return curX, rowTop
-		}
-		curX += w
+	if idx < 0 || idx >= len(m.chipBounds) {
+		return -1, -1
 	}
-	return -1, -1
+	b := m.chipBounds[idx]
+	return b.x, b.y - m.viewport.YOffset
 }
 
 func setupTopics(m *model) {
@@ -45,10 +29,9 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	setupTopics(m)
 	m.viewClient()
 	x, y := chipCoords(m, 0)
-	start := m.elemPos["topics"] + 1
-	for offset := 0; offset < 3; offset++ {
+	for offset := 0; offset < m.chipBounds[0].h; offset++ {
 		activeBefore := m.topics[0].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		if m.selectedTopic != 0 {
 			t.Fatalf("expected selected topic 0, got %d", m.selectedTopic)
 		}
@@ -65,10 +48,9 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
-	start := m.elemPos["topics"] + 1
-	for offset := 0; offset < 3; offset++ {
+	for offset := 0; offset < m.chipBounds[6].h; offset++ {
 		before := m.topics[6].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		if m.selectedTopic != 6 {
 			t.Fatalf("expected selected topic 6, got %d", m.selectedTopic)
 		}
@@ -85,10 +67,9 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 8 resides on the fourth row
 	x, y := chipCoords(m, 8)
-	start := m.elemPos["topics"] + 2
-	for offset := 0; offset < 3; offset++ {
+	for offset := 0; offset < m.chipBounds[8].h; offset++ {
 		before := m.topics[8].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		if m.selectedTopic != 8 {
 			t.Fatalf("expected selected topic 8, got %d", m.selectedTopic)
 		}
@@ -114,10 +95,9 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 	// Index of the first chip on the 15th row (0-based rows, 3 chips per row)
 	idx := 14 * 3
 	x, y := chipCoords(m, idx)
-	start := m.elemPos["topics"] + 2
-	for offset := 0; offset < 3; offset++ {
+	for offset := 0; offset < m.chipBounds[idx].h; offset++ {
 		before := m.topics[idx].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		if m.selectedTopic != idx {
 			t.Fatalf("expected selected topic %d, got %d", idx, m.selectedTopic)
 		}
@@ -143,14 +123,11 @@ func TestMouseToggleWithScroll(t *testing.T) {
 	// Choose a chip on row 7 (0-based index -> row 7 => start index 6*3)
 	idx := 6 * 3
 	x, y := chipCoords(m, idx)
-	start := m.elemPos["topics"] + 2
-	// Convert chip coord to viewport coordinate
-	yInView := y - m.viewport.YOffset + start
-	for offset := 0; offset < 3; offset++ {
+	for offset := 0; offset < m.chipBounds[idx].h; offset++ {
 		before := m.topics[idx].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: yInView + offset})
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		if m.selectedTopic != idx {
-			t.Fatalf("expected selected %d got %d (yInView %d off %d)", idx, m.selectedTopic, yInView, offset)
+			t.Fatalf("expected selected %d got %d", idx, m.selectedTopic)
 		}
 		if m.topics[idx].active == before {
 			t.Fatalf("offset %d did not toggle topic %d", offset, idx)

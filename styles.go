@@ -35,6 +35,7 @@ func legendGreenBox(content, label string, width int, focused bool) string {
 }
 
 func legendStyledBox(content, label string, width int, color lipgloss.Color) string {
+	content = strings.TrimRight(content, "\n")
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
 	}

@@ -319,7 +319,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 		if m.focusOrder[m.focusIndex] == "topics" {
 			start := m.elemPos["topics"] + 1
-			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
+			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-4)
 			if idx >= 0 {
 				m.selectedTopic = idx
 				if msg.Type == tea.MouseLeft {

@@ -318,19 +318,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusOrder[m.focusIndex] == "topics" {
-			start := m.elemPos["topics"] + 1
-			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
-			if idx >= 0 {
-				m.selectedTopic = idx
-				if msg.Type == tea.MouseLeft {
-					m.toggleTopic(idx)
-				} else if msg.Type == tea.MouseRight {
-					name := m.topics[idx].title
-					m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
-						m.removeTopic(idx)
-					})
-				}
-			}
+			m.handleTopicsClick(msg)
 		}
 	}
 
@@ -355,6 +343,26 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
 	}
 	return tea.Batch(cmds...)
+}
+
+// handleTopicsClick processes mouse events within the topics area. The
+// coordinates are relative to the entire viewport, so we subtract the info
+// line and box border to get chip positions.
+func (m *model) handleTopicsClick(msg tea.MouseMsg) {
+	start := m.elemPos["topics"] + 1
+	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
+	if idx < 0 {
+		return
+	}
+	m.selectedTopic = idx
+	if msg.Type == tea.MouseLeft {
+		m.toggleTopic(idx)
+	} else if msg.Type == tea.MouseRight {
+		name := m.topics[idx].title
+		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+			m.removeTopic(idx)
+		})
+	}
 }
 
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {

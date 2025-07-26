@@ -41,7 +41,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	setupTopics(m)
 	m.viewClient()
 	x, y := chipCoords(m, 0)
-	start := m.elemPos["topics"] + 1
+	start := m.elemPos["topics"] + 2
 	_, _ = m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start})
 	if m.selectedTopic != 0 {
 		t.Fatalf("expected selected topic 0, got %d", m.selectedTopic)
@@ -58,7 +58,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
-	start := m.elemPos["topics"] + 1
+	start := m.elemPos["topics"] + 2
 	_, _ = m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start})
 	if m.selectedTopic != 6 {
 		t.Fatalf("expected selected topic 6, got %d", m.selectedTopic)

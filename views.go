@@ -7,29 +7,34 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-func wrapChips(chips []string, width int) string {
+func layoutChips(chips []string, width int) (string, []chipBound) {
 	var lines []string
 	var row []string
-	cur := 0
+	var bounds []chipBound
+	curX := 0
+	rowTop := 0
+	chipH := lipgloss.Height(chipStyle.Render("test"))
+	rowSpacing := chipH + 1
 	for _, c := range chips {
 		cw := lipgloss.Width(c)
-		if cur+cw > width && len(row) > 0 {
+		if curX+cw > width && len(row) > 0 {
 			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
 			line = strings.TrimRightFunc(line, unicode.IsSpace)
 			lines = append(lines, line)
-			row = []string{c}
-			cur = cw
-		} else {
-			row = append(row, c)
-			cur += cw
+			row = []string{}
+			curX = 0
+			rowTop += rowSpacing
 		}
+		row = append(row, c)
+		bounds = append(bounds, chipBound{x: curX, y: rowTop, w: cw, h: chipH})
+		curX += cw
 	}
 	if len(row) > 0 {
 		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
 		lines = append(lines, line)
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n"), bounds
 }
 
 func (m *model) viewClient() string {
@@ -51,7 +56,8 @@ func (m *model) viewClient() string {
 	messageFocused := m.focusOrder[m.focusIndex] == "message"
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
-	topicsBox := legendBox(wrapChips(chips, m.width-4), "Topics", m.width-2, topicsFocused)
+	chipContent, bounds := layoutChips(chips, m.width-4)
+	topicsBox := legendBox(chipContent, "Topics", m.width-2, topicsFocused)
 	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
 	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, messageFocused)
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
@@ -66,6 +72,13 @@ func (m *model) viewClient() string {
 	m.elemPos["message"] = y
 	y += lipgloss.Height(messageBox)
 	m.elemPos["history"] = y
+
+	startX := 2
+	startY := m.elemPos["topics"] + 2
+	m.chipBounds = make([]chipBound, len(bounds))
+	for i, b := range bounds {
+		m.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}
+	}
 
 	box := lipgloss.NewStyle().Width(m.width).Padding(1, 1).Render(content)
 	m.viewport.SetContent(box)

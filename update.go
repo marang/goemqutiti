@@ -317,14 +317,10 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				cmds = append(cmds, hCmd)
 			}
 		}
-		var off int
 		if msg.Type == tea.MouseLeft {
-			off = m.viewport.YOffset
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
-		if m.focusOrder[m.focusIndex] == "topics" {
-			m.handleTopicsClick(msg, off)
-		}
+		m.handleTopicsClick(msg)
 	}
 
 	var cmd tea.Cmd
@@ -351,15 +347,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 }
 
 // handleTopicsClick processes mouse events within the topics area. The
-// coordinates are relative to the entire viewport, so we subtract the info
-// line and box border to get chip positions.
-func (m *model) handleTopicsClick(msg tea.MouseMsg, off int) {
-	// Mouse coordinates are relative to the entire viewport. Account for
-	// the viewport padding and the "Topics" box border so Y=0 aligns with
-	// the first chip row.
-	start := m.elemPos["topics"] + 2
-	y := msg.Y + off - start
-	idx := m.topicAtPosition(msg.X-2, y, m.width-4)
+// mouse coordinates are adjusted for the viewport offset and compared
+// against precomputed chip bounds.
+func (m *model) handleTopicsClick(msg tea.MouseMsg) {
+	y := msg.Y + m.viewport.YOffset
+	idx := m.topicAtPosition(msg.X, y)
 	if idx < 0 {
 		return
 	}

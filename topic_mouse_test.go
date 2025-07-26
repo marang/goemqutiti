@@ -49,7 +49,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		activeBefore := m.topics[0].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonLeft, X: x + 2, Y: y + start + offset})
 		if m.selectedTopic != 0 {
 			t.Fatalf("expected selected topic 0, got %d", m.selectedTopic)
 		}
@@ -69,7 +69,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[6].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonLeft, X: x + 2, Y: y + start + offset})
 		if m.selectedTopic != 6 {
 			t.Fatalf("expected selected topic 6, got %d", m.selectedTopic)
 		}
@@ -89,7 +89,7 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[8].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonLeft, X: x + 2, Y: y + start + offset})
 		if m.selectedTopic != 8 {
 			t.Fatalf("expected selected topic 8, got %d", m.selectedTopic)
 		}
@@ -118,7 +118,7 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[idx].active
-		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		m.Update(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonLeft, X: x + 2, Y: y + start + offset})
 		if m.selectedTopic != idx {
 			t.Fatalf("expected selected topic %d, got %d", idx, m.selectedTopic)
 		}

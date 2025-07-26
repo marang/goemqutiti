@@ -27,18 +27,43 @@ Run the built binary (or use `go run .`) to start the TUI application. On startu
 ./goemqutiti
 ```
 
-The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. A minimal configuration looks like:
+The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. A sample configuration with all options looks like:
 
 ```toml
 default_profile = "local"
 
 [[profiles]]
 name = "local"
-broker = "tcp://localhost:1883"
+schema = "tcp"
+host = "localhost"
+port = 1883
 client_id = "goemqutiti"
+random_id_suffix = false       # append nano timestamp to the client ID
 username = "user"
 password = "keyring:emqutiti-local/user"
+ssl_tls = false                # enable TLS/SSL encryption
+mqtt_version = ""              # protocol version 3, 4, or 5
+connect_timeout = 0            # seconds to wait when connecting
+keep_alive = 0                 # keep-alive interval in seconds
+qos = 0                        # default Quality of Service level
+auto_reconnect = false         # automatically reconnect when the link drops
+reconnect_period = 0           # seconds between reconnect attempts
+clean_start = false            # start a clean session (MQTT v5)
+session_expiry_interval = 0    # session expiry time in seconds
+receive_maximum = 0            # maximum inflight messages
+maximum_packet_size = 0        # limit the packet size in bytes
+topic_alias_maximum = 0        # maximum number of topic aliases
+request_response_info = false  # request response information from the broker
+request_problem_info = false   # request problem information from the broker
+last_will_enabled = false      # enable a Last Will and Testament message
+last_will_topic = ""
+last_will_qos = 0
+last_will_retain = false
+last_will_payload = ""
 ```
+
+Setting `random_id_suffix` to `true` appends a nano timestamp to the client ID
+so multiple connections remain unique.
 
 Passwords can be stored securely using the operating system keyring. You may also set the `MQTT_PASSWORD` environment variable to override the stored password at runtime.
 
@@ -69,4 +94,4 @@ Unit tests can be run with `go test ./...`. The example `ExampleSet_manual` in
 `keyring_util_test.go` interacts with the real system keyring and is excluded
 from automated runs. Execute it manually when a keyring is available.
 
-Additional notes for repository contributors are available in [Agent.md](Agent.md).
+Additional notes for repository contributors are available in [AGENTS.md](AGENTS.md).

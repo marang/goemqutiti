@@ -41,6 +41,7 @@ type Profile struct {
 	LastWillQos         int    `toml:"last_will_qos"`
 	LastWillRetain      bool   `toml:"last_will_retain"`
 	LastWillPayload     string `toml:"last_will_payload"`
+	RandomIDSuffix      bool   `toml:"random_id_suffix"`
 }
 
 // Connections manages the state and logic for handling broker profiles.

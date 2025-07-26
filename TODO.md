@@ -24,7 +24,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ### **Secure Storage**
 - [x] Integrate Linux keyring using [`zalando/go-keyring`](https://github.com/zalando/go-keyring).
 - [x] Store sensitive fields (e.g., passwords) in the keyring.
-- [ ] Update `config.toml` to reference keyring entries (e.g., `password = "keyring:<service>/<username>"`).
+ - [x] Update `config.toml` to reference keyring entries (e.g., `password = "keyring:<service>/<username>"`).
 - [ ] Prompt user to unlock the keyring on application startup.
 - [ ] Handle cases where the keyring is unavailable or inaccessible.
 
@@ -42,11 +42,12 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - [ ] Show connection status (connected/disconnected).
 - [x] Provide a form for adding/editing brokers using `bubbles/textinput`.
 - [x] Support advanced connection options (keep alive, clean session, TLS, LWT, etc.).
+- [x] Option to append a random client ID suffix.
 
 ---
 
 ## **3. General Features**
- - [ ] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
+ - [x] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
 - [ ] Add error handling for failed connections or invalid inputs.
 - [ ] Persist all data securely between application runs.
 - [ ] Support dynamic updates from the MQTT broker (real-time message logging).

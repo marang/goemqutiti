@@ -104,7 +104,7 @@ func (c *checkField) Update(msg tea.Msg) tea.Cmd {
 			c.value = !c.value
 		}
 	case tea.MouseMsg:
-		if m.Type == tea.MouseLeft {
+		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
 			c.value = !c.value
 		}
 	}
@@ -305,7 +305,7 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 			}
 		}
 	case tea.MouseMsg:
-		if msg.Type == tea.MouseLeft {
+		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
 			// crude calculation: rows correspond to field order
 			if msg.Y >= 1 && msg.Y-1 < len(f.fields) {
 				f.focus = msg.Y - 1

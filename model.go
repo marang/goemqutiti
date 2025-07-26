@@ -179,7 +179,7 @@ func initialModel(conns *Connections) *model {
 	payloadList.DisableQuitKeybindings()
 	vp := viewport.New(0, 0)
 
-	order := []string{"topics", "message", "history"}
+	order := []string{"topic", "message", "topics", "history"}
 	saved := loadState()
 
 	m := &model{

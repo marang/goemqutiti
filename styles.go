@@ -26,8 +26,12 @@ func legendBox(content, label string, width int, focused bool) string {
 	return legendStyledBox(content, label, width, color)
 }
 
-func legendGreenBox(content, label string, width int) string {
-	return legendStyledBox(content, label, width, lipgloss.Color("34"))
+func legendGreenBox(content, label string, width int, focused bool) string {
+	color := lipgloss.Color("34")
+	if focused {
+		color = lipgloss.Color("205")
+	}
+	return legendStyledBox(content, label, width, color)
 }
 
 func legendStyledBox(content, label string, width int, color lipgloss.Color) string {

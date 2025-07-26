@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -37,14 +36,17 @@ func (m *model) viewClient() string {
 		if !t.active {
 			st = chipInactive
 		}
-		if m.focusIndex == 2 && i == m.selectedTopic {
+		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
 			st = st.BorderForeground(lipgloss.Color("212"))
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsBox := legendBox(wrapChips(chips, m.width-6), "Topics", m.width-4, m.focusIndex == 2)
+	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
+	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
-	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
+	topicsBox := legendBox(wrapChips(chips, m.width-6), "Topics", m.width-4, topicsFocused)
+
+	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4, historyFocused)
 
 	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-4, m.focusIndex == 0)
 	messageBox := legendBox(m.messageInput.View(), "Message", m.width-4, m.focusIndex == 1)
@@ -56,6 +58,7 @@ func (m *model) viewClient() string {
 	y := 1
 	m.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
+	m.elemPos["history"] = y
 	y += lipgloss.Height(messagesBox)
 	m.elemPos["topic"] = y
 	y += lipgloss.Height(topicBox)
@@ -87,12 +90,8 @@ func (m model) viewForm() string {
 }
 
 func (m model) viewConfirmDelete() string {
-	var name string
-	if m.deleteIndex >= 0 && m.deleteIndex < len(m.connections.Profiles) {
-		name = m.connections.Profiles[m.deleteIndex].Name
-	}
 	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	return border.Render(fmt.Sprintf("Delete connection '%s'? [y/n]", name))
+	return border.Render(m.confirmPrompt)
 }
 
 func (m model) viewTopics() string {

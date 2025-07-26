@@ -558,7 +558,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
-		m.topicInput.Width = msg.Width - 4
+		// textinput.View() renders the prompt and cursor in addition
+		// to the configured width. Reduce the width slightly so the
+		// surrounding box stays within the terminal boundaries.
+		m.topicInput.Width = msg.Width - 7
 		m.messageInput.SetWidth(msg.Width - 4)
 		m.history.SetSize(msg.Width-4, (msg.Height-1)/3+10)
 		m.viewport.Width = msg.Width

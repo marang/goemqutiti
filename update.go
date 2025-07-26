@@ -387,6 +387,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.mqttClient = client
 						m.activeConn = p.Name
 						m.restoreState(p.Name)
+						m.subscribeActiveTopics()
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 						m.connection = "Connected to " + brokerURL
 						m.mode = modeClient
@@ -426,6 +427,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.mqttClient = client
 					m.activeConn = p.Name
 					m.restoreState(p.Name)
+					m.subscribeActiveTopics()
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connection = "Connected to " + brokerURL
 					m.mode = modeClient

@@ -80,6 +80,7 @@ In the interface:
 - **Esc** navigates back within menus without quitting.
 - **Ctrl+D** exits the program.
 - Left-click a topic chip to toggle it and middle-click to remove it.
+- Active topics are automatically subscribed when you connect to a broker.
 - Clicking on any pane or input field focuses it.
 
 All `Ctrl` shortcuts are global, so they work even when an input field is active.

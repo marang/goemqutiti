@@ -41,28 +41,25 @@ func (m *model) viewClient() string {
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
+	topicsFocused := m.focusOrder[m.focusIndex] == "topics" || m.focusOrder[m.focusIndex] == "topic"
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
-	topicsBox := legendBox(wrapChips(chips, m.width-4), "Topics", m.width-2, topicsFocused)
+	topicsContent := lipgloss.JoinVertical(lipgloss.Left, m.topicInput.View(), wrapChips(chips, m.width-4))
+	topicsBox := legendBox(topicsContent, "Topics", m.width-2, topicsFocused)
+
+	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, m.focusIndex == 1)
 
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
 
-	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, m.focusIndex == 0)
-	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, m.focusIndex == 1)
-
-	inputsBox := lipgloss.JoinVertical(lipgloss.Left, topicBox, messageBox)
-
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messagesBox, inputsBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messageBox, messagesBox)
 
 	y := 1
 	m.elemPos["topics"] = y
-	y += lipgloss.Height(topicsBox)
-	m.elemPos["history"] = y
-	y += lipgloss.Height(messagesBox)
 	m.elemPos["topic"] = y
-	y += lipgloss.Height(topicBox)
+	y += lipgloss.Height(topicsBox)
 	m.elemPos["message"] = y
+	y += lipgloss.Height(messageBox)
+	m.elemPos["history"] = y
 
 	box := lipgloss.NewStyle().Width(m.width).Padding(1, 1).Render(content)
 	m.viewport.SetContent(box)
@@ -98,14 +95,14 @@ func (m model) viewTopics() string {
 	listView := m.topicsList.View()
 	help := "[space] toggle  [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
+	return legendBox(content, "Topics", m.width-2, false)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.payloadList.View()
 	help := "[enter] load  [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
+	return legendBox(content, "Payloads", m.width-2, false)
 }
 
 func (m *model) View() string {

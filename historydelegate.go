@@ -42,7 +42,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		align = lipgloss.Right
 	}
 	line1 := lipgloss.PlaceHorizontal(width, align, lipgloss.NewStyle().Foreground(lblColor).Render(label))
-	line2 := lipgloss.NewStyle().Foreground(msgColor).Width(width).Render(hi.payload)
+	line2 := lipgloss.PlaceHorizontal(width, align, lipgloss.NewStyle().Foreground(msgColor).Render(hi.payload))
 	lines := []string{line1, line2}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {

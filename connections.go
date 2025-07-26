@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -132,22 +131,24 @@ func (m *Connections) DeleteConnection(index int) {
 
 // saveConfigToFile writes the current connections to the config.toml file using BurntSushi/toml.
 func (m *Connections) saveConfigToFile() {
-	cf := struct {
-		DefaultProfileName string    `toml:"default_profile"`
-		Profiles           []Profile `toml:"profiles"`
-	}{DefaultProfileName: m.DefaultProfileName, Profiles: m.Profiles}
-
-	var buf bytes.Buffer
-	if err := toml.NewEncoder(&buf).Encode(cf); err != nil {
-		fmt.Println("Error encoding TOML:", err)
-		return
+	saved := loadState()
+	cfg := userConfig{
+		DefaultProfileName: m.DefaultProfileName,
+		Profiles:           m.Profiles,
+		Saved:              make(map[string]persistedConn),
 	}
-
-	filePath, _ := DefaultUserConfigFile()
-	os.MkdirAll(filepath.Dir(filePath), os.ModePerm)
-	if err := os.WriteFile(filePath, buf.Bytes(), 0644); err != nil {
-		fmt.Println("Error writing config file:", err)
+	for k, v := range saved {
+		var topics []persistedTopic
+		for _, t := range v.Topics {
+			topics = append(topics, persistedTopic{Title: t.title, Active: t.active})
+		}
+		var payloads []persistedPayload
+		for _, p := range v.Payloads {
+			payloads = append(payloads, persistedPayload{Topic: p.topic, Payload: p.payload})
+		}
+		cfg.Saved[k] = persistedConn{Topics: topics, Payloads: payloads}
 	}
+	writeConfig(cfg)
 }
 
 // savePasswordToKeyring stores the password in the keyring.

@@ -45,12 +45,20 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	if innerWidth < 0 {
 		innerWidth = 0
 	}
-	line1 := lipgloss.PlaceHorizontal(innerWidth, align, lipgloss.NewStyle().Foreground(lblColor).Render(label))
-	line2 := lipgloss.PlaceHorizontal(innerWidth, align, lipgloss.NewStyle().Foreground(msgColor).Render(hi.payload))
-	lines := []string{line1, line2}
+	line1 := lipgloss.PlaceHorizontal(innerWidth, align,
+		lipgloss.NewStyle().Foreground(lblColor).Render(label))
+
+	// Support multi-line payloads by aligning each line individually
+	var lines []string
+	lines = append(lines, line1)
+	for _, l := range strings.Split(hi.payload, "\n") {
+		rendered := lipgloss.PlaceHorizontal(innerWidth, align,
+			lipgloss.NewStyle().Foreground(msgColor).Render(l))
+		lines = append(lines, rendered)
+	}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {
-			lines[i] = lipgloss.NewStyle().Background(lipgloss.Color("236")).Render(l)
+			lines[i] = lipgloss.NewStyle().Background(lipgloss.Color("237")).Render(l)
 		}
 	}
 	border := " "

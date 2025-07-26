@@ -318,7 +318,9 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusOrder[m.focusIndex] == "topics" {
-			start := m.elemPos["topics"] + 1
+			// Mouse Y positions include the info bar and the box
+			// border. Add two lines to reach the first row of chips.
+			start := m.elemPos["topics"] + 2
 			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
 			if idx >= 0 {
 				m.selectedTopic = idx

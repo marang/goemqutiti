@@ -83,6 +83,7 @@ func (m *model) setFocus(id string) tea.Cmd {
 			m.focusIndex = i
 		}
 	}
+	m.scrollToFocused()
 	if len(cmds) > 0 {
 		return tea.Batch(cmds...)
 	}
@@ -106,6 +107,26 @@ func (m *model) focusFromMouse(y int) tea.Cmd {
 		return m.setFocus(m.focusOrder[0])
 	}
 	return nil
+}
+
+func (m *model) scrollToFocused() {
+	if len(m.focusOrder) == 0 {
+		return
+	}
+	id := m.focusOrder[m.focusIndex]
+	pos, ok := m.elemPos[id]
+	if !ok {
+		return
+	}
+	offset := pos - 1
+	if offset < 0 {
+		offset = 0
+	}
+	if offset < m.viewport.YOffset {
+		m.viewport.SetYOffset(offset)
+	} else if offset >= m.viewport.YOffset+m.viewport.Height {
+		m.viewport.SetYOffset(offset - m.viewport.Height + 1)
+	}
 }
 
 func (m *model) updateClient(msg tea.Msg) tea.Cmd {
@@ -465,8 +486,10 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction = nil
 			}
 			m.mode = m.prevMode
+			m.scrollToFocused()
 		case "n", "esc":
 			m.mode = m.prevMode
+			m.scrollToFocused()
 		}
 	}
 	return *m, listenStatus(m.statusChan)

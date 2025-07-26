@@ -47,20 +47,22 @@ func (m *model) viewClient() string {
 		chips = append(chips, st.Render(t.title))
 	}
 	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
+	topicFocused := m.focusOrder[m.focusIndex] == "topic"
+	messageFocused := m.focusOrder[m.focusIndex] == "message"
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
-	topicsContent := lipgloss.JoinVertical(lipgloss.Left, m.topicInput.View(), wrapChips(chips, m.width-4))
-	topicsBox := legendBox(topicsContent, "Topics", m.width-2, topicsFocused)
-
-	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, m.focusIndex == 1)
-
+	topicsBox := legendBox(wrapChips(chips, m.width-4), "Topics", m.width-2, topicsFocused)
+	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
+	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, messageFocused)
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
 
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, messageBox, messagesBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
 	y := 1
 	m.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
+	m.elemPos["topic"] = y
+	y += lipgloss.Height(topicBox)
 	m.elemPos["message"] = y
 	y += lipgloss.Height(messageBox)
 	m.elemPos["history"] = y

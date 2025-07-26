@@ -40,7 +40,7 @@ func (m *model) viewClient() string {
 			st = chipInactive
 		}
 		if m.focusIndex == 2 && i == m.selectedTopic {
-			st = st.Copy().BorderForeground(lipgloss.Color("212"))
+			st = st.BorderForeground(lipgloss.Color("212"))
 		}
 		chips = append(chips, st.Render(t.title))
 	}
@@ -82,7 +82,7 @@ func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
 	help := "[enter] connect  [a]dd [e]dit [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
+	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
 }
 
 func (m model) viewForm() string {
@@ -91,8 +91,8 @@ func (m model) viewForm() string {
 	}
 	listView := m.connections.ConnectionsList.View()
 	formView := m.connForm.View()
-	left := borderStyle.Copy().Width(m.width/2 - 2).Render(listView)
-	right := borderStyle.Copy().Width(m.width/2 - 2).Render(formView)
+	left := borderStyle.Width(m.width/2 - 2).Render(listView)
+	right := borderStyle.Width(m.width/2 - 2).Render(formView)
 	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 }
 
@@ -109,14 +109,14 @@ func (m model) viewTopics() string {
 	listView := m.topicsList.View()
 	help := "[space] toggle  [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
+	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.payloadList.View()
 	help := "[enter] load  [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Copy().Width(m.width - 2).Height(m.height - 2).Render(content)
+	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
 }
 
 func (m *model) View() string {

@@ -200,3 +200,63 @@ func initialModel(conns *Connections) *model {
 func (m model) Init() tea.Cmd {
 	return tea.EnableMouseCellMotion
 }
+
+func (m *model) hasTopic(topic string) bool {
+	for _, t := range m.topics {
+		if t.title == topic {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *model) toggleTopic(index int) {
+	if index < 0 || index >= len(m.topics) {
+		return
+	}
+	t := &m.topics[index]
+	t.active = !t.active
+	if m.mqttClient != nil {
+		if t.active {
+			m.mqttClient.Subscribe(t.title, 0, nil)
+		} else {
+			m.mqttClient.Unsubscribe(t.title)
+		}
+	}
+}
+
+func (m *model) removeTopic(index int) {
+	if index < 0 || index >= len(m.topics) {
+		return
+	}
+	topic := m.topics[index]
+	if m.mqttClient != nil {
+		m.mqttClient.Unsubscribe(topic.title)
+	}
+	m.topics = append(m.topics[:index], m.topics[index+1:]...)
+	if len(m.topics) == 0 {
+		m.selectedTopic = -1
+	} else if m.selectedTopic >= len(m.topics) {
+		m.selectedTopic = len(m.topics) - 1
+	}
+}
+
+func (m *model) topicAtPosition(x, y, width int) int {
+	curX, curY := 0, 0
+	for i, t := range m.topics {
+		chip := chipStyle.Render(t.title)
+		if !t.active {
+			chip = chipInactive.Render(t.title)
+		}
+		w := lipgloss.Width(chip)
+		if curX+w > width && curX > 0 {
+			curY++
+			curX = 0
+		}
+		if y == curY && x >= curX && x < curX+w {
+			return i
+		}
+		curX += w
+	}
+	return -1
+}

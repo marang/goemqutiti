@@ -89,3 +89,12 @@ func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHand
 	}
 	return nil
 }
+
+func (m *MQTTClient) Unsubscribe(topic string) error {
+	token := m.Client.Unsubscribe(topic)
+	token.Wait()
+	if token.Error() != nil {
+		return fmt.Errorf("unsubscribe failed: %w", token.Error())
+	}
+	return nil
+}

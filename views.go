@@ -7,6 +7,27 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+func wrapChips(chips []string, width int) string {
+	var lines []string
+	line := ""
+	cur := 0
+	for _, c := range chips {
+		cw := lipgloss.Width(c)
+		if cur+cw > width && line != "" {
+			lines = append(lines, line)
+			line = c
+			cur = cw
+		} else {
+			line += c
+			cur += cw
+		}
+	}
+	if line != "" {
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n")
+}
+
 func (m *model) viewClient() string {
 	header := legendBox("GoEmqutiti - MQTT Client", "App", m.width-4, false)
 	info := legendBox("Press Ctrl+M for connections, Ctrl+T topics, Ctrl+P payloads", "Help", m.width-4, false)
@@ -23,7 +44,7 @@ func (m *model) viewClient() string {
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsBox := legendBox(lipgloss.JoinHorizontal(lipgloss.Top, chips...), "Topics", m.width-4, m.focusIndex == 2)
+	topicsBox := legendBox(wrapChips(chips, m.width-6), "Topics", m.width-4, m.focusIndex == 2)
 
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-4)
 
@@ -43,6 +64,7 @@ func (m *model) viewClient() string {
 	y += lipgloss.Height(header)
 	y += lipgloss.Height(info)
 	y += lipgloss.Height(conn)
+	m.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
 	y += lipgloss.Height(messagesBox)
 	m.elemPos["topic"] = y

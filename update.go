@@ -53,11 +53,14 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	m.history.Select(len(items) - 1)
 }
 
-func (m *model) setFocus(id string) {
+func (m *model) setFocus(id string) tea.Cmd {
+	var cmds []tea.Cmd
 	for i, name := range m.focusOrder {
 		if f, ok := m.focusMap[name]; ok && f != nil {
 			if name == id {
-				f.Focus()
+				if c := f.Focus(); c != nil {
+					cmds = append(cmds, c)
+				}
 				m.focusIndex = i
 			} else {
 				f.Blur()
@@ -66,21 +69,33 @@ func (m *model) setFocus(id string) {
 			m.focusIndex = i
 		}
 	}
+	if len(cmds) > 0 {
+		return tea.Batch(cmds...)
+	}
+	return nil
 }
 
-func (m *model) focusFromMouse(y int) {
+func (m *model) focusFromMouse(y int) tea.Cmd {
 	cy := y + m.viewport.YOffset - 1
-	if cy >= m.elemPos["message"] {
-		m.setFocus("message")
-	} else if cy >= m.elemPos["topic"] {
-		m.setFocus("topic")
-	} else {
-		m.setFocus("topics")
+	chosen := ""
+	maxPos := -1
+	for _, id := range m.focusOrder {
+		if pos, ok := m.elemPos[id]; ok && cy >= pos && pos > maxPos {
+			chosen = id
+			maxPos = pos
+		}
 	}
+	if chosen != "" {
+		return m.setFocus(chosen)
+	}
+	if len(m.focusOrder) > 0 {
+		return m.setFocus(m.focusOrder[0])
+	}
+	return nil
 }
 
 func (m *model) updateClient(msg tea.Msg) tea.Cmd {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case statusMessage:
 		m.appendHistory("", string(msg), "log", string(msg))
@@ -102,11 +117,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					clipboard.WriteAll(text)
 				}
 			}
-		case "tab":
+		case "tab", "shift+tab":
 			if len(m.focusOrder) > 0 {
-				next := (m.focusIndex + 1) % len(m.focusOrder)
+				step := 1
+				if msg.String() == "shift+tab" {
+					step = -1
+				}
+				next := (m.focusIndex + step + len(m.focusOrder)) % len(m.focusOrder)
 				id := m.focusOrder[next]
-				m.setFocus(id)
+				cmds = append(cmds, m.setFocus(id))
 				if id == "topics" {
 					if len(m.topics) > 0 {
 						m.selectedTopic = 0
@@ -145,20 +164,10 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
 					// Move focus to the message input for convenience
-					m.setFocus("message")
+					cmds = append(cmds, m.setFocus("message"))
 				}
 			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.topics[m.selectedTopic].active = !m.topics[m.selectedTopic].active
-			} else if m.focusIndex > 1 {
-				// Ctrl+M sends the same code as enter, so treat enter as the connection shortcut when not editing fields
-				m.connections.LoadProfiles("")
-				items := []list.Item{}
-				for _, p := range m.connections.Profiles {
-					items = append(items, connectionItem{title: p.Name})
-				}
-				m.connections.ConnectionsList.SetItems(items)
-				m.saveCurrent()
-				m.mode = modeConnections
 			}
 		case "d":
 			if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
@@ -202,13 +211,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
-			m.history, cmd = m.history.Update(msg)
+			var hCmd tea.Cmd
+			m.history, hCmd = m.history.Update(msg)
+			cmds = append(cmds, hCmd)
 		}
 		if msg.Type == tea.MouseLeft {
-			m.focusFromMouse(msg.Y)
+			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
 		if m.focusIndex == 2 {
-			row := 4
+			row := m.elemPos["topics"] + 1
 			if msg.Y == row {
 				x := msg.X - 2
 				cum := 0
@@ -236,18 +247,24 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 	}
 
+	var cmd tea.Cmd
 	m.topicInput, cmd = m.topicInput.Update(msg)
+	cmds = append(cmds, cmd)
 	var cmdMsg tea.Cmd
 	m.messageInput, cmdMsg = m.messageInput.Update(msg)
+	cmds = append(cmds, cmdMsg)
 	var vpCmd tea.Cmd
 	m.viewport, vpCmd = m.viewport.Update(msg)
+	cmds = append(cmds, vpCmd)
 
 	var histCmd tea.Cmd
 	if m.focusIndex > 1 {
 		m.history, histCmd = m.history.Update(msg)
+		cmds = append(cmds, histCmd)
 	}
 
-	return tea.Batch(cmd, cmdMsg, histCmd, vpCmd, listenStatus(m.statusChan))
+	cmds = append(cmds, listenStatus(m.statusChan))
+	return tea.Batch(cmds...)
 }
 
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {

@@ -349,18 +349,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 // coordinates are relative to the entire viewport, so we subtract the info
 // line and box border to get chip positions.
 func (m *model) handleTopicsClick(msg tea.MouseMsg) {
-	// Mouse coordinates are relative to the entire viewport. Account for
-	// the viewport padding and the "Topics" box border so Y=0 aligns with
-	// the first chip row.
-	start := m.elemPos["topics"] + 2
+	start := m.elemPos["topics"] + 1
 	idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-4)
 	if idx < 0 {
 		return
 	}
 	m.selectedTopic = idx
-	if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
+	if msg.Type == tea.MouseLeft {
 		m.toggleTopic(idx)
-	} else if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonRight {
+	} else if msg.Type == tea.MouseRight {
 		name := m.topics[idx].title
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
 			m.removeTopic(idx)

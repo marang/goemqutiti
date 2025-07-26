@@ -44,6 +44,7 @@ func (m *model) saveCurrent() {
 		return
 	}
 	m.saved[m.activeConn] = connectionData{Topics: m.topics, Payloads: m.payloads}
+	saveState(m.saved)
 }
 
 func (m *model) restoreState(name string) {
@@ -52,7 +53,7 @@ func (m *model) restoreState(name string) {
 		m.payloads = data.Payloads
 	} else {
 		m.topics = []topicItem{}
-		m.payloads = make(map[string]string)
+		m.payloads = []payloadItem{}
 	}
 }
 
@@ -223,7 +224,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				payload := m.messageInput.Value()
 				for _, t := range m.topics {
 					if t.active {
-						m.payloads[t.title] = payload
+						m.payloads = append(m.payloads, payloadItem{topic: t.title, payload: payload})
 						m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 						if m.mqttClient != nil {
 							m.mqttClient.Publish(t.title, 0, false, payload)
@@ -275,8 +276,8 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				m.mode = modeTopics
 			case "ctrl+p":
 				items := []list.Item{}
-				for topic, payload := range m.payloads {
-					items = append(items, payloadItem{topic: topic, payload: payload})
+				for _, pld := range m.payloads {
+					items = append(items, payloadItem{topic: pld.topic, payload: pld.payload})
 				}
 				m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 				m.payloadList.DisableQuitKeybindings()
@@ -517,8 +518,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 			if i >= 0 {
 				items := m.payloadList.Items()
 				if i < len(items) {
-					pi := items[i].(payloadItem)
-					delete(m.payloads, pi.topic)
+					m.payloads = append(m.payloads[:i], m.payloads[i+1:]...)
 					items = append(items[:i], items[i+1:]...)
 					m.payloadList.SetItems(items)
 				}
@@ -560,7 +560,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
 		m.topicInput.Width = msg.Width - 4
 		m.messageInput.SetWidth(msg.Width - 4)
-		m.history.SetSize(msg.Width-4, (msg.Height-1)/3)
+		m.history.SetSize(msg.Width-4, (msg.Height-1)/3+10)
 		m.viewport.Width = msg.Width
 		m.viewport.Height = msg.Height - 1
 		return m, nil

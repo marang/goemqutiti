@@ -75,7 +75,7 @@ const (
 
 type connectionData struct {
 	Topics   []topicItem
-	Payloads map[string]string
+	Payloads []payloadItem
 }
 
 type focusable interface {
@@ -91,7 +91,7 @@ type model struct {
 	history         list.Model
 	topicInput      textinput.Model
 	messageInput    textarea.Model
-	payloads        map[string]string
+	payloads        []payloadItem
 	topics          []topicItem
 	topicsList      list.Model
 	payloadList     list.Model
@@ -136,7 +136,10 @@ func initialModel(conns *Connections) *model {
 	ta := textarea.New()
 	ta.Placeholder = "Enter Message"
 	ta.CharLimit = 10000
-	ta.Prompt = "> "
+	ta.ShowLineNumbers = false
+	ta.SetPromptFunc(0, func(i int) string {
+		return fmt.Sprintf(">%d ", i+1)
+	})
 	ta.Blur()
 	ta.Cursor.Style = noCursor
 	// Set width once the WindowSizeMsg arrives
@@ -174,10 +177,11 @@ func initialModel(conns *Connections) *model {
 	vp := viewport.New(0, 0)
 
 	order := []string{"topic", "message", "topics", "history"}
+	saved := loadState()
 
 	m := &model{
 		history:         hist,
-		payloads:        make(map[string]string),
+		payloads:        []payloadItem{},
 		topicInput:      ti,
 		messageInput:    ta,
 		topics:          []topicItem{},
@@ -193,7 +197,7 @@ func initialModel(conns *Connections) *model {
 		viewport:        vp,
 		elemPos:         map[string]int{},
 		focusOrder:      order,
-		saved:           make(map[string]connectionData),
+		saved:           saved,
 		selectedHistory: make(map[int]struct{}),
 		selectionAnchor: -1,
 		prevMode:        modeClient,

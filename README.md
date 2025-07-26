@@ -44,7 +44,7 @@ Passwords can be stored securely using the operating system keyring. You may als
 
 In the interface:
 
-- **Tab** switches between the topic and message fields.
+- **Tab** cycles focus between the topic input, message editor, and topic chips.
 - **Enter** subscribes to a topic when the topic field is focused.
 - **Ctrl+S** publishes the message currently in the editor.
 - **Ctrl+Enter** also publishes the current message.
@@ -56,6 +56,8 @@ In the interface:
 - **Ctrl+D** exits the program.
 - Left-click a topic chip to toggle it and middle-click to remove it.
 - Clicking on any pane or input field focuses it.
+
+All `Ctrl` shortcuts are global, so they work even when an input field is active.
 
 ## License
 

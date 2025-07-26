@@ -124,7 +124,8 @@ func initialModel(conns *Connections) model {
 	ti.Prompt = "> "
 	ti.Cursor.Style = cursorStyle
 	ti.TextStyle = focusedStyle
-	ti.Width = 40
+	// Defer width assignment until we know the terminal size
+	ti.Width = 0
 
 	ta := textarea.New()
 	ta.Placeholder = "Enter Message"
@@ -132,7 +133,8 @@ func initialModel(conns *Connections) model {
 	ta.Prompt = "> "
 	ta.Blur()
 	ta.Cursor.Style = noCursor
-	ta.SetWidth(80)
+	// Set width once the WindowSizeMsg arrives
+	ta.SetWidth(0)
 	ta.SetHeight(6)
 	ta.FocusedStyle.CursorLine = focusedStyle
 	ta.BlurredStyle.CursorLine = blurredStyle

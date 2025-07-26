@@ -39,7 +39,7 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 		width = lipgloss.Width(label) + 4
 	}
 	b := lipgloss.RoundedBorder()
-	top := b.TopLeft + " " + label + " " + strings.Repeat(b.Top, width-lipgloss.Width(label)-3) + b.TopRight
+	top := b.TopLeft + " " + label + " " + strings.Repeat(b.Top, width-lipgloss.Width(label)-4) + b.TopRight
 	bottom := b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight
 	lines := strings.Split(content, "\n")
 	for i, l := range lines {

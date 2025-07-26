@@ -164,7 +164,6 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					}
 					m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 					m.topicInput.SetValue("")
-					cmds = append(cmds, m.setFocus("message"))
 				}
 			} else if m.focusOrder[m.focusIndex] == "topics" && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.toggleTopic(m.selectedTopic)
@@ -210,9 +209,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 	case tea.MouseMsg:
 		if msg.Type == tea.MouseWheelUp || msg.Type == tea.MouseWheelDown {
-			var hCmd tea.Cmd
-			m.history, hCmd = m.history.Update(msg)
-			cmds = append(cmds, hCmd)
+			if m.focusOrder[m.focusIndex] == "history" {
+				var hCmd tea.Cmd
+				m.history, hCmd = m.history.Update(msg)
+				cmds = append(cmds, hCmd)
+			}
 		}
 		if msg.Type == tea.MouseLeft {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))

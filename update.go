@@ -220,7 +220,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				m.selectionAnchor = -1
 			}
 		case "ctrl+s", "ctrl+enter":
-			if m.focusIndex == 1 {
+			if m.focusOrder[m.focusIndex] == "message" {
 				payload := m.messageInput.Value()
 				for _, t := range m.topics {
 					if t.active {
@@ -233,7 +233,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 			}
 		case "enter":
-			if m.focusIndex == 0 {
+			if m.focusOrder[m.focusIndex] == "topic" {
 				topic := strings.TrimSpace(m.topicInput.Value())
 				if topic != "" && !m.hasTopic(topic) {
 					m.topics = append(m.topics, topicItem{title: topic, active: true})

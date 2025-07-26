@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,7 +10,7 @@ import (
 func chipCoords(m *model, idx int) (int, int) {
 	width := m.width - 4
 	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH
+	rowSpacing := chipH + 1
 
 	curX := 0
 	rowTop := 0
@@ -46,7 +45,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	setupTopics(m)
 	m.viewClient()
 	x, y := chipCoords(m, 0)
-	start := m.elemPos["topics"] + 2
+	start := m.elemPos["topics"] + 1
 	for offset := 0; offset < 3; offset++ {
 		activeBefore := m.topics[0].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
@@ -66,7 +65,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
-	start := m.elemPos["topics"] + 2
+	start := m.elemPos["topics"] + 1
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[6].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})

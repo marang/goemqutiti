@@ -43,19 +43,19 @@ type Profile struct {
 	LastWillPayload     string `toml:"last_will_payload"`
 }
 
-// Connections manages the state and logic for handling connections.
+// Connections manages the state and logic for handling broker profiles.
 type Connections struct {
 	ConnectionsList    list.Model
 	TextInput          textinput.Model
 	DefaultProfileName string    `toml:"default_profile"`
 	Profiles           []Profile `toml:"profiles"`
-	Focused            bool      // Indicates if the connection manager is focused
+	Focused            bool      // Indicates if the broker manager is focused
 }
 
 // NewConnectionsModel initializes a new ConnectionsModel with default values.
 func NewConnectionsModel() Connections {
 	connectionList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	connectionList.Title = "Connections"
+	connectionList.Title = "Brokers"
 	// Ensure items are visible by setting a reasonable default size
 	connectionList.SetSize(30, 10)
 	connectionList.DisableQuitKeybindings()

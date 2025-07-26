@@ -7,7 +7,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ## **1. Responsive Layout**
 - [ ] Modularize UI components into separate files:
   - [ ] `header.go` (Header section: title, connection status)
-  - [ ] `connections.go` (Connection manager: list, CRUD operations)
+  - [ ] `connections.go` (Broker manager: list, CRUD operations)
   - [ ] `topic.go` (Topic input section)
   - [ ] `message.go` (Message input section)
   - [ ] `messages_log.go` (Messages log section)
@@ -29,18 +29,18 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - [ ] Handle cases where the keyring is unavailable or inaccessible.
 
 ### **CRUD Operations**
-- [x] Add new connections with full MQTT configuration options.
-- [x] Edit existing connections.
-- [x] Delete connections.
-- [x] Load connections from the configuration file and keyring on startup.
-- [x] Save connections to the configuration file and keyring when modified.
+- [x] Add new brokers with full MQTT configuration options.
+- [x] Edit existing brokers.
+- [x] Delete brokers.
+- [x] Load brokers from the configuration file and keyring on startup.
+- [x] Save brokers to the configuration file and keyring when modified.
 
 ### **UI Components**
-- [x] Display a selectable list of connections using `bubbles/list`.
-- [x] Provide a menu option to open the connection manager.
+- [x] Display a selectable list of brokers using `bubbles/list`.
+- [x] Provide a menu option to open the broker manager.
 - [ ] Highlight the active connection in the list.
 - [ ] Show connection status (connected/disconnected).
-- [x] Provide a form for adding/editing connections using `bubbles/textinput`.
+- [x] Provide a form for adding/editing brokers using `bubbles/textinput`.
 - [x] Support advanced connection options (keep alive, clean session, TLS, LWT, etc.).
 
 ---

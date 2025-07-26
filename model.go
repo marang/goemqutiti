@@ -110,6 +110,10 @@ type model struct {
 	connForm    *connectionForm
 	deleteIndex int
 
+	confirmPrompt string
+	confirmAction func()
+	prevMode      appMode
+
 	viewport   viewport.Model
 	elemPos    map[string]int
 	focusMap   map[string]focusable
@@ -168,7 +172,7 @@ func initialModel(conns *Connections) *model {
 	payloadList.DisableQuitKeybindings()
 	vp := viewport.New(0, 0)
 
-	order := []string{"topic", "message", "topics"}
+	order := []string{"topic", "message", "history", "topics"}
 
 	m := &model{
 		history:       hist,
@@ -189,6 +193,7 @@ func initialModel(conns *Connections) *model {
 		elemPos:       map[string]int{},
 		focusOrder:    order,
 		saved:         make(map[string]connectionData),
+		prevMode:      modeClient,
 	}
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topicInput,
@@ -219,8 +224,10 @@ func (m *model) toggleTopic(index int) {
 	if m.mqttClient != nil {
 		if t.active {
 			m.mqttClient.Subscribe(t.title, 0, nil)
+			m.appendHistory(t.title, "", "log", fmt.Sprintf("Subscribed to topic: %s", t.title))
 		} else {
 			m.mqttClient.Unsubscribe(t.title)
+			m.appendHistory(t.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", t.title))
 		}
 	}
 }
@@ -232,6 +239,7 @@ func (m *model) removeTopic(index int) {
 	topic := m.topics[index]
 	if m.mqttClient != nil {
 		m.mqttClient.Unsubscribe(topic.title)
+		m.appendHistory(topic.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", topic.title))
 	}
 	m.topics = append(m.topics[:index], m.topics[index+1:]...)
 	if len(m.topics) == 0 {
@@ -259,4 +267,11 @@ func (m *model) topicAtPosition(x, y, width int) int {
 		curX += w
 	}
 	return -1
+}
+
+func (m *model) startConfirm(prompt string, action func()) {
+	m.confirmPrompt = prompt
+	m.confirmAction = action
+	m.prevMode = m.mode
+	m.mode = modeConfirmDelete
 }

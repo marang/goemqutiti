@@ -134,11 +134,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 			}
 		case "left":
-			if m.focusIndex == 2 && len(m.topics) > 0 {
+			if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
 				m.selectedTopic = (m.selectedTopic - 1 + len(m.topics)) % len(m.topics)
 			}
 		case "right":
-			if m.focusIndex == 2 && len(m.topics) > 0 {
+			if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
 				m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
 			}
 		case "ctrl+s", "ctrl+enter":
@@ -166,12 +166,16 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					m.topicInput.SetValue("")
 					cmds = append(cmds, m.setFocus("message"))
 				}
-			} else if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
+			} else if m.focusOrder[m.focusIndex] == "topics" && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
 				m.toggleTopic(m.selectedTopic)
 			}
 		case "d":
-			if m.focusIndex == 2 && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
-				m.removeTopic(m.selectedTopic)
+			if m.focusOrder[m.focusIndex] == "topics" && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
+				idx := m.selectedTopic
+				name := m.topics[idx].title
+				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+					m.removeTopic(idx)
+				})
 			}
 		default:
 			switch msg.String() {
@@ -213,7 +217,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		if msg.Type == tea.MouseLeft {
 			cmds = append(cmds, m.focusFromMouse(msg.Y))
 		}
-		if m.focusIndex == 2 {
+		if m.focusOrder[m.focusIndex] == "topics" {
 			start := m.elemPos["topics"] + 1
 			idx := m.topicAtPosition(msg.X-2, msg.Y-start, m.width-6)
 			if idx >= 0 {
@@ -221,7 +225,10 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				if msg.Type == tea.MouseLeft {
 					m.toggleTopic(idx)
 				} else if msg.Type == tea.MouseRight {
-					m.removeTopic(idx)
+					name := m.topics[idx].title
+					m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+						m.removeTopic(idx)
+					})
 				}
 			}
 		}
@@ -238,7 +245,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	cmds = append(cmds, vpCmd)
 
 	var histCmd tea.Cmd
-	if m.focusIndex > 1 {
+	if m.focusOrder[m.focusIndex] == "history" {
 		m.history, histCmd = m.history.Update(msg)
 		cmds = append(cmds, histCmd)
 	}
@@ -315,8 +322,15 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		case "d":
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 {
-				m.deleteIndex = i
-				m.mode = modeConfirmDelete
+				name := m.connections.Profiles[i].Name
+				m.startConfirm(fmt.Sprintf("Delete connection '%s'? [y/n]", name), func() {
+					m.connections.DeleteConnection(i)
+					items := []list.Item{}
+					for _, p := range m.connections.Profiles {
+						items = append(items, connectionItem{title: p.Name})
+					}
+					m.connections.ConnectionsList.SetItems(items)
+				})
 			}
 		}
 	}
@@ -364,15 +378,13 @@ func (m model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "y":
-			m.connections.DeleteConnection(m.deleteIndex)
-			items := []list.Item{}
-			for _, p := range m.connections.Profiles {
-				items = append(items, connectionItem{title: p.Name})
+			if m.confirmAction != nil {
+				m.confirmAction()
+				m.confirmAction = nil
 			}
-			m.connections.ConnectionsList.SetItems(items)
-			m.mode = modeConnections
+			m.mode = m.prevMode
 		case "n", "esc":
-			m.mode = modeConnections
+			m.mode = m.prevMode
 		}
 	}
 	return m, listenStatus(m.statusChan)
@@ -388,12 +400,15 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "d":
 			i := m.topicsList.Index()
 			if i >= 0 && i < len(m.topics) {
-				m.removeTopic(i)
-				items := []list.Item{}
-				for _, t := range m.topics {
-					items = append(items, t)
-				}
-				m.topicsList.SetItems(items)
+				name := m.topics[i].title
+				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+					m.removeTopic(i)
+					items := []list.Item{}
+					for _, t := range m.topics {
+						items = append(items, t)
+					}
+					m.topicsList.SetItems(items)
+				})
 			}
 		case "enter", " ":
 			i := m.topicsList.Index()

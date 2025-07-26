@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -45,7 +46,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	setupTopics(m)
 	m.viewClient()
 	x, y := chipCoords(m, 0)
-	start := m.elemPos["topics"] + 1
+	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		activeBefore := m.topics[0].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
@@ -65,7 +66,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
-	start := m.elemPos["topics"] + 1
+	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[6].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
@@ -85,7 +86,7 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 8 resides on the fourth row
 	x, y := chipCoords(m, 8)
-	start := m.elemPos["topics"] + 1
+	start := m.elemPos["topics"] + 2
 	for offset := 0; offset < 3; offset++ {
 		before := m.topics[8].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
@@ -94,6 +95,35 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 		}
 		if m.topics[8].active == before {
 			t.Fatalf("offset %d did not toggle topic 8", offset)
+		}
+	}
+}
+
+func setupManyTopics(m *model, n int) {
+	for i := 0; i < n; i++ {
+		title := fmt.Sprintf("topic-%d", i)
+		m.topics = append(m.topics, topicItem{title: title, active: true})
+	}
+}
+
+func TestMouseToggleFifteenthRowTopic(t *testing.T) {
+	m := initialModel(nil)
+	// Enough height for many rows
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 80})
+	setupManyTopics(m, 50)
+	m.viewClient()
+	// Index of the first chip on the 15th row (0-based rows, 3 chips per row)
+	idx := 14 * 3
+	x, y := chipCoords(m, idx)
+	start := m.elemPos["topics"] + 2
+	for offset := 0; offset < 3; offset++ {
+		before := m.topics[idx].active
+		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x + 2, Y: y + start + offset})
+		if m.selectedTopic != idx {
+			t.Fatalf("expected selected topic %d, got %d", idx, m.selectedTopic)
+		}
+		if m.topics[idx].active == before {
+			t.Fatalf("offset %d did not toggle topic %d", offset, idx)
 		}
 	}
 }

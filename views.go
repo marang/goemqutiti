@@ -14,7 +14,10 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 	curX := 0
 	rowTop := 0
 	chipH := lipgloss.Height(chipStyle.Render("test"))
-	rowSpacing := chipH + 1
+	// Each chip is exactly chipH lines tall. Newlines inserted between rows
+	// simply stack the rows without extra blank lines, so the vertical offset
+	// for the next row increases by chipH.
+	rowSpacing := chipH
 	for _, c := range chips {
 		cw := lipgloss.Width(c)
 		if curX+cw > width && len(row) > 0 {

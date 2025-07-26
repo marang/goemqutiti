@@ -116,7 +116,7 @@ type model struct {
 	focusOrder []string
 }
 
-func initialModel(conns *Connections) model {
+func initialModel(conns *Connections) *model {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
 	ti.Focus()
@@ -167,7 +167,7 @@ func initialModel(conns *Connections) model {
 
 	order := []string{"topic", "message", "topics"}
 
-	m := model{
+	m := &model{
 		history:       hist,
 		payloads:      make(map[string]string),
 		topicInput:    ti,

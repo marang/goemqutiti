@@ -41,7 +41,7 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoLine := infoStyle.Render("Info: Enter subscribes, Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads. " + m.connection)
+	infoLine := infoStyle.Render("Info: Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.", m.connection)
 
 	var chips []string
 	for i, t := range m.topics {
@@ -83,7 +83,7 @@ func (m *model) viewClient() string {
 		m.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}
 	}
 
-	box := lipgloss.NewStyle().Width(m.width).Padding(1, 1).Render(content)
+	box := lipgloss.NewStyle().Width(m.width).Padding(0, 1, 1, 1).Render(content)
 	m.viewport.SetContent(box)
 	m.viewport.Width = m.width
 	m.viewport.Height = m.height - 1

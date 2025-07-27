@@ -59,6 +59,7 @@ func NewConnectionsModel() Connections {
 	// Ensure items are visible by setting a reasonable default size
 	connectionList.SetSize(30, 10)
 	connectionList.DisableQuitKeybindings()
+	connectionList.SetShowTitle(false)
 
 	return Connections{
 		ConnectionsList: connectionList,
@@ -113,6 +114,7 @@ func (m *Connections) AddConnection(p Profile) {
 	m.Statuses[p.Name] = "disconnected"
 	m.saveConfigToFile()
 	m.savePasswordToKeyring(p.Name, p.Username, plain)
+	m.refreshList()
 }
 
 // EditConnection updates an existing connection and saves changes to config.toml and keyring.
@@ -130,6 +132,7 @@ func (m *Connections) EditConnection(index int, p Profile) {
 		}
 		m.saveConfigToFile()
 		m.savePasswordToKeyring(p.Name, p.Username, plain)
+		m.refreshList()
 	}
 }
 
@@ -140,7 +143,18 @@ func (m *Connections) DeleteConnection(index int) {
 		m.Profiles = append(m.Profiles[:index], m.Profiles[index+1:]...)
 		delete(m.Statuses, name)
 		m.saveConfigToFile()
+		m.refreshList()
 	}
+}
+
+// refreshList rebuilds the list items from the current profiles.
+func (m *Connections) refreshList() {
+	items := []list.Item{}
+	for _, p := range m.Profiles {
+		status := m.Statuses[p.Name]
+		items = append(items, connectionItem{title: p.Name, status: status})
+	}
+	m.ConnectionsList.SetItems(items)
 }
 
 // saveConfigToFile writes the current connections to the config.toml file using BurntSushi/toml.

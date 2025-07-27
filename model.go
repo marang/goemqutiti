@@ -189,8 +189,10 @@ func initialModel(conns *Connections) *model {
 
 	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	topicsList.DisableQuitKeybindings()
+	topicsList.SetShowTitle(false)
 	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	payloadList.DisableQuitKeybindings()
+	payloadList.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
 	order := []string{"topics", "topic", "message", "history"}

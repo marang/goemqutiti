@@ -362,7 +362,7 @@ func (f connectionForm) View() string {
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
-	s += "\nPress Enter to save or Esc to cancel"
+	s += "\n" + infoStyle.Render("[enter] save  [esc] cancel")
 	return s
 }
 

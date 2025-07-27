@@ -411,14 +411,12 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.mode = modeClient
 					}
 				}
-			case "esc":
-				m.mode = modeClient
 			}
 			break
 		}
 		switch msg.String() {
-		case "esc":
-			m.mode = modeClient
+		case "ctrl+d":
+			return m, tea.Quit
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connForm = &f
@@ -484,6 +482,8 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+d":
+			return m, tea.Quit
 		case "esc":
 			m.mode = modeConnections
 			m.connForm = nil
@@ -510,6 +510,8 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+d":
+			return *m, tea.Quit
 		case "y":
 			if m.confirmAction != nil {
 				m.confirmAction()
@@ -530,6 +532,8 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+d":
+			return m, tea.Quit
 		case "esc":
 			m.mode = modeClient
 		case "d":
@@ -564,6 +568,8 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+d":
+			return m, tea.Quit
 		case "esc":
 			m.mode = modeClient
 		case "d":

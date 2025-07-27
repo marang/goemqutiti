@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"goemqutiti/importer"
 	"goemqutiti/ui"
@@ -23,6 +24,7 @@ type Wizard struct {
 	file     textinput.Model
 	headers  []string
 	fields   []textinput.Model
+	focus    int
 	tmpl     textinput.Model
 	rows     []map[string]string
 	index    int
@@ -80,6 +82,10 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fi.SetValue(k)
 				w.fields = append(w.fields, fi)
 			}
+			if len(w.fields) > 0 {
+				w.focus = 0
+				w.fields[0].Focus()
+			}
 			w.step = stepMap
 		}
 		return w, cmd
@@ -87,13 +93,42 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(w.fields) == 0 {
 			return w, nil
 		}
-		for i := range w.fields {
-			w.fields[i], _ = w.fields[i].Update(msg)
+		switch m := msg.(type) {
+		case tea.KeyMsg:
+			switch m.String() {
+			case "tab", "shift+tab", "up", "down", "k", "j":
+				step := 1
+				if m.String() == "shift+tab" || m.String() == "up" || m.String() == "k" {
+					step = -1
+				}
+				w.focus += step
+				if w.focus < 0 {
+					w.focus = len(w.fields) - 1
+				}
+				if w.focus >= len(w.fields) {
+					w.focus = 0
+				}
+			}
+		case tea.MouseMsg:
+			if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
+				if m.Y >= 1 && m.Y-1 < len(w.fields) {
+					w.focus = m.Y - 1
+				}
+			}
 		}
+		for i := range w.fields {
+			if i == w.focus {
+				w.fields[i].Focus()
+			} else {
+				w.fields[i].Blur()
+			}
+		}
+		var cmd tea.Cmd
+		w.fields[w.focus], cmd = w.fields[w.focus].Update(msg)
 		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
 			w.step = stepTemplate
 		}
-		return w, nil
+		return w, cmd
 	case stepTemplate:
 		var cmd tea.Cmd
 		w.tmpl, cmd = w.tmpl.Update(msg)
@@ -140,12 +175,22 @@ func (w *Wizard) View() string {
 	case stepFile:
 		return ui.LegendBox(w.file.View()+"\n[enter] load file", "Import", 50, true)
 	case stepMap:
-		var s string
-		for i, h := range w.headers {
-			s += fmt.Sprintf("%s -> %s\n", h, w.fields[i].View())
+		colw := 0
+		for _, h := range w.headers {
+			if w := lipgloss.Width(h); w > colw {
+				colw = w
+			}
 		}
-		s += "\n[enter] continue"
-		return ui.LegendBox(s, "Map Columns", 50, true)
+		var b strings.Builder
+		for i, h := range w.headers {
+			label := h
+			if i == w.focus {
+				label = focusedStyle.Render(h)
+			}
+			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
+		}
+		b.WriteString("\n[enter] continue")
+		return ui.LegendBox(b.String(), "Map Columns", 50, true)
 	case stepTemplate:
 		return ui.LegendBox(w.tmpl.View()+"\n[enter] continue", "Topic Template", 50, true)
 	case stepReview:

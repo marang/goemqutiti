@@ -137,6 +137,13 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case statusMessage:
 		m.appendHistory("", string(msg), "log", string(msg))
+		if strings.HasPrefix(string(msg), "Connected") && m.activeConn != "" {
+			m.connections.Statuses[m.activeConn] = "connected"
+			m.refreshConnectionItems()
+		} else if strings.HasPrefix(string(msg), "Connection lost") && m.activeConn != "" {
+			m.connections.Statuses[m.activeConn] = "disconnected"
+			m.refreshConnectionItems()
+		}
 		return listenStatus(m.statusChan)
 	case MQTTMessage:
 		m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
@@ -282,11 +289,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			switch msg.String() {
 			case "ctrl+b":
 				m.connections.LoadProfiles("")
-				items := []list.Item{}
-				for _, p := range m.connections.Profiles {
-					items = append(items, connectionItem{title: p.Name})
-				}
-				m.connections.ConnectionsList.SetItems(items)
+				m.refreshConnectionItems()
 				m.saveCurrent()
 				m.mode = modeConnections
 			case "ctrl+t":
@@ -380,9 +383,13 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					if envPassword != "" {
 						p.Password = envPassword
 					}
+					m.connections.Statuses[p.Name] = "connecting"
+					m.refreshConnectionItems()
 					client, err := NewMQTTClient(p, m.statusChan)
 					if err != nil {
 						m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
+						m.connections.Statuses[p.Name] = "disconnected"
+						m.refreshConnectionItems()
 					} else {
 						m.mqttClient = client
 						m.activeConn = p.Name
@@ -390,6 +397,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.subscribeActiveTopics()
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 						m.connection = "Connected to " + brokerURL
+						m.connections.Statuses[p.Name] = "connected"
+						m.refreshConnectionItems()
 						m.mode = modeClient
 					}
 				}
@@ -420,9 +429,13 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if envPassword != "" {
 					p.Password = envPassword
 				}
+				m.connections.Statuses[p.Name] = "connecting"
+				m.refreshConnectionItems()
 				client, err := NewMQTTClient(p, m.statusChan)
 				if err != nil {
 					m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
+					m.connections.Statuses[p.Name] = "disconnected"
+					m.refreshConnectionItems()
 				} else {
 					m.mqttClient = client
 					m.activeConn = p.Name
@@ -430,6 +443,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.subscribeActiveTopics()
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connection = "Connected to " + brokerURL
+					m.connections.Statuses[p.Name] = "connected"
+					m.refreshConnectionItems()
 					m.mode = modeClient
 				}
 			}
@@ -439,11 +454,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				name := m.connections.Profiles[i].Name
 				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), func() {
 					m.connections.DeleteConnection(i)
-					items := []list.Item{}
-					for _, p := range m.connections.Profiles {
-						items = append(items, connectionItem{title: p.Name})
-					}
-					m.connections.ConnectionsList.SetItems(items)
+					m.refreshConnectionItems()
 				})
 			}
 		}
@@ -472,11 +483,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 			} else {
 				m.connections.AddConnection(p)
 			}
-			items := []list.Item{}
-			for _, pr := range m.connections.Profiles {
-				items = append(items, connectionItem{title: pr.Name})
-			}
-			m.connections.ConnectionsList.SetItems(items)
+			m.refreshConnectionItems()
 			m.mode = modeConnections
 			m.connForm = nil
 			return m, nil

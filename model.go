@@ -11,11 +11,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-type connectionItem struct{ title string }
+type connectionItem struct {
+	title  string
+	status string
+}
 
 func (c connectionItem) FilterValue() string { return c.title }
 func (c connectionItem) Title() string       { return c.title }
-func (c connectionItem) Description() string { return "" }
+func (c connectionItem) Description() string { return c.status }
 
 type topicItem struct {
 	title  string
@@ -165,9 +168,14 @@ func initialModel(conns *Connections) *model {
 		connModel.LoadProfiles("")
 	}
 	connModel.ConnectionsList.SetShowStatusBar(false)
+	for _, p := range connModel.Profiles {
+		if _, ok := connModel.Statuses[p.Name]; !ok {
+			connModel.Statuses[p.Name] = "disconnected"
+		}
+	}
 	items := []list.Item{}
 	for _, p := range connModel.Profiles {
-		items = append(items, connectionItem{title: p.Name})
+		items = append(items, connectionItem{title: p.Name, status: connModel.Statuses[p.Name]})
 	}
 	connModel.ConnectionsList.SetItems(items)
 
@@ -293,4 +301,13 @@ func (m *model) subscribeActiveTopics() {
 			m.mqttClient.Subscribe(t.title, 0, nil)
 		}
 	}
+}
+
+func (m *model) refreshConnectionItems() {
+	items := []list.Item{}
+	for _, p := range m.connections.Profiles {
+		status := m.connections.Statuses[p.Name]
+		items = append(items, connectionItem{title: p.Name, status: status})
+	}
+	m.connections.ConnectionsList.SetItems(items)
 }

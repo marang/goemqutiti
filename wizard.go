@@ -167,14 +167,14 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.published = nil
 				w.finished = false
 				w.step = stepPublish
-				return w, w.nextPublishCmd()
+				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
 			case "d":
 				w.dryRun = true
 				w.index = 0
 				w.published = nil
 				w.finished = false
 				w.step = stepPublish
-				return w, w.nextPublishCmd()
+				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
 			case "e":
 				w.step = stepMap
 			case "q":
@@ -189,11 +189,16 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch m := msg.(type) {
 		case publishMsg:
 			w.index++
+			p := float64(w.index) / float64(len(w.rows))
+			if p > 1 {
+				p = 1
+			}
+			cmd := w.progress.SetPercent(p)
 			if w.index >= len(w.rows) {
 				w.finished = true
-			} else {
-				return w, w.nextPublishCmd()
+				return w, cmd
 			}
+			return w, tea.Batch(cmd, w.nextPublishCmd())
 		case tea.KeyMsg:
 			if w.finished {
 				switch m.Type {
@@ -270,17 +275,22 @@ func (w *Wizard) View() string {
 		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
 		box = ui.LegendBox(s, "Review", 50, true)
 	case stepPublish:
-		p := float64(w.index) / float64(len(w.rows))
-		if p > 1 {
-			p = 1
-		}
-		w.progress.SetPercent(p)
 		bar := w.progress.View()
+		lines := w.published
+		if len(lines) > 5 {
+			lines = lines[len(lines)-5:]
+		}
+		recent := strings.Join(lines, "\n")
+		recent = ansi.Wrap(recent, 48, " ")
+		if recent != "" {
+			recent += "\n"
+		}
 		if w.finished {
-			msg := fmt.Sprintf("Published %d messages\n%s\n[ctrl+n] next  [ctrl+p] back", len(w.rows), bar)
+			msg := fmt.Sprintf("Published %d messages\n%s%s[ctrl+n] next  [ctrl+p] back", len(w.rows), recent, bar)
 			box = ui.LegendBox(msg, "Progress", 50, true)
 		} else {
-			box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+			msg := fmt.Sprintf("Publishing %d/%d\n%s%s", w.index, len(w.rows), recent, bar)
+			box = ui.LegendBox(msg, "Progress", 50, true)
 		}
 	case stepDone:
 		if w.dryRun {
@@ -307,9 +317,10 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 	topic := importer.BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
 	payload, _ := importer.RowToJSON(row, mapping)
 	return func() tea.Msg {
-		if w.dryRun {
+		if w.dryRun || len(w.published) < 5 {
 			w.published = append(w.published, fmt.Sprintf("%s -> %s", topic, string(payload)))
-		} else {
+		}
+		if !w.dryRun {
 			w.client.Publish(topic, 0, false, payload)
 		}
 		return publishMsg{}

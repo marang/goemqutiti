@@ -120,9 +120,10 @@ away.
 After showing a preview of the first few messages you can perform a dry run or
 publish them to the broker. A dry run lists the resulting topics and JSON
 payloads so you can verify them; press `Ctrl+P` from the results screen to go
-back. Publishing shows a progress bar and stays on screen when complete so you
-can see how many messages were sent. Use `Ctrl+N` and `Ctrl+P` to move forward
-and back through the wizard steps.
+back. Publishing shows a progress bar, listing up to five recently published
+messages, and stays on screen when complete so you can see how many messages
+were sent. Use `Ctrl+N` and `Ctrl+P` to move forward and back through the wizard
+steps.
 
 Future versions may store import settings for quick reuse.
 

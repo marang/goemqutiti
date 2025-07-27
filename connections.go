@@ -56,7 +56,6 @@ type Connections struct {
 // NewConnectionsModel initializes a new ConnectionsModel with default values.
 func NewConnectionsModel() Connections {
 	connectionList := list.New([]list.Item{}, connectionDelegate{}, 0, 0)
-	connectionList.Title = "Brokers"
 	// Ensure items are visible by setting a reasonable default size
 	connectionList.SetSize(30, 10)
 	connectionList.DisableQuitKeybindings()

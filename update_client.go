@@ -8,7 +8,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"goemqutiti/trace"
+	"goemqutiti/history"
 )
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
@@ -287,8 +287,8 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 
 	if m.history.FilterState() == list.Filtering {
 		q := m.history.FilterInput.Value()
-		topics, start, end, text := trace.ParseQuery(q)
-		msgs := m.tracer.Search(topics, start, end, text)
+		topics, start, end, text := history.ParseQuery(q)
+		msgs := m.store.Search(topics, start, end, text)
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
 			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}

@@ -212,16 +212,12 @@ func (w *Wizard) View() string {
 			}
 			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
 		}
-		b.WriteString("\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
+		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 		box = ui.LegendBox(b.String(), "Map Columns", 50, true)
 	case stepTemplate:
 		names := make([]string, len(w.headers))
 		for i, h := range w.headers {
-			name := strings.TrimSpace(w.fields[i].Value())
-			if name == "" {
-				name = h
-			}
-			names[i] = "{" + name + "}"
+			names[i] = "{" + h + "}"
 		}
 		help := "Available fields: " + strings.Join(names, " ")
 		help = ansi.Wrap(help, 48, " ")
@@ -271,14 +267,15 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 func renameFields(row map[string]string, mapping map[string]string) map[string]string {
 	out := map[string]string{}
 	for k, v := range row {
+		out[k] = v
 		if mapped, ok := mapping[k]; ok {
 			name := strings.TrimSpace(mapped)
 			if name == "" {
 				name = k
 			}
-			out[name] = v
-		} else {
-			out[k] = v
+			if name != k {
+				out[name] = v
+			}
 		}
 	}
 	return out

@@ -37,11 +37,35 @@ func TestRowToJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	var got map[string]string
+	var got struct {
+		Alpha string `json:"alpha"`
+		B     string `json:"B"`
+	}
 	if err := json.Unmarshal(data, &got); err != nil {
 		t.Fatalf("bad json: %v", err)
 	}
-	if got["alpha"] != "1" || got["B"] != "2" {
-		t.Fatalf("got %v", got)
+	if got.Alpha != "1" || got.B != "2" {
+		t.Fatalf("got %+v", got)
+	}
+}
+
+func TestRowToJSONNested(t *testing.T) {
+	row := map[string]string{"lat": "1", "lon": "2"}
+	mapping := map[string]string{"lat": "location.latitude", "lon": "location.longitude"}
+	data, err := RowToJSON(row, mapping)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	var got struct {
+		Location struct {
+			Latitude  string `json:"latitude"`
+			Longitude string `json:"longitude"`
+		} `json:"location"`
+	}
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("bad json: %v", err)
+	}
+	if got.Location.Latitude != "1" || got.Location.Longitude != "2" {
+		t.Fatalf("got %+v", got)
 	}
 }

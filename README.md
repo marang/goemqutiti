@@ -113,8 +113,10 @@ path pre-selects the file in the wizard:
 ```
 
 Each row becomes a JSON object with properties derived from the mapped column
-names. The topic template screen lists those names as `{field}` placeholders
-and focuses the input automatically so you can start typing right away.
+names. Enter nested names using `parent.child` syntax when mapping columns.
+The topic template screen shows the original column names as `{field}`
+placeholders and focuses the input automatically so you can start typing right
+away.
 After showing a preview of the first few messages you can perform a dry run or
 publish them to the broker. Use `Ctrl+N` and `Ctrl+P` to move
 forward and back through the wizard steps.

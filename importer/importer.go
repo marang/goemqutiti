@@ -107,17 +107,27 @@ func BuildTopic(tmpl string, fields map[string]string) string {
 
 // RowToJSON converts a row map to a JSON payload using the provided field mapping.
 func RowToJSON(row map[string]string, mapping map[string]string) ([]byte, error) {
-	m := map[string]string{}
+	out := map[string]interface{}{}
 	for k, v := range row {
-		if mapped, ok := mapping[k]; ok {
-			name := strings.TrimSpace(mapped)
-			if name == "" {
-				name = k
-			}
-			m[name] = v
-		} else {
-			m[k] = v
+		path := k
+		if mapped, ok := mapping[k]; ok && strings.TrimSpace(mapped) != "" {
+			path = mapped
 		}
+		setNested(out, strings.Split(path, "."), v)
 	}
-	return json.Marshal(m)
+	return json.Marshal(out)
+}
+
+func setNested(m map[string]interface{}, path []string, value string) {
+	for i, p := range path {
+		if i == len(path)-1 {
+			m[p] = value
+			return
+		}
+		if _, ok := m[p]; !ok {
+			m[p] = map[string]interface{}{}
+		}
+		child, _ := m[p].(map[string]interface{})
+		m = child
+	}
 }

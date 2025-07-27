@@ -109,8 +109,14 @@ func BuildTopic(tmpl string, fields map[string]string) string {
 func RowToJSON(row map[string]string, mapping map[string]string) ([]byte, error) {
 	m := map[string]string{}
 	for k, v := range row {
-		if mapped, ok := mapping[k]; ok && mapped != "" {
-			m[mapped] = v
+		if mapped, ok := mapping[k]; ok {
+			name := strings.TrimSpace(mapped)
+			if name == "" {
+				name = k
+			}
+			m[name] = v
+		} else {
+			m[k] = v
 		}
 	}
 	return json.Marshal(m)

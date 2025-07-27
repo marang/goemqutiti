@@ -1,6 +1,7 @@
 package importer
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -36,7 +37,11 @@ func TestRowToJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if string(data) != "{\"alpha\":\"1\"}" {
-		t.Fatalf("got %s", string(data))
+	var got map[string]string
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("bad json: %v", err)
+	}
+	if got["alpha"] != "1" || got["B"] != "2" {
+		t.Fatalf("got %v", got)
 	}
 }

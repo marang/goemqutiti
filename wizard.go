@@ -193,8 +193,14 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 func renameFields(row map[string]string, mapping map[string]string) map[string]string {
 	out := map[string]string{}
 	for k, v := range row {
-		if name := mapping[k]; name != "" {
+		if mapped, ok := mapping[k]; ok {
+			name := strings.TrimSpace(mapped)
+			if name == "" {
+				name = k
+			}
 			out[name] = v
+		} else {
+			out[k] = v
 		}
 	}
 	return out

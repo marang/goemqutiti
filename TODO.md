@@ -53,7 +53,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
  - [x] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
 - [x] Add error handling for failed connections or invalid inputs.
 - [x] Display configuration load warnings in the history log.
-- [x] Persist brokers, topics, and payloads between runs (messages are not yet persisted).
+ - [x] Persist brokers, topics, payloads, and messages between runs using BadgerDB.
 - [x] Support dynamic updates from the MQTT broker (real-time message logging).
 
 ---
@@ -67,7 +67,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ---
 
 ## **5. Future Enhancements**
- - [ ] Add advanced filtering or search functionality for large logs.
+ - [x] Add advanced filtering or search functionality for large logs. History view now accepts `topic`, `start`, `end`, and payload filters.
  - [ ] Implement TLS/SSL certificate management (consider storing certificate paths securely).
  - [x] Add support for Last Will and Testament (LWT) settings.
 

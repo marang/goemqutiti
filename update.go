@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"goemqutiti/trace"
 )
 
 type statusMessage string
@@ -89,9 +91,17 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	if kind == "log" {
 		text = logText
 	}
-	items := append(m.history.Items(), historyItem{topic: topic, payload: text, kind: kind})
+	hi := historyItem{topic: topic, payload: text, kind: kind}
+	m.historyItems = append(m.historyItems, hi)
+	items := make([]list.Item, len(m.historyItems))
+	for i, it := range m.historyItems {
+		items[i] = it
+	}
 	m.history.SetItems(items)
 	m.history.Select(len(items) - 1)
+	if m.tracer != nil {
+		m.tracer.Add(trace.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
+	}
 }
 
 func (m *model) setFocus(id string) tea.Cmd {

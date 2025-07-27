@@ -94,18 +94,20 @@ func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
 	help := "[enter] connect  [a]dd [e]dit [d]elete  [esc] back"
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return borderStyle.Width(m.width - 2).Height(m.height - 2).Render(content)
+	return legendBox(content, "Brokers", m.width-2, true)
 }
 
 func (m model) viewForm() string {
 	if m.connForm == nil {
 		return ""
 	}
-	listView := m.connections.ConnectionsList.View()
-	formView := m.connForm.View()
-	left := borderStyle.Width(m.width/2 - 2).Render(listView)
-	right := borderStyle.Width(m.width/2 - 2).Render(formView)
-	return lipgloss.JoinHorizontal(lipgloss.Top, left, right)
+	listView := legendBox(m.connections.ConnectionsList.View(), "Brokers", m.width/2-2, false)
+	formLabel := "Add Broker"
+	if m.connForm.index >= 0 {
+		formLabel = "Edit Broker"
+	}
+	formView := legendBox(m.connForm.View(), formLabel, m.width/2-2, false)
+	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 
 func (m model) viewConfirmDelete() string {

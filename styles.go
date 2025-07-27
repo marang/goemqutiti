@@ -41,14 +41,6 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
 	}
-	// Ensure the box is wide enough for the content while
-	// ignoring trailing whitespace that might come from inputs
-	for _, l := range strings.Split(content, "\n") {
-		l = strings.TrimRightFunc(l, unicode.IsSpace)
-		if w := lipgloss.Width(l) + 2; w > width {
-			width = w
-		}
-	}
 
 	b := lipgloss.RoundedBorder()
 	cy := colCyan

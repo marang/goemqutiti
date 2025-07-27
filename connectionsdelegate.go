@@ -26,6 +26,6 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	status := lipgloss.NewStyle().Foreground(colGray).Render(ci.status)
 	status = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, status)
 	detail := lipgloss.PlaceHorizontal(width-2, lipgloss.Left,
-		lipgloss.NewStyle().Foreground(colDarkGray).Render(ci.detail))
+		lipgloss.NewStyle().Foreground(colGray).Render(ci.detail))
 	fmt.Fprintf(w, "%s %s\n%s %s\n%s %s", border, name, border, status, border, detail)
 }

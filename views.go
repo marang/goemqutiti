@@ -101,12 +101,7 @@ func (m *model) viewClient() string {
 func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
 	help := infoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
-	var parts []string
-	if strings.TrimSpace(m.connection) != "" {
-		parts = append(parts, connStyle.Render(strings.TrimSpace(m.connection)))
-	}
-	parts = append(parts, listView, help)
-	content := lipgloss.JoinVertical(lipgloss.Left, parts...)
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return legendBox(content, "Brokers", m.width-2, true)
 }
 

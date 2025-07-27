@@ -42,6 +42,8 @@ const (
 	stepDone
 )
 
+var wizardSteps = []string{"File", "Map", "Template", "Review", "Publish", "Done"}
+
 // NewWizard creates a new wizard. A non-empty path pre-fills the file field.
 func NewWizard(client Publisher, path string) *Wizard {
 	ti := textinput.New()
@@ -60,7 +62,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stepFile:
 		var cmd tea.Cmd
 		w.file, cmd = w.file.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
+		if km, ok := msg.(tea.KeyMsg); ok && (km.Type == tea.KeyEnter || km.Type == tea.KeyCtrlN) {
 			path := strings.TrimSpace(w.file.Value())
 			if path == "" {
 				return w, nil
@@ -78,7 +80,6 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for k := range rows[0] {
 				w.headers = append(w.headers, k)
 				fi := textinput.New()
-				// Default mapping uses the original column name.
 				fi.SetValue(k)
 				w.fields = append(w.fields, fi)
 			}
@@ -108,6 +109,12 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if w.focus >= len(w.fields) {
 					w.focus = 0
 				}
+			case "ctrl+n":
+				w.step = stepTemplate
+				return w, nil
+			case "ctrl+p":
+				w.step = stepFile
+				return w, nil
 			}
 		case tea.MouseMsg:
 			if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
@@ -132,9 +139,14 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stepTemplate:
 		var cmd tea.Cmd
 		w.tmpl, cmd = w.tmpl.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
-			if strings.TrimSpace(w.tmpl.Value()) != "" {
-				w.step = stepReview
+		if km, ok := msg.(tea.KeyMsg); ok {
+			switch km.Type {
+			case tea.KeyCtrlP:
+				w.step = stepMap
+			case tea.KeyCtrlN, tea.KeyEnter:
+				if strings.TrimSpace(w.tmpl.Value()) != "" {
+					w.step = stepReview
+				}
 			}
 		}
 		return w, cmd
@@ -153,6 +165,8 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.step = stepMap
 			case "q":
 				w.step = stepDone
+			case "ctrl+p":
+				w.step = stepTemplate
 			}
 		}
 		return w, nil
@@ -171,9 +185,11 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (w *Wizard) View() string {
+	header := w.stepsView()
+	var box string
 	switch w.step {
 	case stepFile:
-		return ui.LegendBox(w.file.View()+"\n[enter] load file", "Import", 50, true)
+		box = ui.LegendBox(w.file.View()+"\n[enter] load file  [ctrl+n] next", "Import", 50, true)
 	case stepMap:
 		colw := 0
 		for _, h := range w.headers {
@@ -189,10 +205,10 @@ func (w *Wizard) View() string {
 			}
 			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
 		}
-		b.WriteString("\n[enter] continue")
-		return ui.LegendBox(b.String(), "Map Columns", 50, true)
+		b.WriteString("\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
+		box = ui.LegendBox(b.String(), "Map Columns", 50, true)
 	case stepTemplate:
-		return ui.LegendBox(w.tmpl.View()+"\n[enter] continue", "Topic Template", 50, true)
+		box = ui.LegendBox(w.tmpl.View()+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()
@@ -206,17 +222,17 @@ func (w *Wizard) View() string {
 			p, _ := importer.RowToJSON(w.rows[i], mapping)
 			previews += fmt.Sprintf("%s -> %s\n", t, string(p))
 		}
-		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [q] quit", len(w.rows), previews)
-		return ui.LegendBox(s, "Review", 50, true)
+		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
+		box = ui.LegendBox(s, "Review", 50, true)
 	case stepPublish:
 		p := float64(w.index) / float64(len(w.rows))
 		w.progress.SetPercent(p)
 		bar := w.progress.View()
-		return ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+		box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
 	case stepDone:
-		return ui.LegendBox("Done", "Import", 50, true)
+		box = ui.LegendBox("Done", "Import", 50, true)
 	}
-	return ""
+	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
 
 func (w *Wizard) nextPublishCmd() tea.Cmd {
@@ -257,6 +273,18 @@ func (w *Wizard) mapping() map[string]string {
 		m[h] = strings.TrimSpace(w.fields[i].Value())
 	}
 	return m
+}
+
+func (w *Wizard) stepsView() string {
+	var parts []string
+	for i, name := range wizardSteps {
+		st := blurredStyle
+		if i == w.step {
+			st = focusedStyle
+		}
+		parts = append(parts, st.Render(name))
+	}
+	return strings.Join(parts, " > ")
 }
 
 type publishMsg struct{}

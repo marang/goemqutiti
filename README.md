@@ -118,8 +118,10 @@ The topic template screen shows the original column names as `{field}`
 placeholders and focuses the input automatically so you can start typing right
 away.
 After showing a preview of the first few messages you can perform a dry run or
-publish them to the broker. Use `Ctrl+N` and `Ctrl+P` to move
-forward and back through the wizard steps.
+publish them to the broker. A dry run lists the resulting topics and JSON
+payloads so you can verify them; press `Ctrl+P` from the results screen to go
+back. Use `Ctrl+N` and `Ctrl+P` to move forward and back through the wizard
+steps.
 
 Future versions may store import settings for quick reuse.
 

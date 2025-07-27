@@ -21,17 +21,18 @@ type Publisher interface {
 
 // Wizard runs an interactive import wizard.
 type Wizard struct {
-	step     int
-	file     textinput.Model
-	headers  []string
-	fields   []textinput.Model
-	focus    int
-	tmpl     textinput.Model
-	rows     []map[string]string
-	index    int
-	progress progress.Model
-	client   Publisher
-	dryRun   bool
+	step      int
+	file      textinput.Model
+	headers   []string
+	fields    []textinput.Model
+	focus     int
+	tmpl      textinput.Model
+	rows      []map[string]string
+	index     int
+	progress  progress.Model
+	client    Publisher
+	dryRun    bool
+	published []string
 }
 
 const (
@@ -161,10 +162,14 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch km.String() {
 			case "p":
 				w.dryRun = false
+				w.index = 0
+				w.published = nil
 				w.step = stepPublish
 				return w, w.nextPublishCmd()
 			case "d":
 				w.dryRun = true
+				w.index = 0
+				w.published = nil
 				w.step = stepPublish
 				return w, w.nextPublishCmd()
 			case "e":
@@ -184,6 +189,17 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.step = stepDone
 			} else {
 				return w, w.nextPublishCmd()
+			}
+		}
+		return w, nil
+	case stepDone:
+		if km, ok := msg.(tea.KeyMsg); ok {
+			switch km.Type {
+			case tea.KeyCtrlP:
+				w.step = stepReview
+			}
+			if km.String() == "q" {
+				return w, tea.Quit
 			}
 		}
 		return w, nil
@@ -233,7 +249,8 @@ func (w *Wizard) View() string {
 		for i := 0; i < max; i++ {
 			t := importer.BuildTopic(topic, renameFields(w.rows[i], mapping))
 			p, _ := importer.RowToJSON(w.rows[i], mapping)
-			previews += fmt.Sprintf("%s -> %s\n", t, string(p))
+			line := fmt.Sprintf("%s -> %s", t, string(p))
+			previews += ansi.Wrap(line, 48, " ") + "\n"
 		}
 		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
 		box = ui.LegendBox(s, "Review", 50, true)
@@ -243,7 +260,14 @@ func (w *Wizard) View() string {
 		bar := w.progress.View()
 		box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
 	case stepDone:
-		box = ui.LegendBox("Done", "Import", 50, true)
+		if w.dryRun {
+			out := strings.Join(w.published, "\n")
+			out = ansi.Wrap(out, 48, " ")
+			out += "\n[ctrl+p] back  [q] quit"
+			box = ui.LegendBox(out, "Dry Run", 50, true)
+		} else {
+			box = ui.LegendBox("Done", "Import", 50, true)
+		}
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
@@ -257,7 +281,9 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 	topic := importer.BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
 	payload, _ := importer.RowToJSON(row, mapping)
 	return func() tea.Msg {
-		if !w.dryRun {
+		if w.dryRun {
+			w.published = append(w.published, fmt.Sprintf("%s -> %s", topic, string(payload)))
+		} else {
 			w.client.Publish(topic, 0, false, payload)
 		}
 		return publishMsg{}

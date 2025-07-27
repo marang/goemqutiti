@@ -143,7 +143,7 @@ func initialModel(conns *Connections) *model {
 	ti.Focus()
 	ti.CharLimit = 32
 	ti.Prompt = "> "
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(colDarkGray)
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(colGray)
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(colGray)
 	ti.Cursor.Style = cursorStyle
 	ti.TextStyle = focusedStyle

@@ -33,6 +33,7 @@ type Wizard struct {
 	client    Publisher
 	dryRun    bool
 	published []string
+	finished  bool
 }
 
 const (
@@ -164,12 +165,14 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.dryRun = false
 				w.index = 0
 				w.published = nil
+				w.finished = false
 				w.step = stepPublish
 				return w, w.nextPublishCmd()
 			case "d":
 				w.dryRun = true
 				w.index = 0
 				w.published = nil
+				w.finished = false
 				w.step = stepPublish
 				return w, w.nextPublishCmd()
 			case "e":
@@ -183,12 +186,23 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return w, nil
 	case stepPublish:
-		if _, ok := msg.(publishMsg); ok {
+		switch m := msg.(type) {
+		case publishMsg:
 			w.index++
 			if w.index >= len(w.rows) {
-				w.step = stepDone
+				w.finished = true
 			} else {
 				return w, w.nextPublishCmd()
+			}
+		case tea.KeyMsg:
+			if w.finished {
+				switch m.Type {
+				case tea.KeyCtrlN:
+					w.step = stepDone
+				case tea.KeyCtrlP:
+					w.step = stepReview
+					w.finished = false
+				}
 			}
 		}
 		return w, nil
@@ -197,6 +211,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch km.Type {
 			case tea.KeyCtrlP:
 				w.step = stepReview
+				w.finished = false
 			}
 			if km.String() == "q" {
 				return w, tea.Quit
@@ -256,15 +271,26 @@ func (w *Wizard) View() string {
 		box = ui.LegendBox(s, "Review", 50, true)
 	case stepPublish:
 		p := float64(w.index) / float64(len(w.rows))
+		if p > 1 {
+			p = 1
+		}
 		w.progress.SetPercent(p)
 		bar := w.progress.View()
-		box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+		if w.finished {
+			msg := fmt.Sprintf("Published %d messages\n%s\n[ctrl+n] next  [ctrl+p] back", len(w.rows), bar)
+			box = ui.LegendBox(msg, "Progress", 50, true)
+		} else {
+			box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+		}
 	case stepDone:
 		if w.dryRun {
 			out := strings.Join(w.published, "\n")
 			out = ansi.Wrap(out, 48, " ")
 			out += "\n[ctrl+p] back  [q] quit"
 			box = ui.LegendBox(out, "Dry Run", 50, true)
+		} else if w.finished {
+			msg := fmt.Sprintf("Published %d messages\n[ctrl+p] back  [q] quit", len(w.rows))
+			box = ui.LegendBox(msg, "Import", 50, true)
 		} else {
 			box = ui.LegendBox("Done", "Import", 50, true)
 		}

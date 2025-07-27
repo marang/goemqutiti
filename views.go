@@ -41,13 +41,13 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoShortcuts := infoStyle.Render("Info: Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
+	infoShortcuts := infoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
 	clientID := ""
 	if m.mqttClient != nil {
 		r := m.mqttClient.Client.OptionsReader()
 		clientID = r.ClientID()
 	}
-	connLine := infoStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
+	connLine := connStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
 	infoLine := lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
 
 	var chips []string
@@ -69,7 +69,7 @@ func (m *model) viewClient() string {
 	chipContent, bounds := layoutChips(chips, m.width-4)
 	topicsBox := legendBox(chipContent, "Topics", m.width-2, topicsFocused)
 	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
-	messageBox := legendBox(m.messageInput.View(), "Message", m.width-2, messageFocused)
+	messageBox := legendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
 	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)

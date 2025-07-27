@@ -321,6 +321,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 				m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 				m.topicsList.DisableQuitKeybindings()
+				m.topicsList.SetShowTitle(false)
 				m.mode = modeTopics
 			case "ctrl+p":
 				items := []list.Item{}
@@ -329,6 +330,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 				m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 				m.payloadList.DisableQuitKeybindings()
+				m.payloadList.SetShowTitle(false)
 				m.mode = modePayloads
 			}
 		}
@@ -464,6 +466,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				name := m.connections.Profiles[i].Name
 				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), func() {
 					m.connections.DeleteConnection(i)
+					m.connections.refreshList()
 					m.refreshConnectionItems()
 				})
 			}

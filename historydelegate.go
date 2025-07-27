@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // historyDelegate renders history items with two lines and supports highlighting
@@ -55,9 +56,12 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		lines = append(lines, line1)
 	}
 	for _, l := range strings.Split(hi.payload, "\n") {
-		rendered := lipgloss.PlaceHorizontal(innerWidth, align,
-			lipgloss.NewStyle().Foreground(msgColor).Render(l))
-		lines = append(lines, rendered)
+		wrapped := ansi.Wrap(l, innerWidth, " ")
+		for _, wl := range strings.Split(wrapped, "\n") {
+			rendered := lipgloss.PlaceHorizontal(innerWidth, align,
+				lipgloss.NewStyle().Foreground(msgColor).Render(wl))
+			lines = append(lines, rendered)
+		}
 	}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {

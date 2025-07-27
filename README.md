@@ -79,6 +79,7 @@ In the interface:
 - **Ctrl+S** publishes the message currently in the editor.
 - **Ctrl+Enter** also publishes the current message.
 - **Ctrl+B** opens the broker manager where you can add, edit or delete MQTT profiles.
+- **x** disconnects from the current broker in the broker manager.
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.

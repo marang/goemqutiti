@@ -491,6 +491,15 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.refreshConnectionItems()
 				})
 			}
+		case "x":
+			if m.mqttClient != nil {
+				m.mqttClient.Disconnect()
+				m.connections.Statuses[m.activeConn] = "disconnected"
+				m.refreshConnectionItems()
+				m.connection = ""
+				m.activeConn = ""
+				m.mqttClient = nil
+			}
 		}
 	}
 	m.connections.ConnectionsList, cmd = m.connections.ConnectionsList.Update(msg)

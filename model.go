@@ -14,11 +14,17 @@ import (
 type connectionItem struct {
 	title  string
 	status string
+	detail string
 }
 
 func (c connectionItem) FilterValue() string { return c.title }
 func (c connectionItem) Title() string       { return c.title }
-func (c connectionItem) Description() string { return c.status }
+func (c connectionItem) Description() string {
+	if c.detail != "" {
+		return c.status + "\n" + c.detail
+	}
+	return c.status
+}
 
 type topicItem struct {
 	title  string
@@ -54,17 +60,17 @@ type historyItem struct {
 func (h historyItem) FilterValue() string { return h.payload }
 func (h historyItem) Title() string {
 	var label string
-	color := lipgloss.Color("63")
+	color := colBlue
 	switch h.kind {
 	case "sub":
 		label = "SUB"
-		color = lipgloss.Color("205")
+		color = colPink
 	case "pub":
 		label = "PUB"
-		color = lipgloss.Color("63")
+		color = colBlue
 	default:
 		label = "LOG"
-		color = lipgloss.Color("240")
+		color = colGray
 	}
 	return lipgloss.NewStyle().Foreground(color).Render(fmt.Sprintf("%s %s: %s", label, h.topic, h.payload))
 }
@@ -137,6 +143,8 @@ func initialModel(conns *Connections) *model {
 	ti.Focus()
 	ti.CharLimit = 32
 	ti.Prompt = "> "
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(colDarkGray)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(colGray)
 	ti.Cursor.Style = cursorStyle
 	ti.TextStyle = focusedStyle
 	// Defer width assignment until we know the terminal size
@@ -149,7 +157,7 @@ func initialModel(conns *Connections) *model {
 	ta.SetPromptFunc(0, func(i int) string {
 		return fmt.Sprintf("%d> ", i+1)
 	})
-	promptColor := lipgloss.Color("240")
+	promptColor := colGray
 	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.Blur()
@@ -175,7 +183,8 @@ func initialModel(conns *Connections) *model {
 	}
 	items := []list.Item{}
 	for _, p := range connModel.Profiles {
-		items = append(items, connectionItem{title: p.Name, status: connModel.Statuses[p.Name]})
+		detail := connModel.Errors[p.Name]
+		items = append(items, connectionItem{title: p.Name, status: connModel.Statuses[p.Name], detail: detail})
 	}
 	connModel.ConnectionsList.SetItems(items)
 
@@ -309,7 +318,8 @@ func (m *model) refreshConnectionItems() {
 	items := []list.Item{}
 	for _, p := range m.connections.Profiles {
 		status := m.connections.Statuses[p.Name]
-		items = append(items, connectionItem{title: p.Name, status: status})
+		detail := m.connections.Errors[p.Name]
+		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
 	}
 	m.connections.ConnectionsList.SetItems(items)
 }

@@ -8,30 +8,30 @@ import (
 )
 
 var (
-	focusedStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("205"))
-	blurredStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+	focusedStyle = lipgloss.NewStyle().Foreground(colPink)
+	blurredStyle = lipgloss.NewStyle().Foreground(colGray)
 	cursorStyle  = focusedStyle
 	noCursor     = lipgloss.NewStyle()
-	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
-	greenBorder  = borderStyle.BorderForeground(lipgloss.Color("34"))
-	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("63")).Faint(true)
-	chipInactive = chipStyle.Foreground(lipgloss.Color("240"))
-	infoStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).PaddingLeft(1)
-	connStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).PaddingLeft(1)
+	borderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(colBlue).Padding(0, 1)
+	greenBorder  = borderStyle.BorderForeground(colGreen)
+	chipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(colBlue).Faint(true)
+	chipInactive = chipStyle.Foreground(colGray)
+	infoStyle    = lipgloss.NewStyle().Foreground(colBlue).PaddingLeft(1)
+	connStyle    = lipgloss.NewStyle().Foreground(colGray).PaddingLeft(1)
 )
 
 func legendBox(content, label string, width int, focused bool) string {
-	color := lipgloss.Color("63")
+	color := colBlue
 	if focused {
-		color = lipgloss.Color("205")
+		color = colPink
 	}
 	return legendStyledBox(content, label, width, color)
 }
 
 func legendGreenBox(content, label string, width int, focused bool) string {
-	color := lipgloss.Color("34")
+	color := colGreen
 	if focused {
-		color = lipgloss.Color("205")
+		color = colPink
 	}
 	return legendStyledBox(content, label, width, color)
 }
@@ -51,7 +51,7 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 	}
 
 	b := lipgloss.RoundedBorder()
-	cy := lipgloss.Color("51")
+	cy := colCyan
 	top := lipgloss.NewStyle().Foreground(color).Render(
 		b.TopLeft+" "+label+" "+strings.Repeat(b.Top, width-lipgloss.Width(label)-4),
 	) + lipgloss.NewStyle().Foreground(cy).Render(b.TopRight)

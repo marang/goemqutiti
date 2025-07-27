@@ -70,6 +70,8 @@ so multiple connections remain unique.
 
 Passwords can be stored securely using the operating system keyring. You may also set the `MQTT_PASSWORD` environment variable to override the stored password at runtime.
 
+Each broker profile can optionally load all of its settings from environment variables instead of `config.toml`. Enable **Load from env** when editing a profile and set variables using the pattern `GOEMQUTITI_<NAME>_<FIELD>`. The `<NAME>` portion is derived from the profile name: letters are upper‑cased and any other characters become underscores. For example, a profile named `local broker` would use variables like `GOEMQUTITI_LOCAL_BROKER_PASSWORD`.
+
 In the interface:
 
 - **Tab** cycles focus between the topic input, message editor, and topic chips.
@@ -77,6 +79,7 @@ In the interface:
 - **Ctrl+S** publishes the message currently in the editor.
 - **Ctrl+Enter** also publishes the current message.
 - **Ctrl+B** opens the broker manager where you can add, edit or delete MQTT profiles.
+- **x** disconnects from the current broker in the broker manager.
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.

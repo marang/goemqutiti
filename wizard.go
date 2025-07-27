@@ -1,4 +1,4 @@
-package importer
+package main
 
 import (
 	"fmt"
@@ -7,8 +7,15 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+
+	"goemqutiti/importer"
+	"goemqutiti/ui"
 )
+
+// Publisher abstracts the MQTT client for publishing.
+type Publisher interface {
+	Publish(topic string, qos byte, retained bool, payload interface{}) error
+}
 
 // Wizard runs an interactive import wizard.
 type Wizard struct {
@@ -22,53 +29,6 @@ type Wizard struct {
 	progress progress.Model
 	client   Publisher
 	dryRun   bool
-}
-
-var (
-	colPink = lipgloss.Color("205")
-	colBlue = lipgloss.Color("63")
-	colCyan = lipgloss.Color("51")
-)
-
-func legendBox(content, label string, width int, focused bool) string {
-	color := colBlue
-	if focused {
-		color = colPink
-	}
-	return legendStyledBox(content, label, width, color)
-}
-
-func legendStyledBox(content, label string, width int, color lipgloss.Color) string {
-	content = strings.TrimRight(content, "\n")
-	if width < lipgloss.Width(label)+4 {
-		width = lipgloss.Width(label) + 4
-	}
-	b := lipgloss.RoundedBorder()
-	cy := colCyan
-	top := lipgloss.NewStyle().Foreground(color).Render(
-		b.TopLeft+" "+label+" "+strings.Repeat(b.Top, width-lipgloss.Width(label)-4),
-	) + lipgloss.NewStyle().Foreground(cy).Render(b.TopRight)
-	bottom := lipgloss.NewStyle().Foreground(cy).Render(
-		b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight,
-	)
-	lines := strings.Split(content, "\n")
-	for i, l := range lines {
-		l = strings.TrimRightFunc(l, func(r rune) bool { return r == ' ' })
-		side := color
-		if i == len(lines)-1 {
-			side = cy
-		}
-		left := lipgloss.NewStyle().Foreground(color).Render(b.Left)
-		right := lipgloss.NewStyle().Foreground(side).Render(b.Right)
-		lines[i] = left + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l) + right
-	}
-	middle := strings.Join(lines, "\n")
-	return top + "\n" + middle + "\n" + bottom
-}
-
-// Publisher abstracts the MQTT client for publishing.
-type Publisher interface {
-	Publish(topic string, qos byte, retained bool, payload interface{}) error
 }
 
 const (
@@ -103,7 +63,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if path == "" {
 				return w, nil
 			}
-			rows, err := ReadFile(path)
+			rows, err := importer.ReadFile(path)
 			if err != nil {
 				w.file.SetValue(path + " (" + err.Error() + ")")
 				return w, nil
@@ -177,16 +137,16 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (w *Wizard) View() string {
 	switch w.step {
 	case stepFile:
-		return legendBox(w.file.View()+"\n[enter] load file", "Import", 50, true)
+		return ui.LegendBox(w.file.View()+"\n[enter] load file", "Import", 50, true)
 	case stepMap:
 		var s string
 		for i, h := range w.headers {
 			s += fmt.Sprintf("%s -> %s\n", h, w.fields[i].View())
 		}
 		s += "\n[enter] continue"
-		return legendBox(s, "Map Columns", 50, true)
+		return ui.LegendBox(s, "Map Columns", 50, true)
 	case stepTemplate:
-		return legendBox(w.tmpl.View()+"\n[enter] continue", "Topic Template", 50, true)
+		return ui.LegendBox(w.tmpl.View()+"\n[enter] continue", "Topic Template", 50, true)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()
@@ -196,19 +156,19 @@ func (w *Wizard) View() string {
 			max = len(w.rows)
 		}
 		for i := 0; i < max; i++ {
-			t := BuildTopic(topic, renameFields(w.rows[i], mapping))
-			p, _ := RowToJSON(w.rows[i], mapping)
+			t := importer.BuildTopic(topic, renameFields(w.rows[i], mapping))
+			p, _ := importer.RowToJSON(w.rows[i], mapping)
 			previews += fmt.Sprintf("%s -> %s\n", t, string(p))
 		}
 		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [q] quit", len(w.rows), previews)
-		return legendBox(s, "Review", 50, true)
+		return ui.LegendBox(s, "Review", 50, true)
 	case stepPublish:
 		p := float64(w.index) / float64(len(w.rows))
 		w.progress.SetPercent(p)
 		bar := w.progress.View()
-		return legendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+		return ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
 	case stepDone:
-		return legendBox("Done", "Import", 50, true)
+		return ui.LegendBox("Done", "Import", 50, true)
 	}
 	return ""
 }
@@ -219,8 +179,8 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 	}
 	row := w.rows[w.index]
 	mapping := w.mapping()
-	topic := BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
-	payload, _ := RowToJSON(row, mapping)
+	topic := importer.BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
+	payload, _ := importer.RowToJSON(row, mapping)
 	return func() tea.Msg {
 		if !w.dryRun {
 			w.client.Publish(topic, 0, false, payload)

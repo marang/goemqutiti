@@ -5,6 +5,8 @@ import (
 	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
+
+	"goemqutiti/ui"
 )
 
 func layoutChips(chips []string, width int) (string, []chipBound) {
@@ -57,7 +59,7 @@ func (m *model) viewClient() string {
 			st = chipInactive
 		}
 		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
-			st = st.BorderForeground(colPurple)
+			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
@@ -67,10 +69,10 @@ func (m *model) viewClient() string {
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
 	chipContent, bounds := layoutChips(chips, m.width-4)
-	topicsBox := legendBox(chipContent, "Topics", m.width-2, topicsFocused)
-	topicBox := legendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
-	messageBox := legendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
-	messagesBox := legendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
+	topicsBox := ui.LegendBox(chipContent, "Topics", m.width-2, topicsFocused)
+	topicBox := ui.LegendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
+	messageBox := ui.LegendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
+	messagesBox := ui.LegendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
@@ -102,24 +104,24 @@ func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
 	help := infoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return legendBox(content, "Brokers", m.width-2, true)
+	return ui.LegendBox(content, "Brokers", m.width-2, true)
 }
 
 func (m model) viewForm() string {
 	if m.connForm == nil {
 		return ""
 	}
-	listView := legendBox(m.connections.ConnectionsList.View(), "Brokers", m.width/2-2, false)
+	listView := ui.LegendBox(m.connections.ConnectionsList.View(), "Brokers", m.width/2-2, false)
 	formLabel := "Add Broker"
 	if m.connForm.index >= 0 {
 		formLabel = "Edit Broker"
 	}
-	formView := legendBox(m.connForm.View(), formLabel, m.width/2-2, true)
+	formView := ui.LegendBox(m.connForm.View(), formLabel, m.width/2-2, true)
 	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 
 func (m model) viewConfirmDelete() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colBlue).Padding(0, 1)
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ui.ColBlue).Padding(0, 1)
 	return border.Render(m.confirmPrompt)
 }
 
@@ -127,14 +129,14 @@ func (m model) viewTopics() string {
 	listView := m.topicsList.View()
 	help := infoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return legendBox(content, "Topics", m.width-2, false)
+	return ui.LegendBox(content, "Topics", m.width-2, false)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.payloadList.View()
 	help := infoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return legendBox(content, "Payloads", m.width-2, false)
+	return ui.LegendBox(content, "Payloads", m.width-2, false)
 }
 
 func (m *model) View() string {

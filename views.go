@@ -92,7 +92,7 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
-	help := "[enter] connect  [a]dd [e]dit [d]elete  [esc] back"
+	help := infoStyle.Render("[enter] connect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return legendBox(content, "Brokers", m.width-2, true)
 }
@@ -106,7 +106,7 @@ func (m model) viewForm() string {
 	if m.connForm.index >= 0 {
 		formLabel = "Edit Broker"
 	}
-	formView := legendBox(m.connForm.View(), formLabel, m.width/2-2, false)
+	formView := legendBox(m.connForm.View(), formLabel, m.width/2-2, true)
 	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 

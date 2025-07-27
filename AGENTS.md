@@ -12,6 +12,11 @@ The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker
 - Favor multi-line text areas where users might paste formatted data.
 - Always consider usability and look for ways to improve it.
 
+### UI Guidelines
+- Use `legendBox` or its variants for all boxed sections.
+- Highlight the selected box using the focused style (pink).
+- Present keyboard shortcuts consistently across views and ensure they behave the same everywhere.
+
 ## Test Info
 `ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
 

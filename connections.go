@@ -236,11 +236,28 @@ func retrievePasswordFromKeyring(password string) (string, error) {
 // applyEnvVars loads all profile fields from environment variables when FromEnv is set.
 // Environment variable names use the pattern GOEMQUTITI_<NAME>_<FIELD>, where
 // <NAME> is the uppercased profile name and <FIELD> matches the TOML field name.
+func sanitizeEnvName(name string) string {
+	upper := strings.ToUpper(name)
+	var b strings.Builder
+	for _, r := range upper {
+		if r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune('_')
+		}
+	}
+	return b.String()
+}
+
+func envPrefix(name string) string {
+	return "GOEMQUTITI_" + sanitizeEnvName(name) + "_"
+}
+
 func applyEnvVars(p *Profile) {
 	if !p.FromEnv {
 		return
 	}
-	prefix := fmt.Sprintf("GOEMQUTITI_%s_", strings.ToUpper(p.Name))
+	prefix := envPrefix(p.Name)
 	rv := reflect.ValueOf(p).Elem()
 	rt := rv.Type()
 	for i := 0; i < rt.NumField(); i++ {

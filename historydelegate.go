@@ -64,7 +64,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lines[i] = lipgloss.NewStyle().Background(colDarkGray).Render(l)
 		}
 	}
-	border := " "
+	border := lipgloss.NewStyle().Foreground(colGray).Render("┃")
 	if _, ok := d.m.selectedHistory[index]; ok {
 		border = lipgloss.NewStyle().Foreground(colBlue).Render("┃")
 	}

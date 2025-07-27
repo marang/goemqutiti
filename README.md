@@ -70,7 +70,7 @@ so multiple connections remain unique.
 
 Passwords can be stored securely using the operating system keyring. You may also set the `MQTT_PASSWORD` environment variable to override the stored password at runtime.
 
-Each broker profile can optionally load all of its settings from environment variables instead of `config.toml`. Enable **Load from env** when editing a profile and set variables using the pattern `GOEMQUTITI_<NAME>_<FIELD>` where `<NAME>` is the profile name in uppercase. For example, the password for a profile named `local` is read from `GOEMQUTITI_LOCAL_PASSWORD`.
+Each broker profile can optionally load all of its settings from environment variables instead of `config.toml`. Enable **Load from env** when editing a profile and set variables using the pattern `GOEMQUTITI_<NAME>_<FIELD>`. The `<NAME>` portion is derived from the profile name: letters are upper‑cased and any other characters become underscores. For example, a profile named `local broker` would use variables like `GOEMQUTITI_LOCAL_BROKER_PASSWORD`.
 
 In the interface:
 

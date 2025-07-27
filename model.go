@@ -138,6 +138,7 @@ func initialModel(conns *Connections) *model {
 	ti.CharLimit = 32
 	ti.Prompt = "> "
 	ti.PromptStyle = lipgloss.NewStyle().Foreground(colGray)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(colGray)
 	ti.Cursor.Style = cursorStyle
 	ti.TextStyle = focusedStyle
 	// Defer width assignment until we know the terminal size

@@ -59,7 +59,13 @@ func main() {
 	initial := initialModel(nil)
 	initial.mode = modeConnections
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
-	if _, err := p.Run(); err != nil {
+	finalModel, err := p.Run()
+	if err != nil {
 		log.Fatalf("Error running program: %v", err)
+	}
+	if m, ok := finalModel.(*model); ok {
+		if m.tracer != nil {
+			m.tracer.Close()
+		}
 	}
 }

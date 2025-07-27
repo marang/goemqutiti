@@ -113,3 +113,11 @@ func (m *MQTTClient) Unsubscribe(topic string) error {
 	}
 	return nil
 }
+
+// Disconnect cleanly closes the connection to the broker.
+func (m *MQTTClient) Disconnect() {
+	if m.Client != nil && m.Client.IsConnected() {
+		// Allow up to 250 milliseconds for pending work to complete.
+		m.Client.Disconnect(250)
+	}
+}

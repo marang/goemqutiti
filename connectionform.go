@@ -5,7 +5,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 type formField interface {
@@ -326,7 +325,6 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 }
 
 func (f connectionForm) View() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).Padding(0, 1).BorderForeground(lipgloss.Color("63"))
 	var s string
 	labels := []string{
 		"Name",
@@ -365,7 +363,7 @@ func (f connectionForm) View() string {
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	s += "\nPress Enter to save or Esc to cancel"
-	return border.Render(s)
+	return s
 }
 
 func (f connectionForm) Profile() Profile {

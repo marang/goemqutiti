@@ -184,6 +184,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 					clipboard.WriteAll(text)
 				}
 			}
+		case "ctrl+x":
+			if m.mqttClient != nil {
+				m.mqttClient.Disconnect()
+				m.connections.Statuses[m.activeConn] = "disconnected"
+				m.refreshConnectionItems()
+				m.connection = ""
+				m.activeConn = ""
+				m.mqttClient = nil
+			}
 		case "space":
 			if m.focusOrder[m.focusIndex] == "history" {
 				idx := m.history.Index()
@@ -468,7 +477,10 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 		return m, nil
 	}
 	var cmd tea.Cmd
-	m.connections.ConnectionsList, _ = m.connections.ConnectionsList.Update(msg)
+	switch msg.(type) {
+	case tea.WindowSizeMsg, tea.MouseMsg:
+		m.connections.ConnectionsList, _ = m.connections.ConnectionsList.Update(msg)
+	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {

@@ -27,7 +27,10 @@ Run the built binary (or use `go run .`) to start the TUI application. On startu
 ./goemqutiti
 ```
 
-The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. A sample configuration with all options looks like:
+The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. 
+There is also an option to create connections within the client (recommended).
+
+A sample configuration with all options looks like:
 
 ```toml
 default_profile = "local"

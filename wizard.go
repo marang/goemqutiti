@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"math"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -21,19 +24,20 @@ type Publisher interface {
 
 // Wizard runs an interactive import wizard.
 type Wizard struct {
-	step      int
-	file      textinput.Model
-	headers   []string
-	fields    []textinput.Model
-	focus     int
-	tmpl      textinput.Model
-	rows      []map[string]string
-	index     int
-	progress  progress.Model
-	client    Publisher
-	dryRun    bool
-	published []string
-	finished  bool
+	step        int
+	file        textinput.Model
+	headers     []string
+	fields      []textinput.Model
+	focus       int
+	tmpl        textinput.Model
+	rows        []map[string]string
+	index       int
+	progress    progress.Model
+	client      Publisher
+	dryRun      bool
+	published   []string
+	finished    bool
+	sampleLimit int
 }
 
 const (
@@ -55,6 +59,7 @@ func NewWizard(client Publisher, path string) *Wizard {
 	ti.SetValue(path)
 	tmpl := textinput.New()
 	tmpl.Placeholder = "Topic template"
+	rand.Seed(time.Now().UnixNano())
 	return &Wizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient())}
 }
 
@@ -277,8 +282,13 @@ func (w *Wizard) View() string {
 	case stepPublish:
 		bar := w.progress.View()
 		lines := w.published
-		if len(lines) > 5 {
-			lines = lines[len(lines)-5:]
+		limit := w.sampleLimit
+		if limit == 0 {
+			limit = sampleSize(len(w.rows))
+			w.sampleLimit = limit
+		}
+		if len(lines) > limit {
+			lines = lines[len(lines)-limit:]
 		}
 		recent := strings.Join(lines, "\n")
 		recent = ansi.Wrap(recent, 48, " ")
@@ -316,11 +326,24 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 	mapping := w.mapping()
 	topic := importer.BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
 	payload, _ := importer.RowToJSON(row, mapping)
+	limit := w.sampleLimit
+	if limit == 0 {
+		limit = sampleSize(len(w.rows))
+		w.sampleLimit = limit
+	}
+	i := w.index
 	return func() tea.Msg {
-		if w.dryRun || len(w.published) < 5 {
-			w.published = append(w.published, fmt.Sprintf("%s -> %s", topic, string(payload)))
-		}
-		if !w.dryRun {
+		line := fmt.Sprintf("%s -> %s", topic, string(payload))
+		if w.dryRun {
+			w.published = append(w.published, line)
+		} else {
+			if len(w.published) < limit {
+				w.published = append(w.published, line)
+			} else {
+				if r := rand.Intn(i + 1); r < limit {
+					w.published[r] = line
+				}
+			}
 			w.client.Publish(topic, 0, false, payload)
 		}
 		return publishMsg{}
@@ -365,3 +388,17 @@ func (w *Wizard) stepsView() string {
 }
 
 type publishMsg struct{}
+
+func sampleSize(total int) int {
+	if total <= 5 {
+		return total
+	}
+	size := int(math.Sqrt(float64(total)))
+	if size < 5 {
+		size = 5
+	}
+	if size > 20 {
+		size = 20
+	}
+	return size
+}

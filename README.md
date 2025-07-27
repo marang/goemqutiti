@@ -97,7 +97,9 @@ All `Ctrl` shortcuts are global, so they work even when an input field is active
 
 Run the program with `-import` to launch an interactive wizard that guides you
 through selecting a file, mapping column names, defining the topic template and
-publishing the messages. Providing a path pre-selects the file in the wizard:
+publishing the messages. During the mapping step each CSV column appears on the
+left with an editable field on the right so you can rename it for the JSON
+payload. Providing a path pre-selects the file in the wizard:
 
 ```bash
 ./goemqutiti -import data.csv -profile local

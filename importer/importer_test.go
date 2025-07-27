@@ -28,3 +28,15 @@ func TestReadCSVBuildTopic(t *testing.T) {
 		t.Fatalf("payload mismatch")
 	}
 }
+
+func TestRowToJSON(t *testing.T) {
+	row := map[string]string{"A": "1", "B": "2"}
+	mapping := map[string]string{"A": "alpha", "B": ""}
+	data, err := RowToJSON(row, mapping)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if string(data) != "{\"alpha\":\"1\"}" {
+		t.Fatalf("got %s", string(data))
+	}
+}

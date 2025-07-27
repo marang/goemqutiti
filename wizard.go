@@ -76,7 +76,8 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for k := range rows[0] {
 				w.headers = append(w.headers, k)
 				fi := textinput.New()
-				fi.SetValue(toSnake(k))
+				// Default mapping uses the original column name.
+				fi.SetValue(k)
 				w.fields = append(w.fields, fi)
 			}
 			w.step = stepMap
@@ -192,7 +193,9 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 func renameFields(row map[string]string, mapping map[string]string) map[string]string {
 	out := map[string]string{}
 	for k, v := range row {
-		out[mapping[k]] = v
+		if name := mapping[k]; name != "" {
+			out[name] = v
+		}
 	}
 	return out
 }
@@ -206,20 +209,3 @@ func (w *Wizard) mapping() map[string]string {
 }
 
 type publishMsg struct{}
-
-func toSnake(s string) string {
-	var out []rune
-	for i, r := range s {
-		if r >= 'A' && r <= 'Z' {
-			if i > 0 {
-				out = append(out, '_')
-			}
-			out = append(out, r+('a'-'A'))
-		} else if r == ' ' || r == '-' {
-			out = append(out, '_')
-		} else {
-			out = append(out, r)
-		}
-	}
-	return string(out)
-}

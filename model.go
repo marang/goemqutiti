@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"goemqutiti/ui"
 	"goemqutiti/trace"
 )
 
@@ -62,17 +63,17 @@ type historyItem struct {
 func (h historyItem) FilterValue() string { return h.payload }
 func (h historyItem) Title() string {
 	var label string
-	color := colBlue
+	color := ui.ColBlue
 	switch h.kind {
 	case "sub":
 		label = "SUB"
-		color = colPink
+		color = ui.ColPink
 	case "pub":
 		label = "PUB"
-		color = colBlue
+		color = ui.ColBlue
 	default:
 		label = "LOG"
-		color = colGray
+		color = ui.ColGray
 	}
 	return lipgloss.NewStyle().Foreground(color).Render(fmt.Sprintf("%s %s: %s", label, h.topic, h.payload))
 }
@@ -147,8 +148,8 @@ func initialModel(conns *Connections) *model {
 	ti.Focus()
 	ti.CharLimit = 32
 	ti.Prompt = "> "
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(colGray)
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(colGray)
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
 	ti.Cursor.Style = cursorStyle
 	ti.TextStyle = focusedStyle
 	// Defer width assignment until we know the terminal size
@@ -161,7 +162,7 @@ func initialModel(conns *Connections) *model {
 	ta.SetPromptFunc(0, func(i int) string {
 		return fmt.Sprintf("%d> ", i+1)
 	})
-	promptColor := colGray
+	promptColor := ui.ColGray
 	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.Blur()

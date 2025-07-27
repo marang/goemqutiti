@@ -9,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
+
+	"goemqutiti/ui"
 )
 
 // historyDelegate renders history items with two lines and supports highlighting
@@ -28,16 +30,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	switch hi.kind {
 	case "sub":
 		label = fmt.Sprintf("SUB %s:", hi.topic)
-		lblColor = colPink
-		msgColor = colPub
+		lblColor = ui.ColPink
+		msgColor = ui.ColPub
 	case "pub":
 		label = fmt.Sprintf("PUB %s:", hi.topic)
-		lblColor = colBlue
-		msgColor = colSub
+		lblColor = ui.ColBlue
+		msgColor = ui.ColSub
 	default:
 		label = ""
-		lblColor = colGray
-		msgColor = colGray
+		lblColor = ui.ColGray
+		msgColor = ui.ColGray
 	}
 	align := lipgloss.Left
 	if hi.kind == "pub" {
@@ -65,19 +67,19 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {
-			lines[i] = lipgloss.NewStyle().Background(colDarkGray).Render(l)
+			lines[i] = lipgloss.NewStyle().Background(ui.ColDarkGray).Render(l)
 		}
 	}
-	borderColor := colGray
+	borderColor := ui.ColGray
 	if hi.kind == "log" {
-		borderColor = colDarkGray
+		borderColor = ui.ColDarkGray
 	}
 	border := lipgloss.NewStyle().Foreground(borderColor).Render("┃")
 	if _, ok := d.m.selectedHistory[index]; ok {
-		border = lipgloss.NewStyle().Foreground(colBlue).Render("┃")
+		border = lipgloss.NewStyle().Foreground(ui.ColBlue).Render("┃")
 	}
 	if index == d.m.history.Index() {
-		border = lipgloss.NewStyle().Foreground(colPurple).Render("┃")
+		border = lipgloss.NewStyle().Foreground(ui.ColPurple).Render("┃")
 	}
 	for i, l := range lines {
 		lines[i] = border + " " + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l)

@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"goemqutiti/ui"
 )
 
 type connectionDelegate struct{}
@@ -20,12 +22,12 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	width := m.Width()
 	border := " "
 	if index == m.Index() {
-		border = lipgloss.NewStyle().Foreground(colPurple).Render("┃")
+		border = lipgloss.NewStyle().Foreground(ui.ColPurple).Render("┃")
 	}
 	name := lipgloss.PlaceHorizontal(width-2, lipgloss.Left, ci.title)
-	status := lipgloss.NewStyle().Foreground(colGray).Render(ci.status)
+	status := lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.status)
 	status = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, status)
 	detail := lipgloss.PlaceHorizontal(width-2, lipgloss.Left,
-		lipgloss.NewStyle().Foreground(colGray).Render(ci.detail))
+		lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.detail))
 	fmt.Fprintf(w, "%s %s\n%s %s\n%s %s", border, name, border, status, border, detail)
 }

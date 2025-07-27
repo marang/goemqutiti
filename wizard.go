@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"goemqutiti/importer"
 	"goemqutiti/ui"
@@ -223,6 +224,7 @@ func (w *Wizard) View() string {
 			names[i] = "{" + name + "}"
 		}
 		help := "Available fields: " + strings.Join(names, " ")
+		help = ansi.Wrap(help, 48, " ")
 		box = ui.LegendBox(w.tmpl.View()+"\n"+help+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
 	case stepReview:
 		topic := w.tmpl.Value()

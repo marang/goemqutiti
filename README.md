@@ -93,6 +93,20 @@ In the interface:
 
 All `Ctrl` shortcuts are global, so they work even when an input field is active.
 
+### Importing from CSV or XLS
+
+The command line supports bulk publishing from files. Use the `-import` flag to
+specify a CSV or XLS/XLSX file and `-template` to define the topic format using
+column names as placeholders:
+
+```bash
+./goemqutiti -import data.csv -template "device/{serial_number}/status" -profile local
+```
+
+Each row must contain a `payload` column. Placeholders in the template are
+replaced with corresponding values from the row and the payload is published to
+the generated topic.
+
 ## License
 
 This project is licensed under the terms of the MIT License. See [LICENSE](LICENSE) for details.

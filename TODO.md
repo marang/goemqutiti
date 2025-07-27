@@ -55,6 +55,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - [x] Display configuration load warnings in the history log.
 - [x] Persist brokers, topics, and payloads between runs (messages are not yet persisted).
 - [x] Support dynamic updates from the MQTT broker (real-time message logging).
+- [x] Import and publish messages from CSV or XLS files using command-line flags.
 
 ---
 

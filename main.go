@@ -1,11 +1,14 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"goemqutiti/importer"
 )
 
 // type Profile struct {
@@ -44,7 +47,15 @@ import (
 // 	return &config, nil
 // }
 
+var (
+	importFile    = flag.String("import", "", "CSV or XLS file to import and publish")
+	topicTemplate = flag.String("template", "", "Topic template using field placeholders")
+	profileName   = flag.String("profile", "", "Connection profile to use")
+)
+
 func main() {
+	flag.Parse()
+
 	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		fmt.Println("Failed to open log file:", err)
@@ -54,6 +65,11 @@ func main() {
 	// Set log output to file
 	log.SetOutput(logFile)
 
+	if *importFile != "" {
+		runImport(*importFile, *topicTemplate, *profileName)
+		return
+	}
+
 	// Start Bubble Tea UI without connecting. The user can choose a profile
 	// from the connection manager once the program starts.
 	initial := initialModel(nil)
@@ -61,5 +77,67 @@ func main() {
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		log.Fatalf("Error running program: %v", err)
+	}
+}
+
+func runImport(path, tmpl, profile string) {
+	if path == "" || tmpl == "" {
+		fmt.Println("import file and template are required")
+		return
+	}
+	conns := NewConnectionsModel()
+	if err := conns.LoadProfiles(""); err != nil {
+		fmt.Println("Error loading profiles:", err)
+		return
+	}
+	var p *Profile
+	if profile != "" {
+		for i := range conns.Profiles {
+			if conns.Profiles[i].Name == profile {
+				p = &conns.Profiles[i]
+				break
+			}
+		}
+	} else if conns.DefaultProfileName != "" {
+		for i := range conns.Profiles {
+			if conns.Profiles[i].Name == conns.DefaultProfileName {
+				p = &conns.Profiles[i]
+				break
+			}
+		}
+	}
+	if p == nil && len(conns.Profiles) > 0 {
+		p = &conns.Profiles[0]
+	}
+	if p == nil {
+		fmt.Println("no connection profile available")
+		return
+	}
+	if p.FromEnv {
+		applyEnvVars(p)
+	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+		p.Password = env
+	}
+
+	client, err := NewMQTTClient(*p, nil)
+	if err != nil {
+		fmt.Println("connect error:", err)
+		return
+	}
+	defer client.Disconnect()
+
+	rows, err := importer.ReadFile(path)
+	if err != nil {
+		fmt.Println("read error:", err)
+		return
+	}
+	for _, row := range rows {
+		topic := importer.BuildTopic(tmpl, row)
+		payload := row["payload"]
+		if err := client.Publish(topic, 0, false, payload); err != nil {
+			fmt.Println("publish failed:", err)
+		} else {
+			fmt.Println("published", topic)
+		}
 	}
 }

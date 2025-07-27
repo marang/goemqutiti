@@ -630,7 +630,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.messageInput.SetWidth(msg.Width - 4)
 		m.history.SetSize(msg.Width-4, (msg.Height-1)/3+10)
 		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 1
+		// Reserve two lines for the info header at the top of the view.
+		m.viewport.Height = msg.Height - 2
 		return m, nil
 	}
 

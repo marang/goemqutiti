@@ -95,17 +95,20 @@ All `Ctrl` shortcuts are global, so they work even when an input field is active
 
 ### Importing from CSV or XLS
 
-The command line supports bulk publishing from files. Use the `-import` flag to
-specify a CSV or XLS/XLSX file and `-template` to define the topic format using
-column names as placeholders:
+Run the program with `-import` to launch an interactive wizard that guides you
+through selecting a file, mapping column names, defining the topic template and
+publishing the messages. Providing a path pre-selects the file in the wizard:
 
 ```bash
-./goemqutiti -import data.csv -template "device/{serial_number}/status" -profile local
+./goemqutiti -import data.csv -profile local
 ```
 
-Each row must contain a `payload` column. Placeholders in the template are
-replaced with corresponding values from the row and the payload is published to
-the generated topic.
+Each row becomes a JSON object with properties derived from the mapped column
+names. The topic template can reference those fields using `{field}`
+placeholders. After showing a preview of the first few messages you can perform
+a dry run or publish them to the broker.
+
+Future versions may store import settings for quick reuse.
 
 ## License
 

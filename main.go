@@ -48,9 +48,8 @@ import (
 // }
 
 var (
-	importFile    = flag.String("import", "", "CSV or XLS file to import and publish")
-	topicTemplate = flag.String("template", "", "Topic template using field placeholders")
-	profileName   = flag.String("profile", "", "Connection profile to use")
+	importFile  = flag.String("import", "", "Launch import wizard with optional file path")
+	profileName = flag.String("profile", "", "Connection profile to use")
 )
 
 func main() {
@@ -66,7 +65,7 @@ func main() {
 	log.SetOutput(logFile)
 
 	if *importFile != "" {
-		runImport(*importFile, *topicTemplate, *profileName)
+		runImport(*importFile, *profileName)
 		return
 	}
 
@@ -80,11 +79,7 @@ func main() {
 	}
 }
 
-func runImport(path, tmpl, profile string) {
-	if path == "" || tmpl == "" {
-		fmt.Println("import file and template are required")
-		return
-	}
+func runImport(path, profile string) {
 	conns := NewConnectionsModel()
 	if err := conns.LoadProfiles(""); err != nil {
 		fmt.Println("Error loading profiles:", err)
@@ -126,18 +121,9 @@ func runImport(path, tmpl, profile string) {
 	}
 	defer client.Disconnect()
 
-	rows, err := importer.ReadFile(path)
-	if err != nil {
-		fmt.Println("read error:", err)
-		return
-	}
-	for _, row := range rows {
-		topic := importer.BuildTopic(tmpl, row)
-		payload := row["payload"]
-		if err := client.Publish(topic, 0, false, payload); err != nil {
-			fmt.Println("publish failed:", err)
-		} else {
-			fmt.Println("published", topic)
-		}
+	w := importer.NewWizard(client, path)
+	prog := tea.NewProgram(w, tea.WithAltScreen())
+	if _, err := prog.Run(); err != nil {
+		fmt.Println("import error:", err)
 	}
 }

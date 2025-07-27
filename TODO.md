@@ -71,6 +71,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
  - [ ] Add advanced filtering or search functionality for large logs.
  - [ ] Implement TLS/SSL certificate management (consider storing certificate paths securely).
  - [x] Add support for Last Will and Testament (LWT) settings.
+ - [ ] Persist import wizard settings for reuse.
 
 ---
 

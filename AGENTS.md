@@ -4,7 +4,7 @@
 - Run `go vet ./...` and attempt `go test ./...` before committing.
 
 ## Agent Notes
-The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Bulk publishing from a CSV or XLS file is available via the `-import` flag and a topic `-template`.
+The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `-import` flag to launch an interactive wizard for CSV or XLS bulk publishing.
 
 ### Recent Experience
 - Keyboard shortcuts bound to plain letters can interfere with text entry. Use `Ctrl` combinations for global actions.

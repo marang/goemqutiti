@@ -2,6 +2,7 @@ package importer
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -102,4 +103,15 @@ func BuildTopic(tmpl string, fields map[string]string) string {
 		}
 		return ""
 	})
+}
+
+// RowToJSON converts a row map to a JSON payload using the provided field mapping.
+func RowToJSON(row map[string]string, mapping map[string]string) ([]byte, error) {
+	m := map[string]string{}
+	for k, v := range row {
+		if mapped, ok := mapping[k]; ok {
+			m[mapped] = v
+		}
+	}
+	return json.Marshal(m)
 }

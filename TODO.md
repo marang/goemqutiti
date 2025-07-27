@@ -25,8 +25,11 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - [x] Integrate Linux keyring using [`zalando/go-keyring`](https://github.com/zalando/go-keyring).
 - [x] Store sensitive fields (e.g., passwords) in the keyring.
  - [x] Update `config.toml` to reference keyring entries (e.g., `password = "keyring:<service>/<username>"`).
-- [ ] Prompt user to unlock the keyring on application startup.
-- [ ] Handle cases where the keyring is unavailable or inaccessible.
+- [x] Prompt user to unlock the keyring on application startup (handled
+  automatically by the OS keyring).
+- [x] Handle cases where the keyring is unavailable or inaccessible
+  using the `MQTT_PASSWORD` environment variable (one connection only for
+  now).
 
 ### **CRUD Operations**
 - [x] Add new brokers with full MQTT configuration options.
@@ -38,7 +41,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ### **UI Components**
 - [x] Display a selectable list of brokers using `bubbles/list`.
 - [x] Provide a menu option to open the broker manager.
-- [ ] Highlight the active connection in the list.
+ - [x] Highlight the active connection in the list.
 - [x] Show connection status (connected/disconnected).
 - [x] Provide a form for adding/editing brokers using `bubbles/textinput`.
 - [x] Support advanced connection options (keep alive, clean session, TLS, LWT, etc.).
@@ -48,9 +51,9 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 
 ## **3. General Features**
  - [x] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
-- [ ] Add error handling for failed connections or invalid inputs.
-- [ ] Persist all data securely between application runs.
-- [ ] Support dynamic updates from the MQTT broker (real-time message logging).
+ - [x] Add error handling for failed connections or invalid inputs.
+- [x] Persist brokers, topics, and payloads between runs (messages are not yet persisted).
+- [x] Support dynamic updates from the MQTT broker (real-time message logging).
 
 ---
 
@@ -63,10 +66,9 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 ---
 
 ## **5. Future Enhancements**
-- [ ] Add filtering or search functionality for large logs.
-- [ ] Implement TLS/SSL certificate management (consider storing certificates in the keyring).
-- [ ] Add support for Last Will and Testament (LWT) settings.
-- [ ] Explore additional security features (e.g., biometric authentication).
+ - [ ] Add advanced filtering or search functionality for large logs.
+ - [ ] Implement TLS/SSL certificate management (consider storing certificate paths securely).
+ - [x] Add support for Last Will and Testament (LWT) settings.
 
 ---
 

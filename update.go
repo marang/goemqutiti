@@ -21,6 +21,10 @@ type connectResult struct {
 
 func connectBroker(p Profile, ch chan string) tea.Cmd {
 	return func() tea.Msg {
+		if ch != nil {
+			brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+			ch <- fmt.Sprintf("Connecting to %s", brokerURL)
+		}
 		client, err := NewMQTTClient(p, ch)
 		return connectResult{client: client, profile: p, err: err}
 	}
@@ -395,17 +399,17 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case connectResult:
+		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
 		if msg.err != nil {
-			m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", msg.err))
+			m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
 			m.connections.Statuses[msg.profile.Name] = "disconnected"
-			m.connection = ""
+			m.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
 			m.refreshConnectionItems()
 		} else {
 			m.mqttClient = msg.client
 			m.activeConn = msg.profile.Name
 			m.restoreState(msg.profile.Name)
 			m.subscribeActiveTopics()
-			brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
 			m.connection = "Connected to " + brokerURL
 			m.connections.Statuses[msg.profile.Name] = "connected"
 			m.refreshConnectionItems()

@@ -173,7 +173,9 @@ func initialModel(conns *Connections) *model {
 		connModel = *conns
 	} else {
 		connModel = NewConnectionsModel()
-		connModel.LoadProfiles("")
+		if err := connModel.LoadProfiles(""); err != nil {
+			fmt.Println("Warning:", err)
+		}
 	}
 	connModel.ConnectionsList.SetShowStatusBar(false)
 	for _, p := range connModel.Profiles {

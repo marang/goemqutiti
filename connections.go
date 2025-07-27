@@ -344,11 +344,11 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 
 // LoadProfiles updates c with profiles from the config file. It logs errors but
 // leaves c unchanged on failure.
-func (c *Connections) LoadProfiles(filePath string) {
+func (c *Connections) LoadProfiles(filePath string) error {
 	loaded, err := LoadFromConfig(filePath)
 	if err != nil {
 		fmt.Println("Warning:", err)
-		return
+		return err
 	}
 	c.DefaultProfileName = loaded.DefaultProfileName
 	c.Profiles = loaded.Profiles
@@ -368,4 +368,5 @@ func (c *Connections) LoadProfiles(filePath string) {
 	}
 	c.Statuses = statuses
 	c.Errors = errors
+	return nil
 }

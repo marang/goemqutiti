@@ -88,6 +88,7 @@ In the interface:
 - Left-click a topic chip to toggle it and middle-click to remove it.
 - Active topics are automatically subscribed when you connect to a broker.
 - Connection attempts and any errors are shown at the top of the interface and recorded in the history log.
+- Warnings while loading connection profiles also appear in the history log.
 - Clicking on any pane or input field focuses it.
 
 All `Ctrl` shortcuts are global, so they work even when an input field is active.
@@ -101,5 +102,6 @@ This project is licensed under the terms of the MIT License. See [LICENSE](LICEN
 Unit tests can be run with `go test ./...`. The example `ExampleSet_manual` in
 `keyring_util_test.go` interacts with the real system keyring and is excluded
 from automated runs. Execute it manually when a keyring is available.
+Tests also cover configuration parsing and saved state persistence.
 
 Additional notes for repository contributors are available in [AGENTS.md](AGENTS.md).

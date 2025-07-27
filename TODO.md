@@ -51,17 +51,18 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 
 ## **3. General Features**
  - [x] Implement keyboard shortcuts for navigation and actions. (Ctrl+S or Ctrl+Enter to publish messages)
- - [x] Add error handling for failed connections or invalid inputs.
+- [x] Add error handling for failed connections or invalid inputs.
+- [x] Display configuration load warnings in the history log.
 - [x] Persist brokers, topics, and payloads between runs (messages are not yet persisted).
 - [x] Support dynamic updates from the MQTT broker (real-time message logging).
 
 ---
 
 ## **4. Testing and Debugging**
-- [ ] Test responsiveness across different terminal sizes.
-- [ ] Test secure storage integration with the Linux keyring.
-- [ ] Verify encryption/decryption logic (if still applicable).
-- [ ] Debug any issues with loading/saving connections.
+ - [ ] Test responsiveness across different terminal sizes.
+ - [x] Test secure storage integration with the Linux keyring.
+ - [x] Debug any issues with loading/saving connections.
+ - [x] Add unit tests for config parsing and state persistence.
 
 ---
 

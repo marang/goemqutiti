@@ -83,6 +83,12 @@ In the interface:
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+C** copies the currently selected history entry.
+- Press `/` while the history is focused to filter messages. Queries support
+  `topic=<list>` comma separated, `start=<RFC3339 time>`, `end=<RFC3339 time>`
+  and free text to match payloads. Example:
+  `topic=sensors/start start=2024-01-01T00:00:00Z payload=error`.
+  The history log is stored in BadgerDB under `~/.emqutiti/history` so messages
+  remain searchable across sessions.
 - **Esc** navigates back within menus without quitting.
 - **Ctrl+D** exits the program.
 - Left-click a topic chip to toggle it and middle-click to remove it.

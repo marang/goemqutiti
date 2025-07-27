@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
@@ -9,8 +10,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-
 	"goemqutiti/ui"
+	"goemqutiti/trace"
 )
 
 type connectionItem struct {
@@ -105,6 +106,8 @@ type model struct {
 	connection      string
 	activeConn      string
 	history         list.Model
+	historyItems    []historyItem
+	tracer          *trace.Index
 	topicInput      textinput.Model
 	messageInput    textarea.Model
 	payloads        []payloadItem
@@ -213,6 +216,8 @@ func initialModel(conns *Connections) *model {
 
 	m := &model{
 		history:         hist,
+		historyItems:    []historyItem{},
+		tracer:          nil,
 		payloads:        []payloadItem{},
 		topicInput:      ti,
 		messageInput:    ta,
@@ -241,6 +246,16 @@ func initialModel(conns *Connections) *model {
 	}
 	hDel.m = m
 	m.history.SetDelegate(hDel)
+	if idx, err := trace.Open(""); err == nil {
+		m.tracer = idx
+		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
+		items := make([]list.Item, len(msgs))
+		for i, mmsg := range msgs {
+			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+			m.historyItems = append(m.historyItems, items[i].(historyItem))
+		}
+		m.history.SetItems(items)
+	}
 	return m
 }
 

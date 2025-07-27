@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -142,6 +143,8 @@ const (
 	idxIDSuffix
 	idxUsername
 	idxPassword
+	idxPasswordFromEnv
+	idxPasswordEnv
 	idxSSL
 	idxMQTTVersion
 	idxConnectTimeout
@@ -176,28 +179,34 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		p.ClientID,
 		"", // checkbox for rand suffix
 		p.Username,
-		"",
-		"", // placeholder for checkbox
+		p.Password,
+		"", // checkbox: password from env
+		p.PasswordEnvVar,
+		"", // SSL checkbox
 		p.MQTTVersion,
 		fmt.Sprintf("%d", p.ConnectTimeout),
 		fmt.Sprintf("%d", p.KeepAlive),
 		fmt.Sprintf("%d", p.QoS),
-		"", // checkbox
+		"", // auto reconnect checkbox
 		fmt.Sprintf("%d", p.ReconnectPeriod),
-		"", // checkbox
+		"", // clean start checkbox
 		fmt.Sprintf("%d", p.SessionExpiry),
 		fmt.Sprintf("%d", p.ReceiveMaximum),
 		fmt.Sprintf("%d", p.MaximumPacketSize),
 		fmt.Sprintf("%d", p.TopicAliasMaximum),
-		"", // checkbox
-		"", // checkbox
-		"", // checkbox
+		"", // request response info checkbox
+		"", // request problem info checkbox
+		"", // last will enabled checkbox
 		p.LastWillTopic,
 		fmt.Sprintf("%d", p.LastWillQos),
-		"", // checkbox
+		"", // last will retain checkbox
 		p.LastWillPayload,
 	}
 
+	envName := "GOEMQUTITI_<NAME>_PASSWORD"
+	if p.Name != "" {
+		envName = fmt.Sprintf("GOEMQUTITI_%s_PASSWORD", strings.ToUpper(p.Name))
+	}
 	placeholders := []string{
 		"Name",
 		"Schema",
@@ -207,6 +216,8 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Random ID suffix",
 		"Username",
 		pwKey,
+		"Use env var",
+		envName,
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -230,14 +241,15 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	fields := make([]formField, len(values))
 	boolIndices := map[int]bool{
-		idxSSL:           true,
-		idxAutoReconnect: true,
-		idxCleanStart:    true,
-		idxRequestResp:   true,
-		idxRequestProb:   true,
-		idxWillEnable:    true,
-		idxWillRetain:    true,
-		idxIDSuffix:      true,
+		idxIDSuffix:        true,
+		idxPasswordFromEnv: true,
+		idxSSL:             true,
+		idxAutoReconnect:   true,
+		idxCleanStart:      true,
+		idxRequestResp:     true,
+		idxRequestProb:     true,
+		idxWillEnable:      true,
+		idxWillRetain:      true,
 	}
 
 	selectOptions := map[int][]string{
@@ -249,6 +261,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	boolValues := []bool{
 		p.RandomIDSuffix,
+		p.PasswordFromEnv,
 		p.SSL,
 		p.AutoReconnect,
 		p.CleanStart,
@@ -335,6 +348,8 @@ func (f connectionForm) View() string {
 		"Random ID suffix",
 		"Username",
 		"Password",
+		"Use env var",
+		"Env var name",
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -379,6 +394,8 @@ func (f connectionForm) Profile() Profile {
 	p.ClientID = vals[idxClientID]
 	p.Username = vals[idxUsername]
 	p.Password = vals[idxPassword]
+	fmt.Sscan(vals[idxPasswordFromEnv], &p.PasswordFromEnv)
+	p.PasswordEnvVar = vals[idxPasswordEnv]
 	fmt.Sscan(vals[idxSSL], &p.SSL)
 	p.MQTTVersion = vals[idxMQTTVersion]
 	fmt.Sscan(vals[idxConnectTimeout], &p.ConnectTimeout)

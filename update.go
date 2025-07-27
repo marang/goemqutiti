@@ -56,6 +56,19 @@ func listenStatus(ch chan string) tea.Cmd {
 	}
 }
 
+func flushStatus(ch chan string) {
+	if ch == nil {
+		return
+	}
+	for {
+		select {
+		case <-ch:
+		default:
+			return
+		}
+	}
+}
+
 func (m *model) saveCurrent() {
 	if m.activeConn == "" {
 		return
@@ -423,9 +436,17 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				i := m.connections.ConnectionsList.Index()
 				if i >= 0 && i < len(m.connections.Profiles) {
 					p := m.connections.Profiles[i]
-					envPassword := os.Getenv("MQTT_PASSWORD")
-					if envPassword != "" {
-						p.Password = envPassword
+					flushStatus(m.statusChan)
+					if p.PasswordFromEnv {
+						if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
+							p.Password = val
+						} else {
+							m.connection = fmt.Sprintf("Missing password env %s", p.PasswordEnvVar)
+							m.appendHistory("", "", "log", m.connection)
+							return m, nil
+						}
+					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+						p.Password = env
 					}
 					m.connections.Statuses[p.Name] = "connecting"
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -454,9 +475,17 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.Profiles) {
 				p := m.connections.Profiles[i]
-				envPassword := os.Getenv("MQTT_PASSWORD")
-				if envPassword != "" {
-					p.Password = envPassword
+				flushStatus(m.statusChan)
+				if p.PasswordFromEnv {
+					if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
+						p.Password = val
+					} else {
+						m.connection = fmt.Sprintf("Missing password env %s", p.PasswordEnvVar)
+						m.appendHistory("", "", "log", m.connection)
+						return m, nil
+					}
+				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+					p.Password = env
 				}
 				m.connections.Statuses[p.Name] = "connecting"
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)

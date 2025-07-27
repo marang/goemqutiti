@@ -21,6 +21,8 @@ type Profile struct {
 	ClientID            string `toml:"client_id"`
 	Username            string `toml:"username"`
 	Password            string `toml:"password"`
+	PasswordFromEnv     bool   `toml:"password_from_env"`
+	PasswordEnvVar      string `toml:"password_env_var"`
 	SSL                 bool   `toml:"ssl_tls"`
 	MQTTVersion         string `toml:"mqtt_version"`
 	ConnectTimeout      int    `toml:"connect_timeout"`
@@ -105,15 +107,20 @@ func (m Connections) View() string {
 // AddConnection adds a new connection to the list and saves it to config.toml and keyring.
 func (m *Connections) AddConnection(p Profile) {
 	plain := p.Password
-	keyref := "keyring:emqutiti-" + p.Name + "/" + p.Username
-	p.Password = keyref
+	if !p.PasswordFromEnv {
+		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+	} else {
+		p.Password = ""
+	}
 	m.Profiles = append(m.Profiles, p)
 	if m.Statuses == nil {
 		m.Statuses = make(map[string]string)
 	}
 	m.Statuses[p.Name] = "disconnected"
 	m.saveConfigToFile()
-	m.savePasswordToKeyring(p.Name, p.Username, plain)
+	if !p.PasswordFromEnv {
+		m.savePasswordToKeyring(p.Name, p.Username, plain)
+	}
 	m.refreshList()
 }
 
@@ -122,7 +129,11 @@ func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
 		plain := p.Password
 		oldName := m.Profiles[index].Name
-		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+		if !p.PasswordFromEnv {
+			p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+		} else {
+			p.Password = ""
+		}
 		m.Profiles[index] = p
 		if oldName != p.Name {
 			if status, ok := m.Statuses[oldName]; ok {
@@ -131,7 +142,9 @@ func (m *Connections) EditConnection(index int, p Profile) {
 			}
 		}
 		m.saveConfigToFile()
-		m.savePasswordToKeyring(p.Name, p.Username, plain)
+		if !p.PasswordFromEnv {
+			m.savePasswordToKeyring(p.Name, p.Username, plain)
+		}
 		m.refreshList()
 	}
 }
@@ -238,7 +251,18 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 
 	// Step 3: Process each profile to handle keyring references
 	for i := range connections.Profiles {
-		password := connections.Profiles[i].Password
+		p := &connections.Profiles[i]
+		password := p.Password
+
+		if p.PasswordFromEnv {
+			if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
+				p.Password = val
+			} else {
+				fmt.Printf("Warning: environment variable %s not set\n", p.PasswordEnvVar)
+				p.Password = ""
+			}
+			continue
+		}
 
 		// Check if the password references the keyring
 		if strings.HasPrefix(password, "keyring:") {
@@ -246,11 +270,11 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 			if err != nil {
 				// Do not fail if the keyring entry is missing
 				fmt.Println("Warning:", err)
-				connections.Profiles[i].Password = ""
+				p.Password = ""
 				continue
 			}
 			// Update the password in the profile
-			connections.Profiles[i].Password = keyringPassword
+			p.Password = keyringPassword
 		}
 	}
 

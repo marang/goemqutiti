@@ -81,6 +81,7 @@ In the interface:
 - **Ctrl+D** exits the program.
 - Left-click a topic chip to toggle it and middle-click to remove it.
 - Active topics are automatically subscribed when you connect to a broker.
+- Connection attempts and any errors are shown at the top of the interface and recorded in the history log.
 - Clicking on any pane or input field focuses it.
 
 All `Ctrl` shortcuts are global, so they work even when an input field is active.

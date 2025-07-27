@@ -41,7 +41,14 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoLine := infoStyle.Render("Info: Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.", m.connection)
+	infoShortcuts := infoStyle.Render("Info: Ctrl+S publishes, Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
+	clientID := ""
+	if m.mqttClient != nil {
+		r := m.mqttClient.Client.OptionsReader()
+		clientID = r.ClientID()
+	}
+	connLine := infoStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
+	infoLine := lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
 
 	var chips []string
 	for i, t := range m.topics {

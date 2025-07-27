@@ -47,14 +47,15 @@ type Profile struct {
 type Connections struct {
 	ConnectionsList    list.Model
 	TextInput          textinput.Model
-	DefaultProfileName string    `toml:"default_profile"`
-	Profiles           []Profile `toml:"profiles"`
-	Focused            bool      // Indicates if the broker manager is focused
+	DefaultProfileName string            `toml:"default_profile"`
+	Profiles           []Profile         `toml:"profiles"`
+	Statuses           map[string]string // connection status by name
+	Focused            bool              // Indicates if the broker manager is focused
 }
 
 // NewConnectionsModel initializes a new ConnectionsModel with default values.
 func NewConnectionsModel() Connections {
-	connectionList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	connectionList := list.New([]list.Item{}, connectionDelegate{}, 0, 0)
 	connectionList.Title = "Brokers"
 	// Ensure items are visible by setting a reasonable default size
 	connectionList.SetSize(30, 10)
@@ -64,6 +65,7 @@ func NewConnectionsModel() Connections {
 		ConnectionsList: connectionList,
 		TextInput:       textinput.New(),
 		Profiles:        []Profile{},
+		Statuses:        make(map[string]string),
 		Focused:         false,
 	}
 }
@@ -106,6 +108,10 @@ func (m *Connections) AddConnection(p Profile) {
 	keyref := "keyring:emqutiti-" + p.Name + "/" + p.Username
 	p.Password = keyref
 	m.Profiles = append(m.Profiles, p)
+	if m.Statuses == nil {
+		m.Statuses = make(map[string]string)
+	}
+	m.Statuses[p.Name] = "disconnected"
 	m.saveConfigToFile()
 	m.savePasswordToKeyring(p.Name, p.Username, plain)
 }
@@ -114,8 +120,15 @@ func (m *Connections) AddConnection(p Profile) {
 func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
 		plain := p.Password
+		oldName := m.Profiles[index].Name
 		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
 		m.Profiles[index] = p
+		if oldName != p.Name {
+			if status, ok := m.Statuses[oldName]; ok {
+				delete(m.Statuses, oldName)
+				m.Statuses[p.Name] = status
+			}
+		}
 		m.saveConfigToFile()
 		m.savePasswordToKeyring(p.Name, p.Username, plain)
 	}
@@ -124,7 +137,9 @@ func (m *Connections) EditConnection(index int, p Profile) {
 // DeleteConnection removes a connection from the list and updates config.toml.
 func (m *Connections) DeleteConnection(index int) {
 	if index >= 0 && index < len(m.Profiles) {
+		name := m.Profiles[index].Name
 		m.Profiles = append(m.Profiles[:index], m.Profiles[index+1:]...)
+		delete(m.Statuses, name)
 		m.saveConfigToFile()
 	}
 }
@@ -239,4 +254,13 @@ func (c *Connections) LoadProfiles(filePath string) {
 	}
 	c.DefaultProfileName = loaded.DefaultProfileName
 	c.Profiles = loaded.Profiles
+	statuses := make(map[string]string)
+	for _, p := range c.Profiles {
+		if st, ok := c.Statuses[p.Name]; ok {
+			statuses[p.Name] = st
+		} else {
+			statuses[p.Name] = "disconnected"
+		}
+	}
+	c.Statuses = statuses
 }

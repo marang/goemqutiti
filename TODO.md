@@ -39,7 +39,7 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - [x] Display a selectable list of brokers using `bubbles/list`.
 - [x] Provide a menu option to open the broker manager.
 - [ ] Highlight the active connection in the list.
-- [ ] Show connection status (connected/disconnected).
+- [x] Show connection status (connected/disconnected).
 - [x] Provide a form for adding/editing brokers using `bubbles/textinput`.
 - [x] Support advanced connection options (keep alive, clean session, TLS, LWT, etc.).
 - [x] Option to append a random client ID suffix.

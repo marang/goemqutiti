@@ -117,14 +117,14 @@ func (m model) viewConfirmDelete() string {
 
 func (m model) viewTopics() string {
 	listView := m.topicsList.View()
-	help := "[space] toggle  [d]elete  [esc] back"
+	help := infoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return legendBox(content, "Topics", m.width-2, false)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.payloadList.View()
-	help := "[enter] load  [d]elete  [esc] back"
+	help := infoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return legendBox(content, "Payloads", m.width-2, false)
 }

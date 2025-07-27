@@ -13,6 +13,19 @@ import (
 
 type statusMessage string
 
+type connectResult struct {
+	client  *MQTTClient
+	profile Profile
+	err     error
+}
+
+func connectBroker(p Profile, ch chan string) tea.Cmd {
+	return func() tea.Msg {
+		client, err := NewMQTTClient(p, ch)
+		return connectResult{client: client, profile: p, err: err}
+	}
+}
+
 func listenMessages(ch chan MQTTMessage) tea.Cmd {
 	return func() tea.Msg {
 		if ch == nil {
@@ -308,7 +321,6 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 				m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 				m.topicsList.DisableQuitKeybindings()
-				m.topicsList.Title = "Topics"
 				m.mode = modeTopics
 			case "ctrl+p":
 				items := []list.Item{}
@@ -317,7 +329,6 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 				}
 				m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
 				m.payloadList.DisableQuitKeybindings()
-				m.payloadList.Title = "Payloads"
 				m.mode = modePayloads
 			}
 		}
@@ -381,6 +392,24 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
+	case connectResult:
+		if msg.err != nil {
+			m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", msg.err))
+			m.connections.Statuses[msg.profile.Name] = "disconnected"
+			m.connection = ""
+			m.refreshConnectionItems()
+		} else {
+			m.mqttClient = msg.client
+			m.activeConn = msg.profile.Name
+			m.restoreState(msg.profile.Name)
+			m.subscribeActiveTopics()
+			brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
+			m.connection = "Connected to " + brokerURL
+			m.connections.Statuses[msg.profile.Name] = "connected"
+			m.refreshConnectionItems()
+			m.mode = modeClient
+		}
+		return m, listenStatus(m.statusChan)
 	case tea.KeyMsg:
 		if m.connections.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
@@ -393,23 +422,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						p.Password = envPassword
 					}
 					m.connections.Statuses[p.Name] = "connecting"
+					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					m.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
-					client, err := NewMQTTClient(p, m.statusChan)
-					if err != nil {
-						m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
-						m.connections.Statuses[p.Name] = "disconnected"
-						m.refreshConnectionItems()
-					} else {
-						m.mqttClient = client
-						m.activeConn = p.Name
-						m.restoreState(p.Name)
-						m.subscribeActiveTopics()
-						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-						m.connection = "Connected to " + brokerURL
-						m.connections.Statuses[p.Name] = "connected"
-						m.refreshConnectionItems()
-						m.mode = modeClient
-					}
+					return m, connectBroker(p, m.statusChan)
 				}
 			}
 			break
@@ -437,23 +453,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					p.Password = envPassword
 				}
 				m.connections.Statuses[p.Name] = "connecting"
+				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+				m.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
-				client, err := NewMQTTClient(p, m.statusChan)
-				if err != nil {
-					m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect: %v", err))
-					m.connections.Statuses[p.Name] = "disconnected"
-					m.refreshConnectionItems()
-				} else {
-					m.mqttClient = client
-					m.activeConn = p.Name
-					m.restoreState(p.Name)
-					m.subscribeActiveTopics()
-					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-					m.connection = "Connected to " + brokerURL
-					m.connections.Statuses[p.Name] = "connected"
-					m.refreshConnectionItems()
-					m.mode = modeClient
-				}
+				return m, connectBroker(p, m.statusChan)
 			}
 		case "d":
 			i := m.connections.ConnectionsList.Index()

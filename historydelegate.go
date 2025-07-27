@@ -27,16 +27,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	switch hi.kind {
 	case "sub":
 		label = fmt.Sprintf("SUB %s:", hi.topic)
-		lblColor = lipgloss.Color("205")
-		msgColor = lipgloss.Color("219")
+		lblColor = colPink
+		msgColor = colPub
 	case "pub":
 		label = fmt.Sprintf("PUB %s:", hi.topic)
-		lblColor = lipgloss.Color("63")
-		msgColor = lipgloss.Color("81")
+		lblColor = colBlue
+		msgColor = colSub
 	default:
 		label = ""
-		lblColor = lipgloss.Color("240")
-		msgColor = lipgloss.Color("240")
+		lblColor = colGray
+		msgColor = colGray
 	}
 	align := lipgloss.Left
 	if hi.kind == "pub" {
@@ -61,15 +61,15 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {
-			lines[i] = lipgloss.NewStyle().Background(lipgloss.Color("237")).Render(l)
+			lines[i] = lipgloss.NewStyle().Background(colDarkGray).Render(l)
 		}
 	}
 	border := " "
 	if _, ok := d.m.selectedHistory[index]; ok {
-		border = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Render("┃")
+		border = lipgloss.NewStyle().Foreground(colBlue).Render("┃")
 	}
 	if index == d.m.history.Index() {
-		border = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render("┃")
+		border = lipgloss.NewStyle().Foreground(colPurple).Render("┃")
 	}
 	for i, l := range lines {
 		lines[i] = border + " " + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l)

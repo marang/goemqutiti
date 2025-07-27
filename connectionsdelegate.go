@@ -20,10 +20,10 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	width := m.Width()
 	border := " "
 	if index == m.Index() {
-		border = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render("┃")
+		border = lipgloss.NewStyle().Foreground(colPurple).Render("┃")
 	}
 	name := lipgloss.PlaceHorizontal(width-2, lipgloss.Left, ci.title)
-	status := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render(ci.status)
+	status := lipgloss.NewStyle().Foreground(colGray).Render(ci.status)
 	status = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, status)
 	fmt.Fprintf(w, "%s %s\n%s %s", border, name, border, status)
 }

@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/BurntSushi/toml"
@@ -21,8 +23,7 @@ type Profile struct {
 	ClientID            string `toml:"client_id"`
 	Username            string `toml:"username"`
 	Password            string `toml:"password"`
-	PasswordFromEnv     bool   `toml:"password_from_env"`
-	PasswordEnvVar      string `toml:"password_env_var"`
+	FromEnv             bool   `toml:"from_env"` // when true, values are loaded from environment variables
 	SSL                 bool   `toml:"ssl_tls"`
 	MQTTVersion         string `toml:"mqtt_version"`
 	ConnectTimeout      int    `toml:"connect_timeout"`
@@ -107,7 +108,7 @@ func (m Connections) View() string {
 // AddConnection adds a new connection to the list and saves it to config.toml and keyring.
 func (m *Connections) AddConnection(p Profile) {
 	plain := p.Password
-	if !p.PasswordFromEnv {
+	if !p.FromEnv {
 		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
 	} else {
 		p.Password = ""
@@ -118,7 +119,7 @@ func (m *Connections) AddConnection(p Profile) {
 	}
 	m.Statuses[p.Name] = "disconnected"
 	m.saveConfigToFile()
-	if !p.PasswordFromEnv {
+	if !p.FromEnv {
 		m.savePasswordToKeyring(p.Name, p.Username, plain)
 	}
 	m.refreshList()
@@ -129,7 +130,7 @@ func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
 		plain := p.Password
 		oldName := m.Profiles[index].Name
-		if !p.PasswordFromEnv {
+		if !p.FromEnv {
 			p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
 		} else {
 			p.Password = ""
@@ -142,7 +143,7 @@ func (m *Connections) EditConnection(index int, p Profile) {
 			}
 		}
 		m.saveConfigToFile()
-		if !p.PasswordFromEnv {
+		if !p.FromEnv {
 			m.savePasswordToKeyring(p.Name, p.Username, plain)
 		}
 		m.refreshList()
@@ -232,6 +233,46 @@ func retrievePasswordFromKeyring(password string) (string, error) {
 	return keyringPassword, nil
 }
 
+// applyEnvVars loads all profile fields from environment variables when FromEnv is set.
+// Environment variable names use the pattern GOEMQUTITI_<NAME>_<FIELD>, where
+// <NAME> is the uppercased profile name and <FIELD> matches the TOML field name.
+func applyEnvVars(p *Profile) {
+	if !p.FromEnv {
+		return
+	}
+	prefix := fmt.Sprintf("GOEMQUTITI_%s_", strings.ToUpper(p.Name))
+	rv := reflect.ValueOf(p).Elem()
+	rt := rv.Type()
+	for i := 0; i < rt.NumField(); i++ {
+		f := rt.Field(i)
+		if f.Name == "FromEnv" {
+			continue
+		}
+		tag := f.Tag.Get("toml")
+		if tag == "" {
+			continue
+		}
+		envName := prefix + strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
+		val, ok := os.LookupEnv(envName)
+		if !ok {
+			continue
+		}
+		field := rv.Field(i)
+		switch field.Kind() {
+		case reflect.String:
+			field.SetString(val)
+		case reflect.Int:
+			if iv, err := strconv.Atoi(val); err == nil {
+				field.SetInt(int64(iv))
+			}
+		case reflect.Bool:
+			if bv, err := strconv.ParseBool(val); err == nil {
+				field.SetBool(bv)
+			}
+		}
+	}
+}
+
 // LoadConfig loads the configuration from a TOML file and retrieves keyring-stored passwords.
 func LoadFromConfig(filePath string) (*Connections, error) {
 	var err error
@@ -249,31 +290,22 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 		return nil, fmt.Errorf("failed to decode config file: %w", err)
 	}
 
-	// Step 3: Process each profile to handle keyring references
+	// Step 3: Process each profile to handle keyring references or env overrides
 	for i := range connections.Profiles {
 		p := &connections.Profiles[i]
-		password := p.Password
-
-		if p.PasswordFromEnv {
-			if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
-				p.Password = val
-			} else {
-				fmt.Printf("Warning: environment variable %s not set\n", p.PasswordEnvVar)
-				p.Password = ""
-			}
+		if p.FromEnv {
+			applyEnvVars(p)
 			continue
 		}
 
-		// Check if the password references the keyring
+		password := p.Password
 		if strings.HasPrefix(password, "keyring:") {
 			keyringPassword, err := retrievePasswordFromKeyring(password)
 			if err != nil {
-				// Do not fail if the keyring entry is missing
 				fmt.Println("Warning:", err)
 				p.Password = ""
 				continue
 			}
-			// Update the password in the profile
 			p.Password = keyringPassword
 		}
 	}

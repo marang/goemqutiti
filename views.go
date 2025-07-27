@@ -57,7 +57,7 @@ func (m *model) viewClient() string {
 			st = chipInactive
 		}
 		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
-			st = st.BorderForeground(lipgloss.Color("212"))
+			st = st.BorderForeground(colPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
@@ -119,7 +119,7 @@ func (m model) viewForm() string {
 }
 
 func (m model) viewConfirmDelete() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colBlue).Padding(0, 1)
 	return border.Render(m.confirmPrompt)
 }
 

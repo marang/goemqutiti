@@ -437,14 +437,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if i >= 0 && i < len(m.connections.Profiles) {
 					p := m.connections.Profiles[i]
 					flushStatus(m.statusChan)
-					if p.PasswordFromEnv {
-						if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
-							p.Password = val
-						} else {
-							m.connection = fmt.Sprintf("Missing password env %s", p.PasswordEnvVar)
-							m.appendHistory("", "", "log", m.connection)
-							return m, nil
-						}
+					if p.FromEnv {
+						applyEnvVars(&p)
 					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 						p.Password = env
 					}
@@ -476,14 +470,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if i >= 0 && i < len(m.connections.Profiles) {
 				p := m.connections.Profiles[i]
 				flushStatus(m.statusChan)
-				if p.PasswordFromEnv {
-					if val, ok := os.LookupEnv(p.PasswordEnvVar); ok {
-						p.Password = val
-					} else {
-						m.connection = fmt.Sprintf("Missing password env %s", p.PasswordEnvVar)
-						m.appendHistory("", "", "log", m.connection)
-						return m, nil
-					}
+				if p.FromEnv {
+					applyEnvVars(&p)
 				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 					p.Password = env
 				}

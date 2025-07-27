@@ -143,8 +143,7 @@ const (
 	idxIDSuffix
 	idxUsername
 	idxPassword
-	idxPasswordFromEnv
-	idxPasswordEnv
+	idxFromEnv
 	idxSSL
 	idxMQTTVersion
 	idxConnectTimeout
@@ -180,8 +179,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"", // checkbox for rand suffix
 		p.Username,
 		p.Password,
-		"", // checkbox: password from env
-		p.PasswordEnvVar,
+		"", // checkbox: load from env
 		"", // SSL checkbox
 		p.MQTTVersion,
 		fmt.Sprintf("%d", p.ConnectTimeout),
@@ -203,10 +201,6 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		p.LastWillPayload,
 	}
 
-	envName := "GOEMQUTITI_<NAME>_PASSWORD"
-	if p.Name != "" {
-		envName = fmt.Sprintf("GOEMQUTITI_%s_PASSWORD", strings.ToUpper(p.Name))
-	}
 	placeholders := []string{
 		"Name",
 		"Schema",
@@ -216,8 +210,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Random ID suffix",
 		"Username",
 		pwKey,
-		"Use env var",
-		envName,
+		"Values from env",
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -241,15 +234,15 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	fields := make([]formField, len(values))
 	boolIndices := map[int]bool{
-		idxIDSuffix:        true,
-		idxPasswordFromEnv: true,
-		idxSSL:             true,
-		idxAutoReconnect:   true,
-		idxCleanStart:      true,
-		idxRequestResp:     true,
-		idxRequestProb:     true,
-		idxWillEnable:      true,
-		idxWillRetain:      true,
+		idxIDSuffix:      true,
+		idxFromEnv:       true,
+		idxSSL:           true,
+		idxAutoReconnect: true,
+		idxCleanStart:    true,
+		idxRequestResp:   true,
+		idxRequestProb:   true,
+		idxWillEnable:    true,
+		idxWillRetain:    true,
 	}
 
 	selectOptions := map[int][]string{
@@ -261,7 +254,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	boolValues := []bool{
 		p.RandomIDSuffix,
-		p.PasswordFromEnv,
+		p.FromEnv,
 		p.SSL,
 		p.AutoReconnect,
 		p.CleanStart,
@@ -348,8 +341,7 @@ func (f connectionForm) View() string {
 		"Random ID suffix",
 		"Username",
 		"Password",
-		"Use env var",
-		"Env var name",
+		"Load from env",
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -377,6 +369,10 @@ func (f connectionForm) View() string {
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
+	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
+		prefix := fmt.Sprintf("GOEMQUTITI_%s_", strings.ToUpper(f.fields[idxName].Value()))
+		s += infoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
+	}
 	s += "\n" + infoStyle.Render("[enter] save  [esc] cancel")
 	return s
 }
@@ -394,8 +390,7 @@ func (f connectionForm) Profile() Profile {
 	p.ClientID = vals[idxClientID]
 	p.Username = vals[idxUsername]
 	p.Password = vals[idxPassword]
-	fmt.Sscan(vals[idxPasswordFromEnv], &p.PasswordFromEnv)
-	p.PasswordEnvVar = vals[idxPasswordEnv]
+	fmt.Sscan(vals[idxFromEnv], &p.FromEnv)
 	fmt.Sscan(vals[idxSSL], &p.SSL)
 	p.MQTTVersion = vals[idxMQTTVersion]
 	fmt.Sscan(vals[idxConnectTimeout], &p.ConnectTimeout)

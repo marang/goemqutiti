@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"goemqutiti/importer"
 	"goemqutiti/ui"
@@ -23,6 +24,7 @@ type Wizard struct {
 	file     textinput.Model
 	headers  []string
 	fields   []textinput.Model
+	focus    int
 	tmpl     textinput.Model
 	rows     []map[string]string
 	index    int
@@ -40,6 +42,8 @@ const (
 	stepDone
 )
 
+var wizardSteps = []string{"File", "Map", "Template", "Review", "Publish", "Done"}
+
 // NewWizard creates a new wizard. A non-empty path pre-fills the file field.
 func NewWizard(client Publisher, path string) *Wizard {
 	ti := textinput.New()
@@ -54,11 +58,14 @@ func NewWizard(client Publisher, path string) *Wizard {
 func (w *Wizard) Init() tea.Cmd { return textinput.Blink }
 
 func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlD {
+		return w, tea.Quit
+	}
 	switch w.step {
 	case stepFile:
 		var cmd tea.Cmd
 		w.file, cmd = w.file.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
+		if km, ok := msg.(tea.KeyMsg); ok && (km.Type == tea.KeyEnter || km.Type == tea.KeyCtrlN) {
 			path := strings.TrimSpace(w.file.Value())
 			if path == "" {
 				return w, nil
@@ -76,9 +83,12 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			for k := range rows[0] {
 				w.headers = append(w.headers, k)
 				fi := textinput.New()
-				// Default mapping uses the original column name.
 				fi.SetValue(k)
 				w.fields = append(w.fields, fi)
+			}
+			if len(w.fields) > 0 {
+				w.focus = 0
+				w.fields[0].Focus()
 			}
 			w.step = stepMap
 		}
@@ -87,19 +97,59 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(w.fields) == 0 {
 			return w, nil
 		}
-		for i := range w.fields {
-			w.fields[i], _ = w.fields[i].Update(msg)
+		switch m := msg.(type) {
+		case tea.KeyMsg:
+			switch m.String() {
+			case "tab", "shift+tab", "up", "down", "k", "j":
+				step := 1
+				if m.String() == "shift+tab" || m.String() == "up" || m.String() == "k" {
+					step = -1
+				}
+				w.focus += step
+				if w.focus < 0 {
+					w.focus = len(w.fields) - 1
+				}
+				if w.focus >= len(w.fields) {
+					w.focus = 0
+				}
+			case "ctrl+n":
+				w.step = stepTemplate
+				return w, nil
+			case "ctrl+p":
+				w.step = stepFile
+				return w, nil
+			}
+		case tea.MouseMsg:
+			if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
+				if m.Y >= 1 && m.Y-1 < len(w.fields) {
+					w.focus = m.Y - 1
+				}
+			}
 		}
+		for i := range w.fields {
+			if i == w.focus {
+				w.fields[i].Focus()
+			} else {
+				w.fields[i].Blur()
+			}
+		}
+		var cmd tea.Cmd
+		w.fields[w.focus], cmd = w.fields[w.focus].Update(msg)
 		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
 			w.step = stepTemplate
 		}
-		return w, nil
+		return w, cmd
 	case stepTemplate:
 		var cmd tea.Cmd
 		w.tmpl, cmd = w.tmpl.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
-			if strings.TrimSpace(w.tmpl.Value()) != "" {
-				w.step = stepReview
+		if km, ok := msg.(tea.KeyMsg); ok {
+			switch km.Type {
+			case tea.KeyCtrlP:
+				w.step = stepMap
+			case tea.KeyCtrlN, tea.KeyEnter:
+				if strings.TrimSpace(w.tmpl.Value()) != "" {
+					w.step = stepReview
+				}
 			}
 		}
 		return w, cmd
@@ -118,6 +168,8 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.step = stepMap
 			case "q":
 				w.step = stepDone
+			case "ctrl+p":
+				w.step = stepTemplate
 			}
 		}
 		return w, nil
@@ -136,18 +188,30 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (w *Wizard) View() string {
+	header := w.stepsView()
+	var box string
 	switch w.step {
 	case stepFile:
-		return ui.LegendBox(w.file.View()+"\n[enter] load file", "Import", 50, true)
+		box = ui.LegendBox(w.file.View()+"\n[enter] load file  [ctrl+n] next", "Import", 50, true)
 	case stepMap:
-		var s string
-		for i, h := range w.headers {
-			s += fmt.Sprintf("%s -> %s\n", h, w.fields[i].View())
+		colw := 0
+		for _, h := range w.headers {
+			if w := lipgloss.Width(h); w > colw {
+				colw = w
+			}
 		}
-		s += "\n[enter] continue"
-		return ui.LegendBox(s, "Map Columns", 50, true)
+		var b strings.Builder
+		for i, h := range w.headers {
+			label := h
+			if i == w.focus {
+				label = focusedStyle.Render(h)
+			}
+			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
+		}
+		b.WriteString("\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
+		box = ui.LegendBox(b.String(), "Map Columns", 50, true)
 	case stepTemplate:
-		return ui.LegendBox(w.tmpl.View()+"\n[enter] continue", "Topic Template", 50, true)
+		box = ui.LegendBox(w.tmpl.View()+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()
@@ -161,17 +225,17 @@ func (w *Wizard) View() string {
 			p, _ := importer.RowToJSON(w.rows[i], mapping)
 			previews += fmt.Sprintf("%s -> %s\n", t, string(p))
 		}
-		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [q] quit", len(w.rows), previews)
-		return ui.LegendBox(s, "Review", 50, true)
+		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
+		box = ui.LegendBox(s, "Review", 50, true)
 	case stepPublish:
 		p := float64(w.index) / float64(len(w.rows))
 		w.progress.SetPercent(p)
 		bar := w.progress.View()
-		return ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
+		box = ui.LegendBox(fmt.Sprintf("Publishing %d/%d\n%s", w.index, len(w.rows), bar), "Progress", 50, true)
 	case stepDone:
-		return ui.LegendBox("Done", "Import", 50, true)
+		box = ui.LegendBox("Done", "Import", 50, true)
 	}
-	return ""
+	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
 
 func (w *Wizard) nextPublishCmd() tea.Cmd {
@@ -212,6 +276,18 @@ func (w *Wizard) mapping() map[string]string {
 		m[h] = strings.TrimSpace(w.fields[i].Value())
 	}
 	return m
+}
+
+func (w *Wizard) stepsView() string {
+	var parts []string
+	for i, name := range wizardSteps {
+		st := blurredStyle
+		if i == w.step {
+			st = focusedStyle
+		}
+		parts = append(parts, st.Render(name))
+	}
+	return strings.Join(parts, " > ")
 }
 
 type publishMsg struct{}

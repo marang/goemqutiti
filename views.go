@@ -93,7 +93,8 @@ func (m *model) viewClient() string {
 	box := lipgloss.NewStyle().Width(m.width).Padding(0, 1, 1, 1).Render(content)
 	m.viewport.SetContent(box)
 	m.viewport.Width = m.width
-	m.viewport.Height = m.height - 1
+	// Deduct two lines for the info header rendered above the viewport.
+	m.viewport.Height = m.height - 2
 	return lipgloss.JoinVertical(lipgloss.Left, infoLine, m.viewport.View())
 }
 

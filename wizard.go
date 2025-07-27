@@ -114,6 +114,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "ctrl+n":
 				w.step = stepTemplate
+				w.tmpl.Focus()
 				return w, nil
 			case "ctrl+p":
 				w.step = stepFile
@@ -137,6 +138,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		w.fields[w.focus], cmd = w.fields[w.focus].Update(msg)
 		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
 			w.step = stepTemplate
+			w.tmpl.Focus()
 		}
 		return w, cmd
 	case stepTemplate:
@@ -170,6 +172,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.step = stepDone
 			case "ctrl+p":
 				w.step = stepTemplate
+				w.tmpl.Focus()
 			}
 		}
 		return w, nil
@@ -211,7 +214,16 @@ func (w *Wizard) View() string {
 		b.WriteString("\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 		box = ui.LegendBox(b.String(), "Map Columns", 50, true)
 	case stepTemplate:
-		box = ui.LegendBox(w.tmpl.View()+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
+		names := make([]string, len(w.headers))
+		for i, h := range w.headers {
+			name := strings.TrimSpace(w.fields[i].Value())
+			if name == "" {
+				name = h
+			}
+			names[i] = "{" + name + "}"
+		}
+		help := "Available fields: " + strings.Join(names, " ")
+		box = ui.LegendBox(w.tmpl.View()+"\n"+help+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()

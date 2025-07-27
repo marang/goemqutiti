@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 )
 
 // historyDelegate renders history items with two lines and supports highlighting
@@ -27,15 +28,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	switch hi.kind {
 	case "sub":
 		label = fmt.Sprintf("SUB %s:", hi.topic)
-		lblColor = lipgloss.Color("205")
-		msgColor = lipgloss.Color("219")
+		lblColor = colPink
+		msgColor = colPub
 	case "pub":
 		label = fmt.Sprintf("PUB %s:", hi.topic)
-		lblColor = lipgloss.Color("63")
-		msgColor = lipgloss.Color("81")
+		lblColor = colBlue
+		msgColor = colSub
 	default:
-		fmt.Fprint(w, lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Width(width).Render(hi.payload))
-		return
+		label = ""
+		lblColor = colGray
+		msgColor = colGray
 	}
 	align := lipgloss.Left
 	if hi.kind == "pub" {
@@ -45,28 +47,37 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	if innerWidth < 0 {
 		innerWidth = 0
 	}
-	line1 := lipgloss.PlaceHorizontal(innerWidth, align,
-		lipgloss.NewStyle().Foreground(lblColor).Render(label))
 
 	// Support multi-line payloads by aligning each line individually
 	var lines []string
-	lines = append(lines, line1)
+	if hi.kind != "log" {
+		line1 := lipgloss.PlaceHorizontal(innerWidth, align,
+			lipgloss.NewStyle().Foreground(lblColor).Render(label))
+		lines = append(lines, line1)
+	}
 	for _, l := range strings.Split(hi.payload, "\n") {
-		rendered := lipgloss.PlaceHorizontal(innerWidth, align,
-			lipgloss.NewStyle().Foreground(msgColor).Render(l))
-		lines = append(lines, rendered)
+		wrapped := ansi.Wrap(l, innerWidth, " ")
+		for _, wl := range strings.Split(wrapped, "\n") {
+			rendered := lipgloss.PlaceHorizontal(innerWidth, align,
+				lipgloss.NewStyle().Foreground(msgColor).Render(wl))
+			lines = append(lines, rendered)
+		}
 	}
 	if _, ok := d.m.selectedHistory[index]; ok {
 		for i, l := range lines {
-			lines[i] = lipgloss.NewStyle().Background(lipgloss.Color("237")).Render(l)
+			lines[i] = lipgloss.NewStyle().Background(colDarkGray).Render(l)
 		}
 	}
-	border := " "
+	borderColor := colGray
+	if hi.kind == "log" {
+		borderColor = colDarkGray
+	}
+	border := lipgloss.NewStyle().Foreground(borderColor).Render("┃")
 	if _, ok := d.m.selectedHistory[index]; ok {
-		border = lipgloss.NewStyle().Foreground(lipgloss.Color("63")).Render("┃")
+		border = lipgloss.NewStyle().Foreground(colBlue).Render("┃")
 	}
 	if index == d.m.history.Index() {
-		border = lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Render("┃")
+		border = lipgloss.NewStyle().Foreground(colPurple).Render("┃")
 	}
 	for i, l := range lines {
 		lines[i] = border + " " + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l)

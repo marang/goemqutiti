@@ -56,6 +56,19 @@ func listenStatus(ch chan string) tea.Cmd {
 	}
 }
 
+func flushStatus(ch chan string) {
+	if ch == nil {
+		return
+	}
+	for {
+		select {
+		case <-ch:
+		default:
+			return
+		}
+	}
+}
+
 func (m *model) saveCurrent() {
 	if m.activeConn == "" {
 		return
@@ -205,6 +218,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			if m.mqttClient != nil {
 				m.mqttClient.Disconnect()
 				m.connections.Statuses[m.activeConn] = "disconnected"
+				m.connections.Errors[m.activeConn] = ""
 				m.refreshConnectionItems()
 				m.connection = ""
 				m.activeConn = ""
@@ -401,8 +415,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	case connectResult:
 		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
 		if msg.err != nil {
-			m.appendHistory("", "", "log", fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
 			m.connections.Statuses[msg.profile.Name] = "disconnected"
+			m.connections.Errors[msg.profile.Name] = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
 			m.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
 			m.refreshConnectionItems()
 		} else {
@@ -412,6 +426,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			m.subscribeActiveTopics()
 			m.connection = "Connected to " + brokerURL
 			m.connections.Statuses[msg.profile.Name] = "connected"
+			m.connections.Errors[msg.profile.Name] = ""
 			m.refreshConnectionItems()
 			m.mode = modeClient
 		}
@@ -423,10 +438,13 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				i := m.connections.ConnectionsList.Index()
 				if i >= 0 && i < len(m.connections.Profiles) {
 					p := m.connections.Profiles[i]
-					envPassword := os.Getenv("MQTT_PASSWORD")
-					if envPassword != "" {
-						p.Password = envPassword
+					flushStatus(m.statusChan)
+					if p.FromEnv {
+						applyEnvVars(&p)
+					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+						p.Password = env
 					}
+					m.connections.Errors[p.Name] = ""
 					m.connections.Statuses[p.Name] = "connecting"
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connection = "Connecting to " + brokerURL
@@ -454,10 +472,13 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.Profiles) {
 				p := m.connections.Profiles[i]
-				envPassword := os.Getenv("MQTT_PASSWORD")
-				if envPassword != "" {
-					p.Password = envPassword
+				flushStatus(m.statusChan)
+				if p.FromEnv {
+					applyEnvVars(&p)
+				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+					p.Password = env
 				}
+				m.connections.Errors[p.Name] = ""
 				m.connections.Statuses[p.Name] = "connecting"
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 				m.connection = "Connecting to " + brokerURL
@@ -473,6 +494,16 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.connections.refreshList()
 					m.refreshConnectionItems()
 				})
+			}
+		case "x":
+			if m.mqttClient != nil {
+				m.mqttClient.Disconnect()
+				m.connections.Statuses[m.activeConn] = "disconnected"
+				m.connections.Errors[m.activeConn] = ""
+				m.refreshConnectionItems()
+				m.connection = ""
+				m.activeConn = ""
+				m.mqttClient = nil
 			}
 		}
 	}

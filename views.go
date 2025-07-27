@@ -57,7 +57,7 @@ func (m *model) viewClient() string {
 			st = chipInactive
 		}
 		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
-			st = st.BorderForeground(lipgloss.Color("212"))
+			st = st.BorderForeground(colPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
@@ -100,8 +100,13 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
-	help := infoStyle.Render("[enter] connect  [a]dd [e]dit [d]elete")
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	help := infoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
+	var parts []string
+	if strings.TrimSpace(m.connection) != "" {
+		parts = append(parts, connStyle.Render(strings.TrimSpace(m.connection)))
+	}
+	parts = append(parts, listView, help)
+	content := lipgloss.JoinVertical(lipgloss.Left, parts...)
 	return legendBox(content, "Brokers", m.width-2, true)
 }
 
@@ -119,7 +124,7 @@ func (m model) viewForm() string {
 }
 
 func (m model) viewConfirmDelete() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("63")).Padding(0, 1)
+	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colBlue).Padding(0, 1)
 	return border.Render(m.confirmPrompt)
 }
 

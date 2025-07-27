@@ -15,7 +15,10 @@ type formField interface {
 	Value() string
 }
 
-type textField struct{ textinput.Model }
+type textField struct {
+	textinput.Model
+	readOnly bool
+}
 
 func newTextField(value, placeholder string, opts ...bool) *textField {
 	ti := textinput.New()
@@ -24,10 +27,20 @@ func newTextField(value, placeholder string, opts ...bool) *textField {
 	if len(opts) > 0 && opts[0] {
 		ti.EchoMode = textinput.EchoPassword
 	}
-	return &textField{ti}
+	return &textField{Model: ti}
+}
+
+func (t *textField) setReadOnly(ro bool) {
+	t.readOnly = ro
+	if ro {
+		t.Blur()
+	}
 }
 
 func (t *textField) Update(msg tea.Msg) tea.Cmd {
+	if t.readOnly {
+		return nil
+	}
 	var cmd tea.Cmd
 	t.Model, cmd = t.Model.Update(msg)
 	return cmd
@@ -36,14 +49,16 @@ func (t *textField) Update(msg tea.Msg) tea.Cmd {
 func (t *textField) Value() string { return t.Model.Value() }
 
 type checkField struct {
-	value   bool
-	focused bool
+	value    bool
+	focused  bool
+	readOnly bool
 }
 
 type selectField struct {
-	options []string
-	index   int
-	focused bool
+	options  []string
+	index    int
+	focused  bool
+	readOnly bool
 }
 
 func newSelectField(val string, opts []string) *selectField {
@@ -57,11 +72,22 @@ func newSelectField(val string, opts []string) *selectField {
 	return &selectField{options: opts, index: idx}
 }
 
-func (s *selectField) Focus() { s.focused = true }
-func (s *selectField) Blur()  { s.focused = false }
+func (s *selectField) Focus() {
+	if !s.readOnly {
+		s.focused = true
+	}
+}
+func (s *selectField) Blur() { s.focused = false }
+
+func (s *selectField) setReadOnly(ro bool) {
+	s.readOnly = ro
+	if ro {
+		s.Blur()
+	}
+}
 
 func (s *selectField) Update(msg tea.Msg) tea.Cmd {
-	if !s.focused {
+	if !s.focused || s.readOnly {
 		return nil
 	}
 	if km, ok := msg.(tea.KeyMsg); ok {
@@ -96,14 +122,16 @@ func newCheckField(val bool) *checkField { return &checkField{value: val} }
 func (c *checkField) Focus() { c.focused = true }
 func (c *checkField) Blur()  { c.focused = false }
 
+func (c *checkField) setReadOnly(ro bool) { c.readOnly = ro }
+
 func (c *checkField) Update(msg tea.Msg) tea.Cmd {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		if m.String() == " " {
+		if !c.readOnly && m.String() == " " {
 			c.value = !c.value
 		}
 	case tea.MouseMsg:
-		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
+		if !c.readOnly && m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
 			c.value = !c.value
 		}
 	}
@@ -128,9 +156,10 @@ func (t *textField) Blur()        { t.Model.Blur() }
 func (t *textField) View() string { return t.Model.View() }
 
 type connectionForm struct {
-	fields []formField
-	focus  int
-	index  int // -1 for new
+	fields  []formField
+	focus   int
+	index   int  // -1 for new
+	fromEnv bool // current state of env loading
 }
 
 const (
@@ -142,6 +171,7 @@ const (
 	idxIDSuffix
 	idxUsername
 	idxPassword
+	idxFromEnv
 	idxSSL
 	idxMQTTVersion
 	idxConnectTimeout
@@ -164,6 +194,9 @@ const (
 )
 
 func newConnectionForm(p Profile, idx int) connectionForm {
+	if p.FromEnv {
+		applyEnvVars(&p)
+	}
 	pwKey := ""
 	if p.Name != "" && p.Username != "" {
 		pwKey = fmt.Sprintf("keyring:emqutiti-%s/%s", p.Name, p.Username)
@@ -176,25 +209,26 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		p.ClientID,
 		"", // checkbox for rand suffix
 		p.Username,
-		"",
-		"", // placeholder for checkbox
+		p.Password,
+		"", // checkbox: load from env
+		"", // SSL checkbox
 		p.MQTTVersion,
 		fmt.Sprintf("%d", p.ConnectTimeout),
 		fmt.Sprintf("%d", p.KeepAlive),
 		fmt.Sprintf("%d", p.QoS),
-		"", // checkbox
+		"", // auto reconnect checkbox
 		fmt.Sprintf("%d", p.ReconnectPeriod),
-		"", // checkbox
+		"", // clean start checkbox
 		fmt.Sprintf("%d", p.SessionExpiry),
 		fmt.Sprintf("%d", p.ReceiveMaximum),
 		fmt.Sprintf("%d", p.MaximumPacketSize),
 		fmt.Sprintf("%d", p.TopicAliasMaximum),
-		"", // checkbox
-		"", // checkbox
-		"", // checkbox
+		"", // request response info checkbox
+		"", // request problem info checkbox
+		"", // last will enabled checkbox
 		p.LastWillTopic,
 		fmt.Sprintf("%d", p.LastWillQos),
-		"", // checkbox
+		"", // last will retain checkbox
 		p.LastWillPayload,
 	}
 
@@ -207,6 +241,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		"Random ID suffix",
 		"Username",
 		pwKey,
+		"Values from env",
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -230,6 +265,8 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	fields := make([]formField, len(values))
 	boolIndices := map[int]bool{
+		idxIDSuffix:      true,
+		idxFromEnv:       true,
 		idxSSL:           true,
 		idxAutoReconnect: true,
 		idxCleanStart:    true,
@@ -237,7 +274,6 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		idxRequestProb:   true,
 		idxWillEnable:    true,
 		idxWillRetain:    true,
-		idxIDSuffix:      true,
 	}
 
 	selectOptions := map[int][]string{
@@ -249,6 +285,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 
 	boolValues := []bool{
 		p.RandomIDSuffix,
+		p.FromEnv,
 		p.SSL,
 		p.AutoReconnect,
 		p.CleanStart,
@@ -274,8 +311,18 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 			fields[i] = newTextField(values[i], placeholders[i])
 		}
 	}
+	if p.FromEnv {
+		for i, fld := range fields {
+			if i == idxName || i == idxFromEnv {
+				continue
+			}
+			if ro, ok := fld.(interface{ setReadOnly(bool) }); ok {
+				ro.setReadOnly(true)
+			}
+		}
+	}
 	fields[0].Focus()
-	return connectionForm{fields: fields, focus: 0, index: idx}
+	return connectionForm{fields: fields, focus: 0, index: idx, fromEnv: p.FromEnv}
 }
 
 func (f connectionForm) Init() tea.Cmd {
@@ -321,6 +368,12 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	if len(f.fields) > 0 {
 		f.fields[f.focus].Update(msg)
 	}
+	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value != f.fromEnv {
+		p := f.Profile()
+		f = newConnectionForm(p, f.index)
+		f.focus = idxFromEnv
+		f.fromEnv = chk.value
+	}
 	return f, cmd
 }
 
@@ -335,6 +388,7 @@ func (f connectionForm) View() string {
 		"Random ID suffix",
 		"Username",
 		"Password",
+		"Load from env",
 		"SSL/TLS",
 		"MQTT Version",
 		"Connect Timeout (s)",
@@ -362,6 +416,10 @@ func (f connectionForm) View() string {
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
+	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
+		prefix := envPrefix(f.fields[idxName].Value())
+		s += infoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
+	}
 	s += "\n" + infoStyle.Render("[enter] save  [esc] cancel")
 	return s
 }
@@ -379,6 +437,7 @@ func (f connectionForm) Profile() Profile {
 	p.ClientID = vals[idxClientID]
 	p.Username = vals[idxUsername]
 	p.Password = vals[idxPassword]
+	fmt.Sscan(vals[idxFromEnv], &p.FromEnv)
 	fmt.Sscan(vals[idxSSL], &p.SSL)
 	p.MQTTVersion = vals[idxMQTTVersion]
 	fmt.Sscan(vals[idxConnectTimeout], &p.ConnectTimeout)

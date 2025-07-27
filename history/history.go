@@ -1,4 +1,4 @@
-package trace
+package history
 
 import (
 	"encoding/json"
@@ -28,20 +28,21 @@ type Index struct {
 }
 
 // DefaultDir returns the default directory for the history database.
-func DefaultDir() string {
+func DefaultDir(profile string) string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return "history"
+		return filepath.Join("history", profile)
 	}
-	return filepath.Join(home, ".emqutiti", "history")
+	return filepath.Join(home, ".emqutiti", "history", profile)
 }
 
-// Open opens (or creates) a persistent message index at the given path.
-// If path is empty, DefaultDir() is used.
-func Open(path string) (*Index, error) {
-	if path == "" {
-		path = DefaultDir()
+// Open opens (or creates) a persistent message index for the given profile.
+// If profile is empty, "default" is used.
+func Open(profile string) (*Index, error) {
+	if profile == "" {
+		profile = "default"
 	}
+	path := DefaultDir(profile)
 	os.MkdirAll(path, 0755)
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	db, err := badger.Open(opts)
@@ -81,7 +82,11 @@ func (i *Index) Add(msg Message) {
 	defer i.mu.Unlock()
 	i.msgs = append(i.msgs, msg)
 	if i.db != nil {
-		key := []byte(fmt.Sprintf("%020d", msg.Timestamp.UnixNano()))
+		// Keys use the format <topic>/<timestamp>. Slashes in the topic are
+		// safe because BadgerDB treats keys as byte strings and doesn't
+		// interpret '/' as a directory separator. Keeping slashes allows
+		// prefix queries on hierarchical topics.
+		key := []byte(fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano()))
 		val, _ := json.Marshal(msg)
 		i.db.Update(func(txn *badger.Txn) error {
 			return txn.Set(key, val)

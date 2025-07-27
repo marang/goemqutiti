@@ -79,4 +79,5 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - Prioritize modularization and secure storage as the foundation for the application.
 - Regularly update this TODO list as tasks are completed or new requirements emerge.
 - Keep the documentation in `README.md`, `TODO.md`, and `AGENTS.md` aligned with the current implementation.
+- Ensure `Ctrl+D` quits the TUI from every screen, including the import wizard.
 

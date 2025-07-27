@@ -58,6 +58,9 @@ func NewWizard(client Publisher, path string) *Wizard {
 func (w *Wizard) Init() tea.Cmd { return textinput.Blink }
 
 func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlD {
+		return w, tea.Quit
+	}
 	switch w.step {
 	case stepFile:
 		var cmd tea.Cmd

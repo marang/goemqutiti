@@ -5,6 +5,7 @@
 
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `-import` flag to launch an interactive wizard for CSV or XLS bulk publishing. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name.
+Press `Ctrl+D` from any screen to exit the program. The import wizard should also honor this shortcut.
 
 ### Recent Experience
 - Keyboard shortcuts bound to plain letters can interfere with text entry. Use `Ctrl` combinations for global actions.

@@ -88,7 +88,9 @@ In the interface:
   and free text to match payloads. Example:
   `topic=sensors/start start=2024-01-01T00:00:00Z payload=error`.
   The history log is stored in BadgerDB under
-  `~/.emqutiti/history/<profile>` so messages remain searchable per profile.
+  `~/.emqutiti/data/<profile>/history` so messages remain searchable per profile.
+  Any traces recorded with the tracer package are saved separately in
+  `~/.emqutiti/data/<profile>/traces`.
 - **Esc** navigates back within menus without quitting.
 - **Ctrl+D** exits the program.
 - Left-click a topic chip to toggle it and middle-click to remove it.

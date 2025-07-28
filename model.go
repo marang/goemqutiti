@@ -188,6 +188,16 @@ func (t *traceItem) Description() string {
 	if len(parts) > 0 {
 		status += " " + strings.Join(parts, " ")
 	}
+	var times []string
+	if !t.cfg.Start.IsZero() {
+		times = append(times, t.cfg.Start.Format(time.RFC3339))
+	}
+	if !t.cfg.End.IsZero() {
+		times = append(times, t.cfg.End.Format(time.RFC3339))
+	}
+	if len(times) > 0 {
+		status += " " + strings.Join(times, " -> ")
+	}
 	return status
 }
 

@@ -225,11 +225,15 @@ func (m model) viewTraceMessages() string {
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	listLines := strings.Split(m.traces.view.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
-	target := m.layout.trace.height + 1
-	for len(listLines)+1 < target {
-		listLines = append(listLines, "")
-	}
 	listLines = append(listLines, help)
+	target := len(listLines)
+	minHeight := m.layout.trace.height + 1
+	if target < minHeight {
+		for len(listLines) < minHeight {
+			listLines = append(listLines, "")
+		}
+		target = minHeight
+	}
 	content := strings.Join(listLines, "\n")
 	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
 }

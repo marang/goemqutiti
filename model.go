@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"goemqutiti/history"
@@ -141,6 +142,9 @@ type model struct {
 	chipBounds []chipBound
 	focusMap   map[string]focusable
 	focusOrder []string
+
+	messageHeight int
+	historyHeight int
 }
 
 func initialModel(conns *Connections) *model {
@@ -240,6 +244,8 @@ func initialModel(conns *Connections) *model {
 		selectedHistory: make(map[int]struct{}),
 		selectionAnchor: -1,
 		prevMode:        modeClient,
+		messageHeight:   6,
+		historyHeight:   10,
 	}
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topicInput,
@@ -273,6 +279,30 @@ func (m *model) hasTopic(topic string) bool {
 	return false
 }
 
+func (m *model) sortTopics() {
+	if len(m.topics) == 0 {
+		return
+	}
+	sel := ""
+	if m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
+		sel = m.topics[m.selectedTopic].title
+	}
+	sort.SliceStable(m.topics, func(i, j int) bool {
+		if m.topics[i].active != m.topics[j].active {
+			return m.topics[i].active && !m.topics[j].active
+		}
+		return m.topics[i].title < m.topics[j].title
+	})
+	if sel != "" {
+		for i, t := range m.topics {
+			if t.title == sel {
+				m.selectedTopic = i
+				break
+			}
+		}
+	}
+}
+
 func (m *model) toggleTopic(index int) {
 	if index < 0 || index >= len(m.topics) {
 		return
@@ -288,6 +318,7 @@ func (m *model) toggleTopic(index int) {
 			m.appendHistory(t.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", t.title))
 		}
 	}
+	m.sortTopics()
 }
 
 func (m *model) removeTopic(index int) {
@@ -305,6 +336,7 @@ func (m *model) removeTopic(index int) {
 	} else if m.selectedTopic >= len(m.topics) {
 		m.selectedTopic = len(m.topics) - 1
 	}
+	m.sortTopics()
 }
 
 func (m *model) topicAtPosition(x, y int) int {
@@ -314,6 +346,21 @@ func (m *model) topicAtPosition(x, y int) int {
 		}
 	}
 	return -1
+}
+
+func (m *model) historyIndexAt(y int) int {
+	rel := y - (m.elemPos["history"] + 1) + m.viewport.YOffset
+	if rel < 0 {
+		return -1
+	}
+	h := 2 // historyDelegate height
+	idx := rel / h
+	start := m.history.Paginator.Page * m.history.Paginator.PerPage
+	i := start + idx
+	if i >= len(m.history.Items()) || i < 0 {
+		return -1
+	}
+	return i
 }
 
 func (m *model) startConfirm(prompt string, action func()) {

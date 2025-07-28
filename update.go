@@ -80,6 +80,7 @@ func (m *model) restoreState(name string) {
 	if data, ok := m.saved[name]; ok {
 		m.topics = data.Topics
 		m.payloads = data.Payloads
+		m.sortTopics()
 	} else {
 		m.topics = []topicItem{}
 		m.payloads = []payloadItem{}
@@ -445,7 +446,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// surrounding box stays within the terminal boundaries.
 		m.topicInput.Width = msg.Width - 7
 		m.messageInput.SetWidth(msg.Width - 4)
-		m.history.SetSize(msg.Width-4, (msg.Height-1)/3+10)
+		m.messageInput.SetHeight(m.messageHeight)
+		if m.historyHeight == 0 {
+			m.historyHeight = (msg.Height-1)/3 + 10
+		}
+		m.history.SetSize(msg.Width-4, m.historyHeight)
 		m.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.viewport.Height = msg.Height - 2

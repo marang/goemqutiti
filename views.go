@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -76,7 +77,19 @@ func (m *model) viewClient() string {
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
 	chipContent, bounds := layoutChips(chips, m.width-4)
-	topicsBox := ui.LegendBox(chipContent, "Topics", m.width-2, topicsFocused)
+	lines := strings.Split(chipContent, "\n")
+	maxRows := 3
+	if len(lines) > maxRows {
+		chipContent = strings.Join(lines[:maxRows], "\n")
+	}
+	active := 0
+	for _, t := range m.topics {
+		if t.active {
+			active++
+		}
+	}
+	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics))
+	topicsBox := ui.LegendBox(chipContent, label, m.width-2, topicsFocused)
 	topicBox := ui.LegendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
 	messageBox := ui.LegendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
 	messagesBox := ui.LegendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)

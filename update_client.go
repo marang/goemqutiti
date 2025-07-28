@@ -137,10 +137,31 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
 			m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
 		}
+	case "ctrl+shift+up":
+		id := m.focusOrder[m.focusIndex]
+		if id == "message" {
+			if m.messageHeight > 1 {
+				m.messageHeight--
+				m.messageInput.SetHeight(m.messageHeight)
+			}
+		} else if id == "history" {
+			if m.historyHeight > 1 {
+				m.historyHeight--
+				m.history.SetSize(m.width-4, m.historyHeight)
+			}
+		}
+	case "ctrl+shift+down":
+		id := m.focusOrder[m.focusIndex]
+		if id == "message" {
+			m.messageHeight++
+			m.messageInput.SetHeight(m.messageHeight)
+		} else if id == "history" {
+			m.historyHeight++
+			m.history.SetSize(m.width-4, m.historyHeight)
+		}
 	case "up", "down":
 		if m.focusOrder[m.focusIndex] == "history" {
-			m.selectedHistory = map[int]struct{}{}
-			m.selectionAnchor = -1
+			// keep current selection and anchor
 		}
 	case "ctrl+s", "ctrl+enter":
 		if m.focusOrder[m.focusIndex] == "message" {
@@ -160,6 +181,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			topic := strings.TrimSpace(m.topicInput.Value())
 			if topic != "" && !m.hasTopic(topic) {
 				m.topics = append(m.topics, topicItem{title: topic, active: true})
+				m.sortTopics()
 				if m.mqttClient != nil {
 					m.mqttClient.Subscribe(topic, 0, nil)
 				}
@@ -223,6 +245,22 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
+		if m.focusOrder[m.focusIndex] == "history" {
+			idx := m.historyIndexAt(msg.Y)
+			if idx >= 0 {
+				m.history.Select(idx)
+				if msg.Shift {
+					if m.selectionAnchor == -1 {
+						m.selectionAnchor = m.history.Index()
+						m.selectedHistory[m.selectionAnchor] = struct{}{}
+					}
+					m.updateSelectionRange(idx)
+				} else {
+					m.selectedHistory = map[int]struct{}{}
+					m.selectionAnchor = -1
+				}
+			}
+		}
 	}
 	m.handleTopicsClick(msg)
 	if len(cmds) == 0 {
@@ -277,8 +315,24 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	m.messageInput, cmdMsg = m.messageInput.Update(msg)
 	cmds = append(cmds, cmdMsg)
 	var vpCmd tea.Cmd
-	m.viewport, vpCmd = m.viewport.Update(msg)
-	cmds = append(cmds, vpCmd)
+	skipVP := false
+	if m.focusOrder[m.focusIndex] == "history" {
+		switch mt := msg.(type) {
+		case tea.KeyMsg:
+			s := mt.String()
+			if s == "up" || s == "down" || s == "pgup" || s == "pgdown" {
+				skipVP = true
+			}
+		case tea.MouseMsg:
+			if mt.Action == tea.MouseActionPress && (mt.Button == tea.MouseButtonWheelUp || mt.Button == tea.MouseButtonWheelDown) {
+				skipVP = true
+			}
+		}
+	}
+	if !skipVP {
+		m.viewport, vpCmd = m.viewport.Update(msg)
+		cmds = append(cmds, vpCmd)
+	}
 
 	var histCmd tea.Cmd
 	if m.focusOrder[m.focusIndex] == "history" {

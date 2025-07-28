@@ -1,0 +1,83 @@
+name: Publish to AUR
+
+on:
+  push:
+    tags:
+      - 'v*'   # only run when you push a tag like v0.1.0
+
+jobs:
+  aur:
+    runs-on: ubuntu-latest
+    # Run inside Arch so we have makepkg, updpkgsums, etc.
+    container: archlinux:latest
+
+    env:
+      PKGNAME: emqutiti
+      AUR_REPO: emqutiti
+      VERSION: ${{ github.ref_name }} # e.g. v0.1.0
+
+    steps:
+      - name: Install deps
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel git go pacman-contrib openssh curl
+
+      - name: Checkout source repo
+        uses: actions/checkout@v4
+
+      - name: Strip leading v from tag
+        id: v
+        run: |
+          echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Bump PKGBUILD (pkgver & sha256sums)
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          # Update pkgver
+          sed -i "s/^pkgver=.*/pkgver=${ver}/" PKGBUILD
+
+          # Recompute checksum for the new tarball
+          tarball="https://github.com/${GITHUB_REPOSITORY}/archive/refs/tags/v${ver}.tar.gz"
+          sum=$(curl -L "$tarball" | sha256sum | cut -d' ' -f1)
+          sed -i "s/^sha256sums=.*/sha256sums=('${sum}')/" PKGBUILD
+
+          # If your extracted dir name is repo-$ver (not $pkgname-$ver), fix build()/package() cd targets once:
+          # sed -i "s|cd \"\$pkgname-\$pkgver\"|cd \"goemqutiti-\$pkgver\"|g" PKGBUILD
+
+      - name: Generate .SRCINFO
+        run: |
+          makepkg --printsrcinfo > .SRCINFO
+
+      - name: Prepare SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.AUR_PRIVATE_KEY }}
+
+      - name: Trust AUR host key
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Clone AUR repo
+        run: |
+          git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur
+
+      - name: Commit & push to AUR
+        env:
+          GIT_AUTHOR_NAME:  ${{ secrets.AUR_COMMIT_NAME || 'github-actions[bot]' }}
+          GIT_AUTHOR_EMAIL: ${{ secrets.AUR_COMMIT_EMAIL || 'github-actions[bot]@users.noreply.github.com' }}
+          GIT_COMMITTER_NAME:  ${{ secrets.AUR_COMMIT_NAME || 'github-actions[bot]' }}
+          GIT_COMMITTER_EMAIL: ${{ secrets.AUR_COMMIT_EMAIL || 'github-actions[bot]@users.noreply.github.com' }}
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          cp PKGBUILD .SRCINFO aur/
+          cd aur
+          git add PKGBUILD .SRCINFO
+          if git diff --cached --quiet; then
+            echo "No changes to push."
+            exit 0
+          fi
+          git commit -m "Release ${PKGNAME} ${ver}"
+          git push origin HEAD:master
+

@@ -2,49 +2,16 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-	"reflect"
-	"strconv"
-	"strings"
 
-	"github.com/BurntSushi/toml"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zalando/go-keyring"
+
+	"github.com/marang/goemqutiti/config"
 )
 
-type Profile struct {
-	Name                string `toml:"name"`
-	Schema              string `toml:"schema"`
-	Host                string `toml:"host"`
-	Port                int    `toml:"port"`
-	ClientID            string `toml:"client_id"`
-	Username            string `toml:"username"`
-	Password            string `toml:"password"`
-	FromEnv             bool   `toml:"from_env"` // when true, values are loaded from environment variables
-	SSL                 bool   `toml:"ssl_tls"`
-	MQTTVersion         string `toml:"mqtt_version"`
-	ConnectTimeout      int    `toml:"connect_timeout"`
-	KeepAlive           int    `toml:"keep_alive"`
-	QoS                 int    `toml:"qos"`
-	AutoReconnect       bool   `toml:"auto_reconnect"`
-	ReconnectPeriod     int    `toml:"reconnect_period"`
-	CleanStart          bool   `toml:"clean_start"`
-	SessionExpiry       int    `toml:"session_expiry_interval"`
-	ReceiveMaximum      int    `toml:"receive_maximum"`
-	MaximumPacketSize   int    `toml:"maximum_packet_size"`
-	TopicAliasMaximum   int    `toml:"topic_alias_maximum"`
-	RequestResponseInfo bool   `toml:"request_response_info"`
-	RequestProblemInfo  bool   `toml:"request_problem_info"`
-	LastWillEnabled     bool   `toml:"last_will_enabled"`
-	LastWillTopic       string `toml:"last_will_topic"`
-	LastWillQos         int    `toml:"last_will_qos"`
-	LastWillRetain      bool   `toml:"last_will_retain"`
-	LastWillPayload     string `toml:"last_will_payload"`
-	RandomIDSuffix      bool   `toml:"random_id_suffix"`
-}
+type Profile = config.Profile
 
 // Connections manages the state and logic for handling broker profiles.
 type Connections struct {
@@ -213,133 +180,14 @@ func (m *Connections) savePasswordToKeyring(service, username, password string) 
 	}
 }
 
-// DefaultUserConfigFile try to load config from ~/.emqutiti/config.toml
-func DefaultUserConfigFile() (string, error) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-
-	return filepath.Join(homeDir, ".emqutiti", "config.toml"), nil
-}
-
-func retrievePasswordFromKeyring(password string) (string, error) {
-	if !strings.HasPrefix(password, "keyring:") {
-		return "", fmt.Errorf("password does not reference keyring")
-	}
-	parts := strings.SplitN(password, ":", 2)
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid keyring reference: %s", password)
-	}
-	serviceUsername := strings.SplitN(parts[1], "/", 2)
-	if len(serviceUsername) != 2 {
-		return "", fmt.Errorf("invalid keyring format: %s", parts[1])
-	}
-
-	// Retrieve the password from the keyring
-	keyringPassword, err := keyring.Get(serviceUsername[0], serviceUsername[1])
-	if err != nil {
-		return "", fmt.Errorf("failed to retrieve password from keyring for %s/%s: %w", serviceUsername[0], serviceUsername[1], err)
-	}
-
-	return keyringPassword, nil
-}
-
-// applyEnvVars loads all profile fields from environment variables when FromEnv is set.
-// Environment variable names use the pattern GOEMQUTITI_<NAME>_<FIELD>, where
-// <NAME> is the uppercased profile name and <FIELD> matches the TOML field name.
-func sanitizeEnvName(name string) string {
-	upper := strings.ToUpper(name)
-	var b strings.Builder
-	for _, r := range upper {
-		if r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
-			b.WriteRune(r)
-		} else {
-			b.WriteRune('_')
-		}
-	}
-	return b.String()
-}
-
-func envPrefix(name string) string {
-	return "GOEMQUTITI_" + sanitizeEnvName(name) + "_"
-}
-
-func applyEnvVars(p *Profile) {
-	if !p.FromEnv {
-		return
-	}
-	prefix := envPrefix(p.Name)
-	rv := reflect.ValueOf(p).Elem()
-	rt := rv.Type()
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		if f.Name == "FromEnv" {
-			continue
-		}
-		tag := f.Tag.Get("toml")
-		if tag == "" {
-			continue
-		}
-		envName := prefix + strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
-		val, ok := os.LookupEnv(envName)
-		if !ok {
-			continue
-		}
-		field := rv.Field(i)
-		switch field.Kind() {
-		case reflect.String:
-			field.SetString(val)
-		case reflect.Int:
-			if iv, err := strconv.Atoi(val); err == nil {
-				field.SetInt(int64(iv))
-			}
-		case reflect.Bool:
-			if bv, err := strconv.ParseBool(val); err == nil {
-				field.SetBool(bv)
-			}
-		}
-	}
-}
-
-// LoadConfig loads the configuration from a TOML file and retrieves keyring-stored passwords.
+// LoadFromConfig loads connection profiles from the config file using the
+// shared config package.
 func LoadFromConfig(filePath string) (*Connections, error) {
-	var err error
-
-	// Step 1: Determine the config file path if not provided
-	if filePath == "" {
-		if filePath, err = DefaultUserConfigFile(); err != nil {
-			return nil, err
-		}
+	cfg, err := config.LoadConfig(filePath)
+	if err != nil {
+		return nil, err
 	}
-
-	// Step 2: Decode the TOML file into the Config struct
-	var connections Connections
-	if _, err := toml.DecodeFile(filePath, &connections); err != nil {
-		return nil, fmt.Errorf("failed to decode config file: %w", err)
-	}
-
-	// Step 3: Process each profile to handle keyring references or env overrides
-	for i := range connections.Profiles {
-		p := &connections.Profiles[i]
-		if p.FromEnv {
-			applyEnvVars(p)
-			continue
-		}
-
-		password := p.Password
-		if strings.HasPrefix(password, "keyring:") {
-			keyringPassword, err := retrievePasswordFromKeyring(password)
-			if err != nil {
-				fmt.Println("Warning:", err)
-				p.Password = ""
-				continue
-			}
-			p.Password = keyringPassword
-		}
-	}
-
-	return &connections, nil
+	return &Connections{DefaultProfileName: cfg.DefaultProfile, Profiles: cfg.Profiles}, nil
 }
 
 // LoadProfiles updates c with profiles from the config file. It logs errors but

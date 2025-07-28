@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/history"
 )
 
@@ -219,7 +221,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					}
 					flushStatus(m.connections.statusChan)
 					if p.FromEnv {
-						applyEnvVars(&p)
+						config.ApplyEnvVars(&p)
 					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 						p.Password = env
 					}
@@ -257,7 +259,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				}
 				flushStatus(m.connections.statusChan)
 				if p.FromEnv {
-					applyEnvVars(&p)
+					config.ApplyEnvVars(&p)
 				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 					p.Password = env
 				}

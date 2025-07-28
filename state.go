@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+	"github.com/marang/goemqutiti/config"
 )
 
 // persistedTopic mirrors topicItem for persistence in the config file.
@@ -33,7 +34,7 @@ type userConfig struct {
 
 // loadState retrieves saved topics and payloads from config.toml.
 func loadState() map[string]connectionData {
-	fp, err := DefaultUserConfigFile()
+	fp, err := config.DefaultUserConfigFile()
 	if err != nil {
 		return map[string]connectionData{}
 	}
@@ -58,7 +59,7 @@ func loadState() map[string]connectionData {
 
 // writeConfig writes the entire configuration back to disk.
 func writeConfig(cfg userConfig) {
-	fp, err := DefaultUserConfigFile()
+	fp, err := config.DefaultUserConfigFile()
 	if err != nil {
 		return
 	}
@@ -72,7 +73,7 @@ func writeConfig(cfg userConfig) {
 
 // saveState updates only the Saved section in config.toml.
 func saveState(data map[string]connectionData) {
-	fp, err := DefaultUserConfigFile()
+	fp, err := config.DefaultUserConfigFile()
 	if err != nil {
 		return
 	}

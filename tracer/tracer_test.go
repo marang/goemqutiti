@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"goemqutiti/history"
+	"github.com/marang/goemqutiti/history"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )

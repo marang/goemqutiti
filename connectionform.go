@@ -2,12 +2,27 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/ui"
 )
+
+func envPrefix(name string) string {
+	upper := strings.ToUpper(name)
+	var b strings.Builder
+	for _, r := range upper {
+		if r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
+			b.WriteRune(r)
+		} else {
+			b.WriteRune('_')
+		}
+	}
+	return "GOEMQUTITI_" + b.String() + "_"
+}
 
 type formField interface {
 	Focus()
@@ -197,7 +212,7 @@ const (
 
 func newConnectionForm(p Profile, idx int) connectionForm {
 	if p.FromEnv {
-		applyEnvVars(&p)
+		config.ApplyEnvVars(&p)
 	}
 	pwKey := ""
 	if p.Name != "" && p.Username != "" {

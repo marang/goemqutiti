@@ -35,7 +35,6 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 	)
 
 	lines := strings.Split(content, "\n")
-	origCount := len(lines)
 	if height > 0 {
 		if len(lines) > height {
 			lines = lines[:height]
@@ -46,7 +45,7 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 	}
 
 	indicator := -1
-	if scroll >= 0 && height > 0 && origCount > height {
+	if scroll >= 0 && height > 0 {
 		indicator = int(math.Round(scroll * float64(height-1)))
 		if indicator < 0 {
 			indicator = 0

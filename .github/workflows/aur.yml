@@ -62,7 +62,7 @@ jobs:
           GIT_SSH_COMMAND: "ssh -o StrictHostKeyChecking=accept-new"
           SSH_AUTH_SOCK: ${{ env.SSH_AUTH_SOCK }}
         run: |
-          sudo -E -u build git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur
+          git clone ssh://aur@aur.archlinux.org/${AUR_REPO}.git aur
 
       - name: Commit & push to AUR
         env:

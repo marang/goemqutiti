@@ -59,11 +59,13 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.AUR_PRIVATE_KEY }}
 
-      - name: Trust AUR host key
+      - name: Trust AUR host key (for build user)
         run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -t ed25519 aur.archlinux.org >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+          mkdir -p /home/build/.ssh
+          ssh-keyscan -t ed25519 aur.archlinux.org >> /home/build/.ssh/known_hosts
+          chown -R build:build /home/build/.ssh
+          chmod 700 /home/build/.ssh
+          chmod 600 /home/build/.ssh/known_hosts
 
       - name: Clone AUR repo
         run: |

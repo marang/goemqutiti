@@ -126,7 +126,8 @@ published messages. The sample size grows with the total number of rows
 screen when complete so you can see how many messages were sent. The wizard
 expands to the full terminal width and shows samples inside the same green box
 used for the live history. Use `Ctrl+N` and `Ctrl+P` to move forward and back
-through the wizard steps.
+through the wizard steps. When many messages are shown you can scroll the
+publish and dry run results with the arrow keys.
 
 Future versions may store import settings for quick reuse.
 

@@ -144,6 +144,18 @@ type messageState struct {
 	list     list.Model // payloadList reused when viewing payloads
 }
 
+// uiState groups general UI information such as current focus and layout.
+type uiState struct {
+	focusIndex int            // index of the currently focused element
+	mode       appMode        // current application mode
+	prevMode   appMode        // mode prior to confirmations
+	width      int            // terminal width
+	height     int            // terminal height
+	viewport   viewport.Model // scrolling container for the main view
+	elemPos    map[string]int // cached Y positions of each box
+	focusOrder []string       // order of focusable elements
+}
+
 type model struct {
 	mqttClient *MQTTClient
 
@@ -152,22 +164,14 @@ type model struct {
 	topics      topicsState
 	message     messageState
 
-	focusIndex int
+	ui uiState
 
-	mode          appMode
-	prevMode      appMode
 	confirmPrompt string
 	confirmAction func()
 
-	width  int
-	height int
-
 	layout layoutConfig
 
-	viewport   viewport.Model
-	elemPos    map[string]int
-	focusMap   map[string]focusable
-	focusOrder []string
+	focusMap map[string]focusable
 }
 
 func initialModel(conns *Connections) *model {
@@ -271,14 +275,16 @@ func initialModel(conns *Connections) *model {
 			payloads: []payloadItem{},
 			list:     payloadList,
 		},
-		focusIndex: 0,
-		mode:       modeClient,
-		width:      0,
-		height:     0,
-		viewport:   vp,
-		elemPos:    map[string]int{},
-		focusOrder: order,
-		prevMode:   modeClient,
+		ui: uiState{
+			focusIndex: 0,
+			mode:       modeClient,
+			prevMode:   modeClient,
+			width:      0,
+			height:     0,
+			viewport:   vp,
+			elemPos:    map[string]int{},
+			focusOrder: order,
+		},
 		layout: layoutConfig{
 			message: boxConfig{height: 6},
 			history: boxConfig{height: 10},
@@ -387,7 +393,7 @@ func (m *model) topicAtPosition(x, y int) int {
 }
 
 func (m *model) historyIndexAt(y int) int {
-	rel := y - (m.elemPos["history"] + 1) + m.viewport.YOffset
+	rel := y - (m.ui.elemPos["history"] + 1) + m.ui.viewport.YOffset
 	if rel < 0 {
 		return -1
 	}
@@ -404,8 +410,8 @@ func (m *model) historyIndexAt(y int) int {
 func (m *model) startConfirm(prompt string, action func()) {
 	m.confirmPrompt = prompt
 	m.confirmAction = action
-	m.prevMode = m.mode
-	m.mode = modeConfirmDelete
+	m.ui.prevMode = m.ui.mode
+	m.ui.mode = modeConfirmDelete
 }
 
 func (m *model) subscribeActiveTopics() {

@@ -13,7 +13,7 @@ func TestDeleteTopic(t *testing.T) {
 	m.setFocus("topics")
 	m.topics.selected = 0
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	if cmd == nil || m.mode != modeConfirmDelete {
+	if cmd == nil || m.ui.mode != modeConfirmDelete {
 		t.Fatalf("expected confirm delete mode")
 	}
 	if m.confirmAction == nil {

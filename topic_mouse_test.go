@@ -15,7 +15,7 @@ func chipCoords(m *model, idx int) (int, int) {
 		return -1, -1
 	}
 	b := m.topics.chipBounds[idx]
-	return b.x, b.y - m.viewport.YOffset
+	return b.x, b.y - m.ui.viewport.YOffset
 }
 
 func setupTopics(m *model) {
@@ -146,10 +146,10 @@ func TestMouseToggleWithScroll(t *testing.T) {
 	setupManyTopics(m, 30)
 	m.viewClient()
 	// Scroll viewport to show around row 6
-	scroll := m.elemPos["topics"] + 2 + 6*lipgloss.Height(ui.ChipStyle.Render("test"))
-	m.viewport.SetYOffset(scroll)
-	if m.viewport.YOffset != scroll {
-		t.Fatalf("expected YOffset %d got %d", scroll, m.viewport.YOffset)
+	scroll := m.ui.elemPos["topics"] + 2 + 6*lipgloss.Height(ui.ChipStyle.Render("test"))
+	m.ui.viewport.SetYOffset(scroll)
+	if m.ui.viewport.YOffset != scroll {
+		t.Fatalf("expected YOffset %d got %d", scroll, m.ui.viewport.YOffset)
 	}
 
 	// Choose a chip on row 7 (0-based index -> row 7 => start index 6*3)

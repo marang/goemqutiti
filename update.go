@@ -107,18 +107,18 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 
 func (m *model) setFocus(id string) tea.Cmd {
 	var cmds []tea.Cmd
-	for i, name := range m.focusOrder {
+	for i, name := range m.ui.focusOrder {
 		if f, ok := m.focusMap[name]; ok && f != nil {
 			if name == id {
 				if c := f.Focus(); c != nil {
 					cmds = append(cmds, c)
 				}
-				m.focusIndex = i
+				m.ui.focusIndex = i
 			} else {
 				f.Blur()
 			}
 		} else if name == id {
-			m.focusIndex = i
+			m.ui.focusIndex = i
 		}
 	}
 	m.scrollToFocused()
@@ -129,33 +129,33 @@ func (m *model) setFocus(id string) tea.Cmd {
 }
 
 func (m *model) focusFromMouse(y int) tea.Cmd {
-	cy := y + m.viewport.YOffset - 1
+	cy := y + m.ui.viewport.YOffset - 1
 	chosen := ""
 	maxPos := -1
-	for _, id := range m.focusOrder {
-		if pos, ok := m.elemPos[id]; ok && cy >= pos && pos > maxPos {
+	for _, id := range m.ui.focusOrder {
+		if pos, ok := m.ui.elemPos[id]; ok && cy >= pos && pos > maxPos {
 			chosen = id
 			maxPos = pos
 		}
 	}
 	if chosen != "" {
-		if chosen != m.focusOrder[m.focusIndex] {
+		if chosen != m.ui.focusOrder[m.ui.focusIndex] {
 			return m.setFocus(chosen)
 		}
 		return nil
 	}
-	if len(m.focusOrder) > 0 && m.focusOrder[m.focusIndex] != m.focusOrder[0] {
-		return m.setFocus(m.focusOrder[0])
+	if len(m.ui.focusOrder) > 0 && m.ui.focusOrder[m.ui.focusIndex] != m.ui.focusOrder[0] {
+		return m.setFocus(m.ui.focusOrder[0])
 	}
 	return nil
 }
 
 func (m *model) scrollToFocused() {
-	if len(m.focusOrder) == 0 {
+	if len(m.ui.focusOrder) == 0 {
 		return
 	}
-	id := m.focusOrder[m.focusIndex]
-	pos, ok := m.elemPos[id]
+	id := m.ui.focusOrder[m.ui.focusIndex]
+	pos, ok := m.ui.elemPos[id]
 	if !ok {
 		return
 	}
@@ -163,10 +163,10 @@ func (m *model) scrollToFocused() {
 	if offset < 0 {
 		offset = 0
 	}
-	if offset < m.viewport.YOffset {
-		m.viewport.SetYOffset(offset)
-	} else if offset >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.SetYOffset(offset - m.viewport.Height + 1)
+	if offset < m.ui.viewport.YOffset {
+		m.ui.viewport.SetYOffset(offset)
+	} else if offset >= m.ui.viewport.YOffset+m.ui.viewport.Height {
+		m.ui.viewport.SetYOffset(offset - m.ui.viewport.Height + 1)
 	}
 }
 
@@ -203,7 +203,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			m.connections.manager.Statuses[msg.profile.Name] = "connected"
 			m.connections.manager.Errors[msg.profile.Name] = ""
 			m.refreshConnectionItems()
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		}
 		return m, listenStatus(m.connections.statusChan)
 	case tea.KeyMsg:
@@ -214,7 +214,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if i >= 0 && i < len(m.connections.manager.Profiles) {
 					p := m.connections.manager.Profiles[i]
 					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
-						m.mode = modeClient
+						m.ui.mode = modeClient
 						return m, nil
 					}
 					flushStatus(m.connections.statusChan)
@@ -239,20 +239,20 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connections.form = &f
-			m.mode = modeEditConnection
+			m.ui.mode = modeEditConnection
 		case "e":
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				f := newConnectionForm(m.connections.manager.Profiles[i], i)
 				m.connections.form = &f
-				m.mode = modeEditConnection
+				m.ui.mode = modeEditConnection
 			}
 		case "enter":
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				p := m.connections.manager.Profiles[i]
 				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
-					m.mode = modeClient
+					m.ui.mode = modeClient
 					return m, nil
 				}
 				flushStatus(m.connections.statusChan)
@@ -309,7 +309,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeConnections
+			m.ui.mode = modeConnections
 			m.connections.form = nil
 			return m, nil
 		case "enter":
@@ -320,7 +320,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 				m.connections.manager.AddConnection(p)
 			}
 			m.refreshConnectionItems()
-			m.mode = modeConnections
+			m.ui.mode = modeConnections
 			m.connections.form = nil
 			return m, nil
 		}
@@ -341,10 +341,10 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction()
 				m.confirmAction = nil
 			}
-			m.mode = m.prevMode
+			m.ui.mode = m.ui.prevMode
 			m.scrollToFocused()
 		case "n", "esc":
-			m.mode = m.prevMode
+			m.ui.mode = m.ui.prevMode
 			m.scrollToFocused()
 		}
 	}
@@ -359,7 +359,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		case "d":
 			i := m.topics.list.Index()
 			if i >= 0 && i < len(m.topics.items) {
@@ -395,7 +395,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		case "d":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -414,7 +414,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					pi := items[i].(payloadItem)
 					m.topics.input.SetValue(pi.topic)
 					m.message.input.SetValue(pi.payload)
-					m.mode = modeClient
+					m.ui.mode = modeClient
 				}
 			}
 		}
@@ -438,8 +438,8 @@ func (m *model) updateSelectionRange(idx int) {
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
+		m.ui.width = msg.Width
+		m.ui.height = msg.Height
 		m.connections.manager.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
 		// textinput.View() renders the prompt and cursor in addition
 		// to the configured width. Reduce the width slightly so the
@@ -451,13 +451,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
 		m.history.list.SetSize(msg.Width-4, m.layout.history.height)
-		m.viewport.Width = msg.Width
+		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
-		m.viewport.Height = msg.Height - 2
+		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
 	}
 
-	switch m.mode {
+	switch m.ui.mode {
 	case modeClient:
 		cmd := m.updateClient(msg)
 		return m, cmd

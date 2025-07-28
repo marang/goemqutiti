@@ -15,6 +15,9 @@ Press `Ctrl+D` from any screen to exit the program.
 
 ### UI Guidelines
 - Use `legendBox` or its variants for all boxed sections.
+- The box helpers have been simplified into a single `LegendBox` function that
+  accepts a border color and optional height. Use this function directly rather
+  than maintaining multiple wrapper variants.
 - Highlight the selected box using the focused style (pink).
 - Present keyboard shortcuts consistently across views and ensure they behave the same everywhere.
 

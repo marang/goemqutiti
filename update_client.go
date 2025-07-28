@@ -77,7 +77,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.mqttClient = nil
 		}
 	case "space":
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			idx := m.history.list.Index()
 			if idx >= 0 {
 				if _, ok := m.history.selected[idx]; ok {
@@ -89,7 +89,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+up":
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				m.history.selected[m.history.selectionAnchor] = struct{}{}
@@ -101,7 +101,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+down":
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				m.history.selected[m.history.selectionAnchor] = struct{}{}
@@ -113,13 +113,13 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "tab", "shift+tab":
-		if len(m.focusOrder) > 0 {
+		if len(m.ui.focusOrder) > 0 {
 			step := 1
 			if msg.String() == "shift+tab" {
 				step = -1
 			}
-			next := (m.focusIndex + step + len(m.focusOrder)) % len(m.focusOrder)
-			id := m.focusOrder[next]
+			next := (m.ui.focusIndex + step + len(m.ui.focusOrder)) % len(m.ui.focusOrder)
+			id := m.ui.focusOrder[next]
 			cmds = append(cmds, m.setFocus(id))
 			if id == "topics" {
 				if len(m.topics.items) > 0 {
@@ -130,15 +130,15 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "left":
-		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics.items) > 0 {
+		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
 		}
 	case "right":
-		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics.items) > 0 {
+		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
 		}
 	case "ctrl+shift+up":
-		id := m.focusOrder[m.focusIndex]
+		id := m.ui.focusOrder[m.ui.focusIndex]
 		if id == "message" {
 			if m.layout.message.height > 1 {
 				m.layout.message.height--
@@ -147,7 +147,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		} else if id == "history" {
 			if m.layout.history.height > 1 {
 				m.layout.history.height--
-				m.history.list.SetSize(m.width-4, m.layout.history.height)
+				m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
 			}
 		} else if id == "topics" {
 			if m.layout.topics.height > 1 {
@@ -155,22 +155,22 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "ctrl+shift+down":
-		id := m.focusOrder[m.focusIndex]
+		id := m.ui.focusOrder[m.ui.focusIndex]
 		if id == "message" {
 			m.layout.message.height++
 			m.message.input.SetHeight(m.layout.message.height)
 		} else if id == "history" {
 			m.layout.history.height++
-			m.history.list.SetSize(m.width-4, m.layout.history.height)
+			m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
 		} else if id == "topics" {
 			m.layout.topics.height++
 		}
 	case "up", "down":
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			// keep current selection and anchor
 		}
 	case "ctrl+s", "ctrl+enter":
-		if m.focusOrder[m.focusIndex] == "message" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "message" {
 			payload := m.message.input.Value()
 			for _, t := range m.topics.items {
 				if t.active {
@@ -183,7 +183,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "enter":
-		if m.focusOrder[m.focusIndex] == "topic" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "topic" {
 			topic := strings.TrimSpace(m.topics.input.Value())
 			if topic != "" && !m.hasTopic(topic) {
 				m.topics.items = append(m.topics.items, topicItem{title: topic, active: true})
@@ -194,11 +194,11 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 				m.topics.input.SetValue("")
 			}
-		} else if m.focusOrder[m.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			m.toggleTopic(m.topics.selected)
 		}
 	case "d":
-		if m.focusOrder[m.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			idx := m.topics.selected
 			name := m.topics.items[idx].title
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
@@ -213,25 +213,25 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 			m.refreshConnectionItems()
 			m.saveCurrent()
-			m.mode = modeConnections
+			m.ui.mode = modeConnections
 		case "ctrl+t":
 			items := []list.Item{}
 			for _, tpc := range m.topics.items {
 				items = append(items, topicItem{title: tpc.title, active: tpc.active})
 			}
-			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.topics.list.DisableQuitKeybindings()
 			m.topics.list.SetShowTitle(false)
-			m.mode = modeTopics
+			m.ui.mode = modeTopics
 		case "ctrl+p":
 			items := []list.Item{}
 			for _, pld := range m.message.payloads {
 				items = append(items, payloadItem{topic: pld.topic, payload: pld.payload})
 			}
-			m.message.list = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.message.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.message.list.DisableQuitKeybindings()
 			m.message.list.SetShowTitle(false)
-			m.mode = modePayloads
+			m.ui.mode = modePayloads
 		}
 	}
 	if len(cmds) == 0 {
@@ -243,7 +243,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
@@ -251,7 +251,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
-		if m.focusOrder[m.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			idx := m.historyIndexAt(msg.Y)
 			if idx >= 0 {
 				m.history.list.Select(idx)
@@ -279,7 +279,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 // The mouse coordinates are adjusted for the viewport offset and compared
 // against precomputed chip bounds.
 func (m *model) handleTopicsClick(msg tea.MouseMsg) {
-	y := msg.Y + m.viewport.YOffset
+	y := msg.Y + m.ui.viewport.YOffset
 	idx := m.topicAtPosition(msg.X, y)
 	if idx < 0 {
 		return
@@ -322,7 +322,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	cmds = append(cmds, cmdMsg)
 	var vpCmd tea.Cmd
 	skipVP := false
-	if m.focusOrder[m.focusIndex] == "history" {
+	if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 		switch mt := msg.(type) {
 		case tea.KeyMsg:
 			s := mt.String()
@@ -336,12 +336,12 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 	}
 	if !skipVP {
-		m.viewport, vpCmd = m.viewport.Update(msg)
+		m.ui.viewport, vpCmd = m.ui.viewport.Update(msg)
 		cmds = append(cmds, vpCmd)
 	}
 
 	var histCmd tea.Cmd
-	if m.focusOrder[m.focusIndex] == "history" {
+	if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 		m.history.list, histCmd = m.history.list.Update(msg)
 		cmds = append(cmds, histCmd)
 	}

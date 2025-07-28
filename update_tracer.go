@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -25,6 +27,21 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 		case "esc":
 			m.savePlannedTraces()
 			m.ui.mode = modeClient
+		case "a":
+			opts := make([]string, len(m.connections.manager.Profiles))
+			for i, p := range m.connections.manager.Profiles {
+				opts[i] = p.Name
+			}
+			topics := []string{}
+			for _, t := range m.topics.items {
+				if t.active {
+					topics = append(topics, t.title)
+				}
+			}
+			f := newTraceForm(opts, m.connections.active, topics)
+			m.traces.form = &f
+			m.ui.mode = modeEditTrace
+			return m, textinput.Blink
 		case "enter":
 			i := m.traces.list.Index()
 			if i >= 0 && i < len(m.traces.items) {
@@ -35,11 +52,58 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 					m.startTrace(i)
 				}
 			}
+		case "d":
+			i := m.traces.list.Index()
+			if i >= 0 && i < len(m.traces.items) {
+				key := m.traces.items[i].key
+				m.stopTrace(i)
+				m.traces.items = append(m.traces.items[:i], m.traces.items[i+1:]...)
+				items := []list.Item{}
+				for _, it := range m.traces.items {
+					items = append(items, it)
+				}
+				m.traces.list.SetItems(items)
+				removeTrace(key)
+			}
 		}
 	}
 	m.traces.list, cmd = m.traces.list.Update(msg)
 	if m.anyTraceRunning() {
 		return m, tea.Batch(cmd, traceTicker())
 	}
+	return m, cmd
+}
+
+func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
+	if m.traces.form == nil {
+		return m, nil
+	}
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+d":
+			return m, tea.Quit
+		case "esc":
+			m.traces.form = nil
+			m.ui.mode = modeTracer
+			return m, nil
+		case "enter":
+			cfg := m.traces.form.Config()
+			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
+				return m, nil
+			}
+			m.traces.items = append(m.traces.items, traceItem{key: cfg.Key, cfg: cfg})
+			items := m.traces.list.Items()
+			items = append(items, traceItem{key: cfg.Key, cfg: cfg})
+			m.traces.list.SetItems(items)
+			addTrace(cfg)
+			m.traces.form = nil
+			m.ui.mode = modeTracer
+			return m, nil
+		}
+	}
+	f, cmd := m.traces.form.Update(msg)
+	m.traces.form = &f
 	return m, cmd
 }

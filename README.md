@@ -83,6 +83,8 @@ In the interface:
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
 - **Ctrl+R** shows running and scheduled traces.
+- In the traces view use **a** to add a new trace, **Enter** to start or stop
+  the selected trace and **d** to delete it.
 - **Ctrl+C** copies the currently selected history entry.
 - Press `/` while the history is focused to filter messages. Queries support
   `topic=<list>` comma separated, `start=<RFC3339 time>`, `end=<RFC3339 time>`

@@ -95,6 +95,7 @@ const (
 	modeTopics
 	modePayloads
 	modeTracer
+	modeEditTrace
 )
 
 type connectionData struct {
@@ -186,6 +187,7 @@ func (t traceItem) Description() string {
 type tracesState struct {
 	list  list.Model
 	items []traceItem
+	form  *traceForm
 }
 
 // uiState groups general UI information such as current focus and layout.
@@ -341,6 +343,7 @@ func initialModel(conns *Connections) *model {
 		traces: tracesState{
 			list:  traceList,
 			items: traceData,
+			form:  nil,
 		},
 		ui: uiState{
 			focusIndex: 0,

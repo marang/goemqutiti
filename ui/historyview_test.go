@@ -24,7 +24,7 @@ func TestHistoryViewWidth(t *testing.T) {
 func TestHistoryBoxLayout(t *testing.T) {
 	hv := NewHistoryView(20, 5)
 	hv.SetLines([]string{"foo"})
-	box := LegendBox(hv.View(), "Hist", 20, 0, ColGreen, false)
+	box := LegendBox(hv.View(), "Hist", 20, 0, ColGreen, false, -1)
 	lines := strings.Split(box, "\n")
 	width := lipgloss.Width(lines[0])
 	for i, l := range lines {

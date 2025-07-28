@@ -61,6 +61,9 @@ func (h *HistoryView) Update(msg tea.Msg) tea.Cmd {
 // View returns the viewport content.
 func (h HistoryView) View() string { return h.vp.View() }
 
+// ScrollPercent returns the scroll position as a fraction between 0 and 1.
+func (h HistoryView) ScrollPercent() float64 { return h.vp.ScrollPercent() }
+
 // GotoBottom scrolls to the end of the list.
 func (h *HistoryView) GotoBottom() { h.vp.GotoBottom() }
 

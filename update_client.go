@@ -8,7 +8,9 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"goemqutiti/history"
+	"goemqutiti/ui"
 )
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
@@ -27,6 +29,39 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 	m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
+}
+
+func (m *model) scrollTopics(delta int) {
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	if delta > 0 {
+		m.topics.vp.ScrollDown(delta * rowH)
+	} else if delta < 0 {
+		m.topics.vp.ScrollUp(-delta * rowH)
+	}
+}
+
+func (m *model) ensureTopicVisible() {
+	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.items) {
+		return
+	}
+	var chips []string
+	for _, t := range m.topics.items {
+		st := ui.ChipStyle
+		if !t.active {
+			st = ui.ChipInactive
+		}
+		chips = append(chips, st.Render(t.title))
+	}
+	_, bounds := layoutChips(chips, m.ui.width-4)
+	if m.topics.selected >= len(bounds) {
+		return
+	}
+	b := bounds[m.topics.selected]
+	if b.y < m.topics.vp.YOffset {
+		m.topics.vp.SetYOffset(b.y)
+	} else if b.y+b.h > m.topics.vp.YOffset+m.topics.vp.Height {
+		m.topics.vp.SetYOffset(b.y + b.h - m.topics.vp.Height)
+	}
 }
 
 func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
@@ -124,6 +159,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			if id == "topics" {
 				if len(m.topics.items) > 0 {
 					m.topics.selected = 0
+					m.ensureTopicVisible()
 				} else {
 					m.topics.selected = -1
 				}
@@ -132,10 +168,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "left":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
+			m.ensureTopicVisible()
 		}
 	case "right":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
+			m.ensureTopicVisible()
 		}
 	case "ctrl+shift+up":
 		id := m.ui.focusOrder[m.ui.focusIndex]
@@ -168,6 +206,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "up", "down":
 		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			// keep current selection and anchor
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.String() == "down" {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
 	case "ctrl+s", "ctrl+enter":
 		if m.ui.focusOrder[m.ui.focusIndex] == "message" {
@@ -196,6 +240,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			m.toggleTopic(m.topics.selected)
+			m.ensureTopicVisible()
 		}
 	case "d":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
@@ -247,7 +292,14 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.Button == tea.MouseButtonWheelDown {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
+		return tea.Batch(cmds...)
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
@@ -268,7 +320,9 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			}
 		}
 	}
-	m.handleTopicsClick(msg)
+	if msg.Type == tea.MouseLeft || msg.Type == tea.MouseRight {
+		m.handleTopicsClick(msg)
+	}
 	if len(cmds) == 0 {
 		return nil
 	}

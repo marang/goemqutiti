@@ -118,7 +118,7 @@ func (m *model) viewClient() string {
 	m.elemPos["history"] = y
 
 	startX := 2
-	startY := m.elemPos["topics"] + 2
+	startY := m.elemPos["topics"] + 1
 	m.chipBounds = make([]chipBound, len(bounds))
 	for i, b := range bounds {
 		m.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}

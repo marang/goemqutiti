@@ -41,15 +41,26 @@ func (m *model) scrollTopics(delta int) {
 }
 
 func (m *model) ensureTopicVisible() {
-	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.allChipBounds) {
+	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.items) {
 		return
 	}
-	y := m.topics.allChipBounds[m.topics.selected].y
-	h := m.topics.allChipBounds[m.topics.selected].h
-	if y < m.topics.vp.YOffset {
-		m.topics.vp.SetYOffset(y)
-	} else if y+h > m.topics.vp.YOffset+m.topics.vp.Height {
-		m.topics.vp.SetYOffset(y + h - m.topics.vp.Height)
+	var chips []string
+	for _, t := range m.topics.items {
+		st := ui.ChipStyle
+		if !t.active {
+			st = ui.ChipInactive
+		}
+		chips = append(chips, st.Render(t.title))
+	}
+	_, bounds := layoutChips(chips, m.ui.width-4)
+	if m.topics.selected >= len(bounds) {
+		return
+	}
+	b := bounds[m.topics.selected]
+	if b.y < m.topics.vp.YOffset {
+		m.topics.vp.SetYOffset(b.y)
+	} else if b.y+b.h > m.topics.vp.YOffset+m.topics.vp.Height {
+		m.topics.vp.SetYOffset(b.y + b.h - m.topics.vp.Height)
 	}
 }
 

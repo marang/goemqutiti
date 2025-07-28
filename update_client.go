@@ -299,6 +299,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			}
 			m.scrollTopics(delta)
 		}
+		return tea.Batch(cmds...)
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
@@ -319,7 +320,9 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			}
 		}
 	}
-	m.handleTopicsClick(msg)
+	if msg.Type == tea.MouseLeft || msg.Type == tea.MouseRight {
+		m.handleTopicsClick(msg)
+	}
 	if len(cmds) == 0 {
 		return nil
 	}

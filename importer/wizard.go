@@ -62,7 +62,7 @@ func NewWizard(client Publisher, path string) *Wizard {
 	tmpl := textinput.New()
 	tmpl.Placeholder = "Topic template"
 	rand.Seed(time.Now().UnixNano())
-	hv := ui.NewHistoryView(50, 5)
+	hv := ui.NewHistoryView(50, 10)
 	return &Wizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv}
 }
 
@@ -326,24 +326,24 @@ func (w *Wizard) View() string {
 			lines = lines[len(lines)-limit:]
 		}
 		w.history.SetSize(bw, w.historyHeight())
-		w.history.SetLines(lines)
+		w.history.SetLines(spacedLines(lines))
 		recent := w.history.View()
 		if recent != "" {
 			recent += "\n"
 		}
+		headerLine := ""
 		if w.finished {
-			msg := fmt.Sprintf("Published %d messages\n%s%s\n[ctrl+n] next  [ctrl+p] back", len(w.rows), recent, bar)
-			msg = ansi.Wrap(msg, wrap, " ")
-			box = ui.LegendGreenBox(msg, "Progress", bw, true)
+			headerLine = fmt.Sprintf("Published %d messages", len(w.rows))
 		} else {
-			msg := fmt.Sprintf("Publishing %d/%d\n%s%s", w.index, len(w.rows), recent, bar)
-			msg = ansi.Wrap(msg, wrap, " ")
-			box = ui.LegendGreenBox(msg, "Progress", bw, true)
+			headerLine = fmt.Sprintf("Publishing %d/%d", w.index, len(w.rows))
 		}
+		msg := fmt.Sprintf("%s\n%s\n%s", headerLine, bar, recent)
+		msg = ansi.Wrap(msg, wrap, " ")
+		box = ui.LegendGreenBox(msg, "Progress", bw, true)
 	case stepDone:
 		if w.dryRun {
 			w.history.SetSize(bw, w.historyHeight())
-			w.history.SetLines(w.published)
+			w.history.SetLines(spacedLines(w.published))
 			out := w.history.View()
 			out = ansi.Wrap(out, wrap, " ") + "\n[ctrl+p] back  [q] quit"
 			box = ui.LegendGreenBox(out, "Dry Run", bw, true)
@@ -429,6 +429,14 @@ func (w *Wizard) stepsView() string {
 
 type publishMsg struct{}
 
+func spacedLines(lines []string) []string {
+	out := make([]string, 0, len(lines)*2)
+	for _, l := range lines {
+		out = append(out, l, "")
+	}
+	return out
+}
+
 func sampleSize(total int) int {
 	if total <= 5 {
 		return total
@@ -453,8 +461,8 @@ func (w *Wizard) lineLimit() int {
 
 func (w *Wizard) historyHeight() int {
 	h := w.lineLimit()
-	if h > 10 {
-		h = 10
+	if h > 20 {
+		h = 20
 	}
 	return h
 }

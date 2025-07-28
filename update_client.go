@@ -16,6 +16,7 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 	if strings.HasPrefix(string(msg), "Connected") && m.activeConn != "" {
 		m.connections.Statuses[m.activeConn] = "connected"
 		m.refreshConnectionItems()
+		m.subscribeActiveTopics()
 	} else if strings.HasPrefix(string(msg), "Connection lost") && m.activeConn != "" {
 		m.connections.Statuses[m.activeConn] = "disconnected"
 		m.refreshConnectionItems()

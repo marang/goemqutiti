@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strings"
 	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"goemqutiti/ui"
 )
@@ -130,7 +132,28 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Width = m.ui.width
 	// Deduct two lines for the info header rendered above the viewport.
 	m.ui.viewport.Height = m.ui.height - 2
-	return lipgloss.JoinVertical(lipgloss.Left, infoLine, m.ui.viewport.View())
+
+	view := m.ui.viewport.View()
+	if lipgloss.Height(box) > m.ui.viewport.Height {
+		lines := strings.Split(view, "\n")
+		if len(lines) > 0 {
+			idx := int(math.Round(m.ui.viewport.ScrollPercent() * float64(len(lines)-1)))
+			if idx < 0 {
+				idx = 0
+			}
+			if idx >= len(lines) {
+				idx = len(lines) - 1
+			}
+			w := ansi.StringWidth(lines[idx])
+			if w > 0 {
+				diamond := lipgloss.NewStyle().Foreground(ui.ColCyan).Render("⧱")
+				lines[idx] = ansi.Cut(lines[idx], 0, w-1) + diamond
+			}
+			view = strings.Join(lines, "\n")
+		}
+	}
+
+	return lipgloss.JoinVertical(lipgloss.Left, infoLine, view)
 }
 
 func (m model) viewConnections() string {

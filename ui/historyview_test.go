@@ -20,11 +20,11 @@ func TestHistoryViewWidth(t *testing.T) {
 	}
 }
 
-// Ensure the box renders with aligned borders when wrapped in LegendGreenBox.
+// Ensure the box renders with aligned borders when wrapped in LegendBox.
 func TestHistoryBoxLayout(t *testing.T) {
 	hv := NewHistoryView(20, 5)
 	hv.SetLines([]string{"foo"})
-	box := LegendGreenBox(hv.View(), "Hist", 20, false)
+	box := LegendBox(hv.View(), "Hist", 20, 0, ColGreen, false)
 	lines := strings.Split(box, "\n")
 	width := lipgloss.Width(lines[0])
 	for i, l := range lines {

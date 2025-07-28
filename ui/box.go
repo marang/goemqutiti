@@ -7,25 +7,18 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// LegendBox renders a bordered box with a label.
-func LegendBox(content, label string, width int, focused bool) string {
-	color := ColBlue
+// LegendBox renders a bordered box with a label and optional height.
+// The border color can be customized, and when focused the border
+// is highlighted in pink.
+func LegendBox(content, label string, width, height int, border lipgloss.Color, focused bool) string {
+	col := border
 	if focused {
-		color = ColPink
+		col = ColPink
 	}
-	return legendStyledBox(content, label, width, color)
+	return legendStyledBox(content, label, width, height, col)
 }
 
-// LegendGreenBox renders a bordered box with a green border.
-func LegendGreenBox(content, label string, width int, focused bool) string {
-	color := ColGreen
-	if focused {
-		color = ColPink
-	}
-	return legendStyledBox(content, label, width, color)
-}
-
-func legendStyledBox(content, label string, width int, color lipgloss.Color) string {
+func legendStyledBox(content, label string, width, height int, color lipgloss.Color) string {
 	content = strings.TrimRight(content, "\n")
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
@@ -41,6 +34,14 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 	)
 
 	lines := strings.Split(content, "\n")
+	if height > 0 {
+		if len(lines) > height {
+			lines = lines[:height]
+		}
+		for len(lines) < height {
+			lines = append(lines, "")
+		}
+	}
 	for i, l := range lines {
 		l = strings.TrimRightFunc(l, unicode.IsSpace)
 		side := color

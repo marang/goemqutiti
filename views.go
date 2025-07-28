@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 	"unicode"
 
@@ -49,81 +50,106 @@ func (m *model) viewClient() string {
 		r := m.mqttClient.Client.OptionsReader()
 		clientID = r.ClientID()
 	}
-	status := strings.TrimSpace(m.connection + " " + clientID)
+	status := strings.TrimSpace(m.connections.connection + " " + clientID)
 	st := ui.ConnStyle
-	if strings.HasPrefix(m.connection, "Connected") {
+	if strings.HasPrefix(m.connections.connection, "Connected") {
 		st = st.Foreground(ui.ColGreen)
-	} else if strings.HasPrefix(m.connection, "Connection lost") || strings.HasPrefix(m.connection, "Failed") {
+	} else if strings.HasPrefix(m.connections.connection, "Connection lost") || strings.HasPrefix(m.connections.connection, "Failed") {
 		st = st.Foreground(ui.ColWarn)
 	}
 	connLine := st.Render(status)
 	infoLine := lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
 
 	var chips []string
-	for i, t := range m.topics {
+	for i, t := range m.topics.items {
 		st := ui.ChipStyle
 		if !t.active {
 			st = ui.ChipInactive
 		}
-		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
+		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && i == m.topics.selected {
 			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsFocused := m.focusOrder[m.focusIndex] == "topics"
-	topicFocused := m.focusOrder[m.focusIndex] == "topic"
-	messageFocused := m.focusOrder[m.focusIndex] == "message"
-	historyFocused := m.focusOrder[m.focusIndex] == "history"
+	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == "topics"
+	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == "topic"
+	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == "message"
+	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == "history"
 
-	chipContent, bounds := layoutChips(chips, m.width-4)
-	topicsBox := ui.LegendBox(chipContent, "Topics", m.width-2, topicsFocused)
-	topicBox := ui.LegendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
-	messageBox := ui.LegendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
-	messagesBox := ui.LegendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
+	chipContent, bounds := layoutChips(chips, m.ui.width-4)
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	maxRows := m.layout.topics.height
+	if maxRows <= 0 {
+		maxRows = 3
+	}
+	lines := strings.Split(chipContent, "\n")
+	limit := maxRows * rowH
+	if len(lines) > limit {
+		chipContent = strings.Join(lines[:limit], "\n")
+	}
+	visible := []chipBound{}
+	for _, b := range bounds {
+		if b.y/rowH < maxRows {
+			visible = append(visible, b)
+		}
+	}
+	bounds = visible
+	active := 0
+	for _, t := range m.topics.items {
+		if t.active {
+			active++
+		}
+	}
+	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.items))
+	topicsBoxHeight := maxRows * rowH
+	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused)
+	topicBox := ui.LegendBox(m.topics.input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused)
+	messageBox := ui.LegendBox(m.message.input.View(), "Message (Ctrl+S publishes)", m.ui.width-2, m.layout.message.height, ui.ColBlue, messageFocused)
+	messagesBox := ui.LegendBox(m.history.list.View(), "History (Ctrl+C copy)", m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
 	y := 1
-	m.elemPos["topics"] = y
+	m.ui.elemPos["topics"] = y
 	y += lipgloss.Height(topicsBox)
-	m.elemPos["topic"] = y
+	m.ui.elemPos["topic"] = y
 	y += lipgloss.Height(topicBox)
-	m.elemPos["message"] = y
+	m.ui.elemPos["message"] = y
 	y += lipgloss.Height(messageBox)
-	m.elemPos["history"] = y
+	m.ui.elemPos["history"] = y
 
 	startX := 2
-	startY := m.elemPos["topics"] + 2
-	m.chipBounds = make([]chipBound, len(bounds))
+	startY := m.ui.elemPos["topics"] + 1
+	m.topics.chipBounds = make([]chipBound, len(bounds))
 	for i, b := range bounds {
-		m.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}
+		m.topics.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}
 	}
 
-	box := lipgloss.NewStyle().Width(m.width).Padding(0, 1, 1, 1).Render(content)
-	m.viewport.SetContent(box)
-	m.viewport.Width = m.width
+	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)
+	m.ui.viewport.SetContent(box)
+	m.ui.viewport.Width = m.ui.width
 	// Deduct two lines for the info header rendered above the viewport.
-	m.viewport.Height = m.height - 2
-	return lipgloss.JoinVertical(lipgloss.Left, infoLine, m.viewport.View())
+	m.ui.viewport.Height = m.ui.height - 2
+	return lipgloss.JoinVertical(lipgloss.Left, infoLine, m.ui.viewport.View())
 }
 
 func (m model) viewConnections() string {
-	listView := m.connections.ConnectionsList.View()
+	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Brokers", m.width-2, true)
+	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true)
 }
 
 func (m model) viewForm() string {
-	if m.connForm == nil {
+	if m.connections.form == nil {
 		return ""
 	}
-	listView := ui.LegendBox(m.connections.ConnectionsList.View(), "Brokers", m.width/2-2, false)
+	listView := ui.LegendBox(m.connections.manager.ConnectionsList.View(), "Brokers", m.ui.width/2-2, 0, ui.ColBlue, false)
 	formLabel := "Add Broker"
-	if m.connForm.index >= 0 {
+	if m.connections.form.index >= 0 {
 		formLabel = "Edit Broker"
 	}
-	formView := ui.LegendBox(m.connForm.View(), formLabel, m.width/2-2, true)
+	formView := ui.LegendBox(m.connections.form.View(), formLabel, m.ui.width/2-2, 0, ui.ColBlue, true)
 	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 
@@ -133,21 +159,21 @@ func (m model) viewConfirmDelete() string {
 }
 
 func (m model) viewTopics() string {
-	listView := m.topicsList.View()
+	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Topics", m.width-2, false)
+	return ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false)
 }
 
 func (m model) viewPayloads() string {
-	listView := m.payloadList.View()
+	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Payloads", m.width-2, false)
+	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false)
 }
 
 func (m *model) View() string {
-	switch m.mode {
+	switch m.ui.mode {
 	case modeClient:
 		return m.viewClient()
 	case modeConnections:

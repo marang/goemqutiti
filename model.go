@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"sort"
 	"time"
 
 	"goemqutiti/history"
@@ -101,46 +102,76 @@ type focusable interface {
 	Blur()
 }
 
+type boxConfig struct {
+	height int
+}
+
+type layoutConfig struct {
+	message boxConfig
+	history boxConfig
+	topics  boxConfig
+}
+
+type connectionsState struct {
+	connection  string
+	active      string
+	manager     Connections
+	form        *connectionForm
+	deleteIndex int
+	statusChan  chan string
+	saved       map[string]connectionData
+}
+
+type historyState struct {
+	list            list.Model
+	items           []historyItem
+	store           *history.Index
+	selected        map[int]struct{}
+	selectionAnchor int
+}
+
+type topicsState struct {
+	input      textinput.Model
+	items      []topicItem
+	list       list.Model
+	selected   int
+	chipBounds []chipBound
+}
+
+type messageState struct {
+	input    textarea.Model
+	payloads []payloadItem
+	list     list.Model // payloadList reused when viewing payloads
+}
+
+// uiState groups general UI information such as current focus and layout.
+type uiState struct {
+	focusIndex int            // index of the currently focused element
+	mode       appMode        // current application mode
+	prevMode   appMode        // mode prior to confirmations
+	width      int            // terminal width
+	height     int            // terminal height
+	viewport   viewport.Model // scrolling container for the main view
+	elemPos    map[string]int // cached Y positions of each box
+	focusOrder []string       // order of focusable elements
+}
+
 type model struct {
 	mqttClient *MQTTClient
 
-	connection      string
-	activeConn      string
-	history         list.Model
-	historyItems    []historyItem
-	store           *history.Index
-	topicInput      textinput.Model
-	messageInput    textarea.Model
-	payloads        []payloadItem
-	topics          []topicItem
-	topicsList      list.Model
-	payloadList     list.Model
-	focusIndex      int
-	selectedTopic   int
-	selectedHistory map[int]struct{}
-	selectionAnchor int
+	connections connectionsState
+	history     historyState
+	topics      topicsState
+	message     messageState
 
-	saved map[string]connectionData
-
-	statusChan chan string
-
-	width  int
-	height int
-
-	mode        appMode
-	connections Connections
-	connForm    *connectionForm
-	deleteIndex int
+	ui uiState
 
 	confirmPrompt string
 	confirmAction func()
-	prevMode      appMode
 
-	viewport   viewport.Model
-	elemPos    map[string]int
-	chipBounds []chipBound
-	focusMap   map[string]focusable
-	focusOrder []string
+	layout layoutConfig
+
+	focusMap map[string]focusable
 }
 
 func initialModel(conns *Connections) *model {
@@ -216,46 +247,65 @@ func initialModel(conns *Connections) *model {
 	saved := loadState()
 
 	m := &model{
-		history:         hist,
-		historyItems:    []historyItem{},
-		store:           nil,
-		payloads:        []payloadItem{},
-		topicInput:      ti,
-		messageInput:    ta,
-		topics:          []topicItem{},
-		topicsList:      topicsList,
-		payloadList:     payloadList,
-		focusIndex:      0,
-		selectedTopic:   -1,
-		statusChan:      statusChan,
-		mode:            modeClient,
-		connections:     connModel,
-		width:           0,
-		height:          0,
-		viewport:        vp,
-		elemPos:         map[string]int{},
-		chipBounds:      []chipBound{},
-		focusOrder:      order,
-		saved:           saved,
-		selectedHistory: make(map[int]struct{}),
-		selectionAnchor: -1,
-		prevMode:        modeClient,
+		connections: connectionsState{
+			connection:  "",
+			active:      "",
+			manager:     connModel,
+			form:        nil,
+			deleteIndex: 0,
+			statusChan:  statusChan,
+			saved:       saved,
+		},
+		history: historyState{
+			list:            hist,
+			items:           []historyItem{},
+			store:           nil,
+			selected:        make(map[int]struct{}),
+			selectionAnchor: -1,
+		},
+		topics: topicsState{
+			input:      ti,
+			items:      []topicItem{},
+			list:       topicsList,
+			selected:   -1,
+			chipBounds: []chipBound{},
+		},
+		message: messageState{
+			input:    ta,
+			payloads: []payloadItem{},
+			list:     payloadList,
+		},
+		ui: uiState{
+			focusIndex: 0,
+			mode:       modeClient,
+			prevMode:   modeClient,
+			width:      0,
+			height:     0,
+			viewport:   vp,
+			elemPos:    map[string]int{},
+			focusOrder: order,
+		},
+		layout: layoutConfig{
+			message: boxConfig{height: 6},
+			history: boxConfig{height: 10},
+			topics:  boxConfig{height: 3},
+		},
 	}
 	m.focusMap = map[string]focusable{
-		"topic":   &m.topicInput,
-		"message": &m.messageInput,
+		"topic":   &m.topics.input,
+		"message": &m.message.input,
 	}
 	hDel.m = m
-	m.history.SetDelegate(hDel)
+	m.history.list.SetDelegate(hDel)
 	if idx, err := history.Open(""); err == nil {
-		m.store = idx
+		m.history.store = idx
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
 			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-			m.historyItems = append(m.historyItems, items[i].(historyItem))
+			m.history.items = append(m.history.items, items[i].(historyItem))
 		}
-		m.history.SetItems(items)
+		m.history.list.SetItems(items)
 	}
 	return m
 }
@@ -265,7 +315,7 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m *model) hasTopic(topic string) bool {
-	for _, t := range m.topics {
+	for _, t := range m.topics.items {
 		if t.title == topic {
 			return true
 		}
@@ -273,11 +323,35 @@ func (m *model) hasTopic(topic string) bool {
 	return false
 }
 
-func (m *model) toggleTopic(index int) {
-	if index < 0 || index >= len(m.topics) {
+func (m *model) sortTopics() {
+	if len(m.topics.items) == 0 {
 		return
 	}
-	t := &m.topics[index]
+	sel := ""
+	if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		sel = m.topics.items[m.topics.selected].title
+	}
+	sort.SliceStable(m.topics.items, func(i, j int) bool {
+		if m.topics.items[i].active != m.topics.items[j].active {
+			return m.topics.items[i].active && !m.topics.items[j].active
+		}
+		return m.topics.items[i].title < m.topics.items[j].title
+	})
+	if sel != "" {
+		for i, t := range m.topics.items {
+			if t.title == sel {
+				m.topics.selected = i
+				break
+			}
+		}
+	}
+}
+
+func (m *model) toggleTopic(index int) {
+	if index < 0 || index >= len(m.topics.items) {
+		return
+	}
+	t := &m.topics.items[index]
 	t.active = !t.active
 	if m.mqttClient != nil {
 		if t.active {
@@ -288,27 +362,29 @@ func (m *model) toggleTopic(index int) {
 			m.appendHistory(t.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", t.title))
 		}
 	}
+	m.sortTopics()
 }
 
 func (m *model) removeTopic(index int) {
-	if index < 0 || index >= len(m.topics) {
+	if index < 0 || index >= len(m.topics.items) {
 		return
 	}
-	topic := m.topics[index]
+	topic := m.topics.items[index]
 	if m.mqttClient != nil {
 		m.mqttClient.Unsubscribe(topic.title)
 		m.appendHistory(topic.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", topic.title))
 	}
-	m.topics = append(m.topics[:index], m.topics[index+1:]...)
-	if len(m.topics) == 0 {
-		m.selectedTopic = -1
-	} else if m.selectedTopic >= len(m.topics) {
-		m.selectedTopic = len(m.topics) - 1
+	m.topics.items = append(m.topics.items[:index], m.topics.items[index+1:]...)
+	if len(m.topics.items) == 0 {
+		m.topics.selected = -1
+	} else if m.topics.selected >= len(m.topics.items) {
+		m.topics.selected = len(m.topics.items) - 1
 	}
+	m.sortTopics()
 }
 
 func (m *model) topicAtPosition(x, y int) int {
-	for i, b := range m.chipBounds {
+	for i, b := range m.topics.chipBounds {
 		if x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h {
 			return i
 		}
@@ -316,18 +392,33 @@ func (m *model) topicAtPosition(x, y int) int {
 	return -1
 }
 
+func (m *model) historyIndexAt(y int) int {
+	rel := y - (m.ui.elemPos["history"] + 1) + m.ui.viewport.YOffset
+	if rel < 0 {
+		return -1
+	}
+	h := 2 // historyDelegate height
+	idx := rel / h
+	start := m.history.list.Paginator.Page * m.history.list.Paginator.PerPage
+	i := start + idx
+	if i >= len(m.history.list.Items()) || i < 0 {
+		return -1
+	}
+	return i
+}
+
 func (m *model) startConfirm(prompt string, action func()) {
 	m.confirmPrompt = prompt
 	m.confirmAction = action
-	m.prevMode = m.mode
-	m.mode = modeConfirmDelete
+	m.ui.prevMode = m.ui.mode
+	m.ui.mode = modeConfirmDelete
 }
 
 func (m *model) subscribeActiveTopics() {
 	if m.mqttClient == nil {
 		return
 	}
-	for _, t := range m.topics {
+	for _, t := range m.topics.items {
 		if t.active {
 			m.mqttClient.Subscribe(t.title, 0, nil)
 		}
@@ -336,10 +427,10 @@ func (m *model) subscribeActiveTopics() {
 
 func (m *model) refreshConnectionItems() {
 	items := []list.Item{}
-	for _, p := range m.connections.Profiles {
-		status := m.connections.Statuses[p.Name]
-		detail := m.connections.Errors[p.Name]
+	for _, p := range m.connections.manager.Profiles {
+		status := m.connections.manager.Statuses[p.Name]
+		detail := m.connections.manager.Errors[p.Name]
 		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
 	}
-	m.connections.ConnectionsList.SetItems(items)
+	m.connections.manager.ConnectionsList.SetItems(items)
 }

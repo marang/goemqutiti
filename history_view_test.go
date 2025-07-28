@@ -13,10 +13,10 @@ import (
 func TestHistoryDelegateWidth(t *testing.T) {
 	m := initialModel(nil)
 	d := historyDelegate{m: m}
-	m.history.SetSize(30, 4)
+	m.history.list.SetSize(30, 4)
 	hi := historyItem{topic: "foo", payload: "bar", kind: "pub"}
 	var buf bytes.Buffer
-	d.Render(&buf, m.history, 0, hi)
+	d.Render(&buf, m.history.list, 0, hi)
 	lines := strings.Split(buf.String(), "\n")
 	for i, line := range lines {
 		if lipgloss.Width(line) != 30 {
@@ -28,7 +28,7 @@ func TestHistoryDelegateWidth(t *testing.T) {
 // Test that the history box has aligned borders when rendered
 func TestHistoryBoxLayout(t *testing.T) {
 	m := initialModel(nil)
-	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	m.appendHistory("foo", "bar", "pub", "")
 	view := m.viewClient()
 	lines := strings.Split(view, "\n")

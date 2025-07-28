@@ -69,20 +69,21 @@ func flushStatus(ch chan string) {
 }
 
 func (m *model) saveCurrent() {
-	if m.activeConn == "" {
+	if m.connections.active == "" {
 		return
 	}
-	m.saved[m.activeConn] = connectionData{Topics: m.topics, Payloads: m.payloads}
-	saveState(m.saved)
+	m.connections.saved[m.connections.active] = connectionData{Topics: m.topics.items, Payloads: m.message.payloads}
+	saveState(m.connections.saved)
 }
 
 func (m *model) restoreState(name string) {
-	if data, ok := m.saved[name]; ok {
-		m.topics = data.Topics
-		m.payloads = data.Payloads
+	if data, ok := m.connections.saved[name]; ok {
+		m.topics.items = data.Topics
+		m.message.payloads = data.Payloads
+		m.sortTopics()
 	} else {
-		m.topics = []topicItem{}
-		m.payloads = []payloadItem{}
+		m.topics.items = []topicItem{}
+		m.message.payloads = []payloadItem{}
 	}
 }
 
@@ -92,32 +93,32 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 		text = logText
 	}
 	hi := historyItem{topic: topic, payload: text, kind: kind}
-	m.historyItems = append(m.historyItems, hi)
-	items := make([]list.Item, len(m.historyItems))
-	for i, it := range m.historyItems {
+	m.history.items = append(m.history.items, hi)
+	items := make([]list.Item, len(m.history.items))
+	for i, it := range m.history.items {
 		items[i] = it
 	}
-	m.history.SetItems(items)
-	m.history.Select(len(items) - 1)
-	if m.store != nil {
-		m.store.Add(history.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
+	m.history.list.SetItems(items)
+	m.history.list.Select(len(items) - 1)
+	if m.history.store != nil {
+		m.history.store.Add(history.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
 	}
 }
 
 func (m *model) setFocus(id string) tea.Cmd {
 	var cmds []tea.Cmd
-	for i, name := range m.focusOrder {
+	for i, name := range m.ui.focusOrder {
 		if f, ok := m.focusMap[name]; ok && f != nil {
 			if name == id {
 				if c := f.Focus(); c != nil {
 					cmds = append(cmds, c)
 				}
-				m.focusIndex = i
+				m.ui.focusIndex = i
 			} else {
 				f.Blur()
 			}
 		} else if name == id {
-			m.focusIndex = i
+			m.ui.focusIndex = i
 		}
 	}
 	m.scrollToFocused()
@@ -128,33 +129,33 @@ func (m *model) setFocus(id string) tea.Cmd {
 }
 
 func (m *model) focusFromMouse(y int) tea.Cmd {
-	cy := y + m.viewport.YOffset - 1
+	cy := y + m.ui.viewport.YOffset - 1
 	chosen := ""
 	maxPos := -1
-	for _, id := range m.focusOrder {
-		if pos, ok := m.elemPos[id]; ok && cy >= pos && pos > maxPos {
+	for _, id := range m.ui.focusOrder {
+		if pos, ok := m.ui.elemPos[id]; ok && cy >= pos && pos > maxPos {
 			chosen = id
 			maxPos = pos
 		}
 	}
 	if chosen != "" {
-		if chosen != m.focusOrder[m.focusIndex] {
+		if chosen != m.ui.focusOrder[m.ui.focusIndex] {
 			return m.setFocus(chosen)
 		}
 		return nil
 	}
-	if len(m.focusOrder) > 0 && m.focusOrder[m.focusIndex] != m.focusOrder[0] {
-		return m.setFocus(m.focusOrder[0])
+	if len(m.ui.focusOrder) > 0 && m.ui.focusOrder[m.ui.focusIndex] != m.ui.focusOrder[0] {
+		return m.setFocus(m.ui.focusOrder[0])
 	}
 	return nil
 }
 
 func (m *model) scrollToFocused() {
-	if len(m.focusOrder) == 0 {
+	if len(m.ui.focusOrder) == 0 {
 		return
 	}
-	id := m.focusOrder[m.focusIndex]
-	pos, ok := m.elemPos[id]
+	id := m.ui.focusOrder[m.ui.focusIndex]
+	pos, ok := m.ui.elemPos[id]
 	if !ok {
 		return
 	}
@@ -162,10 +163,10 @@ func (m *model) scrollToFocused() {
 	if offset < 0 {
 		offset = 0
 	}
-	if offset < m.viewport.YOffset {
-		m.viewport.SetYOffset(offset)
-	} else if offset >= m.viewport.YOffset+m.viewport.Height {
-		m.viewport.SetYOffset(offset - m.viewport.Height + 1)
+	if offset < m.ui.viewport.YOffset {
+		m.ui.viewport.SetYOffset(offset)
+	} else if offset >= m.ui.viewport.YOffset+m.ui.viewport.Height {
+		m.ui.viewport.SetYOffset(offset - m.ui.viewport.Height + 1)
 	}
 }
 
@@ -175,59 +176,59 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	case connectResult:
 		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
 		if msg.err != nil {
-			m.connections.Statuses[msg.profile.Name] = "disconnected"
-			m.connections.Errors[msg.profile.Name] = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
-			m.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
+			m.connections.manager.Statuses[msg.profile.Name] = "disconnected"
+			m.connections.manager.Errors[msg.profile.Name] = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
+			m.connections.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
 			m.refreshConnectionItems()
 		} else {
 			m.mqttClient = msg.client
-			m.activeConn = msg.profile.Name
-			if m.store != nil {
-				m.store.Close()
+			m.connections.active = msg.profile.Name
+			if m.history.store != nil {
+				m.history.store.Close()
 			}
 			if idx, err := history.Open(msg.profile.Name); err == nil {
-				m.store = idx
+				m.history.store = idx
 				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
-				m.historyItems = nil
+				m.history.items = nil
 				items := make([]list.Item, len(msgs))
 				for i, mmsg := range msgs {
 					items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-					m.historyItems = append(m.historyItems, items[i].(historyItem))
+					m.history.items = append(m.history.items, items[i].(historyItem))
 				}
-				m.history.SetItems(items)
+				m.history.list.SetItems(items)
 			}
 			m.restoreState(msg.profile.Name)
 			m.subscribeActiveTopics()
-			m.connection = "Connected to " + brokerURL
-			m.connections.Statuses[msg.profile.Name] = "connected"
-			m.connections.Errors[msg.profile.Name] = ""
+			m.connections.connection = "Connected to " + brokerURL
+			m.connections.manager.Statuses[msg.profile.Name] = "connected"
+			m.connections.manager.Errors[msg.profile.Name] = ""
 			m.refreshConnectionItems()
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		}
-		return m, listenStatus(m.statusChan)
+		return m, listenStatus(m.connections.statusChan)
 	case tea.KeyMsg:
-		if m.connections.ConnectionsList.FilterState() == list.Filtering {
+		if m.connections.manager.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
 			case "enter":
-				i := m.connections.ConnectionsList.Index()
-				if i >= 0 && i < len(m.connections.Profiles) {
-					p := m.connections.Profiles[i]
-					if p.Name == m.activeConn && m.connections.Statuses[p.Name] == "connected" {
-						m.mode = modeClient
+				i := m.connections.manager.ConnectionsList.Index()
+				if i >= 0 && i < len(m.connections.manager.Profiles) {
+					p := m.connections.manager.Profiles[i]
+					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+						m.ui.mode = modeClient
 						return m, nil
 					}
-					flushStatus(m.statusChan)
+					flushStatus(m.connections.statusChan)
 					if p.FromEnv {
 						applyEnvVars(&p)
 					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 						p.Password = env
 					}
-					m.connections.Errors[p.Name] = ""
-					m.connections.Statuses[p.Name] = "connecting"
+					m.connections.manager.Errors[p.Name] = ""
+					m.connections.manager.Statuses[p.Name] = "connecting"
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-					m.connection = "Connecting to " + brokerURL
+					m.connections.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
-					return m, connectBroker(p, m.statusChan)
+					return m, connectBroker(p, m.connections.statusChan)
 				}
 			}
 			break
@@ -237,70 +238,70 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			return m, tea.Quit
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
-			m.connForm = &f
-			m.mode = modeEditConnection
+			m.connections.form = &f
+			m.ui.mode = modeEditConnection
 		case "e":
-			i := m.connections.ConnectionsList.Index()
-			if i >= 0 && i < len(m.connections.Profiles) {
-				f := newConnectionForm(m.connections.Profiles[i], i)
-				m.connForm = &f
-				m.mode = modeEditConnection
+			i := m.connections.manager.ConnectionsList.Index()
+			if i >= 0 && i < len(m.connections.manager.Profiles) {
+				f := newConnectionForm(m.connections.manager.Profiles[i], i)
+				m.connections.form = &f
+				m.ui.mode = modeEditConnection
 			}
 		case "enter":
-			i := m.connections.ConnectionsList.Index()
-			if i >= 0 && i < len(m.connections.Profiles) {
-				p := m.connections.Profiles[i]
-				if p.Name == m.activeConn && m.connections.Statuses[p.Name] == "connected" {
-					m.mode = modeClient
+			i := m.connections.manager.ConnectionsList.Index()
+			if i >= 0 && i < len(m.connections.manager.Profiles) {
+				p := m.connections.manager.Profiles[i]
+				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+					m.ui.mode = modeClient
 					return m, nil
 				}
-				flushStatus(m.statusChan)
+				flushStatus(m.connections.statusChan)
 				if p.FromEnv {
 					applyEnvVars(&p)
 				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 					p.Password = env
 				}
-				m.connections.Errors[p.Name] = ""
-				m.connections.Statuses[p.Name] = "connecting"
+				m.connections.manager.Errors[p.Name] = ""
+				m.connections.manager.Statuses[p.Name] = "connecting"
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-				m.connection = "Connecting to " + brokerURL
+				m.connections.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
-				return m, connectBroker(p, m.statusChan)
+				return m, connectBroker(p, m.connections.statusChan)
 			}
 		case "d":
-			i := m.connections.ConnectionsList.Index()
+			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 {
-				name := m.connections.Profiles[i].Name
+				name := m.connections.manager.Profiles[i].Name
 				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), func() {
-					m.connections.DeleteConnection(i)
-					m.connections.refreshList()
+					m.connections.manager.DeleteConnection(i)
+					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
 				})
 			}
 		case "x":
 			if m.mqttClient != nil {
 				m.mqttClient.Disconnect()
-				m.connections.Statuses[m.activeConn] = "disconnected"
-				m.connections.Errors[m.activeConn] = ""
+				m.connections.manager.Statuses[m.connections.active] = "disconnected"
+				m.connections.manager.Errors[m.connections.active] = ""
 				m.refreshConnectionItems()
-				m.connection = ""
-				m.activeConn = ""
+				m.connections.connection = ""
+				m.connections.active = ""
 				m.mqttClient = nil
 			}
 		}
 	}
-	m.connections.ConnectionsList, cmd = m.connections.ConnectionsList.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.statusChan))
+	m.connections.manager.ConnectionsList, cmd = m.connections.manager.ConnectionsList.Update(msg)
+	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
 func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
-	if m.connForm == nil {
+	if m.connections.form == nil {
 		return m, nil
 	}
 	var cmd tea.Cmd
 	switch msg.(type) {
 	case tea.WindowSizeMsg, tea.MouseMsg:
-		m.connections.ConnectionsList, _ = m.connections.ConnectionsList.Update(msg)
+		m.connections.manager.ConnectionsList, _ = m.connections.manager.ConnectionsList.Update(msg)
 	}
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -308,25 +309,25 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeConnections
-			m.connForm = nil
+			m.ui.mode = modeConnections
+			m.connections.form = nil
 			return m, nil
 		case "enter":
-			p := m.connForm.Profile()
-			if m.connForm.index >= 0 {
-				m.connections.EditConnection(m.connForm.index, p)
+			p := m.connections.form.Profile()
+			if m.connections.form.index >= 0 {
+				m.connections.manager.EditConnection(m.connections.form.index, p)
 			} else {
-				m.connections.AddConnection(p)
+				m.connections.manager.AddConnection(p)
 			}
 			m.refreshConnectionItems()
-			m.mode = modeConnections
-			m.connForm = nil
+			m.ui.mode = modeConnections
+			m.connections.form = nil
 			return m, nil
 		}
 	}
-	f, cmd := m.connForm.Update(msg)
-	m.connForm = &f
-	return m, tea.Batch(cmd, listenStatus(m.statusChan))
+	f, cmd := m.connections.form.Update(msg)
+	m.connections.form = &f
+	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
 func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
@@ -340,14 +341,14 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction()
 				m.confirmAction = nil
 			}
-			m.mode = m.prevMode
+			m.ui.mode = m.ui.prevMode
 			m.scrollToFocused()
 		case "n", "esc":
-			m.mode = m.prevMode
+			m.ui.mode = m.ui.prevMode
 			m.scrollToFocused()
 		}
 	}
-	return *m, listenStatus(m.statusChan)
+	return *m, listenStatus(m.connections.statusChan)
 }
 
 func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
@@ -358,32 +359,32 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		case "d":
-			i := m.topicsList.Index()
-			if i >= 0 && i < len(m.topics) {
-				name := m.topics[i].title
+			i := m.topics.list.Index()
+			if i >= 0 && i < len(m.topics.items) {
+				name := m.topics.items[i].title
 				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
 					m.removeTopic(i)
 					items := []list.Item{}
-					for _, t := range m.topics {
+					for _, t := range m.topics.items {
 						items = append(items, t)
 					}
-					m.topicsList.SetItems(items)
+					m.topics.list.SetItems(items)
 				})
 			}
 		case "enter", " ":
-			i := m.topicsList.Index()
-			if i >= 0 && i < len(m.topics) {
+			i := m.topics.list.Index()
+			if i >= 0 && i < len(m.topics.items) {
 				m.toggleTopic(i)
-				items := m.topicsList.Items()
-				items[i] = m.topics[i]
-				m.topicsList.SetItems(items)
+				items := m.topics.list.Items()
+				items[i] = m.topics.items[i]
+				m.topics.list.SetItems(items)
 			}
 		}
 	}
-	m.topicsList, cmd = m.topicsList.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.statusChan))
+	m.topics.list, cmd = m.topics.list.Update(msg)
+	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
 func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
@@ -394,65 +395,69 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.mode = modeClient
+			m.ui.mode = modeClient
 		case "d":
-			i := m.payloadList.Index()
+			i := m.message.list.Index()
 			if i >= 0 {
-				items := m.payloadList.Items()
+				items := m.message.list.Items()
 				if i < len(items) {
-					m.payloads = append(m.payloads[:i], m.payloads[i+1:]...)
+					m.message.payloads = append(m.message.payloads[:i], m.message.payloads[i+1:]...)
 					items = append(items[:i], items[i+1:]...)
-					m.payloadList.SetItems(items)
+					m.message.list.SetItems(items)
 				}
 			}
 		case "enter":
-			i := m.payloadList.Index()
+			i := m.message.list.Index()
 			if i >= 0 {
-				items := m.payloadList.Items()
+				items := m.message.list.Items()
 				if i < len(items) {
 					pi := items[i].(payloadItem)
-					m.topicInput.SetValue(pi.topic)
-					m.messageInput.SetValue(pi.payload)
-					m.mode = modeClient
+					m.topics.input.SetValue(pi.topic)
+					m.message.input.SetValue(pi.payload)
+					m.ui.mode = modeClient
 				}
 			}
 		}
 	}
-	m.payloadList, cmd = m.payloadList.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.statusChan))
+	m.message.list, cmd = m.message.list.Update(msg)
+	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
 func (m *model) updateSelectionRange(idx int) {
-	start := m.selectionAnchor
+	start := m.history.selectionAnchor
 	end := idx
 	if start > end {
 		start, end = end, start
 	}
-	m.selectedHistory = map[int]struct{}{}
+	m.history.selected = map[int]struct{}{}
 	for i := start; i <= end; i++ {
-		m.selectedHistory[i] = struct{}{}
+		m.history.selected[i] = struct{}{}
 	}
 }
 
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.width = msg.Width
-		m.height = msg.Height
-		m.connections.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
+		m.ui.width = msg.Width
+		m.ui.height = msg.Height
+		m.connections.manager.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
 		// textinput.View() renders the prompt and cursor in addition
 		// to the configured width. Reduce the width slightly so the
 		// surrounding box stays within the terminal boundaries.
-		m.topicInput.Width = msg.Width - 7
-		m.messageInput.SetWidth(msg.Width - 4)
-		m.history.SetSize(msg.Width-4, (msg.Height-1)/3+10)
-		m.viewport.Width = msg.Width
+		m.topics.input.Width = msg.Width - 7
+		m.message.input.SetWidth(msg.Width - 4)
+		m.message.input.SetHeight(m.layout.message.height)
+		if m.layout.history.height == 0 {
+			m.layout.history.height = (msg.Height-1)/3 + 10
+		}
+		m.history.list.SetSize(msg.Width-4, m.layout.history.height)
+		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
-		m.viewport.Height = msg.Height - 2
+		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
 	}
 
-	switch m.mode {
+	switch m.ui.mode {
 	case modeClient:
 		cmd := m.updateClient(msg)
 		return m, cmd

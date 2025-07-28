@@ -65,7 +65,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lines = append(lines, rendered)
 		}
 	}
-	if _, ok := d.m.selectedHistory[index]; ok {
+	if _, ok := d.m.history.selected[index]; ok {
 		for i, l := range lines {
 			lines[i] = lipgloss.NewStyle().Background(ui.ColDarkGray).Render(l)
 		}
@@ -74,10 +74,10 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	if hi.kind == "log" {
 		barColor = ui.ColDarkGray
 	}
-	if _, ok := d.m.selectedHistory[index]; ok {
+	if _, ok := d.m.history.selected[index]; ok {
 		barColor = ui.ColBlue
 	}
-	if index == d.m.history.Index() {
+	if index == d.m.history.list.Index() {
 		barColor = ui.ColPurple
 	}
 	bar := lipgloss.NewStyle().Foreground(barColor)

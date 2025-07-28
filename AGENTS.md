@@ -4,7 +4,7 @@
 - Run `go vet ./...` and attempt `go test ./...` before committing.
 
 ## Agent Notes
-The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `-import` flag to launch an interactive wizard for CSV or XLS bulk publishing. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name.
+The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name.
 Press `Ctrl+D` from any screen to exit the program.
 
 ### Recent Experience

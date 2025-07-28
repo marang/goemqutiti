@@ -13,4 +13,5 @@ const (
 	ColPub      = lipgloss.Color("219")
 	ColSub      = lipgloss.Color("81")
 	ColDarkGray = lipgloss.Color("237")
+	ColWarn     = lipgloss.Color("208")
 )

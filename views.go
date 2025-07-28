@@ -49,7 +49,14 @@ func (m *model) viewClient() string {
 		r := m.mqttClient.Client.OptionsReader()
 		clientID = r.ClientID()
 	}
-	connLine := ui.ConnStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
+	status := strings.TrimSpace(m.connection + " " + clientID)
+	st := ui.ConnStyle
+	if strings.HasPrefix(m.connection, "Connected") {
+		st = st.Foreground(ui.ColGreen)
+	} else if strings.HasPrefix(m.connection, "Connection lost") || strings.HasPrefix(m.connection, "Failed") {
+		st = st.Foreground(ui.ColWarn)
+	}
+	connLine := st.Render(status)
 	infoLine := lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
 
 	var chips []string
@@ -102,7 +109,7 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Brokers", m.width-2, true)
 }

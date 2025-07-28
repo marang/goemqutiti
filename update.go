@@ -212,6 +212,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				i := m.connections.ConnectionsList.Index()
 				if i >= 0 && i < len(m.connections.Profiles) {
 					p := m.connections.Profiles[i]
+					if p.Name == m.activeConn && m.connections.Statuses[p.Name] == "connected" {
+						m.mode = modeClient
+						return m, nil
+					}
 					flushStatus(m.statusChan)
 					if p.FromEnv {
 						applyEnvVars(&p)
@@ -246,6 +250,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			i := m.connections.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.Profiles) {
 				p := m.connections.Profiles[i]
+				if p.Name == m.activeConn && m.connections.Statuses[p.Name] == "connected" {
+					m.mode = modeClient
+					return m, nil
+				}
 				flushStatus(m.statusChan)
 				if p.FromEnv {
 					applyEnvVars(&p)

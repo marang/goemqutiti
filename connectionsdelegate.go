@@ -25,7 +25,16 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 		border = lipgloss.NewStyle().Foreground(ui.ColPurple).Render("┃")
 	}
 	name := lipgloss.PlaceHorizontal(width-2, lipgloss.Left, ci.title)
-	status := lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.status)
+	color := ui.ColGray
+	switch ci.status {
+	case "connected":
+		color = ui.ColGreen
+	case "disconnected":
+		color = ui.ColWarn
+	case "connecting":
+		color = ui.ColCyan
+	}
+	status := lipgloss.NewStyle().Foreground(color).Render(ci.status)
 	status = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, status)
 	detail := lipgloss.PlaceHorizontal(width-2, lipgloss.Left,
 		lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.detail))

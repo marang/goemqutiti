@@ -8,7 +8,9 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"goemqutiti/history"
+	"goemqutiti/ui"
 )
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
@@ -27,6 +29,34 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 	m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
+}
+
+func (m *model) scrollTopics(delta int) {
+	chips := make([]string, len(m.topics.items))
+	for i, t := range m.topics.items {
+		st := ui.ChipStyle
+		if !t.active {
+			st = ui.ChipInactive
+		}
+		chips[i] = st.Render(t.title)
+	}
+	rows, _ := layoutChips(chips, m.ui.width-4)
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	maxRows := m.layout.topics.height
+	if maxRows <= 0 {
+		maxRows = 3
+	}
+	maxScroll := len(rows)*rowH - maxRows*rowH
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	m.topics.scroll += delta * rowH
+	if m.topics.scroll < 0 {
+		m.topics.scroll = 0
+	}
+	if m.topics.scroll > maxScroll {
+		m.topics.scroll = maxScroll
+	}
 }
 
 func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
@@ -168,6 +198,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "up", "down":
 		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			// keep current selection and anchor
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.String() == "down" {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
 	case "ctrl+s", "ctrl+enter":
 		if m.ui.focusOrder[m.ui.focusIndex] == "message" {
@@ -247,6 +283,12 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.Button == tea.MouseButtonWheelDown {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
 	}
 	if msg.Type == tea.MouseLeft {

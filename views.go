@@ -84,10 +84,7 @@ func (m *model) viewClient() string {
 	}
 	topicsBoxHeight := maxRows * rowH
 	totalHeight := len(chipRows) * rowH
-	offset := m.ui.viewport.YOffset - (1 + 1)
-	if offset < 0 {
-		offset = 0
-	}
+	offset := m.topics.scroll
 	maxScroll := totalHeight - topicsBoxHeight
 	if maxScroll < 0 {
 		maxScroll = 0
@@ -95,6 +92,7 @@ func (m *model) viewClient() string {
 	if offset > maxScroll {
 		offset = maxScroll
 	}
+	m.topics.scroll = offset
 	startRow := 0
 	topicsSP := -1.0
 	if maxScroll > 0 {

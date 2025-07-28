@@ -11,6 +11,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"goemqutiti/trace"
+	"goemqutiti/history"
 	"goemqutiti/ui"
 )
 
@@ -107,7 +108,7 @@ type model struct {
 	activeConn      string
 	history         list.Model
 	historyItems    []historyItem
-	tracer          *trace.Index
+	store           *history.Index
 	topicInput      textinput.Model
 	messageInput    textarea.Model
 	payloads        []payloadItem
@@ -217,7 +218,7 @@ func initialModel(conns *Connections) *model {
 	m := &model{
 		history:         hist,
 		historyItems:    []historyItem{},
-		tracer:          nil,
+		store:           nil,
 		payloads:        []payloadItem{},
 		topicInput:      ti,
 		messageInput:    ta,
@@ -246,8 +247,8 @@ func initialModel(conns *Connections) *model {
 	}
 	hDel.m = m
 	m.history.SetDelegate(hDel)
-	if idx, err := trace.Open(""); err == nil {
-		m.tracer = idx
+	if idx, err := history.Open(""); err == nil {
+		m.store = idx
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"goemqutiti/trace"
+	"goemqutiti/history"
 )
 
 type statusMessage string
@@ -99,8 +99,8 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	}
 	m.history.SetItems(items)
 	m.history.Select(len(items) - 1)
-	if m.tracer != nil {
-		m.tracer.Add(trace.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
+	if m.store != nil {
+		m.store.Add(history.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
 	}
 }
 
@@ -182,6 +182,20 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		} else {
 			m.mqttClient = msg.client
 			m.activeConn = msg.profile.Name
+			if m.store != nil {
+				m.store.Close()
+			}
+			if idx, err := history.Open(msg.profile.Name); err == nil {
+				m.store = idx
+				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
+				m.historyItems = nil
+				items := make([]list.Item, len(msgs))
+				for i, mmsg := range msgs {
+					items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+					m.historyItems = append(m.historyItems, items[i].(historyItem))
+				}
+				m.history.SetItems(items)
+			}
 			m.restoreState(msg.profile.Name)
 			m.subscribeActiveTopics()
 			m.connection = "Connected to " + brokerURL

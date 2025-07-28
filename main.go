@@ -48,9 +48,16 @@ import (
 // }
 
 var (
-	importFile  = flag.String("import", "", "Launch import wizard with optional file path")
-	profileName = flag.String("profile", "", "Connection profile to use")
+	importFile  string
+	profileName string
 )
+
+func init() {
+	flag.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
+	flag.StringVar(&importFile, "i", "", "(shorthand)")
+	flag.StringVar(&profileName, "profile", "", "Connection profile to use")
+	flag.StringVar(&profileName, "p", "", "(shorthand)")
+}
 
 func main() {
 	flag.Parse()
@@ -64,8 +71,8 @@ func main() {
 	// Set log output to file
 	log.SetOutput(logFile)
 
-	if *importFile != "" {
-		runImport(*importFile, *profileName)
+	if importFile != "" {
+		runImport(importFile, profileName)
 		return
 	}
 

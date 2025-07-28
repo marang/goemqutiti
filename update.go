@@ -491,11 +491,15 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, cmd := m.updateTraces(msg)
 		*m = nm
 		return m, cmd
-	case modeEditTrace:
-		nm, cmd := m.updateTraceForm(msg)
-		*m = nm
-		return m, cmd
-	default:
-		return m, nil
-	}
+       case modeEditTrace:
+               nm, cmd := m.updateTraceForm(msg)
+               *m = nm
+               return m, cmd
+       case modeViewTrace:
+               nm, cmd := m.updateTraceView(msg)
+               *m = nm
+               return m, cmd
+       default:
+               return m, nil
+       }
 }

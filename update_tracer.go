@@ -48,12 +48,18 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 		case "enter":
 			i := m.traces.list.Index()
 			if i >= 0 && i < len(m.traces.items) {
-				it := &m.traces.items[i]
+				it := m.traces.items[i]
 				if it.tracer != nil && (it.tracer.Running() || it.tracer.Planned()) {
 					m.stopTrace(i)
 				} else {
 					m.startTrace(i)
 				}
+			}
+		case "v":
+			i := m.traces.list.Index()
+			if i >= 0 && i < len(m.traces.items) {
+				m.loadTraceMessages(i)
+				return m, nil
 			}
 		case "d":
 			i := m.traces.list.Index()
@@ -125,9 +131,10 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 				return m, nil
 			}
 			client.Disconnect()
-			m.traces.items = append(m.traces.items, traceItem{key: cfg.Key, cfg: cfg})
+			newItem := &traceItem{key: cfg.Key, cfg: cfg}
+			m.traces.items = append(m.traces.items, newItem)
 			items := m.traces.list.Items()
-			items = append(items, traceItem{key: cfg.Key, cfg: cfg})
+			items = append(items, newItem)
 			m.traces.list.SetItems(items)
 			addTrace(cfg)
 			m.traces.form = nil
@@ -137,5 +144,21 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 	}
 	f, cmd := m.traces.form.Update(msg)
 	m.traces.form = &f
+	return m, cmd
+}
+
+func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.ui.mode = modeTracer
+			return m, nil
+		case "ctrl+d":
+			return m, tea.Quit
+		}
+	}
+	m.traces.view, cmd = m.traces.view.Update(msg)
 	return m, cmd
 }

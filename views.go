@@ -211,7 +211,7 @@ func (m model) viewPayloads() string {
 
 func (m model) viewTraces() string {
 	listView := m.traces.list.View()
-	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [d] delete  [esc] back")
+	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
@@ -219,6 +219,14 @@ func (m model) viewTraces() string {
 func (m model) viewTraceForm() string {
 	content := m.traces.form.View()
 	return ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
+}
+
+func (m model) viewTraceMessages() string {
+	listView := m.traces.view.View()
+	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
+	help := ui.InfoStyle.Render("[esc] back")
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return ui.LegendBox(content, title, m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
 func (m *model) View() string {
@@ -239,6 +247,8 @@ func (m *model) View() string {
 		return m.viewTraces()
 	case modeEditTrace:
 		return m.viewTraceForm()
+	case modeViewTrace:
+		return m.viewTraceMessages()
 	default:
 		return ""
 	}

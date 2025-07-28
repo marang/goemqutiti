@@ -96,6 +96,7 @@ const (
 	modePayloads
 	modeTracer
 	modeEditTrace
+	modeViewTrace
 )
 
 type connectionData struct {
@@ -155,11 +156,13 @@ type traceItem struct {
 	key    string
 	cfg    tracer.Config
 	tracer *tracer.Tracer
+	counts map[string]int
+	loaded bool
 }
 
-func (t traceItem) FilterValue() string { return t.key }
-func (t traceItem) Title() string       { return t.key }
-func (t traceItem) Description() string {
+func (t *traceItem) FilterValue() string { return t.key }
+func (t *traceItem) Title() string       { return t.key }
+func (t *traceItem) Description() string {
 	status := "stopped"
 	if t.tracer != nil {
 		if t.tracer.Running() {
@@ -171,9 +174,15 @@ func (t traceItem) Description() string {
 		status = "planned"
 	}
 	var parts []string
-	counts := map[string]int{}
+	counts := t.counts
 	if t.tracer != nil {
 		counts = t.tracer.Counts()
+	} else if !t.loaded {
+		if c, err := tracer.LoadCounts(t.cfg.Profile, t.cfg.Key); err == nil {
+			t.counts = c
+			t.loaded = true
+			counts = c
+		}
 	}
 	for _, tp := range t.cfg.Topics {
 		parts = append(parts, fmt.Sprintf("%s:%d", tp, counts[tp]))
@@ -185,9 +194,11 @@ func (t traceItem) Description() string {
 }
 
 type tracesState struct {
-	list  list.Model
-	items []traceItem
-	form  *traceForm
+	list    list.Model
+	items   []*traceItem
+	form    *traceForm
+	view    list.Model
+	viewKey string
 }
 
 // uiState groups general UI information such as current focus and layout.
@@ -291,20 +302,23 @@ func initialModel(conns *Connections) *model {
 	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	traceList.DisableQuitKeybindings()
 	traceList.SetShowTitle(false)
+	traceView := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	traceView.DisableQuitKeybindings()
+	traceView.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
 	order := []string{"topics", "topic", "message", "history"}
 	saved := loadState()
 	tracesCfg := loadTraces()
 	var traceItems []list.Item
-	var traceData []traceItem
+	var traceData []*traceItem
 	keys := make([]string, 0, len(tracesCfg))
 	for k := range tracesCfg {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	for _, k := range keys {
-		it := traceItem{key: k, cfg: tracesCfg[k]}
+		it := &traceItem{key: k, cfg: tracesCfg[k]}
 		traceItems = append(traceItems, it)
 		traceData = append(traceData, it)
 	}
@@ -344,6 +358,7 @@ func initialModel(conns *Connections) *model {
 			list:  traceList,
 			items: traceData,
 			form:  nil,
+			view:  traceView,
 		},
 		ui: uiState{
 			focusIndex: 0,
@@ -457,7 +472,7 @@ func (m *model) startTrace(index int) {
 	if index < 0 || index >= len(m.traces.items) {
 		return
 	}
-	item := &m.traces.items[index]
+	item := m.traces.items[index]
 	p, err := config.LoadProfile(item.cfg.Profile, "")
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
@@ -511,6 +526,32 @@ func (m *model) savePlannedTraces() {
 		}
 	}
 	saveTraces(data)
+}
+
+func (m *model) loadTraceMessages(index int) {
+	if index < 0 || index >= len(m.traces.items) {
+		return
+	}
+	it := m.traces.items[index]
+	idx, err := history.OpenTrace(it.cfg.Profile)
+	if err != nil {
+		m.appendHistory("", err.Error(), "log", err.Error())
+		return
+	}
+	msgs, err := idx.TraceMessages(it.key)
+	idx.Close()
+	if err != nil {
+		m.appendHistory("", err.Error(), "log", err.Error())
+		return
+	}
+	items := make([]list.Item, len(msgs))
+	for i, mmsg := range msgs {
+		items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: "trace"}
+	}
+	m.traces.view.SetItems(items)
+	m.traces.view.SetSize(m.ui.width-4, m.ui.height-4)
+	m.traces.viewKey = it.key
+	m.ui.mode = modeViewTrace
 }
 
 func (m *model) topicAtPosition(x, y int) int {

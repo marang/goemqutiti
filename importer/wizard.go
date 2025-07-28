@@ -1,4 +1,4 @@
-package main
+package importer
 
 import (
 	"fmt"
@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"goemqutiti/importer"
 	"goemqutiti/ui"
 )
 
@@ -94,7 +93,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if path == "" {
 				return w, nil
 			}
-			rows, err := importer.ReadFile(path)
+			rows, err := ReadFile(path)
 			if err != nil {
 				w.file.SetValue(path + " (" + err.Error() + ")")
 				return w, nil
@@ -284,7 +283,7 @@ func (w *Wizard) View() string {
 		for i, h := range w.headers {
 			label := h
 			if i == w.focus {
-				label = focusedStyle.Render(h)
+				label = ui.FocusedStyle.Render(h)
 			}
 			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
 		}
@@ -308,8 +307,8 @@ func (w *Wizard) View() string {
 			max = len(w.rows)
 		}
 		for i := 0; i < max; i++ {
-			t := importer.BuildTopic(topic, renameFields(w.rows[i], mapping))
-			p, _ := importer.RowToJSON(w.rows[i], mapping)
+			t := BuildTopic(topic, renameFields(w.rows[i], mapping))
+			p, _ := RowToJSON(w.rows[i], mapping)
 			line := fmt.Sprintf("%s -> %s", t, string(p))
 			previews += ansi.Wrap(line, wrap, " ") + "\n"
 		}
@@ -365,8 +364,8 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 	}
 	row := w.rows[w.index]
 	mapping := w.mapping()
-	topic := importer.BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
-	payload, _ := importer.RowToJSON(row, mapping)
+	topic := BuildTopic(w.tmpl.Value(), renameFields(row, mapping))
+	payload, _ := RowToJSON(row, mapping)
 	limit := w.sampleLimit
 	if limit == 0 {
 		limit = sampleSize(len(w.rows))
@@ -419,9 +418,9 @@ func (w *Wizard) mapping() map[string]string {
 func (w *Wizard) stepsView() string {
 	var parts []string
 	for i, name := range wizardSteps {
-		st := blurredStyle
+		st := ui.BlurredStyle
 		if i == w.step {
-			st = focusedStyle
+			st = ui.FocusedStyle
 		}
 		parts = append(parts, st.Render(name))
 	}

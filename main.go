@@ -7,6 +7,8 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"goemqutiti/importer"
 )
 
 // type Profile struct {
@@ -125,7 +127,7 @@ func runImport(path, profile string) {
 	}
 	defer client.Disconnect()
 
-	w := NewWizard(client, path)
+	w := importer.NewWizard(client, path)
 	prog := tea.NewProgram(w, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		fmt.Println("import error:", err)

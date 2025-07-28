@@ -15,6 +15,23 @@ type HistoryView struct {
 	vp viewport.Model
 }
 
+// FormatHistoryLines wraps lines and prefixes them with a colored bar.
+func FormatHistoryLines(lines []string, width int, bar lipgloss.Style) []string {
+	inner := width - 2
+	if inner < 0 {
+		inner = 0
+	}
+	var out []string
+	prefix := bar.Render("┃")
+	for _, l := range lines {
+		wrapped := ansi.Wrap(l, inner, " ")
+		for _, wl := range strings.Split(wrapped, "\n") {
+			out = append(out, prefix+" "+lipgloss.PlaceHorizontal(width-2, lipgloss.Left, wl))
+		}
+	}
+	return out
+}
+
 // NewHistoryView creates a HistoryView sized for the given outer box width and height.
 func NewHistoryView(boxWidth, height int) HistoryView {
 	vp := viewport.New(boxWidth-4, height)
@@ -29,19 +46,8 @@ func (h *HistoryView) SetSize(boxWidth, height int) {
 
 // SetLines replaces the displayed lines.
 func (h *HistoryView) SetLines(lines []string) {
-	width := h.vp.Width
-	inner := width - 2
-	if inner < 0 {
-		inner = 0
-	}
-	bar := lipgloss.NewStyle().Foreground(ColDarkGray).Render("┃")
-	var out []string
-	for _, l := range lines {
-		wrapped := ansi.Wrap(l, inner, " ")
-		for _, wl := range strings.Split(wrapped, "\n") {
-			out = append(out, bar+" "+lipgloss.PlaceHorizontal(width-2, lipgloss.Left, wl))
-		}
-	}
+	bar := lipgloss.NewStyle().Foreground(ColDarkGray)
+	out := FormatHistoryLines(lines, h.vp.Width, bar)
 	h.vp.SetContent(strings.Join(out, "\n"))
 }
 

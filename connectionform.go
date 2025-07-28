@@ -5,6 +5,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"goemqutiti/ui"
 )
 
 type formField interface {
@@ -110,7 +112,7 @@ func (s *selectField) Update(msg tea.Msg) tea.Cmd {
 func (s *selectField) View() string {
 	val := s.options[s.index]
 	if s.focused {
-		return focusedStyle.Render(val)
+		return ui.FocusedStyle.Render(val)
 	}
 	return val
 }
@@ -144,7 +146,7 @@ func (c *checkField) View() string {
 		box = "[x]"
 	}
 	if c.focused {
-		return focusedStyle.Render(box)
+		return ui.FocusedStyle.Render(box)
 	}
 	return box
 }
@@ -412,15 +414,15 @@ func (f connectionForm) View() string {
 	for i, in := range f.fields {
 		label := labels[i]
 		if i == f.focus {
-			label = focusedStyle.Render(label)
+			label = ui.FocusedStyle.Render(label)
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
 		prefix := envPrefix(f.fields[idxName].Value())
-		s += infoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
+		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
 	}
-	s += "\n" + infoStyle.Render("[enter] save  [esc] cancel")
+	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")
 	return s
 }
 

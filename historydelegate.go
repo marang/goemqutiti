@@ -70,19 +70,17 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lines[i] = lipgloss.NewStyle().Background(ui.ColDarkGray).Render(l)
 		}
 	}
-	borderColor := ui.ColGray
+	barColor := ui.ColGray
 	if hi.kind == "log" {
-		borderColor = ui.ColDarkGray
+		barColor = ui.ColDarkGray
 	}
-	border := lipgloss.NewStyle().Foreground(borderColor).Render("┃")
 	if _, ok := d.m.selectedHistory[index]; ok {
-		border = lipgloss.NewStyle().Foreground(ui.ColBlue).Render("┃")
+		barColor = ui.ColBlue
 	}
 	if index == d.m.history.Index() {
-		border = lipgloss.NewStyle().Foreground(ui.ColPurple).Render("┃")
+		barColor = ui.ColPurple
 	}
-	for i, l := range lines {
-		lines[i] = border + " " + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l)
-	}
+	bar := lipgloss.NewStyle().Foreground(barColor)
+	lines = ui.FormatHistoryLines(lines, width, bar)
 	fmt.Fprint(w, strings.Join(lines, "\n"))
 }

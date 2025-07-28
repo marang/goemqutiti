@@ -6,6 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+
+	"goemqutiti/ui"
 )
 
 func chipCoords(m *model, idx int) (int, int) {
@@ -114,7 +116,7 @@ func TestMouseToggleWithScroll(t *testing.T) {
 	setupManyTopics(m, 30)
 	m.viewClient()
 	// Scroll viewport to show around row 6
-	scroll := m.elemPos["topics"] + 2 + 6*lipgloss.Height(chipStyle.Render("test"))
+	scroll := m.elemPos["topics"] + 2 + 6*lipgloss.Height(ui.ChipStyle.Render("test"))
 	m.viewport.SetYOffset(scroll)
 	if m.viewport.YOffset != scroll {
 		t.Fatalf("expected YOffset %d got %d", scroll, m.viewport.YOffset)

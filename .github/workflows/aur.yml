@@ -44,9 +44,15 @@ jobs:
           # If your extracted dir name is repo-$ver (not $pkgname-$ver), fix build()/package() cd targets once:
           # sed -i "s|cd \"\$pkgname-\$pkgver\"|cd \"goemqutiti-\$pkgver\"|g" PKGBUILD
 
+      - name: Create non-root build user
+        run: |
+          useradd -m build
+          echo 'build ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers
+          chown -R build:build .
+
       - name: Generate .SRCINFO
         run: |
-          makepkg --printsrcinfo > .SRCINFO
+          sudo -u build makepkg --printsrcinfo > .SRCINFO
 
       - name: Prepare SSH
         uses: webfactory/ssh-agent@v0.9.0

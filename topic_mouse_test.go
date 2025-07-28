@@ -23,7 +23,7 @@ func setupTopics(m *model) {
 	for _, n := range names {
 		m.topics = append(m.topics, topicItem{title: n, active: true})
 	}
-	m.topicsHeight = len(names)
+	m.layout.topics.height = len(names)
 }
 
 func TestMouseToggleFirstTopic(t *testing.T) {
@@ -102,7 +102,7 @@ func setupManyTopics(m *model, n int) {
 		title := fmt.Sprintf("topic-%d", i)
 		m.topics = append(m.topics, topicItem{title: title, active: true})
 	}
-	m.topicsHeight = n
+	m.layout.topics.height = n
 }
 
 func TestMouseToggleFifteenthRowTopic(t *testing.T) {

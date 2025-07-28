@@ -102,6 +102,16 @@ type focusable interface {
 	Blur()
 }
 
+type boxConfig struct {
+	height int
+}
+
+type layoutConfig struct {
+	message boxConfig
+	history boxConfig
+	topics  boxConfig
+}
+
 type model struct {
 	mqttClient *MQTTClient
 
@@ -143,9 +153,7 @@ type model struct {
 	focusMap   map[string]focusable
 	focusOrder []string
 
-	messageHeight int
-	historyHeight int
-	topicsHeight  int
+	layout layoutConfig
 }
 
 func initialModel(conns *Connections) *model {
@@ -245,9 +253,11 @@ func initialModel(conns *Connections) *model {
 		selectedHistory: make(map[int]struct{}),
 		selectionAnchor: -1,
 		prevMode:        modeClient,
-		messageHeight:   6,
-		historyHeight:   10,
-		topicsHeight:    3,
+		layout: layoutConfig{
+			message: boxConfig{height: 6},
+			history: boxConfig{height: 10},
+			topics:  boxConfig{height: 3},
+		},
 	}
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topicInput,

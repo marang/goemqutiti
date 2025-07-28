@@ -446,11 +446,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// surrounding box stays within the terminal boundaries.
 		m.topicInput.Width = msg.Width - 7
 		m.messageInput.SetWidth(msg.Width - 4)
-		m.messageInput.SetHeight(m.messageHeight)
-		if m.historyHeight == 0 {
-			m.historyHeight = (msg.Height-1)/3 + 10
+		m.messageInput.SetHeight(m.layout.message.height)
+		if m.layout.history.height == 0 {
+			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
-		m.history.SetSize(msg.Width-4, m.historyHeight)
+		m.history.SetSize(msg.Width-4, m.layout.history.height)
 		m.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.viewport.Height = msg.Height - 2

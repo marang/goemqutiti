@@ -140,30 +140,30 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "ctrl+shift+up":
 		id := m.focusOrder[m.focusIndex]
 		if id == "message" {
-			if m.messageHeight > 1 {
-				m.messageHeight--
-				m.messageInput.SetHeight(m.messageHeight)
+			if m.layout.message.height > 1 {
+				m.layout.message.height--
+				m.messageInput.SetHeight(m.layout.message.height)
 			}
 		} else if id == "history" {
-			if m.historyHeight > 1 {
-				m.historyHeight--
-				m.history.SetSize(m.width-4, m.historyHeight)
+			if m.layout.history.height > 1 {
+				m.layout.history.height--
+				m.history.SetSize(m.width-4, m.layout.history.height)
 			}
 		} else if id == "topics" {
-			if m.topicsHeight > 1 {
-				m.topicsHeight--
+			if m.layout.topics.height > 1 {
+				m.layout.topics.height--
 			}
 		}
 	case "ctrl+shift+down":
 		id := m.focusOrder[m.focusIndex]
 		if id == "message" {
-			m.messageHeight++
-			m.messageInput.SetHeight(m.messageHeight)
+			m.layout.message.height++
+			m.messageInput.SetHeight(m.layout.message.height)
 		} else if id == "history" {
-			m.historyHeight++
-			m.history.SetSize(m.width-4, m.historyHeight)
+			m.layout.history.height++
+			m.history.SetSize(m.width-4, m.layout.history.height)
 		} else if id == "topics" {
-			m.topicsHeight++
+			m.layout.topics.height++
 		}
 	case "up", "down":
 		if m.focusOrder[m.focusIndex] == "history" {

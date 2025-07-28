@@ -77,7 +77,7 @@ func (m *model) viewClient() string {
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
 	chipContent, bounds := layoutChips(chips, m.width-4)
-	maxRows := m.topicsHeight
+	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
 		maxRows = 3
 	}
@@ -103,8 +103,8 @@ func (m *model) viewClient() string {
 	topicsBoxHeight := maxRows * rowH
 	topicsBox := ui.LegendBoxSized(chipContent, label, m.width-2, topicsBoxHeight, topicsFocused)
 	topicBox := ui.LegendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
-	messageBox := ui.LegendBoxSized(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, m.messageHeight, messageFocused)
-	messagesBox := ui.LegendGreenBoxSized(m.history.View(), "History (Ctrl+C copy)", m.width-2, m.historyHeight, historyFocused)
+	messageBox := ui.LegendBoxSized(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, m.layout.message.height, messageFocused)
+	messagesBox := ui.LegendGreenBoxSized(m.history.View(), "History (Ctrl+C copy)", m.width-2, m.layout.history.height, historyFocused)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 

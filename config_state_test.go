@@ -5,6 +5,9 @@ import (
 	"path/filepath"
 	"reflect"
 	"testing"
+	"time"
+
+	"github.com/marang/goemqutiti/tracer"
 )
 
 func TestLoadFromConfig(t *testing.T) {
@@ -85,5 +88,30 @@ func TestSaveLoadState(t *testing.T) {
 	got := loadState()
 	if !reflect.DeepEqual(got, data) {
 		t.Fatalf("state mismatch: %#v != %#v", got, data)
+	}
+}
+
+func TestSaveLoadTraces(t *testing.T) {
+	dir := t.TempDir()
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", dir)
+	defer os.Setenv("HOME", oldHome)
+
+	start := time.Date(2025, time.July, 28, 18, 25, 21, 0, time.UTC)
+	end := start.Add(time.Hour)
+	data := map[string]tracer.Config{
+		"t1": {Profile: "p1", Topics: []string{"a"}, Start: start, End: end, Key: "t1"},
+	}
+	saveTraces(data)
+	got := loadTraces()
+	// Compare only relevant fields
+	if len(got) != len(data) {
+		t.Fatalf("trace count mismatch")
+	}
+	for k, v := range data {
+		g := got[k]
+		if g.Profile != v.Profile || len(g.Topics) != len(v.Topics) || g.Topics[0] != v.Topics[0] || !g.Start.Equal(v.Start) || !g.End.Equal(v.End) {
+			t.Fatalf("trace mismatch: %#v != %#v", g, v)
+		}
 	}
 }

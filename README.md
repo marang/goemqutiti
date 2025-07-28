@@ -82,6 +82,9 @@ In the interface:
 - **x** disconnects from the current broker in the broker manager.
 - **Ctrl+T** manages subscribed topics.
 - **Ctrl+P** manages stored payloads.
+ - **Ctrl+R** opens the traces manager from the main or broker list view.
+- In the traces view use **a** to add a new trace, **Enter** to start or stop
+  the selected trace and **d** to delete it.
 - **Ctrl+C** copies the currently selected history entry.
 - Press `/` while the history is focused to filter messages. Queries support
   `topic=<list>` comma separated, `start=<RFC3339 time>`, `end=<RFC3339 time>`
@@ -134,6 +137,8 @@ history-style box from the main view so the list has a fixed height and a
 scrollable bar on the left.
 
 Future versions may store import settings for quick reuse.
+
+Press **Ctrl+R** from the main screen or broker manager to manage traces within the TUI.
 
 ### Headless tracing
 

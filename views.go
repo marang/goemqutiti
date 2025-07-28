@@ -44,7 +44,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
+	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
 	if m.mqttClient != nil {
 		r := m.mqttClient.Client.OptionsReader()
@@ -172,7 +172,7 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.manager.ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete")
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
 }
@@ -209,6 +209,35 @@ func (m model) viewPayloads() string {
 	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+func (m model) viewTraces() string {
+	listView := m.traces.list.View()
+	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
+}
+
+func (m model) viewTraceForm() string {
+	content := m.traces.form.View()
+	return ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
+}
+
+func (m model) viewTraceMessages() string {
+	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
+	listLines := strings.Split(m.traces.view.View(), "\n")
+	help := ui.InfoStyle.Render("[esc] back")
+	listLines = append(listLines, help)
+	target := len(listLines)
+	minHeight := m.layout.trace.height + 1
+	if target < minHeight {
+		for len(listLines) < minHeight {
+			listLines = append(listLines, "")
+		}
+		target = minHeight
+	}
+	content := strings.Join(listLines, "\n")
+	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
+}
+
 func (m *model) View() string {
 	switch m.ui.mode {
 	case modeClient:
@@ -223,6 +252,12 @@ func (m *model) View() string {
 		return m.viewTopics()
 	case modePayloads:
 		return m.viewPayloads()
+	case modeTracer:
+		return m.viewTraces()
+	case modeEditTrace:
+		return m.viewTraceForm()
+	case modeViewTrace:
+		return m.viewTraceMessages()
 	default:
 		return ""
 	}

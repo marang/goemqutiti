@@ -52,6 +52,9 @@ func (t *Tracer) Start() error {
 	}
 	t.running = true
 	t.counts = make(map[string]int)
+	for _, tp := range t.cfg.Topics {
+		t.counts[tp] = 0
+	}
 	t.mu.Unlock()
 
 	idx, err := history.OpenTrace(t.cfg.Profile)
@@ -105,7 +108,11 @@ func (t *Tracer) Start() error {
 				}
 				idx.AddTrace(t.cfg.Key, history.Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
 				t.mu.Lock()
-				t.counts[m.Topic()]++
+				for _, sub := range t.cfg.Topics {
+					if Match(sub, m.Topic()) {
+						t.counts[sub]++
+					}
+				}
 				t.mu.Unlock()
 			})
 		}
@@ -151,6 +158,9 @@ func (t *Tracer) Running() bool {
 // Planned reports whether the trace start time is in the future.
 func (t *Tracer) Planned() bool { return time.Now().Before(t.cfg.Start) }
 
+// Config returns the trace configuration.
+func (t *Tracer) Config() Config { return t.cfg }
+
 // Counts returns the per-topic message counts.
 func (t *Tracer) Counts() map[string]int {
 	t.mu.Lock()
@@ -164,7 +174,7 @@ func (t *Tracer) Counts() map[string]int {
 
 // Messages returns the stored trace messages.
 func (t *Tracer) Messages() ([]history.Message, error) {
-	idx, err := history.OpenTrace(t.cfg.Profile)
+	idx, err := history.OpenTraceReadOnly(t.cfg.Profile)
 	if err != nil {
 		return nil, err
 	}

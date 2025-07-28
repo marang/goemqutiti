@@ -99,6 +99,22 @@ func OpenTrace(profile string) (*Index, error) {
 	return idx, nil
 }
 
+// OpenTraceReadOnly opens the trace database in read-only mode.
+func OpenTraceReadOnly(profile string) (*Index, error) {
+	if profile == "" {
+		profile = "default"
+	}
+	path := TraceDir(profile)
+	os.MkdirAll(path, 0755)
+	opts := badger.DefaultOptions(path).WithLogger(nil).WithReadOnly(true)
+	db, err := badger.Open(opts)
+	if err != nil {
+		return nil, err
+	}
+	idx := &Index{db: db}
+	return idx, nil
+}
+
 // Close closes the underlying database.
 func (i *Index) Close() error {
 	if i.db != nil {
@@ -182,6 +198,24 @@ func (i *Index) TraceKeys(key string) ([]string, error) {
 		return nil
 	})
 	return out, err
+}
+
+// DeleteTrace removes all stored messages for the given trace key.
+func (i *Index) DeleteTrace(key string) error {
+	if i.db == nil {
+		return nil
+	}
+	prefix := []byte(fmt.Sprintf("trace/%s/", key))
+	return i.db.Update(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			if err := txn.Delete(it.Item().KeyCopy(nil)); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // Search returns all messages matching the provided filters. Zero timestamps

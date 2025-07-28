@@ -238,6 +238,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+d":
 			return m, tea.Quit
+		case "ctrl+r":
+			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
+			m.ui.mode = modeTracer
+			return m, nil
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connections.form = &f
@@ -453,6 +457,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
 		m.history.list.SetSize(msg.Width-4, m.layout.history.height)
+		if m.layout.trace.height == 0 {
+			m.layout.trace.height = msg.Height - 6
+		}
+		m.traces.view.SetSize(msg.Width-4, m.layout.trace.height)
+		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
 		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
@@ -481,6 +490,18 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case modePayloads:
 		nm, cmd := m.updatePayloads(msg)
+		*m = nm
+		return m, cmd
+	case modeTracer:
+		nm, cmd := m.updateTraces(msg)
+		*m = nm
+		return m, cmd
+	case modeEditTrace:
+		nm, cmd := m.updateTraceForm(msg)
+		*m = nm
+		return m, cmd
+	case modeViewTrace:
+		nm, cmd := m.updateTraceView(msg)
 		*m = nm
 		return m, cmd
 	default:

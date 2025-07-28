@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -82,6 +84,27 @@ func main() {
 	log.SetOutput(logFile)
 
 	if traceKey != "" {
+		tlist := strings.Split(traceTopics, ",")
+		for i := range tlist {
+			tlist[i] = strings.TrimSpace(tlist[i])
+		}
+		var start, end time.Time
+		if traceStart != "" {
+			start, _ = time.Parse(time.RFC3339, traceStart)
+		}
+		if traceEnd != "" {
+			end, _ = time.Parse(time.RFC3339, traceEnd)
+			if end.Before(time.Now()) {
+				fmt.Println("trace end time already passed")
+				return
+			}
+		}
+		exists, _ := tracer.HasData(profileName, traceKey)
+		if exists {
+			fmt.Println("trace key already exists")
+			return
+		}
+		addTrace(tracer.Config{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
 		if err := tracer.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			fmt.Println(err)
 		}

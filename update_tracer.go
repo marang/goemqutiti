@@ -1,0 +1,176 @@
+package main
+
+import (
+	"os"
+	"time"
+
+	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/config"
+)
+
+type traceTickMsg struct{}
+
+func traceTicker() tea.Cmd {
+	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return traceTickMsg{} })
+}
+
+func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case traceTickMsg:
+		// just refresh
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+d":
+			m.savePlannedTraces()
+			return m, tea.Quit
+		case "esc":
+			m.savePlannedTraces()
+			m.ui.mode = modeClient
+		case "a":
+			opts := make([]string, len(m.connections.manager.Profiles))
+			for i, p := range m.connections.manager.Profiles {
+				opts[i] = p.Name
+			}
+			topics := []string{}
+			for _, t := range m.topics.items {
+				if t.active {
+					topics = append(topics, t.title)
+				}
+			}
+			f := newTraceForm(opts, m.connections.active, topics)
+			m.traces.form = &f
+			m.ui.mode = modeEditTrace
+			return m, textinput.Blink
+		case "enter":
+			i := m.traces.list.Index()
+			if i >= 0 && i < len(m.traces.items) {
+				it := m.traces.items[i]
+				if it.tracer != nil && (it.tracer.Running() || it.tracer.Planned()) {
+					m.stopTrace(i)
+				} else {
+					m.startTrace(i)
+				}
+			}
+		case "v":
+			i := m.traces.list.Index()
+			if i >= 0 && i < len(m.traces.items) {
+				m.loadTraceMessages(i)
+				return m, nil
+			}
+		case "d":
+			i := m.traces.list.Index()
+			if i >= 0 && i < len(m.traces.items) {
+				key := m.traces.items[i].key
+				m.stopTrace(i)
+				m.traces.items = append(m.traces.items[:i], m.traces.items[i+1:]...)
+				items := []list.Item{}
+				for _, it := range m.traces.items {
+					items = append(items, it)
+				}
+				m.traces.list.SetItems(items)
+				removeTrace(key)
+			}
+		}
+	}
+	m.traces.list, cmd = m.traces.list.Update(msg)
+	if m.anyTraceRunning() {
+		return m, tea.Batch(cmd, traceTicker())
+	}
+	return m, cmd
+}
+
+func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
+	if m.traces.form == nil {
+		return m, nil
+	}
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+d":
+			return m, tea.Quit
+		case "esc":
+			m.traces.form = nil
+			m.ui.mode = modeTracer
+			return m, nil
+		case "enter":
+			cfg := m.traces.form.Config()
+			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
+				m.traces.form.errMsg = "key, profile and topics required"
+				return m, nil
+			}
+			if cfg.Start.IsZero() {
+				cfg.Start = time.Now().Round(time.Second)
+				if tf, ok := m.traces.form.fields[idxTraceStart].(*textField); ok {
+					tf.SetValue(cfg.Start.Format(time.RFC3339))
+				}
+			}
+			if cfg.End.IsZero() {
+				cfg.End = cfg.Start.Add(time.Hour)
+				if tf, ok := m.traces.form.fields[idxTraceEnd].(*textField); ok {
+					tf.SetValue(cfg.End.Format(time.RFC3339))
+				}
+			}
+			if m.traceIndex(cfg.Key) >= 0 {
+				m.traces.form.errMsg = "trace key exists"
+				return m, nil
+			}
+			p, err := config.LoadProfile(cfg.Profile, "")
+			if err != nil {
+				m.traces.form.errMsg = err.Error()
+				return m, nil
+			}
+			if p.FromEnv {
+				config.ApplyEnvVars(p)
+			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+				p.Password = env
+			}
+			client, err := NewMQTTClient(*p, nil)
+			if err != nil {
+				m.traces.form.errMsg = err.Error()
+				return m, nil
+			}
+			client.Disconnect()
+			newItem := &traceItem{key: cfg.Key, cfg: cfg}
+			m.traces.items = append(m.traces.items, newItem)
+			items := m.traces.list.Items()
+			items = append(items, newItem)
+			m.traces.list.SetItems(items)
+			addTrace(cfg)
+			m.traces.form = nil
+			m.ui.mode = modeTracer
+			return m, nil
+		}
+	}
+	f, cmd := m.traces.form.Update(msg)
+	m.traces.form = &f
+	return m, cmd
+}
+
+func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "esc":
+			m.ui.mode = modeTracer
+			return m, nil
+		case "ctrl+d":
+			return m, tea.Quit
+		case "ctrl+shift+up":
+			if m.layout.trace.height > 1 {
+				m.layout.trace.height--
+				m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
+			}
+		case "ctrl+shift+down":
+			m.layout.trace.height++
+			m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
+		}
+	}
+	m.traces.view, cmd = m.traces.view.Update(msg)
+	return m, cmd
+}

@@ -14,17 +14,17 @@ cd goemqutiti
 2. Build the application:
 
 ```bash
-go build
+go build -o emqutiti
 ```
 
-This will produce a `goemqutiti` binary in the current directory.
+This will produce an `emqutiti` binary in the current directory.
 
 ## Usage
 
 Run the built binary (or use `go run .`) to start the TUI application. On startup the broker manager is shown so you can select which profile to use. The manager can also be opened at any time with the `Ctrl+B`. Each broker entry shows the connection name on the first line and the current status (e.g. "connected" or "connecting") on the second. Profiles expose all common connection options inspired by the EMQX MQTT client:
 
 ```bash
-./goemqutiti
+./emqutiti
 ```
 
 The client expects a configuration file at `~/.emqutiti/config.toml` describing broker profiles. 
@@ -109,7 +109,7 @@ payload. Leaving a mapping blank keeps the original column name. Providing a
 path pre-selects the file in the wizard:
 
 ```bash
-./goemqutiti -i data.csv -p local
+./emqutiti -i data.csv -p local
 ```
 
 Each row becomes a JSON object with properties derived from the mapped column

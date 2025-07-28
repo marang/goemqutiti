@@ -15,7 +15,7 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 	var bounds []chipBound
 	curX := 0
 	rowTop := 0
-	chipH := lipgloss.Height(chipStyle.Render("test"))
+	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	// Each chip is exactly chipH lines tall. Newlines inserted between rows
 	// simply stack the rows without extra blank lines, so the vertical offset
 	// for the next row increases by chipH.
@@ -43,20 +43,20 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoShortcuts := infoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
+	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
 	clientID := ""
 	if m.mqttClient != nil {
 		r := m.mqttClient.Client.OptionsReader()
 		clientID = r.ClientID()
 	}
-	connLine := connStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
+	connLine := ui.ConnStyle.Render(strings.TrimSpace(m.connection + " " + clientID))
 	infoLine := lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
 
 	var chips []string
 	for i, t := range m.topics {
-		st := chipStyle
+		st := ui.ChipStyle
 		if !t.active {
-			st = chipInactive
+			st = ui.ChipInactive
 		}
 		if m.focusOrder[m.focusIndex] == "topics" && i == m.selectedTopic {
 			st = st.BorderForeground(ui.ColPurple)
@@ -102,7 +102,7 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.ConnectionsList.View()
-	help := infoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
+	help := ui.InfoStyle.Render("[enter] connect  [x] disconnect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Brokers", m.width-2, true)
 }
@@ -127,14 +127,14 @@ func (m model) viewConfirmDelete() string {
 
 func (m model) viewTopics() string {
 	listView := m.topicsList.View()
-	help := infoStyle.Render("[space] toggle  [d]elete  [esc] back")
+	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Topics", m.width-2, false)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.payloadList.View()
-	help := infoStyle.Render("[enter] load  [d]elete  [esc] back")
+	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Payloads", m.width-2, false)
 }

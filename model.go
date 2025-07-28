@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"goemqutiti/trace"
 	"goemqutiti/history"
 	"goemqutiti/ui"
 )
@@ -150,8 +151,8 @@ func initialModel(conns *Connections) *model {
 	ti.Prompt = "> "
 	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
-	ti.Cursor.Style = cursorStyle
-	ti.TextStyle = focusedStyle
+	ti.Cursor.Style = ui.CursorStyle
+	ti.TextStyle = ui.FocusedStyle
 	// Defer width assignment until we know the terminal size
 	ti.Width = 0
 
@@ -166,12 +167,12 @@ func initialModel(conns *Connections) *model {
 	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
 	ta.Blur()
-	ta.Cursor.Style = noCursor
+	ta.Cursor.Style = ui.NoCursor
 	// Set width once the WindowSizeMsg arrives
 	ta.SetWidth(0)
 	ta.SetHeight(6)
-	ta.FocusedStyle.CursorLine = focusedStyle
-	ta.BlurredStyle.CursorLine = blurredStyle
+	ta.FocusedStyle.CursorLine = ui.FocusedStyle
+	ta.BlurredStyle.CursorLine = ui.BlurredStyle
 
 	var connModel Connections
 	if conns != nil {

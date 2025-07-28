@@ -94,11 +94,24 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 		case "enter":
 			cfg := m.traces.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
+				m.traces.form.errMsg = "key, profile and topics required"
 				return m, nil
+			}
+			if cfg.Start.IsZero() {
+				cfg.Start = time.Now().Round(time.Second)
+				if tf, ok := m.traces.form.fields[idxTraceStart].(*textField); ok {
+					tf.SetValue(cfg.Start.Format(time.RFC3339))
+				}
+			}
+			if cfg.End.IsZero() {
+				cfg.End = cfg.Start.Add(time.Hour)
+				if tf, ok := m.traces.form.fields[idxTraceEnd].(*textField); ok {
+					tf.SetValue(cfg.End.Format(time.RFC3339))
+				}
 			}
 			p, err := config.LoadProfile(cfg.Profile, "")
 			if err != nil {
-				m.appendHistory("", err.Error(), "log", err.Error())
+				m.traces.form.errMsg = err.Error()
 				return m, nil
 			}
 			if p.FromEnv {
@@ -108,7 +121,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			}
 			client, err := NewMQTTClient(*p, nil)
 			if err != nil {
-				m.appendHistory("", err.Error(), "log", err.Error())
+				m.traces.form.errMsg = err.Error()
 				return m, nil
 			}
 			client.Disconnect()

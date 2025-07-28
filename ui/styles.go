@@ -12,5 +12,6 @@ var (
 	ChipStyle    = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(ColBlue).Faint(true)
 	ChipInactive = ChipStyle.Foreground(ColGray)
 	InfoStyle    = lipgloss.NewStyle().Foreground(ColBlue).PaddingLeft(1)
+	ErrorStyle   = lipgloss.NewStyle().Foreground(ColWarn).PaddingLeft(1)
 	ConnStyle    = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
 )

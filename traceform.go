@@ -14,6 +14,7 @@ import (
 type traceForm struct {
 	fields []formField
 	focus  int
+	errMsg string
 }
 
 const (
@@ -29,8 +30,8 @@ func newTraceForm(profiles []string, current string, topics []string) traceForm 
 	keyField := newTextField("", "Key")
 	profileField := newSelectField(current, profiles)
 	topicsField := newTextField(strings.Join(topics, ","), "Topics")
-	startField := newTextField("", "Start 2006-01-02T15:04:05Z")
-	endField := newTextField("", "End 2006-01-02T15:04:05Z")
+	startField := newTextField("", "2006-01-02T15:04:05Z")
+	endField := newTextField("", "2006-01-02T15:04:05Z")
 	tf.fields = []formField{keyField, profileField, topicsField, startField, endField}
 	tf.focus = 0
 	tf.fields[0].Focus()
@@ -86,6 +87,9 @@ func (f traceForm) View() string {
 			label = ui.FocusedStyle.Render(label)
 		}
 		b.WriteString(label + ": " + fld.View() + "\n")
+	}
+	if f.errMsg != "" {
+		b.WriteString("\n" + ui.ErrorStyle.Render(f.errMsg))
 	}
 	b.WriteString("\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel"))
 	return b.String()

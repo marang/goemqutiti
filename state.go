@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/BurntSushi/toml"
 	"github.com/marang/goemqutiti/config"
+	"github.com/marang/goemqutiti/tracer"
 )
 
 // persistedTopic mirrors topicItem for persistence in the config file.
@@ -25,11 +27,19 @@ type persistedConn struct {
 	Payloads []persistedPayload `toml:"payloads"`
 }
 
+type persistedTrace struct {
+	Profile string   `toml:"profile"`
+	Topics  []string `toml:"topics"`
+	Start   string   `toml:"start"`
+	End     string   `toml:"end"`
+}
+
 // userConfig represents the structure stored in config.toml.
 type userConfig struct {
-	DefaultProfileName string                   `toml:"default_profile"`
-	Profiles           []Profile                `toml:"profiles"`
-	Saved              map[string]persistedConn `toml:"saved"`
+	DefaultProfileName string                    `toml:"default_profile"`
+	Profiles           []Profile                 `toml:"profiles"`
+	Saved              map[string]persistedConn  `toml:"saved"`
+	Traces             map[string]persistedTrace `toml:"traces"`
 }
 
 // loadState retrieves saved topics and payloads from config.toml.
@@ -90,6 +100,52 @@ func saveState(data map[string]connectionData) {
 			payloads = append(payloads, persistedPayload{Topic: p.topic, Payload: p.payload})
 		}
 		cfg.Saved[k] = persistedConn{Topics: topics, Payloads: payloads}
+	}
+	writeConfig(cfg)
+}
+
+// loadTraces retrieves planned traces from config.toml.
+func loadTraces() map[string]tracer.Config {
+	fp, err := config.DefaultUserConfigFile()
+	if err != nil {
+		return map[string]tracer.Config{}
+	}
+	var cfg userConfig
+	if _, err := toml.DecodeFile(fp, &cfg); err != nil {
+		return map[string]tracer.Config{}
+	}
+	out := make(map[string]tracer.Config)
+	for k, v := range cfg.Traces {
+		var start, end time.Time
+		if v.Start != "" {
+			start, _ = time.Parse(time.RFC3339, v.Start)
+		}
+		if v.End != "" {
+			end, _ = time.Parse(time.RFC3339, v.End)
+		}
+		out[k] = tracer.Config{Profile: v.Profile, Topics: v.Topics, Start: start, End: end, Key: k}
+	}
+	return out
+}
+
+// saveTraces updates the Traces section in config.toml.
+func saveTraces(data map[string]tracer.Config) {
+	fp, err := config.DefaultUserConfigFile()
+	if err != nil {
+		return
+	}
+	var cfg userConfig
+	toml.DecodeFile(fp, &cfg) // ignore errors for new files
+	cfg.Traces = make(map[string]persistedTrace)
+	for k, v := range data {
+		pt := persistedTrace{Profile: v.Profile, Topics: v.Topics}
+		if !v.Start.IsZero() {
+			pt.Start = v.Start.Format(time.RFC3339)
+		}
+		if !v.End.IsZero() {
+			pt.End = v.End.Format(time.RFC3339)
+		}
+		cfg.Traces[k] = pt
 	}
 	writeConfig(cfg)
 }

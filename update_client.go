@@ -69,6 +69,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "ctrl+d":
 		m.saveCurrent()
+		m.savePlannedTraces()
 		return tea.Quit
 	case "ctrl+c":
 		if len(m.history.selected) > 0 {
@@ -258,6 +259,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 			m.refreshConnectionItems()
 			m.saveCurrent()
+			m.savePlannedTraces()
 			m.ui.mode = modeConnections
 		case "ctrl+t":
 			items := []list.Item{}
@@ -277,6 +279,9 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.message.list.DisableQuitKeybindings()
 			m.message.list.SetShowTitle(false)
 			m.ui.mode = modePayloads
+		case "ctrl+r":
+			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
+			m.ui.mode = modeTracer
 		}
 	}
 	if len(cmds) == 0 {

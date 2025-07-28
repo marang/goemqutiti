@@ -44,7 +44,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 }
 
 func (m *model) viewClient() string {
-	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads.")
+	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
 	if m.mqttClient != nil {
 		r := m.mqttClient.Client.OptionsReader()
@@ -209,6 +209,13 @@ func (m model) viewPayloads() string {
 	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+func (m model) viewTraces() string {
+	listView := m.traces.list.View()
+	help := ui.InfoStyle.Render("[enter] start/stop  [esc] back")
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	return ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
+}
+
 func (m *model) View() string {
 	switch m.ui.mode {
 	case modeClient:
@@ -223,6 +230,8 @@ func (m *model) View() string {
 		return m.viewTopics()
 	case modePayloads:
 		return m.viewPayloads()
+	case modeTracer:
+		return m.viewTraces()
 	default:
 		return ""
 	}

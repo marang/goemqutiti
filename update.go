@@ -483,6 +483,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, cmd := m.updatePayloads(msg)
 		*m = nm
 		return m, cmd
+	case modeTracer:
+		nm, cmd := m.updateTraces(msg)
+		*m = nm
+		return m, cmd
 	default:
 		return m, nil
 	}

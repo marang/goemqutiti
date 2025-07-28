@@ -151,6 +151,9 @@ func (t *Tracer) Running() bool {
 // Planned reports whether the trace start time is in the future.
 func (t *Tracer) Planned() bool { return time.Now().Before(t.cfg.Start) }
 
+// Config returns the trace configuration.
+func (t *Tracer) Config() Config { return t.cfg }
+
 // Counts returns the per-topic message counts.
 func (t *Tracer) Counts() map[string]int {
 	t.mu.Lock()

@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/marang/goemqutiti/history"
@@ -14,6 +16,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marang/goemqutiti/config"
+	"github.com/marang/goemqutiti/tracer"
 )
 
 type connectionItem struct {
@@ -90,6 +94,7 @@ const (
 	modeConfirmDelete
 	modeTopics
 	modePayloads
+	modeTracer
 )
 
 type connectionData struct {
@@ -145,6 +150,44 @@ type messageState struct {
 	list     list.Model // payloadList reused when viewing payloads
 }
 
+type traceItem struct {
+	key    string
+	cfg    tracer.Config
+	tracer *tracer.Tracer
+}
+
+func (t traceItem) FilterValue() string { return t.key }
+func (t traceItem) Title() string       { return t.key }
+func (t traceItem) Description() string {
+	status := "stopped"
+	if t.tracer != nil {
+		if t.tracer.Running() {
+			status = "running"
+		} else if t.tracer.Planned() {
+			status = "planned"
+		}
+	} else if time.Now().Before(t.cfg.Start) {
+		status = "planned"
+	}
+	var parts []string
+	counts := map[string]int{}
+	if t.tracer != nil {
+		counts = t.tracer.Counts()
+	}
+	for _, tp := range t.cfg.Topics {
+		parts = append(parts, fmt.Sprintf("%s:%d", tp, counts[tp]))
+	}
+	if len(parts) > 0 {
+		status += " " + strings.Join(parts, " ")
+	}
+	return status
+}
+
+type tracesState struct {
+	list  list.Model
+	items []traceItem
+}
+
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int            // index of the currently focused element
@@ -164,6 +207,7 @@ type model struct {
 	history     historyState
 	topics      topicsState
 	message     messageState
+	traces      tracesState
 
 	ui uiState
 
@@ -242,10 +286,27 @@ func initialModel(conns *Connections) *model {
 	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	payloadList.DisableQuitKeybindings()
 	payloadList.SetShowTitle(false)
+	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	traceList.DisableQuitKeybindings()
+	traceList.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
 	order := []string{"topics", "topic", "message", "history"}
 	saved := loadState()
+	tracesCfg := loadTraces()
+	var traceItems []list.Item
+	var traceData []traceItem
+	keys := make([]string, 0, len(tracesCfg))
+	for k := range tracesCfg {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		it := traceItem{key: k, cfg: tracesCfg[k]}
+		traceItems = append(traceItems, it)
+		traceData = append(traceData, it)
+	}
+	traceList.SetItems(traceItems)
 
 	m := &model{
 		connections: connectionsState{
@@ -276,6 +337,10 @@ func initialModel(conns *Connections) *model {
 			input:    ta,
 			payloads: []payloadItem{},
 			list:     payloadList,
+		},
+		traces: tracesState{
+			list:  traceList,
+			items: traceData,
 		},
 		ui: uiState{
 			focusIndex: 0,
@@ -383,6 +448,68 @@ func (m *model) removeTopic(index int) {
 		m.topics.selected = len(m.topics.items) - 1
 	}
 	m.sortTopics()
+}
+
+func (m *model) startTrace(index int) {
+	if index < 0 || index >= len(m.traces.items) {
+		return
+	}
+	item := &m.traces.items[index]
+	p, err := config.LoadProfile(item.cfg.Profile, "")
+	if err != nil {
+		m.appendHistory("", err.Error(), "log", err.Error())
+		return
+	}
+	if p.FromEnv {
+		config.ApplyEnvVars(p)
+	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+		p.Password = env
+	}
+	client, err := NewMQTTClient(*p, nil)
+	if err != nil {
+		m.appendHistory("", err.Error(), "log", err.Error())
+		return
+	}
+	tr := tracer.New(item.cfg, client)
+	if err := tr.Start(); err != nil {
+		m.appendHistory("", err.Error(), "log", err.Error())
+		client.Disconnect()
+		return
+	}
+	item.tracer = tr
+}
+
+func (m *model) stopTrace(index int) {
+	if index < 0 || index >= len(m.traces.items) {
+		return
+	}
+	if tr := m.traces.items[index].tracer; tr != nil {
+		tr.Stop()
+	}
+}
+
+func (m *model) anyTraceRunning() bool {
+	for i := range m.traces.items {
+		if tr := m.traces.items[i].tracer; tr != nil && (tr.Running() || tr.Planned()) {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *model) savePlannedTraces() {
+	data := map[string]tracer.Config{}
+	now := time.Now()
+	for _, it := range m.traces.items {
+		cfg := it.cfg
+		if it.tracer != nil {
+			cfg = it.tracer.Config()
+		}
+		if cfg.Start.After(now) {
+			data[it.key] = cfg
+		}
+	}
+	saveTraces(data)
 }
 
 func (m *model) topicAtPosition(x, y int) int {

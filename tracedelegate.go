@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -39,7 +38,8 @@ func (d traceMsgDelegate) Render(w io.Writer, m list.Model, index int, item list
 	if innerWidth < 0 {
 		innerWidth = 0
 	}
-	header := fmt.Sprintf("%d %s %s:", it.idx, it.msg.Timestamp.Format(time.RFC3339), it.msg.Topic)
+	ts := it.msg.Timestamp.Format("2006-01-02T15:04:05.000000000Z07:00")
+	header := fmt.Sprintf("%d %s %s:", it.idx, ts, it.msg.Topic)
 	lines := []string{lipgloss.PlaceHorizontal(innerWidth, lipgloss.Left,
 		lipgloss.NewStyle().Foreground(ui.ColBlue).Render(header))}
 	for _, l := range strings.Split(it.msg.Payload, "\n") {

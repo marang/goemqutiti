@@ -222,11 +222,16 @@ func (m model) viewTraceForm() string {
 }
 
 func (m model) viewTraceMessages() string {
-	listView := m.traces.view.View()
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
+	listLines := strings.Split(m.traces.view.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, title, m.ui.width-2, m.layout.trace.height+1, ui.ColBlue, false, -1)
+	target := m.layout.trace.height + 1
+	for len(listLines)+1 < target {
+		listLines = append(listLines, "")
+	}
+	listLines = append(listLines, help)
+	content := strings.Join(listLines, "\n")
+	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
 }
 
 func (m *model) View() string {

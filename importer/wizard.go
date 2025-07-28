@@ -271,7 +271,7 @@ func (w *Wizard) View() string {
 	switch w.step {
 	case stepFile:
 		content := w.file.View() + "\n[enter] load file  [ctrl+n] next"
-		box = ui.LegendBox(content, "Import", bw, 0, ui.ColBlue, true)
+		box = ui.LegendBox(content, "Import", bw, 0, ui.ColBlue, true, -1)
 	case stepMap:
 		colw := 0
 		for _, h := range w.headers {
@@ -288,7 +288,7 @@ func (w *Wizard) View() string {
 			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
 		}
 		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
-		box = ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true)
+		box = ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)
 	case stepTemplate:
 		names := make([]string, len(w.headers))
 		for i, h := range w.headers {
@@ -297,7 +297,7 @@ func (w *Wizard) View() string {
 		help := "Available fields: " + strings.Join(names, " ")
 		help = ansi.Wrap(help, wrap, " ")
 		content := w.tmpl.View() + "\n" + help + "\n[enter] continue  [ctrl+n] next  [ctrl+p] back"
-		box = ui.LegendBox(content, "Topic Template", bw, 0, ui.ColBlue, true)
+		box = ui.LegendBox(content, "Topic Template", bw, 0, ui.ColBlue, true, -1)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()
@@ -313,7 +313,7 @@ func (w *Wizard) View() string {
 			previews += ansi.Wrap(line, wrap, " ") + "\n"
 		}
 		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
-		box = ui.LegendBox(s, "Review", bw, 0, ui.ColBlue, true)
+		box = ui.LegendBox(s, "Review", bw, 0, ui.ColBlue, true, -1)
 	case stepPublish:
 		bar := w.progress.View()
 		lines := w.published
@@ -339,20 +339,20 @@ func (w *Wizard) View() string {
 		}
 		msg := fmt.Sprintf("%s\n%s\n%s", headerLine, bar, recent)
 		msg = ansi.Wrap(msg, wrap, " ")
-		box = ui.LegendBox(msg, "Progress", bw, 0, ui.ColGreen, true)
+		box = ui.LegendBox(msg, "Progress", bw, 0, ui.ColGreen, true, w.history.ScrollPercent())
 	case stepDone:
 		if w.dryRun {
 			w.history.SetSize(bw, w.historyHeight())
 			w.history.SetLines(spacedLines(w.published))
 			out := w.history.View()
 			out = ansi.Wrap(out, wrap, " ") + "\n[ctrl+p] back  [q] quit"
-			box = ui.LegendBox(out, "Dry Run", bw, 0, ui.ColGreen, true)
+			box = ui.LegendBox(out, "Dry Run", bw, 0, ui.ColGreen, true, w.history.ScrollPercent())
 		} else if w.finished {
 			msg := fmt.Sprintf("Published %d messages\n[ctrl+p] back  [q] quit", len(w.rows))
 			msg = ansi.Wrap(msg, wrap, " ")
-			box = ui.LegendBox(msg, "Import", bw, 0, ui.ColBlue, true)
+			box = ui.LegendBox(msg, "Import", bw, 0, ui.ColBlue, true, -1)
 		} else {
-			box = ui.LegendBox("Done", "Import", bw, 0, ui.ColBlue, true)
+			box = ui.LegendBox("Done", "Import", bw, 0, ui.ColBlue, true, -1)
 		}
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)

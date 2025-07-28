@@ -8,7 +8,9 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"goemqutiti/history"
+	"goemqutiti/ui"
 )
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
@@ -27,6 +29,15 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 	m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
+}
+
+func (m *model) scrollTopics(delta int) {
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	if delta > 0 {
+		m.topics.vp.ScrollDown(delta * rowH)
+	} else if delta < 0 {
+		m.topics.vp.ScrollUp(-delta * rowH)
+	}
 }
 
 func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
@@ -168,6 +179,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "up", "down":
 		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
 			// keep current selection and anchor
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.String() == "down" {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
 	case "ctrl+s", "ctrl+enter":
 		if m.ui.focusOrder[m.ui.focusIndex] == "message" {
@@ -247,6 +264,12 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
+		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+			delta := -1
+			if msg.Button == tea.MouseButtonWheelDown {
+				delta = 1
+			}
+			m.scrollTopics(delta)
 		}
 	}
 	if msg.Type == tea.MouseLeft {

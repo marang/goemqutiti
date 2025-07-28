@@ -135,6 +135,19 @@ scrollable bar on the left.
 
 Future versions may store import settings for quick reuse.
 
+### Headless tracing
+
+Run the program with `--trace <key>` and `--topics <list>` to record messages
+without launching the TUI. Optional `--start` and `--end` values limit the trace
+duration. All times use RFC3339 format.
+
+```bash
+./goemqutiti --trace myrun --topics "sensors/#,devices/+/status" -p local --start 2024-01-01T00:00:00Z --end 2024-01-01T01:00:00Z
+```
+
+Traces are stored in `~/.emqutiti/data/<profile>/traces` and can be inspected
+later.
+
 ## License
 
 This project is licensed under the terms of the MIT License. See [LICENSE](LICENSE) for details.

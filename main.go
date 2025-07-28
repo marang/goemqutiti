@@ -8,7 +8,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/importer"
+	"github.com/marang/goemqutiti/tracer"
 )
 
 // type Profile struct {
@@ -50,6 +52,10 @@ import (
 var (
 	importFile  string
 	profileName string
+	traceKey    string
+	traceTopics string
+	traceStart  string
+	traceEnd    string
 )
 
 func init() {
@@ -57,6 +63,10 @@ func init() {
 	flag.StringVar(&importFile, "i", "", "(shorthand)")
 	flag.StringVar(&profileName, "profile", "", "Connection profile to use")
 	flag.StringVar(&profileName, "p", "", "(shorthand)")
+	flag.StringVar(&traceKey, "trace", "", "Trace key to store messages under")
+	flag.StringVar(&traceTopics, "topics", "", "Comma-separated topics to trace")
+	flag.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
+	flag.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
 }
 
 func main() {
@@ -70,6 +80,13 @@ func main() {
 	defer logFile.Close()
 	// Set log output to file
 	log.SetOutput(logFile)
+
+	if traceKey != "" {
+		if err := tracer.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
+			fmt.Println(err)
+		}
+		return
+	}
 
 	if importFile != "" {
 		runImport(importFile, profileName)
@@ -122,7 +139,7 @@ func runImport(path, profile string) {
 		return
 	}
 	if p.FromEnv {
-		applyEnvVars(p)
+		config.ApplyEnvVars(p)
 	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 		p.Password = env
 	}

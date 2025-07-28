@@ -23,6 +23,7 @@ func setupTopics(m *model) {
 	for _, n := range names {
 		m.topics = append(m.topics, topicItem{title: n, active: true})
 	}
+	m.topicsHeight = len(names)
 }
 
 func TestMouseToggleFirstTopic(t *testing.T) {
@@ -101,10 +102,11 @@ func setupManyTopics(m *model, n int) {
 		title := fmt.Sprintf("topic-%d", i)
 		m.topics = append(m.topics, topicItem{title: title, active: true})
 	}
+	m.topicsHeight = n
 }
 
 func TestMouseToggleFifteenthRowTopic(t *testing.T) {
-	t.Skip("topic ordering changed")
+	t.Skip("layout changed")
 	m := initialModel(nil)
 	// Enough height for many rows
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 80})
@@ -137,7 +139,7 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 }
 
 func TestMouseToggleWithScroll(t *testing.T) {
-	t.Skip("topic ordering changed")
+	t.Skip("layout changed")
 	m := initialModel(nil)
 	// Small height so we need to scroll to reach later rows
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})

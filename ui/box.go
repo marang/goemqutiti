@@ -13,7 +13,7 @@ func LegendBox(content, label string, width int, focused bool) string {
 	if focused {
 		color = ColPink
 	}
-	return legendStyledBox(content, label, width, color)
+	return legendStyledBox(content, label, width, 0, color)
 }
 
 // LegendGreenBox renders a bordered box with a green border.
@@ -22,10 +22,29 @@ func LegendGreenBox(content, label string, width int, focused bool) string {
 	if focused {
 		color = ColPink
 	}
-	return legendStyledBox(content, label, width, color)
+	return legendStyledBox(content, label, width, 0, color)
 }
 
-func legendStyledBox(content, label string, width int, color lipgloss.Color) string {
+// LegendBoxSized renders a bordered box with a fixed height.
+// When height is greater than zero the content is clipped or padded to fit that many lines.
+func LegendBoxSized(content, label string, width, height int, focused bool) string {
+	color := ColBlue
+	if focused {
+		color = ColPink
+	}
+	return legendStyledBox(content, label, width, height, color)
+}
+
+// LegendGreenBoxSized renders a green bordered box with a fixed height.
+func LegendGreenBoxSized(content, label string, width, height int, focused bool) string {
+	color := ColGreen
+	if focused {
+		color = ColPink
+	}
+	return legendStyledBox(content, label, width, height, color)
+}
+
+func legendStyledBox(content, label string, width, height int, color lipgloss.Color) string {
 	content = strings.TrimRight(content, "\n")
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
@@ -41,6 +60,14 @@ func legendStyledBox(content, label string, width int, color lipgloss.Color) str
 	)
 
 	lines := strings.Split(content, "\n")
+	if height > 0 {
+		if len(lines) > height {
+			lines = lines[:height]
+		}
+		for len(lines) < height {
+			lines = append(lines, "")
+		}
+	}
 	for i, l := range lines {
 		l = strings.TrimRightFunc(l, unicode.IsSpace)
 		side := color

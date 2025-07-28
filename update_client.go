@@ -149,6 +149,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.historyHeight--
 				m.history.SetSize(m.width-4, m.historyHeight)
 			}
+		} else if id == "topics" {
+			if m.topicsHeight > 1 {
+				m.topicsHeight--
+			}
 		}
 	case "ctrl+shift+down":
 		id := m.focusOrder[m.focusIndex]
@@ -158,6 +162,8 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		} else if id == "history" {
 			m.historyHeight++
 			m.history.SetSize(m.width-4, m.historyHeight)
+		} else if id == "topics" {
+			m.topicsHeight++
 		}
 	case "up", "down":
 		if m.focusOrder[m.focusIndex] == "history" {

@@ -28,7 +28,7 @@ func TestHistoryDelegateWidth(t *testing.T) {
 // Test that the history box has aligned borders when rendered
 func TestHistoryBoxLayout(t *testing.T) {
 	m := initialModel(nil)
-	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	m.appendHistory("foo", "bar", "pub", "")
 	view := m.viewClient()
 	lines := strings.Split(view, "\n")

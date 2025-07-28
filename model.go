@@ -145,6 +145,7 @@ type model struct {
 
 	messageHeight int
 	historyHeight int
+	topicsHeight  int
 }
 
 func initialModel(conns *Connections) *model {
@@ -246,6 +247,7 @@ func initialModel(conns *Connections) *model {
 		prevMode:        modeClient,
 		messageHeight:   6,
 		historyHeight:   10,
+		topicsHeight:    3,
 	}
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topicInput,

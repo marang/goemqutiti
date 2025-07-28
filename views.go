@@ -77,11 +77,22 @@ func (m *model) viewClient() string {
 	historyFocused := m.focusOrder[m.focusIndex] == "history"
 
 	chipContent, bounds := layoutChips(chips, m.width-4)
+	maxRows := m.topicsHeight
+	if maxRows <= 0 {
+		maxRows = 3
+	}
 	lines := strings.Split(chipContent, "\n")
-	maxRows := 3
 	if len(lines) > maxRows {
 		chipContent = strings.Join(lines[:maxRows], "\n")
 	}
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	visible := []chipBound{}
+	for _, b := range bounds {
+		if b.y/rowH < maxRows {
+			visible = append(visible, b)
+		}
+	}
+	bounds = visible
 	active := 0
 	for _, t := range m.topics {
 		if t.active {
@@ -89,10 +100,11 @@ func (m *model) viewClient() string {
 		}
 	}
 	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics))
-	topicsBox := ui.LegendBox(chipContent, label, m.width-2, topicsFocused)
+	topicsBoxHeight := maxRows * rowH
+	topicsBox := ui.LegendBoxSized(chipContent, label, m.width-2, topicsBoxHeight, topicsFocused)
 	topicBox := ui.LegendBox(m.topicInput.View(), "Topic", m.width-2, topicFocused)
-	messageBox := ui.LegendBox(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, messageFocused)
-	messagesBox := ui.LegendGreenBox(m.history.View(), "History (Ctrl+C copy)", m.width-2, historyFocused)
+	messageBox := ui.LegendBoxSized(m.messageInput.View(), "Message (Ctrl+S publishes)", m.width-2, m.messageHeight, messageFocused)
+	messagesBox := ui.LegendGreenBoxSized(m.history.View(), "History (Ctrl+C copy)", m.width-2, m.historyHeight, historyFocused)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 

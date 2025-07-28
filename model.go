@@ -136,7 +136,7 @@ type topicsState struct {
 	list       list.Model
 	selected   int
 	chipBounds []chipBound
-	scroll     int
+	vp         viewport.Model
 }
 
 type messageState struct {
@@ -270,7 +270,7 @@ func initialModel(conns *Connections) *model {
 			list:       topicsList,
 			selected:   -1,
 			chipBounds: []chipBound{},
-			scroll:     0,
+			vp:         viewport.New(0, 0),
 		},
 		message: messageState{
 			input:    ta,

@@ -14,13 +14,13 @@ func TestTopicsScrollDown(t *testing.T) {
 	setupManyTopics(m, 10)
 	m.layout.topics.height = 2
 	m.viewClient()
-	if m.topics.scroll != 0 {
+	if m.topics.vp.YOffset != 0 {
 		t.Fatalf("expected initial scroll 0")
 	}
 	m.setFocus("topics")
 	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	rowH := lipgloss.Height(ui.ChipStyle.Render("t"))
-	if m.topics.scroll != rowH {
-		t.Fatalf("expected scroll %d got %d", rowH, m.topics.scroll)
+	if m.topics.vp.YOffset != rowH {
+		t.Fatalf("expected scroll %d got %d", rowH, m.topics.vp.YOffset)
 	}
 }

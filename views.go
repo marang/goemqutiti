@@ -83,31 +83,20 @@ func (m *model) viewClient() string {
 		maxRows = 3
 	}
 	topicsBoxHeight := maxRows * rowH
-	totalHeight := len(chipRows) * rowH
-	offset := m.topics.scroll
-	maxScroll := totalHeight - topicsBoxHeight
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
-	if offset > maxScroll {
-		offset = maxScroll
-	}
-	m.topics.scroll = offset
-	startRow := 0
+	m.topics.vp.Width = m.ui.width - 4
+	m.topics.vp.Height = topicsBoxHeight
+	m.topics.vp.SetContent(strings.Join(chipRows, "\n"))
+	startLine := m.topics.vp.YOffset
+	endLine := startLine + topicsBoxHeight
 	topicsSP := -1.0
-	if maxScroll > 0 {
-		startRow = offset / rowH
-		topicsSP = float64(offset) / float64(maxScroll)
+	if len(chipRows)*rowH > topicsBoxHeight {
+		topicsSP = m.topics.vp.ScrollPercent()
 	}
-	endRow := startRow + maxRows
-	if endRow > len(chipRows) {
-		endRow = len(chipRows)
-	}
-	chipContent := strings.Join(chipRows[startRow:endRow], "\n")
+	chipContent := m.topics.vp.View()
 	visible := []chipBound{}
 	for _, b := range bounds {
-		if b.y >= startRow*rowH && b.y < endRow*rowH {
-			b.y -= startRow * rowH
+		if b.y >= startLine && b.y < endLine {
+			b.y -= startLine
 			visible = append(visible, b)
 		}
 	}

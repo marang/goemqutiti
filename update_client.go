@@ -32,30 +32,11 @@ func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 }
 
 func (m *model) scrollTopics(delta int) {
-	chips := make([]string, len(m.topics.items))
-	for i, t := range m.topics.items {
-		st := ui.ChipStyle
-		if !t.active {
-			st = ui.ChipInactive
-		}
-		chips[i] = st.Render(t.title)
-	}
-	rows, _ := layoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
-	maxRows := m.layout.topics.height
-	if maxRows <= 0 {
-		maxRows = 3
-	}
-	maxScroll := len(rows)*rowH - maxRows*rowH
-	if maxScroll < 0 {
-		maxScroll = 0
-	}
-	m.topics.scroll += delta * rowH
-	if m.topics.scroll < 0 {
-		m.topics.scroll = 0
-	}
-	if m.topics.scroll > maxScroll {
-		m.topics.scroll = maxScroll
+	if delta > 0 {
+		m.topics.vp.ScrollDown(delta * rowH)
+	} else if delta < 0 {
+		m.topics.vp.ScrollUp(-delta * rowH)
 	}
 }
 

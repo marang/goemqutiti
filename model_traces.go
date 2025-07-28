@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 
@@ -10,10 +12,7 @@ import (
 	"github.com/marang/goemqutiti/tracer"
 )
 
-func (m *model) startTrace(index int) {
-	if index < 0 || index >= len(m.traces.items) {
-		return
-	}
+func (m *model) forceStartTrace(index int) {
 	item := m.traces.items[index]
 	p, err := config.LoadProfile(item.cfg.Profile, "")
 	if err != nil {
@@ -40,6 +39,26 @@ func (m *model) startTrace(index int) {
 	addTrace(item.cfg)
 }
 
+func (m *model) startTrace(index int) {
+	if index < 0 || index >= len(m.traces.items) {
+		return
+	}
+	item := m.traces.items[index]
+	if !item.cfg.End.IsZero() && time.Now().After(item.cfg.End) {
+		m.appendHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
+		return
+	}
+	exists, err := tracer.HasData(item.cfg.Profile, item.key)
+	if err == nil && exists {
+		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), func() {
+			tracer.ClearData(item.cfg.Profile, item.key)
+			m.forceStartTrace(index)
+		})
+		return
+	}
+	m.forceStartTrace(index)
+}
+
 func (m *model) stopTrace(index int) {
 	if index < 0 || index >= len(m.traces.items) {
 		return
@@ -56,6 +75,15 @@ func (m *model) anyTraceRunning() bool {
 		}
 	}
 	return false
+}
+
+func (m *model) traceIndex(key string) int {
+	for i, it := range m.traces.items {
+		if it.key == key {
+			return i
+		}
+	}
+	return -1
 }
 
 func (m *model) savePlannedTraces() {

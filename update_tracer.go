@@ -115,6 +115,10 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 					tf.SetValue(cfg.End.Format(time.RFC3339))
 				}
 			}
+			if m.traceIndex(cfg.Key) >= 0 {
+				m.traces.form.errMsg = "trace key exists"
+				return m, nil
+			}
 			p, err := config.LoadProfile(cfg.Profile, "")
 			if err != nil {
 				m.traces.form.errMsg = err.Error()

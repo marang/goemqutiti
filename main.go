@@ -94,6 +94,15 @@ func main() {
 		}
 		if traceEnd != "" {
 			end, _ = time.Parse(time.RFC3339, traceEnd)
+			if end.Before(time.Now()) {
+				fmt.Println("trace end time already passed")
+				return
+			}
+		}
+		exists, _ := tracer.HasData(profileName, traceKey)
+		if exists {
+			fmt.Println("trace key already exists")
+			return
 		}
 		addTrace(tracer.Config{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
 		if err := tracer.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {

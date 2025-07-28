@@ -184,6 +184,24 @@ func (i *Index) TraceKeys(key string) ([]string, error) {
 	return out, err
 }
 
+// DeleteTrace removes all stored messages for the given trace key.
+func (i *Index) DeleteTrace(key string) error {
+	if i.db == nil {
+		return nil
+	}
+	prefix := []byte(fmt.Sprintf("trace/%s/", key))
+	return i.db.Update(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
+			if err := txn.Delete(it.Item().KeyCopy(nil)); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
 // Search returns all messages matching the provided filters. Zero timestamps
 // disable the corresponding time constraints.
 func (i *Index) Search(topics []string, start, end time.Time, payload string) []Message {

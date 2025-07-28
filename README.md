@@ -123,8 +123,10 @@ payloads so you can verify them; press `Ctrl+P` from the results screen to go
 back. Publishing shows a progress bar along with a random sample of recently
 published messages. The sample size grows with the total number of rows
 (roughly the square root, capped at twenty) and the progress view stays on
-screen when complete so you can see how many messages were sent. Use
-`Ctrl+N` and `Ctrl+P` to move forward and back through the wizard steps.
+screen when complete so you can see how many messages were sent. The wizard
+expands to the full terminal width and shows samples inside the same green box
+used for the live history. Use `Ctrl+N` and `Ctrl+P` to move forward and back
+through the wizard steps.
 
 Future versions may store import settings for quick reuse.
 

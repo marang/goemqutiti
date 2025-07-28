@@ -38,6 +38,8 @@ type Wizard struct {
 	published   []string
 	finished    bool
 	sampleLimit int
+	width       int
+	height      int
 }
 
 const (
@@ -68,6 +70,17 @@ func (w *Wizard) Init() tea.Cmd { return textinput.Blink }
 func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlD {
 		return w, tea.Quit
+	}
+	switch m := msg.(type) {
+	case tea.WindowSizeMsg:
+		w.width = m.Width
+		w.height = m.Height
+		w.progress.Width = m.Width - 4
+		return w, nil
+	case progress.FrameMsg:
+		nm, cmd := w.progress.Update(msg)
+		w.progress = nm.(progress.Model)
+		return w, cmd
 	}
 	switch w.step {
 	case stepFile:
@@ -234,10 +247,20 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (w *Wizard) View() string {
 	header := w.stepsView()
+	bw := w.width - 2
+	if bw <= 0 {
+		bw = 50
+	}
+	wrap := bw - 2
+	if wrap <= 0 {
+		wrap = 1
+	}
+	w.progress.Width = wrap
 	var box string
 	switch w.step {
 	case stepFile:
-		box = ui.LegendBox(w.file.View()+"\n[enter] load file  [ctrl+n] next", "Import", 50, true)
+		content := w.file.View() + "\n[enter] load file  [ctrl+n] next"
+		box = ui.LegendBox(content, "Import", bw, true)
 	case stepMap:
 		colw := 0
 		for _, h := range w.headers {
@@ -254,15 +277,16 @@ func (w *Wizard) View() string {
 			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
 		}
 		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
-		box = ui.LegendBox(b.String(), "Map Columns", 50, true)
+		box = ui.LegendBox(b.String(), "Map Columns", bw, true)
 	case stepTemplate:
 		names := make([]string, len(w.headers))
 		for i, h := range w.headers {
 			names[i] = "{" + h + "}"
 		}
 		help := "Available fields: " + strings.Join(names, " ")
-		help = ansi.Wrap(help, 48, " ")
-		box = ui.LegendBox(w.tmpl.View()+"\n"+help+"\n[enter] continue  [ctrl+n] next  [ctrl+p] back", "Topic Template", 50, true)
+		help = ansi.Wrap(help, wrap, " ")
+		content := w.tmpl.View() + "\n" + help + "\n[enter] continue  [ctrl+n] next  [ctrl+p] back"
+		box = ui.LegendBox(content, "Topic Template", bw, true)
 	case stepReview:
 		topic := w.tmpl.Value()
 		mapping := w.mapping()
@@ -275,10 +299,10 @@ func (w *Wizard) View() string {
 			t := importer.BuildTopic(topic, renameFields(w.rows[i], mapping))
 			p, _ := importer.RowToJSON(w.rows[i], mapping)
 			line := fmt.Sprintf("%s -> %s", t, string(p))
-			previews += ansi.Wrap(line, 48, " ") + "\n"
+			previews += ansi.Wrap(line, wrap, " ") + "\n"
 		}
 		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
-		box = ui.LegendBox(s, "Review", 50, true)
+		box = ui.LegendBox(s, "Review", bw, true)
 	case stepPublish:
 		bar := w.progress.View()
 		lines := w.published
@@ -291,28 +315,30 @@ func (w *Wizard) View() string {
 			lines = lines[len(lines)-limit:]
 		}
 		recent := strings.Join(lines, "\n")
-		recent = ansi.Wrap(recent, 48, " ")
+		recent = ansi.Wrap(recent, wrap, " ")
 		if recent != "" {
 			recent += "\n"
 		}
 		if w.finished {
-			msg := fmt.Sprintf("Published %d messages\n%s%s[ctrl+n] next  [ctrl+p] back", len(w.rows), recent, bar)
-			box = ui.LegendBox(msg, "Progress", 50, true)
+			msg := fmt.Sprintf("Published %d messages\n%s%s\n[ctrl+n] next  [ctrl+p] back", len(w.rows), recent, bar)
+			msg = ansi.Wrap(msg, wrap, " ")
+			box = ui.LegendGreenBox(msg, "Progress", bw, true)
 		} else {
 			msg := fmt.Sprintf("Publishing %d/%d\n%s%s", w.index, len(w.rows), recent, bar)
-			box = ui.LegendBox(msg, "Progress", 50, true)
+			msg = ansi.Wrap(msg, wrap, " ")
+			box = ui.LegendGreenBox(msg, "Progress", bw, true)
 		}
 	case stepDone:
 		if w.dryRun {
 			out := strings.Join(w.published, "\n")
-			out = ansi.Wrap(out, 48, " ")
-			out += "\n[ctrl+p] back  [q] quit"
-			box = ui.LegendBox(out, "Dry Run", 50, true)
+			out = ansi.Wrap(out, wrap, " ") + "\n[ctrl+p] back  [q] quit"
+			box = ui.LegendGreenBox(out, "Dry Run", bw, true)
 		} else if w.finished {
 			msg := fmt.Sprintf("Published %d messages\n[ctrl+p] back  [q] quit", len(w.rows))
-			box = ui.LegendBox(msg, "Import", 50, true)
+			msg = ansi.Wrap(msg, wrap, " ")
+			box = ui.LegendBox(msg, "Import", bw, true)
 		} else {
-			box = ui.LegendBox("Done", "Import", 50, true)
+			box = ui.LegendBox("Done", "Import", bw, true)
 		}
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)

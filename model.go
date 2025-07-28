@@ -114,6 +114,7 @@ type layoutConfig struct {
 	message boxConfig
 	history boxConfig
 	topics  boxConfig
+	trace   boxConfig
 }
 
 type connectionsState struct {

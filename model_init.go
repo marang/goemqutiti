@@ -86,7 +86,7 @@ func initialModel(conns *Connections) *model {
 	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	traceList.DisableQuitKeybindings()
 	traceList.SetShowTitle(false)
-	traceDel := historyDelegate{}
+	traceDel := traceMsgDelegate{}
 	traceView := list.New([]list.Item{}, traceDel, 0, 0)
 	traceView.DisableQuitKeybindings()
 	traceView.SetShowTitle(false)
@@ -159,6 +159,7 @@ func initialModel(conns *Connections) *model {
 			message: boxConfig{height: 6},
 			history: boxConfig{height: 10},
 			topics:  boxConfig{height: 3},
+			trace:   boxConfig{height: 10},
 		},
 	}
 	m.focusMap = map[string]focusable{

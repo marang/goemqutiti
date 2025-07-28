@@ -226,7 +226,7 @@ func (m model) viewTraceMessages() string {
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	help := ui.InfoStyle.Render("[esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, title, m.ui.width-2, 0, ui.ColBlue, false, -1)
+	return ui.LegendBox(content, title, m.ui.width-2, m.layout.trace.height+1, ui.ColBlue, false, -1)
 }
 
 func (m *model) View() string {

@@ -161,6 +161,14 @@ func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
 			return m, nil
 		case "ctrl+d":
 			return m, tea.Quit
+		case "ctrl+shift+up":
+			if m.layout.trace.height > 1 {
+				m.layout.trace.height--
+				m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
+			}
+		case "ctrl+shift+down":
+			m.layout.trace.height++
+			m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
 		}
 	}
 	m.traces.view, cmd = m.traces.view.Update(msg)

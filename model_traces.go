@@ -115,10 +115,10 @@ func (m *model) loadTraceMessages(index int) {
 	}
 	items := make([]list.Item, len(msgs))
 	for i, mmsg := range msgs {
-		items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: "trace"}
+		items[i] = traceMsgItem{idx: i + 1, msg: mmsg}
 	}
 	m.traces.view.SetItems(items)
-	m.traces.view.SetSize(m.ui.width-4, m.ui.height-4)
+	m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
 	m.traces.viewKey = it.key
 	m.ui.mode = modeViewTrace
 }

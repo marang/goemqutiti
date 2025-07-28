@@ -457,6 +457,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
 		m.history.list.SetSize(msg.Width-4, m.layout.history.height)
+		if m.layout.trace.height == 0 {
+			m.layout.trace.height = msg.Height - 6
+		}
+		m.traces.view.SetSize(msg.Width-4, m.layout.trace.height)
+		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
 		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
@@ -491,15 +496,15 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, cmd := m.updateTraces(msg)
 		*m = nm
 		return m, cmd
-       case modeEditTrace:
-               nm, cmd := m.updateTraceForm(msg)
-               *m = nm
-               return m, cmd
-       case modeViewTrace:
-               nm, cmd := m.updateTraceView(msg)
-               *m = nm
-               return m, cmd
-       default:
-               return m, nil
-       }
+	case modeEditTrace:
+		nm, cmd := m.updateTraceForm(msg)
+		*m = nm
+		return m, cmd
+	case modeViewTrace:
+		nm, cmd := m.updateTraceView(msg)
+		*m = nm
+		return m, cmd
+	default:
+		return m, nil
+	}
 }

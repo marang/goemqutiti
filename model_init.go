@@ -86,7 +86,8 @@ func initialModel(conns *Connections) *model {
 	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	traceList.DisableQuitKeybindings()
 	traceList.SetShowTitle(false)
-	traceView := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	traceDel := historyDelegate{}
+	traceView := list.New([]list.Item{}, traceDel, 0, 0)
 	traceView.DisableQuitKeybindings()
 	traceView.SetShowTitle(false)
 	vp := viewport.New(0, 0)
@@ -166,6 +167,8 @@ func initialModel(conns *Connections) *model {
 	}
 	hDel.m = m
 	m.history.list.SetDelegate(hDel)
+	traceDel.m = m
+	m.traces.view.SetDelegate(traceDel)
 	if idx, err := history.Open(""); err == nil {
 		m.history.store = idx
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")

@@ -52,6 +52,9 @@ func (t *Tracer) Start() error {
 	}
 	t.running = true
 	t.counts = make(map[string]int)
+	for _, tp := range t.cfg.Topics {
+		t.counts[tp] = 0
+	}
 	t.mu.Unlock()
 
 	idx, err := history.OpenTrace(t.cfg.Profile)
@@ -105,7 +108,11 @@ func (t *Tracer) Start() error {
 				}
 				idx.AddTrace(t.cfg.Key, history.Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
 				t.mu.Lock()
-				t.counts[m.Topic()]++
+				for _, sub := range t.cfg.Topics {
+					if Match(sub, m.Topic()) {
+						t.counts[sub]++
+					}
+				}
 				t.mu.Unlock()
 			})
 		}

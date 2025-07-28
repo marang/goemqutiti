@@ -175,7 +175,7 @@ func (t *traceItem) Description() string {
 	if t.tracer != nil {
 		counts = t.tracer.Counts()
 	} else if !t.loaded {
-		if c, err := tracer.LoadCounts(t.cfg.Profile, t.cfg.Key); err == nil {
+		if c, err := tracer.LoadCounts(t.cfg.Profile, t.cfg.Key, t.cfg.Topics); err == nil {
 			t.counts = c
 			t.loaded = true
 			counts = c

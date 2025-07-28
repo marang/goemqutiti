@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"goemqutiti/history"
+	"github.com/marang/goemqutiti/history"
 )
 
 type statusMessage string

@@ -10,7 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 // historyDelegate renders history items with two lines and supports highlighting

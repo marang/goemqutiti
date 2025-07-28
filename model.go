@@ -5,8 +5,8 @@ import (
 	"sort"
 	"time"
 
-	"goemqutiti/history"
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/history"
+	"github.com/marang/goemqutiti/ui"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"

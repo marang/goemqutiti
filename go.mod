@@ -1,4 +1,4 @@
-module goemqutiti
+module github.com/marang/goemqutiti
 
 go 1.24.2
 

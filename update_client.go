@@ -9,8 +9,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"goemqutiti/history"
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/history"
+	"github.com/marang/goemqutiti/ui"
 )
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 func layoutChips(chips []string, width int) ([]string, []chipBound) {

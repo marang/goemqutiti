@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 type formField interface {

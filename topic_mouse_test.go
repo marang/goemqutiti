@@ -11,17 +11,17 @@ import (
 )
 
 func chipCoords(m *model, idx int) (int, int) {
-	if idx < 0 || idx >= len(m.chipBounds) {
+	if idx < 0 || idx >= len(m.topics.chipBounds) {
 		return -1, -1
 	}
-	b := m.chipBounds[idx]
+	b := m.topics.chipBounds[idx]
 	return b.x, b.y - m.viewport.YOffset
 }
 
 func setupTopics(m *model) {
 	names := []string{"testtopic", "asdfsedf", "asdasd", "sdfdfasssssd", "asdasdasss", "asasasdfffa", "asasdfa", "aasdf", "asdfa", "asdasasdfasdf"}
 	for _, n := range names {
-		m.topics = append(m.topics, topicItem{title: n, active: true})
+		m.topics.items = append(m.topics.items, topicItem{title: n, active: true})
 	}
 	m.layout.topics.height = len(names)
 }
@@ -32,18 +32,18 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	setupTopics(m)
 	m.viewClient()
 	x, y := chipCoords(m, 0)
-	name := m.topics[0].title
-	for offset := 0; offset < m.chipBounds[0].h; offset++ {
-		before := m.topics[0].active
+	name := m.topics.items[0].title
+	for offset := 0; offset < m.topics.chipBounds[0].h; offset++ {
+		before := m.topics.items[0].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1
-		for i, tpc := range m.topics {
+		for i, tpc := range m.topics.items {
 			if tpc.title == name {
 				idx = i
 				break
 			}
 		}
-		if idx >= 0 && m.topics[idx].active == before {
+		if idx >= 0 && m.topics.items[idx].active == before {
 			t.Fatalf("click offset %d did not toggle topic", offset)
 		}
 	}
@@ -56,18 +56,18 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
-	name := m.topics[6].title
-	for offset := 0; offset < m.chipBounds[6].h; offset++ {
-		before := m.topics[6].active
+	name := m.topics.items[6].title
+	for offset := 0; offset < m.topics.chipBounds[6].h; offset++ {
+		before := m.topics.items[6].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1
-		for i, tpc := range m.topics {
+		for i, tpc := range m.topics.items {
 			if tpc.title == name {
 				idx = i
 				break
 			}
 		}
-		if idx >= 0 && m.topics[idx].active == before {
+		if idx >= 0 && m.topics.items[idx].active == before {
 			t.Fatalf("offset %d did not toggle topic 6", offset)
 		}
 	}
@@ -80,18 +80,18 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 	m.viewClient()
 	// topic index 8 resides on the fourth row
 	x, y := chipCoords(m, 8)
-	name := m.topics[8].title
-	for offset := 0; offset < m.chipBounds[8].h; offset++ {
-		before := m.topics[8].active
+	name := m.topics.items[8].title
+	for offset := 0; offset < m.topics.chipBounds[8].h; offset++ {
+		before := m.topics.items[8].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1
-		for i, tpc := range m.topics {
+		for i, tpc := range m.topics.items {
 			if tpc.title == name {
 				idx = i
 				break
 			}
 		}
-		if idx >= 0 && m.topics[idx].active == before {
+		if idx >= 0 && m.topics.items[idx].active == before {
 			t.Fatalf("offset %d did not toggle topic 8", offset)
 		}
 	}
@@ -100,7 +100,7 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 func setupManyTopics(m *model, n int) {
 	for i := 0; i < n; i++ {
 		title := fmt.Sprintf("topic-%d", i)
-		m.topics = append(m.topics, topicItem{title: title, active: true})
+		m.topics.items = append(m.topics.items, topicItem{title: title, active: true})
 	}
 	m.layout.topics.height = n
 }
@@ -115,10 +115,10 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 	// Index of the first chip on the 15th row (0-based rows, 3 chips per row)
 	idx := 14 * 3
 	x, y := chipCoords(m, idx)
-	name := m.topics[idx].title
-	for offset := 0; offset < m.chipBounds[idx].h; offset++ {
+	name := m.topics.items[idx].title
+	for offset := 0; offset < m.topics.chipBounds[idx].h; offset++ {
 		before := false
-		for _, tpc := range m.topics {
+		for _, tpc := range m.topics.items {
 			if tpc.title == name {
 				before = tpc.active
 				break
@@ -126,7 +126,7 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 		}
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		after := false
-		for _, tpc := range m.topics {
+		for _, tpc := range m.topics.items {
 			if tpc.title == name {
 				after = tpc.active
 				break
@@ -155,10 +155,10 @@ func TestMouseToggleWithScroll(t *testing.T) {
 	// Choose a chip on row 7 (0-based index -> row 7 => start index 6*3)
 	idx := 6 * 3
 	x, y := chipCoords(m, idx)
-	name := m.topics[idx].title
-	for offset := 0; offset < m.chipBounds[idx].h; offset++ {
+	name := m.topics.items[idx].title
+	for offset := 0; offset < m.topics.chipBounds[idx].h; offset++ {
 		before := false
-		for _, tpc := range m.topics {
+		for _, tpc := range m.topics.items {
 			if tpc.title == name {
 				before = tpc.active
 				break
@@ -166,7 +166,7 @@ func TestMouseToggleWithScroll(t *testing.T) {
 		}
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		after := false
-		for _, tpc := range m.topics {
+		for _, tpc := range m.topics.items {
 			if tpc.title == name {
 				after = tpc.active
 				break

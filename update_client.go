@@ -13,15 +13,15 @@ import (
 
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 	m.appendHistory("", string(msg), "log", string(msg))
-	if strings.HasPrefix(string(msg), "Connected") && m.activeConn != "" {
-		m.connections.Statuses[m.activeConn] = "connected"
+	if strings.HasPrefix(string(msg), "Connected") && m.connections.active != "" {
+		m.connections.manager.Statuses[m.connections.active] = "connected"
 		m.refreshConnectionItems()
 		m.subscribeActiveTopics()
-	} else if strings.HasPrefix(string(msg), "Connection lost") && m.activeConn != "" {
-		m.connections.Statuses[m.activeConn] = "disconnected"
+	} else if strings.HasPrefix(string(msg), "Connection lost") && m.connections.active != "" {
+		m.connections.manager.Statuses[m.connections.active] = "disconnected"
 		m.refreshConnectionItems()
 	}
-	return listenStatus(m.statusChan)
+	return listenStatus(m.connections.statusChan)
 }
 
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
@@ -36,14 +36,14 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		m.saveCurrent()
 		return tea.Quit
 	case "ctrl+c":
-		if len(m.selectedHistory) > 0 {
+		if len(m.history.selected) > 0 {
 			var idxs []int
-			for i := range m.selectedHistory {
+			for i := range m.history.selected {
 				idxs = append(idxs, i)
 			}
 			sort.Ints(idxs)
 			var parts []string
-			items := m.history.Items()
+			items := m.history.list.Items()
 			for _, i := range idxs {
 				if i >= 0 && i < len(items) {
 					hi := items[i].(historyItem)
@@ -55,10 +55,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				}
 			}
 			clipboard.WriteAll(strings.Join(parts, "\n"))
-		} else if len(m.history.Items()) > 0 {
-			idx := m.history.Index()
+		} else if len(m.history.list.Items()) > 0 {
+			idx := m.history.list.Index()
 			if idx >= 0 {
-				hi := m.history.Items()[idx].(historyItem)
+				hi := m.history.list.Items()[idx].(historyItem)
 				text := hi.payload
 				if hi.kind != "log" {
 					text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
@@ -69,46 +69,46 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "ctrl+x":
 		if m.mqttClient != nil {
 			m.mqttClient.Disconnect()
-			m.connections.Statuses[m.activeConn] = "disconnected"
-			m.connections.Errors[m.activeConn] = ""
+			m.connections.manager.Statuses[m.connections.active] = "disconnected"
+			m.connections.manager.Errors[m.connections.active] = ""
 			m.refreshConnectionItems()
-			m.connection = ""
-			m.activeConn = ""
+			m.connections.connection = ""
+			m.connections.active = ""
 			m.mqttClient = nil
 		}
 	case "space":
 		if m.focusOrder[m.focusIndex] == "history" {
-			idx := m.history.Index()
+			idx := m.history.list.Index()
 			if idx >= 0 {
-				if _, ok := m.selectedHistory[idx]; ok {
-					delete(m.selectedHistory, idx)
+				if _, ok := m.history.selected[idx]; ok {
+					delete(m.history.selected, idx)
 				} else {
-					m.selectedHistory[idx] = struct{}{}
+					m.history.selected[idx] = struct{}{}
 				}
-				m.selectionAnchor = idx
+				m.history.selectionAnchor = idx
 			}
 		}
 	case "shift+up":
 		if m.focusOrder[m.focusIndex] == "history" {
-			if m.selectionAnchor == -1 {
-				m.selectionAnchor = m.history.Index()
-				m.selectedHistory[m.selectionAnchor] = struct{}{}
+			if m.history.selectionAnchor == -1 {
+				m.history.selectionAnchor = m.history.list.Index()
+				m.history.selected[m.history.selectionAnchor] = struct{}{}
 			}
-			if m.history.Index() > 0 {
-				m.history.CursorUp()
-				idx := m.history.Index()
+			if m.history.list.Index() > 0 {
+				m.history.list.CursorUp()
+				idx := m.history.list.Index()
 				m.updateSelectionRange(idx)
 			}
 		}
 	case "shift+down":
 		if m.focusOrder[m.focusIndex] == "history" {
-			if m.selectionAnchor == -1 {
-				m.selectionAnchor = m.history.Index()
-				m.selectedHistory[m.selectionAnchor] = struct{}{}
+			if m.history.selectionAnchor == -1 {
+				m.history.selectionAnchor = m.history.list.Index()
+				m.history.selected[m.history.selectionAnchor] = struct{}{}
 			}
-			if m.history.Index() < len(m.history.Items())-1 {
-				m.history.CursorDown()
-				idx := m.history.Index()
+			if m.history.list.Index() < len(m.history.list.Items())-1 {
+				m.history.list.CursorDown()
+				idx := m.history.list.Index()
 				m.updateSelectionRange(idx)
 			}
 		}
@@ -122,32 +122,32 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			id := m.focusOrder[next]
 			cmds = append(cmds, m.setFocus(id))
 			if id == "topics" {
-				if len(m.topics) > 0 {
-					m.selectedTopic = 0
+				if len(m.topics.items) > 0 {
+					m.topics.selected = 0
 				} else {
-					m.selectedTopic = -1
+					m.topics.selected = -1
 				}
 			}
 		}
 	case "left":
-		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
-			m.selectedTopic = (m.selectedTopic - 1 + len(m.topics)) % len(m.topics)
+		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics.items) > 0 {
+			m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
 		}
 	case "right":
-		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics) > 0 {
-			m.selectedTopic = (m.selectedTopic + 1) % len(m.topics)
+		if m.focusOrder[m.focusIndex] == "topics" && len(m.topics.items) > 0 {
+			m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
 		}
 	case "ctrl+shift+up":
 		id := m.focusOrder[m.focusIndex]
 		if id == "message" {
 			if m.layout.message.height > 1 {
 				m.layout.message.height--
-				m.messageInput.SetHeight(m.layout.message.height)
+				m.message.input.SetHeight(m.layout.message.height)
 			}
 		} else if id == "history" {
 			if m.layout.history.height > 1 {
 				m.layout.history.height--
-				m.history.SetSize(m.width-4, m.layout.history.height)
+				m.history.list.SetSize(m.width-4, m.layout.history.height)
 			}
 		} else if id == "topics" {
 			if m.layout.topics.height > 1 {
@@ -158,10 +158,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		id := m.focusOrder[m.focusIndex]
 		if id == "message" {
 			m.layout.message.height++
-			m.messageInput.SetHeight(m.layout.message.height)
+			m.message.input.SetHeight(m.layout.message.height)
 		} else if id == "history" {
 			m.layout.history.height++
-			m.history.SetSize(m.width-4, m.layout.history.height)
+			m.history.list.SetSize(m.width-4, m.layout.history.height)
 		} else if id == "topics" {
 			m.layout.topics.height++
 		}
@@ -171,10 +171,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		}
 	case "ctrl+s", "ctrl+enter":
 		if m.focusOrder[m.focusIndex] == "message" {
-			payload := m.messageInput.Value()
-			for _, t := range m.topics {
+			payload := m.message.input.Value()
+			for _, t := range m.topics.items {
 				if t.active {
-					m.payloads = append(m.payloads, payloadItem{topic: t.title, payload: payload})
+					m.message.payloads = append(m.message.payloads, payloadItem{topic: t.title, payload: payload})
 					m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 					if m.mqttClient != nil {
 						m.mqttClient.Publish(t.title, 0, false, payload)
@@ -184,23 +184,23 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		}
 	case "enter":
 		if m.focusOrder[m.focusIndex] == "topic" {
-			topic := strings.TrimSpace(m.topicInput.Value())
+			topic := strings.TrimSpace(m.topics.input.Value())
 			if topic != "" && !m.hasTopic(topic) {
-				m.topics = append(m.topics, topicItem{title: topic, active: true})
+				m.topics.items = append(m.topics.items, topicItem{title: topic, active: true})
 				m.sortTopics()
 				if m.mqttClient != nil {
 					m.mqttClient.Subscribe(topic, 0, nil)
 				}
 				m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
-				m.topicInput.SetValue("")
+				m.topics.input.SetValue("")
 			}
-		} else if m.focusOrder[m.focusIndex] == "topics" && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
-			m.toggleTopic(m.selectedTopic)
+		} else if m.focusOrder[m.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+			m.toggleTopic(m.topics.selected)
 		}
 	case "d":
-		if m.focusOrder[m.focusIndex] == "topics" && m.selectedTopic >= 0 && m.selectedTopic < len(m.topics) {
-			idx := m.selectedTopic
-			name := m.topics[idx].title
+		if m.focusOrder[m.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+			idx := m.topics.selected
+			name := m.topics.items[idx].title
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
 				m.removeTopic(idx)
 			})
@@ -208,7 +208,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	default:
 		switch msg.String() {
 		case "ctrl+b":
-			if err := m.connections.LoadProfiles(""); err != nil {
+			if err := m.connections.manager.LoadProfiles(""); err != nil {
 				m.appendHistory("", err.Error(), "log", err.Error())
 			}
 			m.refreshConnectionItems()
@@ -216,21 +216,21 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.mode = modeConnections
 		case "ctrl+t":
 			items := []list.Item{}
-			for _, tpc := range m.topics {
+			for _, tpc := range m.topics.items {
 				items = append(items, topicItem{title: tpc.title, active: tpc.active})
 			}
-			m.topicsList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
-			m.topicsList.DisableQuitKeybindings()
-			m.topicsList.SetShowTitle(false)
+			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.topics.list.DisableQuitKeybindings()
+			m.topics.list.SetShowTitle(false)
 			m.mode = modeTopics
 		case "ctrl+p":
 			items := []list.Item{}
-			for _, pld := range m.payloads {
+			for _, pld := range m.message.payloads {
 				items = append(items, payloadItem{topic: pld.topic, payload: pld.payload})
 			}
-			m.payloadList = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
-			m.payloadList.DisableQuitKeybindings()
-			m.payloadList.SetShowTitle(false)
+			m.message.list = list.New(items, list.NewDefaultDelegate(), m.width-4, m.height-4)
+			m.message.list.DisableQuitKeybindings()
+			m.message.list.SetShowTitle(false)
 			m.mode = modePayloads
 		}
 	}
@@ -245,7 +245,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
 		if m.focusOrder[m.focusIndex] == "history" {
 			var hCmd tea.Cmd
-			m.history, hCmd = m.history.Update(msg)
+			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
 		}
 	}
@@ -254,16 +254,16 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 		if m.focusOrder[m.focusIndex] == "history" {
 			idx := m.historyIndexAt(msg.Y)
 			if idx >= 0 {
-				m.history.Select(idx)
+				m.history.list.Select(idx)
 				if msg.Shift {
-					if m.selectionAnchor == -1 {
-						m.selectionAnchor = m.history.Index()
-						m.selectedHistory[m.selectionAnchor] = struct{}{}
+					if m.history.selectionAnchor == -1 {
+						m.history.selectionAnchor = m.history.list.Index()
+						m.history.selected[m.history.selectionAnchor] = struct{}{}
 					}
 					m.updateSelectionRange(idx)
 				} else {
-					m.selectedHistory = map[int]struct{}{}
-					m.selectionAnchor = -1
+					m.history.selected = map[int]struct{}{}
+					m.history.selectionAnchor = -1
 				}
 			}
 		}
@@ -284,11 +284,11 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 	if idx < 0 {
 		return
 	}
-	m.selectedTopic = idx
+	m.topics.selected = idx
 	if msg.Type == tea.MouseLeft {
 		m.toggleTopic(idx)
 	} else if msg.Type == tea.MouseRight {
-		name := m.topics[idx].title
+		name := m.topics.items[idx].title
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
 			m.removeTopic(idx)
 		})
@@ -315,10 +315,10 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	}
 
 	var cmd tea.Cmd
-	m.topicInput, cmd = m.topicInput.Update(msg)
+	m.topics.input, cmd = m.topics.input.Update(msg)
 	cmds = append(cmds, cmd)
 	var cmdMsg tea.Cmd
-	m.messageInput, cmdMsg = m.messageInput.Update(msg)
+	m.message.input, cmdMsg = m.message.input.Update(msg)
 	cmds = append(cmds, cmdMsg)
 	var vpCmd tea.Cmd
 	skipVP := false
@@ -342,28 +342,27 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 
 	var histCmd tea.Cmd
 	if m.focusOrder[m.focusIndex] == "history" {
-		m.history, histCmd = m.history.Update(msg)
+		m.history.list, histCmd = m.history.list.Update(msg)
 		cmds = append(cmds, histCmd)
 	}
 
-	if m.history.FilterState() == list.Filtering {
-		q := m.history.FilterInput.Value()
+	if m.history.list.FilterState() == list.Filtering {
+		q := m.history.list.FilterInput.Value()
 		topics, start, end, text := history.ParseQuery(q)
-		msgs := m.store.Search(topics, start, end, text)
+		msgs := m.history.store.Search(topics, start, end, text)
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
 			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
 		}
-		m.history.SetItems(items)
+		m.history.list.SetItems(items)
 	} else {
-		items := make([]list.Item, len(m.historyItems))
-		for i, it := range m.historyItems {
+		items := make([]list.Item, len(m.history.items))
+		for i, it := range m.history.items {
 			items[i] = it
 		}
-		m.history.SetItems(items)
+		m.history.list.SetItems(items)
 	}
-
-	cmds = append(cmds, listenStatus(m.statusChan))
+	cmds = append(cmds, listenStatus(m.connections.statusChan))
 	if m.mqttClient != nil {
 		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
 	}

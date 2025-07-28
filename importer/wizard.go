@@ -13,7 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 // Publisher abstracts the MQTT client for publishing.

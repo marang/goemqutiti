@@ -5,7 +5,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 func TestTopicsScrollDown(t *testing.T) {

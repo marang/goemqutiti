@@ -8,7 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"goemqutiti/ui"
+	"github.com/marang/goemqutiti/ui"
 )
 
 type connectionDelegate struct{}

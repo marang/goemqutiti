@@ -8,7 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"goemqutiti/importer"
+	"github.com/marang/goemqutiti/importer"
 )
 
 // type Profile struct {

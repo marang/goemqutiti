@@ -172,7 +172,7 @@ func (m *model) viewClient() string {
 
 func (m model) viewConnections() string {
 	listView := m.connections.manager.ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete")
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
 }

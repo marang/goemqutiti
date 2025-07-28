@@ -238,6 +238,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+d":
 			return m, tea.Quit
+		case "ctrl+r":
+			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
+			m.ui.mode = modeTracer
+			return m, nil
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connections.form = &f

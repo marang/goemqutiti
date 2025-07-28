@@ -29,8 +29,8 @@ func newTraceForm(profiles []string, current string, topics []string) traceForm 
 	keyField := newTextField("", "Key")
 	profileField := newSelectField(current, profiles)
 	topicsField := newTextField(strings.Join(topics, ","), "Topics")
-	startField := newTextField("", "Start (RFC3339)")
-	endField := newTextField("", "End (RFC3339)")
+	startField := newTextField("", "Start 2006-01-02T15:04:05Z")
+	endField := newTextField("", "End 2006-01-02T15:04:05Z")
 	tf.fields = []formField{keyField, profileField, topicsField, startField, endField}
 	tf.focus = 0
 	tf.fields[0].Focus()

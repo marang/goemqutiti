@@ -1,11 +1,14 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/config"
 )
 
 type traceTickMsg struct{}
@@ -93,6 +96,22 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
 				return m, nil
 			}
+			p, err := config.LoadProfile(cfg.Profile, "")
+			if err != nil {
+				m.appendHistory("", err.Error(), "log", err.Error())
+				return m, nil
+			}
+			if p.FromEnv {
+				config.ApplyEnvVars(p)
+			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+				p.Password = env
+			}
+			client, err := NewMQTTClient(*p, nil)
+			if err != nil {
+				m.appendHistory("", err.Error(), "log", err.Error())
+				return m, nil
+			}
+			client.Disconnect()
 			m.traces.items = append(m.traces.items, traceItem{key: cfg.Key, cfg: cfg})
 			items := m.traces.list.Items()
 			items = append(items, traceItem{key: cfg.Key, cfg: cfg})

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"math"
 	"strings"
 	"unicode"
 
@@ -10,15 +11,15 @@ import (
 // LegendBox renders a bordered box with a label and optional height.
 // The border color can be customized, and when focused the border
 // is highlighted in pink.
-func LegendBox(content, label string, width, height int, border lipgloss.Color, focused bool) string {
+func LegendBox(content, label string, width, height int, border lipgloss.Color, focused bool, scroll float64) string {
 	col := border
 	if focused {
 		col = ColPink
 	}
-	return legendStyledBox(content, label, width, height, col)
+	return legendStyledBox(content, label, width, height, col, scroll)
 }
 
-func legendStyledBox(content, label string, width, height int, color lipgloss.Color) string {
+func legendStyledBox(content, label string, width, height int, color lipgloss.Color, scroll float64) string {
 	content = strings.TrimRight(content, "\n")
 	if width < lipgloss.Width(label)+4 {
 		width = lipgloss.Width(label) + 4
@@ -34,6 +35,7 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 	)
 
 	lines := strings.Split(content, "\n")
+	origCount := len(lines)
 	if height > 0 {
 		if len(lines) > height {
 			lines = lines[:height]
@@ -42,6 +44,18 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 			lines = append(lines, "")
 		}
 	}
+
+	indicator := -1
+	if scroll >= 0 && height > 0 && origCount > height {
+		indicator = int(math.Round(scroll * float64(height-1)))
+		if indicator < 0 {
+			indicator = 0
+		}
+		if indicator >= height {
+			indicator = height - 1
+		}
+	}
+
 	for i, l := range lines {
 		l = strings.TrimRightFunc(l, unicode.IsSpace)
 		side := color
@@ -49,7 +63,12 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 			side = cy
 		}
 		left := lipgloss.NewStyle().Foreground(color).Render(b.Left)
-		right := lipgloss.NewStyle().Foreground(side).Render(b.Right)
+		rightChar := string(b.Right)
+		if i == indicator {
+			rightChar = "⧱"
+			side = cy
+		}
+		right := lipgloss.NewStyle().Foreground(side).Render(rightChar)
 		lines[i] = left + lipgloss.PlaceHorizontal(width-2, lipgloss.Left, l) + right
 	}
 	middle := strings.Join(lines, "\n")

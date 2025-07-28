@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"math"
 	"strings"
 	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 
 	"goemqutiti/ui"
 )
@@ -104,10 +102,21 @@ func (m *model) viewClient() string {
 	}
 	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.items))
 	topicsBoxHeight := maxRows * rowH
-	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused)
-	topicBox := ui.LegendBox(m.topics.input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused)
-	messageBox := ui.LegendBox(m.message.input.View(), "Message (Ctrl+S publishes)", m.ui.width-2, m.layout.message.height, ui.ColBlue, messageFocused)
-	messagesBox := ui.LegendBox(m.history.list.View(), "History (Ctrl+C copy)", m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused)
+	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused, -1)
+	topicBox := ui.LegendBox(m.topics.input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)
+	messageBox := ui.LegendBox(m.message.input.View(), "Message (Ctrl+S publishes)", m.ui.width-2, m.layout.message.height, ui.ColBlue, messageFocused, -1)
+	// Calculate scroll percent for the history list
+	per := m.history.list.Paginator.PerPage
+	total := len(m.history.list.Items())
+	histSP := -1.0
+	if total > per {
+		start := m.history.list.Paginator.Page * per
+		denom := total - per
+		if denom > 0 {
+			histSP = float64(start) / float64(denom)
+		}
+	}
+	messagesBox := ui.LegendBox(m.history.list.View(), "History (Ctrl+C copy)", m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
@@ -134,25 +143,6 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	if lipgloss.Height(box) > m.ui.viewport.Height {
-		lines := strings.Split(view, "\n")
-		if len(lines) > 0 {
-			idx := int(math.Round(m.ui.viewport.ScrollPercent() * float64(len(lines)-1)))
-			if idx < 0 {
-				idx = 0
-			}
-			if idx >= len(lines) {
-				idx = len(lines) - 1
-			}
-			w := ansi.StringWidth(lines[idx])
-			if w > 0 {
-				diamond := lipgloss.NewStyle().Foreground(ui.ColCyan).Render("⧱")
-				lines[idx] = ansi.Cut(lines[idx], 0, w-1) + diamond
-			}
-			view = strings.Join(lines, "\n")
-		}
-	}
-
 	return lipgloss.JoinVertical(lipgloss.Left, infoLine, view)
 }
 
@@ -160,19 +150,19 @@ func (m model) viewConnections() string {
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true)
+	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
 }
 
 func (m model) viewForm() string {
 	if m.connections.form == nil {
 		return ""
 	}
-	listView := ui.LegendBox(m.connections.manager.ConnectionsList.View(), "Brokers", m.ui.width/2-2, 0, ui.ColBlue, false)
+	listView := ui.LegendBox(m.connections.manager.ConnectionsList.View(), "Brokers", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
 	formLabel := "Add Broker"
 	if m.connections.form.index >= 0 {
 		formLabel = "Edit Broker"
 	}
-	formView := ui.LegendBox(m.connections.form.View(), formLabel, m.ui.width/2-2, 0, ui.ColBlue, true)
+	formView := ui.LegendBox(m.connections.form.View(), formLabel, m.ui.width/2-2, 0, ui.ColBlue, true, -1)
 	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 
@@ -185,14 +175,14 @@ func (m model) viewTopics() string {
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false)
+	return ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false)
+	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
 func (m *model) View() string {

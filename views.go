@@ -86,6 +86,8 @@ func (m *model) viewClient() string {
 	m.topics.vp.Width = m.ui.width - 4
 	m.topics.vp.Height = topicsBoxHeight
 	m.topics.vp.SetContent(strings.Join(chipRows, "\n"))
+	m.topics.allChipBounds = bounds
+	m.ensureTopicVisible()
 	startLine := m.topics.vp.YOffset
 	endLine := startLine + topicsBoxHeight
 	topicsSP := -1.0

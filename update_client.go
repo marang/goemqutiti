@@ -40,6 +40,19 @@ func (m *model) scrollTopics(delta int) {
 	}
 }
 
+func (m *model) ensureTopicVisible() {
+	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.allChipBounds) {
+		return
+	}
+	y := m.topics.allChipBounds[m.topics.selected].y
+	h := m.topics.allChipBounds[m.topics.selected].h
+	if y < m.topics.vp.YOffset {
+		m.topics.vp.SetYOffset(y)
+	} else if y+h > m.topics.vp.YOffset+m.topics.vp.Height {
+		m.topics.vp.SetYOffset(y + h - m.topics.vp.Height)
+	}
+}
+
 func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	switch msg.String() {
@@ -135,6 +148,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			if id == "topics" {
 				if len(m.topics.items) > 0 {
 					m.topics.selected = 0
+					m.ensureTopicVisible()
 				} else {
 					m.topics.selected = -1
 				}
@@ -143,10 +157,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "left":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
+			m.ensureTopicVisible()
 		}
 	case "right":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
+			m.ensureTopicVisible()
 		}
 	case "ctrl+shift+up":
 		id := m.ui.focusOrder[m.ui.focusIndex]
@@ -213,6 +229,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			m.toggleTopic(m.topics.selected)
+			m.ensureTopicVisible()
 		}
 	case "d":
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {

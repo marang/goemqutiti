@@ -477,6 +477,7 @@ func (m *model) startTrace(index int) {
 		return
 	}
 	item.tracer = tr
+	addTrace(item.cfg)
 }
 
 func (m *model) stopTrace(index int) {
@@ -499,14 +500,11 @@ func (m *model) anyTraceRunning() bool {
 
 func (m *model) savePlannedTraces() {
 	data := map[string]tracer.Config{}
-	now := time.Now()
 	for _, it := range m.traces.items {
-		cfg := it.cfg
 		if it.tracer != nil {
-			cfg = it.tracer.Config()
-		}
-		if cfg.Start.After(now) {
-			data[it.key] = cfg
+			data[it.key] = it.tracer.Config()
+		} else {
+			data[it.key] = it.cfg
 		}
 	}
 	saveTraces(data)

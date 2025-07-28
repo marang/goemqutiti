@@ -149,3 +149,17 @@ func saveTraces(data map[string]tracer.Config) {
 	}
 	writeConfig(cfg)
 }
+
+// addTrace merges a single trace configuration into the existing file.
+func addTrace(cfg tracer.Config) {
+	traces := loadTraces()
+	traces[cfg.Key] = cfg
+	saveTraces(traces)
+}
+
+// removeTrace deletes a trace from the configuration file.
+func removeTrace(key string) {
+	traces := loadTraces()
+	delete(traces, key)
+	saveTraces(traces)
+}

@@ -10,7 +10,7 @@ import (
 	"goemqutiti/ui"
 )
 
-func layoutChips(chips []string, width int) (string, []chipBound) {
+func layoutChips(chips []string, width int) ([]string, []chipBound) {
 	var lines []string
 	var row []string
 	var bounds []chipBound
@@ -40,7 +40,7 @@ func layoutChips(chips []string, width int) (string, []chipBound) {
 		line = strings.TrimRightFunc(line, unicode.IsSpace)
 		lines = append(lines, line)
 	}
-	return strings.Join(lines, "\n"), bounds
+	return lines, bounds
 }
 
 func (m *model) viewClient() string {
@@ -76,20 +76,40 @@ func (m *model) viewClient() string {
 	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == "message"
 	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == "history"
 
-	chipContent, bounds := layoutChips(chips, m.ui.width-4)
+	chipRows, bounds := layoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
 		maxRows = 3
 	}
-	lines := strings.Split(chipContent, "\n")
-	limit := maxRows * rowH
-	if len(lines) > limit {
-		chipContent = strings.Join(lines[:limit], "\n")
+	topicsBoxHeight := maxRows * rowH
+	totalHeight := len(chipRows) * rowH
+	offset := m.ui.viewport.YOffset - (1 + 1)
+	if offset < 0 {
+		offset = 0
 	}
+	maxScroll := totalHeight - topicsBoxHeight
+	if maxScroll < 0 {
+		maxScroll = 0
+	}
+	if offset > maxScroll {
+		offset = maxScroll
+	}
+	startRow := 0
+	topicsSP := -1.0
+	if maxScroll > 0 {
+		startRow = offset / rowH
+		topicsSP = float64(offset) / float64(maxScroll)
+	}
+	endRow := startRow + maxRows
+	if endRow > len(chipRows) {
+		endRow = len(chipRows)
+	}
+	chipContent := strings.Join(chipRows[startRow:endRow], "\n")
 	visible := []chipBound{}
 	for _, b := range bounds {
-		if b.y/rowH < maxRows {
+		if b.y >= startRow*rowH && b.y < endRow*rowH {
+			b.y -= startRow * rowH
 			visible = append(visible, b)
 		}
 	}
@@ -101,10 +121,26 @@ func (m *model) viewClient() string {
 		}
 	}
 	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.items))
-	topicsBoxHeight := maxRows * rowH
-	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused, -1)
+	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused, topicsSP)
 	topicBox := ui.LegendBox(m.topics.input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)
-	messageBox := ui.LegendBox(m.message.input.View(), "Message (Ctrl+S publishes)", m.ui.width-2, m.layout.message.height, ui.ColBlue, messageFocused, -1)
+	msgContent := m.message.input.View()
+	msgLines := m.message.input.LineCount()
+	msgHeight := m.layout.message.height
+	msgSP := -1.0
+	if msgLines > msgHeight {
+		off := m.message.input.Line() - msgHeight + 1
+		if off < 0 {
+			off = 0
+		}
+		maxOff := msgLines - msgHeight
+		if off > maxOff {
+			off = maxOff
+		}
+		if maxOff > 0 {
+			msgSP = float64(off) / float64(maxOff)
+		}
+	}
+	messageBox := ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", m.ui.width-2, msgHeight, ui.ColBlue, messageFocused, msgSP)
 	// Calculate scroll percent for the history list
 	per := m.history.list.Paginator.PerPage
 	total := len(m.history.list.Items())

@@ -40,7 +40,7 @@ type Wizard struct {
 	sampleLimit int
 	width       int
 	height      int
-	scroll      int
+	history     ui.HistoryView
 }
 
 const (
@@ -63,7 +63,8 @@ func NewWizard(client Publisher, path string) *Wizard {
 	tmpl := textinput.New()
 	tmpl.Placeholder = "Topic template"
 	rand.Seed(time.Now().UnixNano())
-	return &Wizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient())}
+	hv := ui.NewHistoryView(50, 5)
+	return &Wizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv}
 }
 
 func (w *Wizard) Init() tea.Cmd { return textinput.Blink }
@@ -77,6 +78,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		w.width = m.Width
 		w.height = m.Height
 		w.progress.Width = m.Width - 4
+		w.history.SetSize(m.Width-2, w.historyHeight())
 		return w, nil
 	case progress.FrameMsg:
 		nm, cmd := w.progress.Update(msg)
@@ -185,7 +187,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.index = 0
 				w.published = nil
 				w.finished = false
-				w.scroll = 0
+				w.history.GotoTop()
 				w.step = stepPublish
 				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
 			case "d":
@@ -193,7 +195,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				w.index = 0
 				w.published = nil
 				w.finished = false
-				w.scroll = 0
+				w.history.GotoTop()
 				w.step = stepPublish
 				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
 			case "e":
@@ -222,14 +224,6 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return w, tea.Batch(cmd, w.nextPublishCmd())
 		case tea.KeyMsg:
 			switch m.Type {
-			case tea.KeyUp:
-				if w.scroll > 0 {
-					w.scroll--
-				}
-			case tea.KeyDown:
-				if w.scroll < len(w.published)-w.lineLimit() {
-					w.scroll++
-				}
 			case tea.KeyCtrlN:
 				if w.finished {
 					w.step = stepDone
@@ -240,22 +234,19 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					w.finished = false
 				}
 			}
+			cmd := w.history.Update(m)
+			return w, cmd
 		}
 		return w, nil
 	case stepDone:
 		if km, ok := msg.(tea.KeyMsg); ok {
 			switch km.Type {
-			case tea.KeyUp:
-				if w.scroll > 0 {
-					w.scroll--
-				}
-			case tea.KeyDown:
-				if w.scroll < len(w.published)-w.lineLimit() {
-					w.scroll++
-				}
 			case tea.KeyCtrlP:
 				w.step = stepReview
 				w.finished = false
+			}
+			if cmd := w.history.Update(km); cmd != nil {
+				return w, cmd
 			}
 			if km.String() == "q" {
 				return w, tea.Quit
@@ -335,19 +326,9 @@ func (w *Wizard) View() string {
 		if len(lines) > limit {
 			lines = lines[len(lines)-limit:]
 		}
-		if w.scroll > len(lines)-1 {
-			w.scroll = len(lines) - 1
-			if w.scroll < 0 {
-				w.scroll = 0
-			}
-		}
-		end := w.scroll + w.lineLimit()
-		if end > len(lines) {
-			end = len(lines)
-		}
-		viewLines := lines[w.scroll:end]
-		recent := strings.Join(viewLines, "\n")
-		recent = ansi.Wrap(recent, wrap, " ")
+		w.history.SetSize(bw, w.historyHeight())
+		w.history.SetLines(lines)
+		recent := w.history.View()
 		if recent != "" {
 			recent += "\n"
 		}
@@ -362,18 +343,9 @@ func (w *Wizard) View() string {
 		}
 	case stepDone:
 		if w.dryRun {
-			if w.scroll > len(w.published)-1 {
-				w.scroll = len(w.published) - 1
-				if w.scroll < 0 {
-					w.scroll = 0
-				}
-			}
-			end := w.scroll + w.lineLimit()
-			if end > len(w.published) {
-				end = len(w.published)
-			}
-			viewLines := w.published[w.scroll:end]
-			out := strings.Join(viewLines, "\n")
+			w.history.SetSize(bw, w.historyHeight())
+			w.history.SetLines(w.published)
+			out := w.history.View()
 			out = ansi.Wrap(out, wrap, " ") + "\n[ctrl+p] back  [q] quit"
 			box = ui.LegendGreenBox(out, "Dry Run", bw, true)
 		} else if w.finished {
@@ -408,20 +380,13 @@ func (w *Wizard) nextPublishCmd() tea.Cmd {
 		} else {
 			if len(w.published) < limit {
 				w.published = append(w.published, line)
-			} else {
-				if r := rand.Intn(i + 1); r < limit {
-					w.published[r] = line
-				}
+			} else if r := rand.Intn(i + 1); r < limit {
+				w.published[r] = line
 			}
 			w.client.Publish(topic, 0, false, payload)
 		}
-		if w.scroll+w.lineLimit() >= len(w.published) {
-			if len(w.published) > w.lineLimit() {
-				w.scroll = len(w.published) - w.lineLimit()
-			} else {
-				w.scroll = 0
-			}
-		}
+		w.history.SetLines(w.published)
+		w.history.GotoBottom()
 		return publishMsg{}
 	}
 }
@@ -485,4 +450,12 @@ func (w *Wizard) lineLimit() int {
 		limit = 3
 	}
 	return limit
+}
+
+func (w *Wizard) historyHeight() int {
+	h := w.lineLimit()
+	if h > 10 {
+		h = 10
+	}
+	return h
 }

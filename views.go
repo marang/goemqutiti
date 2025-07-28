@@ -77,15 +77,16 @@ func (m *model) viewClient() string {
 	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == "history"
 
 	chipContent, bounds := layoutChips(chips, m.ui.width-4)
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
 		maxRows = 3
 	}
 	lines := strings.Split(chipContent, "\n")
-	if len(lines) > maxRows {
-		chipContent = strings.Join(lines[:maxRows], "\n")
+	limit := maxRows * rowH
+	if len(lines) > limit {
+		chipContent = strings.Join(lines[:limit], "\n")
 	}
-	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	visible := []chipBound{}
 	for _, b := range bounds {
 		if b.y/rowH < maxRows {

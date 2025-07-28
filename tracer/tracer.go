@@ -174,7 +174,7 @@ func (t *Tracer) Counts() map[string]int {
 
 // Messages returns the stored trace messages.
 func (t *Tracer) Messages() ([]history.Message, error) {
-	idx, err := history.OpenTrace(t.cfg.Profile)
+	idx, err := history.OpenTraceReadOnly(t.cfg.Profile)
 	if err != nil {
 		return nil, err
 	}

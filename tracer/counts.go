@@ -5,7 +5,7 @@ import "github.com/marang/goemqutiti/history"
 // LoadCounts returns per-topic counts for the given trace key aggregated by
 // the provided subscription topics.
 func LoadCounts(profile, key string, topics []string) (map[string]int, error) {
-	idx, err := history.OpenTrace(profile)
+	idx, err := history.OpenTraceReadOnly(profile)
 	if err != nil {
 		return nil, err
 	}

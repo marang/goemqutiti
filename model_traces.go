@@ -102,7 +102,7 @@ func (m *model) loadTraceMessages(index int) {
 		return
 	}
 	it := m.traces.items[index]
-	idx, err := history.OpenTrace(it.cfg.Profile)
+	idx, err := history.OpenTraceReadOnly(it.cfg.Profile)
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return

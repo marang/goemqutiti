@@ -4,7 +4,7 @@ import "github.com/marang/goemqutiti/history"
 
 // HasData reports whether any messages are stored for the given trace key.
 func HasData(profile, key string) (bool, error) {
-	idx, err := history.OpenTrace(profile)
+	idx, err := history.OpenTraceReadOnly(profile)
 	if err != nil {
 		return false, err
 	}

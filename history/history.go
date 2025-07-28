@@ -99,6 +99,22 @@ func OpenTrace(profile string) (*Index, error) {
 	return idx, nil
 }
 
+// OpenTraceReadOnly opens the trace database in read-only mode.
+func OpenTraceReadOnly(profile string) (*Index, error) {
+	if profile == "" {
+		profile = "default"
+	}
+	path := TraceDir(profile)
+	os.MkdirAll(path, 0755)
+	opts := badger.DefaultOptions(path).WithLogger(nil).WithReadOnly(true)
+	db, err := badger.Open(opts)
+	if err != nil {
+		return nil, err
+	}
+	idx := &Index{db: db}
+	return idx, nil
+}
+
 // Close closes the underlying database.
 func (i *Index) Close() error {
 	if i.db != nil {

@@ -238,6 +238,13 @@ func (m model) viewTraceMessages() string {
 	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
 }
 
+func (m model) viewImporter() string {
+	if m.wizard == nil {
+		return ""
+	}
+	return m.wizard.View()
+}
+
 func (m *model) View() string {
 	switch m.ui.mode {
 	case modeClient:
@@ -258,6 +265,8 @@ func (m *model) View() string {
 		return m.viewTraceForm()
 	case modeViewTrace:
 		return m.viewTraceMessages()
+	case modeImporter:
+		return m.viewImporter()
 	default:
 		return ""
 	}

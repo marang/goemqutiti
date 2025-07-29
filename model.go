@@ -13,6 +13,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marang/goemqutiti/importer"
 	"github.com/marang/goemqutiti/tracer"
 )
 
@@ -93,6 +94,7 @@ const (
 	modeTracer
 	modeEditTrace
 	modeViewTrace
+	modeImporter
 )
 
 type connectionData struct {
@@ -228,6 +230,7 @@ type model struct {
 	topics      topicsState
 	message     messageState
 	traces      tracesState
+	wizard      *importer.Wizard
 
 	ui uiState
 

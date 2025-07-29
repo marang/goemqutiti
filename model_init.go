@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"sort"
 	"time"
 
@@ -12,6 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/goemqutiti/config"
+	"github.com/marang/goemqutiti/importer"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -178,6 +181,44 @@ func initialModel(conns *Connections) *model {
 			m.history.items = append(m.history.items, items[i].(historyItem))
 		}
 		m.history.list.SetItems(items)
+	}
+
+	if importFile != "" {
+		var p *Profile
+		if profileName != "" {
+			for i := range m.connections.manager.Profiles {
+				if m.connections.manager.Profiles[i].Name == profileName {
+					p = &m.connections.manager.Profiles[i]
+					break
+				}
+			}
+		} else if m.connections.manager.DefaultProfileName != "" {
+			for i := range m.connections.manager.Profiles {
+				if m.connections.manager.Profiles[i].Name == m.connections.manager.DefaultProfileName {
+					p = &m.connections.manager.Profiles[i]
+					break
+				}
+			}
+		}
+		if p == nil && len(m.connections.manager.Profiles) > 0 {
+			p = &m.connections.manager.Profiles[0]
+		}
+		if p != nil {
+			cfg := *p
+			if cfg.FromEnv {
+				config.ApplyEnvVars(&cfg)
+			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+				cfg.Password = env
+			}
+			if client, err := NewMQTTClient(cfg, nil); err == nil {
+				m.mqttClient = client
+				m.connections.active = cfg.Name
+				m.wizard = importer.NewWizard(client, importFile)
+				m.ui.mode = modeImporter
+			} else {
+				fmt.Println("connect error:", err)
+			}
+		}
 	}
 	return m
 }

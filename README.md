@@ -85,9 +85,8 @@ Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages w
    `cargo install --git https://github.com/asciinema/agg`).
    `agg` needs a monospace font such as **DejaVu Sans Mono**. Install
    `fonts-dejavu-core` or a similar package if conversion fails.
-2. Run `scripts/record_casts.sh` in an interactive terminal. The helper uses
-   `expect` scripts under `scripts/` to drive the TUI and waits for each demo
-   to finish with `expect eof`.
+2. Run `scripts/record_casts.sh` in an interactive terminal. The helper
+   feeds prerecorded input through `script` to automate each demo.
 3. Cast files are saved to `docs/`. Convert them to GIFs with `agg` if you want
    previews locally but avoid committing the generated images.
 

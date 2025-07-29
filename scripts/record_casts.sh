@@ -1,22 +1,56 @@
 #!/usr/bin/env bash
-# Record GoEmqutiti demos using asciinema and expect.
-# Requires asciinema, agg, and expect.
+# Record GoEmqutiti demos using asciinema. Requires asciinema, agg,
+# and the util-linux `script` command.
 set -euo pipefail
 
 run_cast() {
-    local script=$1
+    local cmd=$1
     local outfile=$2
-    asciinema rec -q --overwrite --cols 80 --rows 24 -c "expect $script" "$outfile"
+    local input=$3
+    asciinema rec -q --overwrite --cols 80 --rows 24 \
+        -c "script -q /dev/null -c '$cmd < $input'" "$outfile"
+    rm -f "$input"
 }
 
 DIR=$(dirname "$0")/..
 cd "$DIR"
 
-run_cast "$DIR/scripts/create_connection.exp" docs/create_connection_profile.cast
-run_cast "$DIR/scripts/client_view.exp" docs/client_view.cast
-run_cast "$DIR/scripts/create_import.exp" docs/create_import.cast
-run_cast "$DIR/scripts/create_headless_trace.exp" docs/create_headless_trace.cast
-run_cast "$DIR/scripts/view_headless_trace.exp" docs/view_headless_trace.cast
+# create connection profile
+input=$(mktemp)
+printf '\x02\r' >"$input"
+printf 'local\r' >>"$input"
+printf 'tcp\r' >>"$input"
+printf 'localhost\r' >>"$input"
+printf '1883\r' >>"$input"
+printf '\x04' >>"$input"
+run_cast "HOME=/root ./goemqutiti -p HiveMQ" docs/create_connection_profile.cast "$input"
+
+# client view demo
+input=$(mktemp)
+printf '\n' >"$input"
+printf 'test/topic\n' >>"$input"
+printf '\t' >>"$input"
+printf 'Hello' >>"$input"
+printf '\x13' >>"$input"  # Ctrl+S
+printf '\x04' >>"$input"  # Ctrl+D
+run_cast "HOME=/root ./goemqutiti -p HiveMQ" docs/client_view.cast "$input"
+
+# import wizard
+input=$(mktemp)
+printf '\x04' >"$input"
+run_cast "HOME=/root ./goemqutiti -p HiveMQ --import data.csv" docs/create_import.cast "$input"
+
+# create headless trace
+input=$(mktemp)
+printf '\x03' >"$input"
+run_cast "HOME=/root ./goemqutiti --trace demo --topics 'sensors/#' -p HiveMQ" \
+    docs/create_headless_trace.cast "$input"
+
+# view headless trace
+input=$(mktemp)
+printf '\x04' >"$input"
+run_cast "HOME=/root ./goemqutiti --trace demo --topics 'sensors/#' -p HiveMQ" \
+    docs/view_headless_trace.cast "$input"
 
 agg docs/create_connection_profile.cast docs/create_connection_profile.gif
 agg docs/client_view.cast docs/client_view.gif

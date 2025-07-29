@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/marang/goemqutiti/importer"
 	"github.com/marang/goemqutiti/tracer"
 )
 
@@ -225,12 +224,12 @@ type uiState struct {
 type model struct {
 	mqttClient *MQTTClient
 
-	connections connectionsState
-	history     historyState
-	topics      topicsState
-	message     messageState
-	traces      tracesState
-	wizard      *importer.Wizard
+	connections  connectionsState
+	history      historyState
+	topics       topicsState
+	message      messageState
+	traces       tracesState
+	importWizard *ImportWizard
 
 	ui uiState
 

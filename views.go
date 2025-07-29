@@ -239,10 +239,10 @@ func (m model) viewTraceMessages() string {
 }
 
 func (m model) viewImporter() string {
-	if m.wizard == nil {
+	if m.importWizard == nil {
 		return ""
 	}
-	return m.wizard.View()
+	return m.importWizard.View()
 }
 
 func (m *model) View() string {

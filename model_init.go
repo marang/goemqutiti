@@ -14,7 +14,6 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/importer"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -213,7 +212,7 @@ func initialModel(conns *Connections) *model {
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
 				m.connections.active = cfg.Name
-				m.wizard = importer.NewWizard(client, importFile)
+				m.importWizard = NewImportWizard(client, importFile)
 				m.ui.mode = modeImporter
 			} else {
 				fmt.Println("connect error:", err)

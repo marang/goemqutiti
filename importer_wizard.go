@@ -22,7 +22,7 @@ type Publisher interface {
 }
 
 // Wizard runs an interactive import wizard.
-type Wizard struct {
+type ImportWizard struct {
 	step        int
 	file        textinput.Model
 	headers     []string
@@ -54,7 +54,7 @@ const (
 var wizardSteps = []string{"File", "Map", "Template", "Review", "Publish", "Done"}
 
 // NewWizard creates a new wizard. A non-empty path pre-fills the file field.
-func NewWizard(client Publisher, path string) *Wizard {
+func NewImportWizard(client Publisher, path string) *ImportWizard {
 	ti := textinput.New()
 	ti.Placeholder = "CSV or XLS file"
 	ti.Focus()
@@ -63,12 +63,12 @@ func NewWizard(client Publisher, path string) *Wizard {
 	tmpl.Placeholder = "Topic template"
 	rand.Seed(time.Now().UnixNano())
 	hv := ui.NewHistoryView(50, 10)
-	return &Wizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv}
+	return &ImportWizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv}
 }
 
-func (w *Wizard) Init() tea.Cmd { return textinput.Blink }
+func (w *ImportWizard) Init() tea.Cmd { return textinput.Blink }
 
-func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlD {
 		return w, tea.Quit
 	}
@@ -256,7 +256,7 @@ func (w *Wizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return w, nil
 }
 
-func (w *Wizard) View() string {
+func (w *ImportWizard) View() string {
 	header := w.stepsView()
 	bw := w.width - 2
 	if bw <= 0 {
@@ -358,7 +358,7 @@ func (w *Wizard) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
 
-func (w *Wizard) nextPublishCmd() tea.Cmd {
+func (w *ImportWizard) nextPublishCmd() tea.Cmd {
 	if w.index >= len(w.rows) {
 		return nil
 	}
@@ -407,7 +407,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 	return out
 }
 
-func (w *Wizard) mapping() map[string]string {
+func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
 		m[h] = strings.TrimSpace(w.fields[i].Value())
@@ -415,7 +415,7 @@ func (w *Wizard) mapping() map[string]string {
 	return m
 }
 
-func (w *Wizard) stepsView() string {
+func (w *ImportWizard) stepsView() string {
 	var parts []string
 	for i, name := range wizardSteps {
 		st := ui.BlurredStyle
@@ -451,7 +451,7 @@ func sampleSize(total int) int {
 	return size
 }
 
-func (w *Wizard) lineLimit() int {
+func (w *ImportWizard) lineLimit() int {
 	limit := w.height - 6
 	if limit < 3 {
 		limit = 3
@@ -459,7 +459,7 @@ func (w *Wizard) lineLimit() int {
 	return limit
 }
 
-func (w *Wizard) historyHeight() int {
+func (w *ImportWizard) historyHeight() int {
 	h := w.lineLimit()
 	if h > 20 {
 		h = 20

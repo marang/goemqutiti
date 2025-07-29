@@ -173,7 +173,7 @@ func runImport(path, profile string) {
 	}
 	defer client.Disconnect()
 
-	w := NewWizard(client, path)
+	w := NewImportWizard(client, path)
 	prog := tea.NewProgram(w, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		fmt.Println("import error:", err)

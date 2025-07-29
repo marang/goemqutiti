@@ -246,7 +246,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			idx := m.topics.selected
 			name := m.topics.items[idx].title
-			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 				m.removeTopic(idx)
 			})
 		}
@@ -347,7 +347,7 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 		m.toggleTopic(idx)
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
-		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 			m.removeTopic(idx)
 		})
 	}

@@ -11,7 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/tracer"
 )
 
 // type Profile struct {
@@ -98,13 +97,13 @@ func main() {
 				return
 			}
 		}
-		exists, _ := tracer.HasData(profileName, traceKey)
+		exists, _ := tracerHasData(profileName, traceKey)
 		if exists {
 			fmt.Println("trace key already exists")
 			return
 		}
-		addTrace(tracer.Config{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
-		if err := tracer.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
+		addTrace(TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
+		if err := tracerRun(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			fmt.Println(err)
 		}
 		return

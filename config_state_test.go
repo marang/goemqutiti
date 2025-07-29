@@ -6,8 +6,6 @@ import (
 	"reflect"
 	"testing"
 	"time"
-
-	"github.com/marang/goemqutiti/tracer"
 )
 
 func TestLoadFromConfig(t *testing.T) {
@@ -99,7 +97,7 @@ func TestSaveLoadTraces(t *testing.T) {
 
 	start := time.Date(2025, time.July, 28, 18, 25, 21, 0, time.UTC)
 	end := start.Add(time.Hour)
-	data := map[string]tracer.Config{
+	data := map[string]TracerConfig{
 		"t1": {Profile: "p1", Topics: []string{"a"}, Start: start, End: end, Key: "t1"},
 	}
 	saveTraces(data)

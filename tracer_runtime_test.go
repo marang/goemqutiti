@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import (
 	"os"
@@ -52,7 +52,7 @@ func TestTraceStartAndStore(t *testing.T) {
 	dir := t.TempDir()
 	os.Setenv("HOME", dir)
 
-	cfg := Config{
+	cfg := TracerConfig{
 		Profile: "test",
 		Topics:  []string{"a"},
 		Start:   time.Now().Add(-time.Millisecond),
@@ -60,7 +60,7 @@ func TestTraceStartAndStore(t *testing.T) {
 		Key:     "k1",
 	}
 	fc := newFakeClient()
-	tr := New(cfg, fc)
+	tr := newTracer(cfg, fc)
 	if err := tr.Start(); err != nil {
 		t.Fatalf("start: %v", err)
 	}
@@ -71,7 +71,7 @@ func TestTraceStartAndStore(t *testing.T) {
 	tr.Stop()
 	time.Sleep(5 * time.Millisecond)
 
-	keys, err := Keys("test", "k1")
+	keys, err := tracerKeys("test", "k1")
 	if err != nil {
 		t.Fatalf("trace keys: %v", err)
 	}

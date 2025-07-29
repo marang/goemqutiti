@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"github.com/dgraph-io/badger/v4"
 )
 
-func dataDir(profile string) string {
+func tracerDataDir(profile string) string {
 	if profile == "" {
 		profile = "default"
 	}
@@ -20,15 +20,15 @@ func dataDir(profile string) string {
 	return filepath.Join(home, ".emqutiti", "data", profile)
 }
 
-func traceDir(profile string) string {
-	return filepath.Join(dataDir(profile), "traces")
+func tracerTraceDir(profile string) string {
+	return filepath.Join(tracerDataDir(profile), "traces")
 }
 
-func openTraceDB(profile string, readonly bool) (*badger.DB, error) {
+func tracerOpenTraceDB(profile string, readonly bool) (*badger.DB, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := traceDir(profile)
+	path := tracerTraceDir(profile)
 	os.MkdirAll(path, 0755)
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	if readonly {
@@ -38,8 +38,8 @@ func openTraceDB(profile string, readonly bool) (*badger.DB, error) {
 }
 
 // Add stores a trace message under the given key.
-func Add(profile, key string, msg Message) error {
-	db, err := openTraceDB(profile, false)
+func tracerAdd(profile, key string, msg TracerMessage) error {
+	db, err := tracerOpenTraceDB(profile, false)
 	if err != nil {
 		return err
 	}
@@ -53,22 +53,22 @@ func Add(profile, key string, msg Message) error {
 }
 
 // Messages returns all messages stored for the given trace key.
-func Messages(profile, key string) ([]Message, error) {
-	db, err := openTraceDB(profile, true)
+func tracerMessages(profile, key string) ([]TracerMessage, error) {
+	db, err := tracerOpenTraceDB(profile, true)
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
 	prefix := []byte(fmt.Sprintf("trace/%s/", key))
-	var msgs []Message
+	var msgs []TracerMessage
 	err = db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			if err := item.Value(func(val []byte) error {
-				var m Message
+				var m TracerMessage
 				if err := json.Unmarshal(val, &m); err != nil {
 					return err
 				}
@@ -84,8 +84,8 @@ func Messages(profile, key string) ([]Message, error) {
 }
 
 // Keys returns all database keys for the given trace key.
-func Keys(profile, key string) ([]string, error) {
-	db, err := openTraceDB(profile, true)
+func tracerKeys(profile, key string) ([]string, error) {
+	db, err := tracerOpenTraceDB(profile, true)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,8 @@ func Keys(profile, key string) ([]string, error) {
 }
 
 // Delete removes all stored messages for the given trace key.
-func Delete(profile, key string) error {
-	db, err := openTraceDB(profile, false)
+func tracerDelete(profile, key string) error {
+	db, err := tracerOpenTraceDB(profile, false)
 	if err != nil {
 		return err
 	}
@@ -126,8 +126,8 @@ func Delete(profile, key string) error {
 }
 
 // HasData reports whether any messages are stored for the given trace key.
-func HasData(profile, key string) (bool, error) {
-	keys, err := Keys(profile, key)
+func tracerHasData(profile, key string) (bool, error) {
+	keys, err := tracerKeys(profile, key)
 	if err != nil {
 		return false, err
 	}
@@ -135,6 +135,6 @@ func HasData(profile, key string) (bool, error) {
 }
 
 // ClearData deletes all messages stored for the trace key.
-func ClearData(profile, key string) error {
-	return Delete(profile, key)
+func tracerClearData(profile, key string) error {
+	return tracerDelete(profile, key)
 }

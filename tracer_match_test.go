@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import "testing"
 
@@ -17,7 +17,7 @@ func TestMatch(t *testing.T) {
 		{"foo/#", "bar/foo", false},
 	}
 	for _, c := range cases {
-		if got := Match(c.filter, c.topic); got != c.want {
+		if got := tracerMatch(c.filter, c.topic); got != c.want {
 			t.Errorf("Match(%q,%q)=%v want %v", c.filter, c.topic, got, c.want)
 		}
 	}

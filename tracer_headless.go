@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import (
 	"crypto/tls"
@@ -13,12 +13,10 @@ import (
 	"github.com/marang/goemqutiti/config"
 )
 
-type Profile = config.Profile
-
 // mqttClient wraps the MQTT connection for the tracer.
 type mqttClient struct{ client mqtt.Client }
 
-func newMQTTClient(p Profile) (*mqttClient, error) {
+func newMQTTClient(p config.Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	opts.AddBroker(brokerURL)
@@ -80,7 +78,7 @@ func (m *mqttClient) Disconnect() {
 }
 
 // Run executes the tracer headlessly using configuration from config.toml.
-func Run(key, topics, profileName, startStr, endStr string) error {
+func tracerRun(key, topics, profileName, startStr, endStr string) error {
 	if key == "" || topics == "" {
 		return fmt.Errorf("-trace and -topics are required")
 	}
@@ -115,8 +113,8 @@ func Run(key, topics, profileName, startStr, endStr string) error {
 	for i := range tlist {
 		tlist[i] = strings.TrimSpace(tlist[i])
 	}
-	cfg := Config{Profile: p.Name, Topics: tlist, Start: start, End: end, Key: key}
-	tr := New(cfg, client)
+	cfg := TracerConfig{Profile: p.Name, Topics: tlist, Start: start, End: end, Key: key}
+	tr := newTracer(cfg, client)
 	if err := tr.Start(); err != nil {
 		return fmt.Errorf("trace start: %w", err)
 	}

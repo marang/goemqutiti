@@ -8,7 +8,6 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/tracer"
 )
 
 // persistedTopic mirrors topicItem for persistence in the config file.
@@ -105,16 +104,16 @@ func saveState(data map[string]connectionData) {
 }
 
 // loadTraces retrieves planned traces from config.toml.
-func loadTraces() map[string]tracer.Config {
+func loadTraces() map[string]TracerConfig {
 	fp, err := config.DefaultUserConfigFile()
 	if err != nil {
-		return map[string]tracer.Config{}
+		return map[string]TracerConfig{}
 	}
 	var cfg userConfig
 	if _, err := toml.DecodeFile(fp, &cfg); err != nil {
-		return map[string]tracer.Config{}
+		return map[string]TracerConfig{}
 	}
-	out := make(map[string]tracer.Config)
+	out := make(map[string]TracerConfig)
 	for k, v := range cfg.Traces {
 		var start, end time.Time
 		if v.Start != "" {
@@ -123,13 +122,13 @@ func loadTraces() map[string]tracer.Config {
 		if v.End != "" {
 			end, _ = time.Parse(time.RFC3339, v.End)
 		}
-		out[k] = tracer.Config{Profile: v.Profile, Topics: v.Topics, Start: start, End: end, Key: k}
+		out[k] = TracerConfig{Profile: v.Profile, Topics: v.Topics, Start: start, End: end, Key: k}
 	}
 	return out
 }
 
 // saveTraces updates the Traces section in config.toml.
-func saveTraces(data map[string]tracer.Config) {
+func saveTraces(data map[string]TracerConfig) {
 	fp, err := config.DefaultUserConfigFile()
 	if err != nil {
 		return
@@ -151,7 +150,7 @@ func saveTraces(data map[string]tracer.Config) {
 }
 
 // addTrace merges a single trace configuration into the existing file.
-func addTrace(cfg tracer.Config) {
+func addTrace(cfg TracerConfig) {
 	traces := loadTraces()
 	traces[cfg.Key] = cfg
 	saveTraces(traces)

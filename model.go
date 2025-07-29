@@ -13,7 +13,6 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/marang/goemqutiti/tracer"
 )
 
 type connectionItem struct {
@@ -152,8 +151,8 @@ type messageState struct {
 
 type traceItem struct {
 	key    string
-	cfg    tracer.Config
-	tracer *tracer.Tracer
+	cfg    TracerConfig
+	tracer *Tracer
 	counts map[string]int
 	loaded bool
 }
@@ -176,7 +175,7 @@ func (t *traceItem) Description() string {
 	if t.tracer != nil {
 		counts = t.tracer.Counts()
 	} else if !t.loaded {
-		if c, err := tracer.LoadCounts(t.cfg.Profile, t.cfg.Key, t.cfg.Topics); err == nil {
+		if c, err := tracerLoadCounts(t.cfg.Profile, t.cfg.Key, t.cfg.Topics); err == nil {
 			t.counts = c
 			t.loaded = true
 			counts = c

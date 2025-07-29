@@ -53,7 +53,7 @@ const (
 
 var wizardSteps = []string{"File", "Map", "Template", "Review", "Publish", "Done"}
 
-// NewWizard creates a new wizard. A non-empty path pre-fills the file field.
+// NewImportWizard creates a new wizard. A non-empty path pre-fills the file field.
 func NewImportWizard(client Publisher, path string) *ImportWizard {
 	ti := textinput.New()
 	ti.Placeholder = "CSV or XLS file"

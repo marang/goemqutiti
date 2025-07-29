@@ -27,29 +27,13 @@ type HistoryStore struct {
 	db   *badger.DB
 }
 
-func dataDir(profile string) string {
-	if profile == "" {
-		profile = "default"
-	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join("data", profile)
-	}
-	return filepath.Join(home, ".emqutiti", "data", profile)
-}
-
-// historyDir returns the directory for the history database.
-func historyDir(profile string) string {
-	return filepath.Join(dataDir(profile), "history")
-}
-
 // Open opens (or creates) a persistent message index for the given profile.
 // If profile is empty, "default" is used.
 func openHistoryStore(profile string) (*HistoryStore, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := historyDir(profile)
+	path := filepath.Join(dataDir(profile), "history")
 	os.MkdirAll(path, 0755)
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	db, err := badger.Open(opts)

@@ -4,7 +4,7 @@ import "github.com/charmbracelet/bubbles/list"
 
 func (m *model) topicAtPosition(x, y int) int {
 	for i, b := range m.topics.chipBounds {
-		if x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h {
+		if x >= b.xPos && x < b.xPos+b.width && y >= b.yPos && y < b.yPos+b.height {
 			return i
 		}
 	}

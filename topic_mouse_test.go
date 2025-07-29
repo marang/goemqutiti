@@ -15,7 +15,7 @@ func chipCoords(m *model, idx int) (int, int) {
 		return -1, -1
 	}
 	b := m.topics.chipBounds[idx]
-	return b.x, b.y - m.ui.viewport.YOffset
+	return b.xPos, b.yPos - m.ui.viewport.YOffset
 }
 
 func setupTopics(m *model) {
@@ -33,7 +33,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 	m.viewClient()
 	x, y := chipCoords(m, 0)
 	name := m.topics.items[0].title
-	for offset := 0; offset < m.topics.chipBounds[0].h; offset++ {
+	for offset := 0; offset < m.topics.chipBounds[0].height; offset++ {
 		before := m.topics.items[0].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1
@@ -57,7 +57,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 	// topic index 6 resides on third row
 	x, y := chipCoords(m, 6)
 	name := m.topics.items[6].title
-	for offset := 0; offset < m.topics.chipBounds[6].h; offset++ {
+	for offset := 0; offset < m.topics.chipBounds[6].height; offset++ {
 		before := m.topics.items[6].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1
@@ -81,7 +81,7 @@ func TestMouseToggleFourthRowTopic(t *testing.T) {
 	// topic index 8 resides on the fourth row
 	x, y := chipCoords(m, 8)
 	name := m.topics.items[8].title
-	for offset := 0; offset < m.topics.chipBounds[8].h; offset++ {
+	for offset := 0; offset < m.topics.chipBounds[8].height; offset++ {
 		before := m.topics.items[8].active
 		m.Update(tea.MouseMsg{Type: tea.MouseLeft, X: x, Y: y + offset})
 		idx := -1

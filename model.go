@@ -51,8 +51,8 @@ func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
 type chipBound struct {
-	x, y int
-	w, h int
+	xPos, yPos    int
+	width, height int
 }
 
 type historyItem struct {

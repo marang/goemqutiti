@@ -1,3 +1,4 @@
+set env(HOME) "/root"
 spawn ./goemqutiti -p HiveMQ
 # wait for UI to initialize
 sleep 1

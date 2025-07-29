@@ -1,3 +1,4 @@
+set env(HOME) "/root"
 spawn ./goemqutiti --trace demo --topics "sensors/#" -p HiveMQ
 sleep 1
 send \u0004

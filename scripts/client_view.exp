@@ -1,3 +1,4 @@
+set env(HOME) "/root"
 spawn ./goemqutiti -p HiveMQ
 sleep 1
 # select the first connection in the broker manager

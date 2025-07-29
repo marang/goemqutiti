@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/tracer"
 )
 
 func (m *model) forceStartTrace(index int) {
@@ -28,7 +27,7 @@ func (m *model) forceStartTrace(index int) {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
-	tr := tracer.New(item.cfg, client)
+	tr := newTracer(item.cfg, client)
 	if err := tr.Start(); err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		client.Disconnect()
@@ -47,10 +46,10 @@ func (m *model) startTrace(index int) {
 		m.appendHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
 		return
 	}
-	exists, err := tracer.HasData(item.cfg.Profile, item.key)
+	exists, err := tracerHasData(item.cfg.Profile, item.key)
 	if err == nil && exists {
 		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), func() {
-			tracer.ClearData(item.cfg.Profile, item.key)
+			tracerClearData(item.cfg.Profile, item.key)
 			m.forceStartTrace(index)
 		})
 		return
@@ -86,7 +85,7 @@ func (m *model) traceIndex(key string) int {
 }
 
 func (m *model) savePlannedTraces() {
-	data := map[string]tracer.Config{}
+	data := map[string]TracerConfig{}
 	for _, it := range m.traces.items {
 		if it.tracer != nil {
 			data[it.key] = it.tracer.Config()
@@ -101,7 +100,7 @@ func (m *model) loadTraceMessages(index int) {
 		return
 	}
 	it := m.traces.items[index]
-	msgs, err := tracer.Messages(it.cfg.Profile, it.key)
+	msgs, err := tracerMessages(it.cfg.Profile, it.key)
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return

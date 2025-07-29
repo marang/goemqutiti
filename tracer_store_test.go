@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import (
 	"testing"
@@ -9,9 +9,9 @@ func TestHasDataAndClear(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
 
-	cfg := Config{Profile: "test", Topics: []string{"a"}, Start: time.Now().Add(-time.Millisecond), End: time.Now().Add(200 * time.Millisecond), Key: "k1"}
+	cfg := TracerConfig{Profile: "test", Topics: []string{"a"}, Start: time.Now().Add(-time.Millisecond), End: time.Now().Add(200 * time.Millisecond), Key: "k1"}
 	fc := newFakeClient()
-	tr := New(cfg, fc)
+	tr := newTracer(cfg, fc)
 	if err := tr.Start(); err != nil {
 		t.Fatalf("start: %v", err)
 	}
@@ -23,14 +23,14 @@ func TestHasDataAndClear(t *testing.T) {
 	fc.publish("a", "one")
 	tr.Stop()
 
-	has, err := HasData("test", "k1")
+	has, err := tracerHasData("test", "k1")
 	if err != nil || !has {
 		t.Fatalf("expected data, err=%v", err)
 	}
-	if err := ClearData("test", "k1"); err != nil {
+	if err := tracerClearData("test", "k1"); err != nil {
 		t.Fatalf("clear: %v", err)
 	}
-	has, err = HasData("test", "k1")
+	has, err = tracerHasData("test", "k1")
 	if err != nil || has {
 		t.Fatalf("expected no data")
 	}

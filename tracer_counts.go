@@ -1,9 +1,9 @@
-package tracer
+package main
 
 // LoadCounts returns per-topic counts for the given trace key aggregated by
 // the provided subscription topics.
-func LoadCounts(profile, key string, topics []string) (map[string]int, error) {
-	msgs, err := Messages(profile, key)
+func tracerLoadCounts(profile, key string, topics []string) (map[string]int, error) {
+	msgs, err := tracerMessages(profile, key)
 	if err != nil {
 		return nil, err
 	}
@@ -13,7 +13,7 @@ func LoadCounts(profile, key string, topics []string) (map[string]int, error) {
 	}
 	for _, m := range msgs {
 		for _, sub := range topics {
-			if Match(sub, m.Topic) {
+			if tracerMatch(sub, m.Topic) {
 				counts[sub]++
 			}
 		}

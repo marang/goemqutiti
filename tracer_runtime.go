@@ -1,4 +1,4 @@
-package tracer
+package main
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 // Config defines the trace parameters.
-type Config struct {
+type TracerConfig struct {
 	Profile string
 	Topics  []string
 	Start   time.Time
@@ -27,7 +27,7 @@ type Client interface {
 
 // Tracer collects MQTT messages within a time range and stores them.
 type Tracer struct {
-	cfg     Config
+	cfg     TracerConfig
 	mu      sync.Mutex
 	running bool
 	counts  map[string]int
@@ -37,7 +37,7 @@ type Tracer struct {
 }
 
 // New creates a new Tracer with the given config.
-func New(cfg Config, c Client) *Tracer {
+func newTracer(cfg TracerConfig, c Client) *Tracer {
 	return &Tracer{cfg: cfg, client: c}
 }
 
@@ -98,10 +98,10 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				Add(t.cfg.Profile, t.cfg.Key, Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
+				tracerAdd(t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
 				t.mu.Lock()
 				for _, sub := range t.cfg.Topics {
-					if Match(sub, m.Topic()) {
+					if tracerMatch(sub, m.Topic()) {
 						t.counts[sub]++
 					}
 				}
@@ -151,7 +151,7 @@ func (t *Tracer) Running() bool {
 func (t *Tracer) Planned() bool { return time.Now().Before(t.cfg.Start) }
 
 // Config returns the trace configuration.
-func (t *Tracer) Config() Config { return t.cfg }
+func (t *Tracer) Config() TracerConfig { return t.cfg }
 
 // Counts returns the per-topic message counts.
 func (t *Tracer) Counts() map[string]int {
@@ -165,6 +165,6 @@ func (t *Tracer) Counts() map[string]int {
 }
 
 // Messages returns the stored trace messages.
-func (t *Tracer) Messages() ([]Message, error) {
-	return Messages(t.cfg.Profile, t.cfg.Key)
+func (t *Tracer) Messages() ([]TracerMessage, error) {
+	return tracerMessages(t.cfg.Profile, t.cfg.Key)
 }

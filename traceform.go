@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/marang/goemqutiti/tracer"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -95,12 +94,12 @@ func (f traceForm) View() string {
 	return b.String()
 }
 
-func (f traceForm) Config() tracer.Config {
+func (f traceForm) Config() TracerConfig {
 	vals := make([]string, len(f.fields))
 	for i, fld := range f.fields {
 		vals[i] = fld.Value()
 	}
-	cfg := tracer.Config{}
+	cfg := TracerConfig{}
 	cfg.Key = strings.TrimSpace(vals[idxTraceKey])
 	cfg.Profile = vals[idxTraceProfile]
 	if t := strings.TrimSpace(vals[idxTraceTopics]); t != "" {

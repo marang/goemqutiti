@@ -1,9 +1,9 @@
-package tracer
+package main
 
 import "strings"
 
 // Match reports whether the topic matches the MQTT subscription filter.
-func Match(filter, topic string) bool {
+func tracerMatch(filter, topic string) bool {
 	fp := strings.Split(filter, "/")
 	tp := strings.Split(topic, "/")
 	for i := 0; i < len(fp); i++ {

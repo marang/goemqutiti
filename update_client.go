@@ -89,7 +89,9 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 					parts = append(parts, txt)
 				}
 			}
-			clipboard.WriteAll(strings.Join(parts, "\n"))
+			if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
+				m.appendHistory("", err.Error(), "log", err.Error())
+			}
 		} else if len(m.history.list.Items()) > 0 {
 			idx := m.history.list.Index()
 			if idx >= 0 {
@@ -98,7 +100,9 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				if hi.kind != "log" {
 					text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
 				}
-				clipboard.WriteAll(text)
+				if err := clipboard.WriteAll(text); err != nil {
+					m.appendHistory("", err.Error(), "log", err.Error())
+				}
 			}
 		}
 	case "ctrl+x":

@@ -43,14 +43,6 @@ func historyDir(profile string) string {
 	return filepath.Join(dataDir(profile), "history")
 }
 
-// traceDir returns the directory for the trace database.
-func traceDir(profile string) string {
-	return filepath.Join(dataDir(profile), "traces")
-}
-
-// defaultDir is kept for backward compatibility and returns historyDir.
-func defaultDir(profile string) string { return historyDir(profile) }
-
 // Open opens (or creates) a persistent message index for the given profile.
 // If profile is empty, "default" is used.
 func openHistoryStore(profile string) (*HistoryStore, error) {
@@ -80,38 +72,6 @@ func openHistoryStore(profile string) (*HistoryStore, error) {
 		}
 		return nil
 	})
-	return idx, nil
-}
-
-// OpenTrace opens the trace database for the given profile.
-func openTraceStore(profile string) (*HistoryStore, error) {
-	if profile == "" {
-		profile = "default"
-	}
-	path := traceDir(profile)
-	os.MkdirAll(path, 0755)
-	opts := badger.DefaultOptions(path).WithLogger(nil)
-	db, err := badger.Open(opts)
-	if err != nil {
-		return nil, err
-	}
-	idx := &HistoryStore{db: db}
-	return idx, nil
-}
-
-// OpenTraceReadOnly opens the trace database in read-only mode.
-func openTraceStoreReadOnly(profile string) (*HistoryStore, error) {
-	if profile == "" {
-		profile = "default"
-	}
-	path := traceDir(profile)
-	os.MkdirAll(path, 0755)
-	opts := badger.DefaultOptions(path).WithLogger(nil).WithReadOnly(true)
-	db, err := badger.Open(opts)
-	if err != nil {
-		return nil, err
-	}
-	idx := &HistoryStore{db: db}
 	return idx, nil
 }
 

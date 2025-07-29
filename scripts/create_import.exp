@@ -2,3 +2,4 @@ spawn ./goemqutiti -p HiveMQ --import data.csv
 sleep 1
 send \u0004
 expect eof
+exec stty sane

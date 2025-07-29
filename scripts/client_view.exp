@@ -8,3 +8,4 @@ send \u0001   ;# Ctrl+A maybe not available - placeholder
 send "Hello\r"
 send \u0004
 expect eof
+exec stty sane

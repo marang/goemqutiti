@@ -100,7 +100,7 @@ a TTY so asciinema can capture the session:
 
 ```bash
 docker build -f Dockerfile.cast -t emqutiti-caster .
-docker run --rm -it -v "$PWD/docs:/app/docs" emqutiti-caster \
+docker run --rm -it --network=host -v "$PWD/docs:/app/docs" emqutiti-caster \
   ./scripts/record_casts.sh
 ```
 You'll interact with the TUI inside the container just like running it locally.

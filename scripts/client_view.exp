@@ -1,6 +1,7 @@
 spawn ./goemqutiti -p HiveMQ
 sleep 1
-# assume default profile connects automatically
+# select the first connection in the broker manager
+send "\r"
 # add topic and send a message
 send "test/topic\r"
 send \u0001   ;# Ctrl+A maybe not available - placeholder

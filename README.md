@@ -81,7 +81,8 @@ Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages w
 ### Recording demos
 
 1. Install [asciinema](https://github.com/asciinema/asciinema) and
-   [agg](https://github.com/asciinema/agg).
+   [asciinema-agg](https://github.com/asciinema/agg) (via
+   `cargo install --git https://github.com/asciinema/agg`).
 2. Run `scripts/record_casts.sh` in an interactive terminal.
 3. Casts and GIFs appear in `docs/`.
 

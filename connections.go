@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -143,8 +144,8 @@ func (m *Connections) DeleteConnection(index int) {
 }
 
 func deleteProfileData(name string) {
-	os.RemoveAll(historyDir(name))
-	os.RemoveAll(tracerDataDir(name))
+	os.RemoveAll(filepath.Join(dataDir(name), "history"))
+	os.RemoveAll(filepath.Join(dataDir(name), "tracce"))
 }
 
 // refreshList rebuilds the list items from the current profiles.

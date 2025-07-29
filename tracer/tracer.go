@@ -6,8 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/marang/goemqutiti/history"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -100,7 +98,7 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				Add(t.cfg.Profile, t.cfg.Key, history.Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
+				Add(t.cfg.Profile, t.cfg.Key, Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
 				t.mu.Lock()
 				for _, sub := range t.cfg.Topics {
 					if Match(sub, m.Topic()) {
@@ -167,6 +165,6 @@ func (t *Tracer) Counts() map[string]int {
 }
 
 // Messages returns the stored trace messages.
-func (t *Tracer) Messages() ([]history.Message, error) {
+func (t *Tracer) Messages() ([]Message, error) {
 	return Messages(t.cfg.Profile, t.cfg.Key)
 }

@@ -10,14 +10,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/marang/goemqutiti/history"
+	"github.com/marang/goemqutiti/tracer"
 	"github.com/marang/goemqutiti/ui"
 )
 
 // traceMsgItem holds a trace message with its sequence number.
 type traceMsgItem struct {
 	idx int
-	msg history.Message
+	msg tracer.Message
 }
 
 func (t traceMsgItem) FilterValue() string { return t.msg.Payload }

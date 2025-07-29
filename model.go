@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/marang/goemqutiti/history"
 	"github.com/marang/goemqutiti/ui"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -130,7 +129,7 @@ type connectionsState struct {
 type historyState struct {
 	list            list.Model
 	items           []historyItem
-	store           *history.Index
+	store           *HistoryStore
 	selected        map[int]struct{}
 	selectionAnchor int
 }

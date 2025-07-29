@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,19 +9,6 @@ import (
 	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/ui"
 )
-
-func envPrefix(name string) string {
-	upper := strings.ToUpper(name)
-	var b strings.Builder
-	for _, r := range upper {
-		if r >= 'A' && r <= 'Z' || r >= '0' && r <= '9' {
-			b.WriteRune(r)
-		} else {
-			b.WriteRune('_')
-		}
-	}
-	return "GOEMQUTITI_" + b.String() + "_"
-}
 
 type formField interface {
 	Focus()
@@ -434,7 +420,7 @@ func (f connectionForm) View() string {
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
-		prefix := envPrefix(f.fields[idxName].Value())
+		prefix := config.EnvPrefix(f.fields[idxName].Value())
 		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
 	}
 	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")

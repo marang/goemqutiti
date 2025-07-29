@@ -91,14 +91,16 @@ func sanitizeEnvName(name string) string {
 	return b.String()
 }
 
-func envPrefix(name string) string { return "GOEMQUTITI_" + sanitizeEnvName(name) + "_" }
+// EnvPrefix returns the prefix used for environment variables derived from a
+// profile name.
+func EnvPrefix(name string) string { return "GOEMQUTITI_" + sanitizeEnvName(name) + "_" }
 
 // ApplyEnvVars loads profile fields from environment variables when FromEnv is set.
 func ApplyEnvVars(p *Profile) {
 	if !p.FromEnv {
 		return
 	}
-	prefix := envPrefix(p.Name)
+	prefix := EnvPrefix(p.Name)
 	rv := reflect.ValueOf(p).Elem()
 	rt := rv.Type()
 	for i := 0; i < rt.NumField(); i++ {

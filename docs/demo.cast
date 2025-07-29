@@ -1,2 +1,3 @@
-{"version": 2, "width": 0, "height": 0, "timestamp": 1753773097, "env": {"SHELL": null, "TERM": "xterm"}}
-[0.022995, "o", "welcome to goemqutiti\r\n"]
+{"version": 2, "width": 80, "height": 24, "timestamp": 1753781044, "env": {"SHELL": null, "TERM": "xterm"}}
+[0.048917, "o", "\u001b]11;?\u001b\\\u001b[6n"]
+[5.060078, "o", "Usage of ./goemqutiti:\r\n  -end string\r\n    \tOptional RFC3339 trace end time\r\n  -i string\r\n    \t(shorthand)\r\n  -import string\r\n    \tLaunch import wizard with optional file path\r\n  -p string\r\n    \t(shorthand)\r\n  -profile string\r\n    \tConnection profile to use\r\n  -start string\r\n    \tOptional RFC3339 trace start time\r\n  -topics string\r\n    \tComma-separated topics to trace\r\n  -trace string\r\n    \tTrace key to store messages under\r\n"]

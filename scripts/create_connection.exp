@@ -1,0 +1,13 @@
+spawn ./goemqutiti
+# wait for UI to initialize
+sleep 1
+# open broker manager
+send \u0002
+# create profile (this is a placeholder, adjust as needed)
+send \r
+send "local\r"
+send "tcp\r"
+send "localhost\r"
+send "1883\r"
+# save and exit
+send \u0004

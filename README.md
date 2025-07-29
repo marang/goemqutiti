@@ -5,8 +5,7 @@ GoEmqutiti is a polished MQTT client for the terminal built on
 `~/.emqutiti/config.toml` so you can switch brokers with a few key presses. The
 short demo below shows the app in action.
 
-![Preview](docs/demo.gif)
-The GIF comes from `docs/demo.cast`. After recording with `asciinema`, run `agg docs/demo.cast docs/demo.gif` to refresh the preview. (asciinema can be found here: https://github.com/asciinema/asciinema and to generate a gif out of the .cast files https://github.com/asciinema/agg)
+A demo session is stored in `docs/demo.cast`. Convert it with [asciinema-agg](https://github.com/asciinema/agg) if you want a GIF preview locally. Scripts under `scripts/` automate recording multiple demos; run `scripts/record_casts.sh` in an interactive terminal.
 ## Features
 
 - Slick interface for publishing and subscribing
@@ -78,6 +77,28 @@ Press `Ctrl+R` in the UI to manage recorded traces.
 ### Headless tracing
 
 Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages without the UI. Traces are stored under `~/.emqutiti/data/<profile>/traces`.
+
+### Recording demos
+
+1. Install [asciinema](https://github.com/asciinema/asciinema) and
+   [agg](https://github.com/asciinema/agg).
+2. Run `scripts/record_casts.sh` in an interactive terminal.
+3. Casts and GIFs appear in `docs/`.
+
+#### Without host dependencies
+
+Build the provided `Dockerfile.cast` and run the helper inside
+an interactive container. The file is named this way so it won't
+clash with other `Dockerfile`s in the project. Use `-it` to allocate
+a TTY so asciinema can capture the session:
+
+```bash
+docker build -f Dockerfile.cast -t emqutiti-caster .
+docker run --rm -it -v "$PWD/docs:/app/docs" emqutiti-caster \
+  ./scripts/record_casts.sh
+```
+You'll interact with the TUI inside the container just like running it locally.
+
 
 ## License
 

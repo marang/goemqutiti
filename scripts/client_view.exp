@@ -1,0 +1,8 @@
+spawn ./goemqutiti
+sleep 1
+# assume default profile connects automatically
+# add topic and send a message
+send "test/topic\r"
+send \u0001   ;# Ctrl+A maybe not available - placeholder
+send "Hello\r"
+send \u0004

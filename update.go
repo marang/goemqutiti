@@ -277,7 +277,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 {
 				name := m.connections.manager.Profiles[i].Name
-				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), func() {
+				info := "This also deletes history and traces"
+				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() {
 					m.connections.manager.DeleteConnection(i)
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
@@ -369,7 +370,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 			i := m.topics.list.Index()
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
-				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), func() {
+				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 					m.removeTopic(i)
 					items := []list.Item{}
 					for _, t := range m.topics.items {

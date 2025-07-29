@@ -191,8 +191,12 @@ func (m model) viewForm() string {
 }
 
 func (m model) viewConfirmDelete() string {
-	border := lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(ui.ColBlue).Padding(0, 1)
-	return border.Render(m.confirmPrompt)
+	content := m.confirmPrompt
+	if m.confirmInfo != "" {
+		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
+	}
+	box := ui.LegendBox(content, "Confirm", m.ui.width/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
 }
 
 func (m model) viewTopics() string {

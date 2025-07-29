@@ -26,8 +26,9 @@ func (m *model) historyIndexAt(y int) int {
 	return i
 }
 
-func (m *model) startConfirm(prompt string, action func()) {
+func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmPrompt = prompt
+	m.confirmInfo = info
 	m.confirmAction = action
 	m.ui.prevMode = m.ui.mode
 	m.ui.mode = modeConfirmDelete

@@ -233,6 +233,7 @@ type model struct {
 	ui uiState
 
 	confirmPrompt string
+	confirmInfo   string
 	confirmAction func()
 
 	layout layoutConfig

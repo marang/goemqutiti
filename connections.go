@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -134,9 +135,16 @@ func (m *Connections) DeleteConnection(index int) {
 		m.Profiles = append(m.Profiles[:index], m.Profiles[index+1:]...)
 		delete(m.Statuses, name)
 		delete(m.Errors, name)
+		// Persist removal so the connection no longer appears after a restart
 		m.saveConfigToFile()
+		deleteProfileData(name)
 		m.refreshList()
 	}
+}
+
+func deleteProfileData(name string) {
+	os.RemoveAll(historyDir(name))
+	os.RemoveAll(tracerDataDir(name))
 }
 
 // refreshList rebuilds the list items from the current profiles.

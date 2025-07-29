@@ -1,3 +1,4 @@
 spawn ./goemqutiti --import data.csv
 sleep 1
 send \u0004
+expect eof

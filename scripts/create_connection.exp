@@ -11,3 +11,4 @@ send "localhost\r"
 send "1883\r"
 # save and exit
 send \u0004
+expect eof

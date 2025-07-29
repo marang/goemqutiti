@@ -83,8 +83,13 @@ Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages w
 1. Install [asciinema](https://github.com/asciinema/asciinema) and
    [asciinema-agg](https://github.com/asciinema/agg) (via
    `cargo install --git https://github.com/asciinema/agg`).
-2. Run `scripts/record_casts.sh` in an interactive terminal.
-3. Casts and GIFs appear in `docs/`.
+   `agg` needs a monospace font such as **DejaVu Sans Mono**. Install
+   `fonts-dejavu-core` or a similar package if conversion fails.
+2. Run `scripts/record_casts.sh` in an interactive terminal. The helper uses
+   `expect` scripts under `scripts/` to drive the TUI and waits for each demo
+   to finish with `expect eof`.
+3. Cast files are saved to `docs/`. Convert them to GIFs with `agg` if you want
+   previews locally but avoid committing the generated images.
 
 #### Without host dependencies
 

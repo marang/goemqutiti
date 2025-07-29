@@ -2,6 +2,11 @@
 
 - Always run `gofmt -w` on modified Go files.
 - Run `go vet ./...` and attempt `go test ./...` before committing.
+- Run `go mod tidy` whenever dependencies change.
+- Keep commit messages short and descriptive; wrap lines at 72 characters.
+- Summarize changes and test results in pull request descriptions.
+- Keep documentation snappy. Use bullet lists and short sections so the README
+  is easy to skim. Mention the main keyboard shortcuts.
 
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name. The importer code lives in the main package and runs via these flags.
@@ -14,12 +19,13 @@ Press `Ctrl+D` from any screen to exit the program.
 - Always consider usability and look for ways to improve it.
 
 ### UI Guidelines
-- Use `legendBox` or its variants for all boxed sections.
+- Use the `LegendBox` helper for all boxed sections.
 - The box helpers have been simplified into a single `LegendBox` function that
   accepts a border color and optional height. Use this function directly rather
   than maintaining multiple wrapper variants.
 - Highlight the selected box using the focused style (pink).
 - Present keyboard shortcuts consistently across views and ensure they behave the same everywhere.
+- Keep functions small and comment any exported ones for clarity.
 
 ## Test Info
 `ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
@@ -32,3 +38,12 @@ When adding or updating third-party packages, always consult the latest
 documentation for each dependency to ensure deprecated APIs are avoided.
 Replace outdated calls with the recommended alternatives before committing
 changes.
+
+## Contribution Best Practices
+- Create topic branches off `main` and keep pull requests focused.
+- Describe the problem and solution clearly in commit messages.
+- Keep commits small and avoid mixing unrelated changes.
+- Record TUI demos with `asciinema` and convert them to GIFs using
+  `asciinema-agg` for inclusion in the README. Store the `.cast` and
+  `.gif` files under `docs/` so they can be updated easily. Run
+  `agg docs/demo.cast docs/demo.gif` to regenerate the preview.

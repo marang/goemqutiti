@@ -1,14 +1,13 @@
 package tracer
 
 import (
-	"os"
 	"testing"
 	"time"
 )
 
 func TestHasDataAndClear(t *testing.T) {
 	dir := t.TempDir()
-	os.Setenv("HOME", dir)
+	t.Setenv("HOME", dir)
 
 	cfg := Config{Profile: "test", Topics: []string{"a"}, Start: time.Now().Add(-time.Millisecond), End: time.Now().Add(200 * time.Millisecond), Key: "k1"}
 	fc := newFakeClient()
@@ -16,10 +15,13 @@ func TestHasDataAndClear(t *testing.T) {
 	if err := tr.Start(); err != nil {
 		t.Fatalf("start: %v", err)
 	}
-	time.Sleep(20 * time.Millisecond)
+	select {
+	case <-fc.subCh:
+	case <-time.After(time.Second):
+		t.Fatalf("subscribe timeout")
+	}
 	fc.publish("a", "one")
 	tr.Stop()
-	time.Sleep(5 * time.Millisecond)
 
 	has, err := HasData("test", "k1")
 	if err != nil || !has {

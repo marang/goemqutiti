@@ -23,13 +23,20 @@ func (f fakeMessage) Payload() []byte   { return f.payload }
 func (f fakeMessage) Ack()              {}
 
 type fakeClient struct {
-	subs map[string]mqtt.MessageHandler
+	subs  map[string]mqtt.MessageHandler
+	subCh chan struct{}
 }
 
-func newFakeClient() *fakeClient { return &fakeClient{subs: make(map[string]mqtt.MessageHandler)} }
+func newFakeClient() *fakeClient {
+	return &fakeClient{subs: make(map[string]mqtt.MessageHandler), subCh: make(chan struct{}, 1)}
+}
 
 func (f *fakeClient) Subscribe(topic string, qos byte, cb mqtt.MessageHandler) error {
 	f.subs[topic] = cb
+	select {
+	case f.subCh <- struct{}{}:
+	default:
+	}
 	return nil
 }
 func (f *fakeClient) Unsubscribe(topic string) error { delete(f.subs, topic); return nil }

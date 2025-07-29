@@ -503,6 +503,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, cmd := m.updateTraceView(msg)
 		*m = nm
 		return m, cmd
+	case modeImporter:
+		nm, cmd := m.updateImporter(msg)
+		*m = nm
+		return m, cmd
 	default:
 		return m, nil
 	}

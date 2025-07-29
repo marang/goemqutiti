@@ -40,4 +40,5 @@ app.log
 
 # Ignore built binary
 emqutiti
+goemqutiti
 

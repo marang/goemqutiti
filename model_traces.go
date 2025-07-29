@@ -8,7 +8,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/history"
 	"github.com/marang/goemqutiti/tracer"
 )
 
@@ -102,13 +101,7 @@ func (m *model) loadTraceMessages(index int) {
 		return
 	}
 	it := m.traces.items[index]
-	idx, err := history.OpenTraceReadOnly(it.cfg.Profile)
-	if err != nil {
-		m.appendHistory("", err.Error(), "log", err.Error())
-		return
-	}
-	msgs, err := idx.TraceMessages(it.key)
-	idx.Close()
+	msgs, err := tracer.Messages(it.cfg.Profile, it.key)
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return

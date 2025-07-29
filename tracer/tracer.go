@@ -57,11 +57,6 @@ func (t *Tracer) Start() error {
 	}
 	t.mu.Unlock()
 
-	idx, err := history.OpenTrace(t.cfg.Profile)
-	if err != nil {
-		return err
-	}
-
 	client := t.client
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -71,7 +66,6 @@ func (t *Tracer) Start() error {
 	go func() {
 		defer func() {
 			client.Disconnect()
-			idx.Close()
 			cancel()
 			t.mu.Lock()
 			t.running = false
@@ -106,7 +100,7 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				idx.AddTrace(t.cfg.Key, history.Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
+				Add(t.cfg.Profile, t.cfg.Key, history.Message{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
 				t.mu.Lock()
 				for _, sub := range t.cfg.Topics {
 					if Match(sub, m.Topic()) {
@@ -174,10 +168,5 @@ func (t *Tracer) Counts() map[string]int {
 
 // Messages returns the stored trace messages.
 func (t *Tracer) Messages() ([]history.Message, error) {
-	idx, err := history.OpenTraceReadOnly(t.cfg.Profile)
-	if err != nil {
-		return nil, err
-	}
-	defer idx.Close()
-	return idx.TraceMessages(t.cfg.Key)
+	return Messages(t.cfg.Profile, t.cfg.Key)
 }

@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/dgraph-io/badger/v4"
+
+	"github.com/marang/goemqutiti/internal/files"
 )
 
 // openTracerStore opens the trace database for the profile.
@@ -15,8 +16,10 @@ func openTracerStore(profile string, readonly bool) (*badger.DB, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := filepath.Join(dataDir(profile), "traces")
-	os.MkdirAll(path, 0755)
+	path := filepath.Join(files.DataDir(profile), "traces")
+	if err := files.EnsureDir(path); err != nil {
+		return nil, err
+	}
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	if readonly {
 		opts = opts.WithReadOnly(true)

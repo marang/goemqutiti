@@ -3,13 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
+
+	"github.com/marang/goemqutiti/internal/files"
 )
 
 // Message holds a timestamped MQTT message with optional payload text.
@@ -33,8 +34,10 @@ func openHistoryStore(profile string) (*HistoryStore, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := filepath.Join(dataDir(profile), "history")
-	os.MkdirAll(path, 0755)
+	path := filepath.Join(files.DataDir(profile), "history")
+	if err := files.EnsureDir(path); err != nil {
+		return nil, err
+	}
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	db, err := badger.Open(opts)
 	if err != nil {

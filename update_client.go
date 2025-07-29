@@ -56,10 +56,10 @@ func (m *model) ensureTopicVisible() {
 		return
 	}
 	b := bounds[m.topics.selected]
-	if b.y < m.topics.vp.YOffset {
-		m.topics.vp.SetYOffset(b.y)
-	} else if b.y+b.h > m.topics.vp.YOffset+m.topics.vp.Height {
-		m.topics.vp.SetYOffset(b.y + b.h - m.topics.vp.Height)
+	if b.yPos < m.topics.vp.YOffset {
+		m.topics.vp.SetYOffset(b.yPos)
+	} else if b.yPos+b.height > m.topics.vp.YOffset+m.topics.vp.Height {
+		m.topics.vp.SetYOffset(b.yPos + b.height - m.topics.vp.Height)
 	}
 }
 

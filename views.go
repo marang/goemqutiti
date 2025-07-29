@@ -32,7 +32,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 			rowTop += rowSpacing
 		}
 		row = append(row, c)
-		bounds = append(bounds, chipBound{x: curX, y: rowTop, w: cw, h: chipH})
+		bounds = append(bounds, chipBound{xPos: curX, yPos: rowTop, width: cw, height: chipH})
 		curX += cw
 	}
 	if len(row) > 0 {
@@ -96,8 +96,8 @@ func (m *model) viewClient() string {
 	chipContent := m.topics.vp.View()
 	visible := []chipBound{}
 	for _, b := range bounds {
-		if b.y >= startLine && b.y < endLine {
-			b.y -= startLine
+		if b.yPos >= startLine && b.yPos < endLine {
+			b.yPos -= startLine
 			visible = append(visible, b)
 		}
 	}
@@ -157,7 +157,7 @@ func (m *model) viewClient() string {
 	startY := m.ui.elemPos["topics"] + 1
 	m.topics.chipBounds = make([]chipBound, len(bounds))
 	for i, b := range bounds {
-		m.topics.chipBounds[i] = chipBound{x: startX + b.x, y: startY + b.y, w: b.w, h: b.h}
+		m.topics.chipBounds[i] = chipBound{xPos: startX + b.xPos, yPos: startY + b.yPos, width: b.width, height: b.height}
 	}
 
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)

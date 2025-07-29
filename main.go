@@ -130,6 +130,8 @@ func main() {
 	}
 }
 
+// runImport launches the interactive import wizard using the provided file
+// path and profile name.
 func runImport(path, profile string) {
 	conns := NewConnectionsModel()
 	if err := conns.LoadProfiles(""); err != nil {

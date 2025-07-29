@@ -9,26 +9,13 @@ import (
 	"github.com/dgraph-io/badger/v4"
 )
 
-func tracerDataDir(profile string) string {
+// openTracerStore opens the trace database for the profile.
+// When readonly is true, the database is opened in read-only mode.
+func openTracerStore(profile string, readonly bool) (*badger.DB, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return filepath.Join("data", profile)
-	}
-	return filepath.Join(home, ".emqutiti", "data", profile)
-}
-
-func tracerTraceDir(profile string) string {
-	return filepath.Join(tracerDataDir(profile), "traces")
-}
-
-func tracerOpenTraceDB(profile string, readonly bool) (*badger.DB, error) {
-	if profile == "" {
-		profile = "default"
-	}
-	path := tracerTraceDir(profile)
+	path := filepath.Join(dataDir(profile), "traces")
 	os.MkdirAll(path, 0755)
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	if readonly {
@@ -39,7 +26,7 @@ func tracerOpenTraceDB(profile string, readonly bool) (*badger.DB, error) {
 
 // Add stores a trace message under the given key.
 func tracerAdd(profile, key string, msg TracerMessage) error {
-	db, err := tracerOpenTraceDB(profile, false)
+	db, err := openTracerStore(profile, false)
 	if err != nil {
 		return err
 	}
@@ -54,7 +41,7 @@ func tracerAdd(profile, key string, msg TracerMessage) error {
 
 // Messages returns all messages stored for the given trace key.
 func tracerMessages(profile, key string) ([]TracerMessage, error) {
-	db, err := tracerOpenTraceDB(profile, true)
+	db, err := openTracerStore(profile, true)
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +72,7 @@ func tracerMessages(profile, key string) ([]TracerMessage, error) {
 
 // Keys returns all database keys for the given trace key.
 func tracerKeys(profile, key string) ([]string, error) {
-	db, err := tracerOpenTraceDB(profile, true)
+	db, err := openTracerStore(profile, true)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +93,7 @@ func tracerKeys(profile, key string) ([]string, error) {
 
 // Delete removes all stored messages for the given trace key.
 func tracerDelete(profile, key string) error {
-	db, err := tracerOpenTraceDB(profile, false)
+	db, err := openTracerStore(profile, false)
 	if err != nil {
 		return err
 	}

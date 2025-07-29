@@ -20,6 +20,8 @@ type MQTTClient struct {
 	MessageChan chan MQTTMessage
 }
 
+// NewMQTTClient creates and configures a new MQTT client based on the profile
+// details. The status channel receives connection status updates.
 func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)

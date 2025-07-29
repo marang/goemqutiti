@@ -8,7 +8,8 @@ run_cast() {
     local outfile=$2
     local input=$3
     asciinema rec -q --overwrite --cols 80 --rows 24 \
-        -c "script -q /dev/null -c '$cmd < $input'" "$outfile"
+        -c "script -q /dev/null -c '$cmd' < $input" "$outfile"
+    stty sane
     rm -f "$input"
 }
 

@@ -6,7 +6,7 @@ GoEmqutiti is a polished MQTT client for the terminal built on
 short demo below shows the app in action.
 
 ![Preview](docs/demo.gif)
-The GIF comes from `docs/demo.cast`. After recording with `asciinema`, run `agg docs/demo.cast docs/demo.gif` to refresh the preview.
+The GIF comes from `docs/demo.cast`. After recording with `asciinema`, run `agg docs/demo.cast docs/demo.gif` to refresh the preview. (asciinema can be found here: https://github.com/asciinema/asciinema and to generate a gif out of the .cast files https://github.com/asciinema/agg)
 ## Features
 
 - Slick interface for publishing and subscribing

@@ -1,12 +1,15 @@
 set env(HOME) "/root"
 spawn ./goemqutiti -p HiveMQ
 sleep 1
-# select the first connection in the broker manager
+# connect using the first broker in the list
 send "\r"
-# add topic and send a message
+sleep 1
+# add topic and publish a message
 send "test/topic\r"
-send \u0001   ;# Ctrl+A maybe not available - placeholder
-send "Hello\r"
-send \u0004
+# move focus to message input
+send "\t"
+send "Hello"
+send \u0013   ;# Ctrl+S to publish
+send \u0004   ;# Ctrl+D to exit
 expect eof
 exec stty sane

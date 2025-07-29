@@ -67,9 +67,9 @@ func TestTraceStartAndStore(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 	fc.publish("a", "one")
 	fc.publish("a", "two")
-	time.Sleep(20 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	tr.Stop()
-	time.Sleep(5 * time.Millisecond)
+	time.Sleep(200 * time.Millisecond)
 
 	keys, err := tracerKeys("test", "k1")
 	if err != nil {

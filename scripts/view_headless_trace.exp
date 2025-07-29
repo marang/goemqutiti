@@ -1,0 +1,3 @@
+spawn ./goemqutiti --trace demo --topics "sensors/#" -p local
+sleep 1
+send \u0004

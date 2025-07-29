@@ -3,6 +3,7 @@
 - Always run `gofmt -w` on modified Go files.
 - Run `go vet ./...` and attempt `go test ./...` before committing.
 - Run `go mod tidy` whenever dependencies change.
+- Avoid committing binary artifacts such as GIFs. Generate them locally from `.cast` files instead.
 - Keep commit messages short and descriptive; wrap lines at 72 characters.
 - Summarize changes and test results in pull request descriptions.
 - Keep documentation snappy. Use bullet lists and short sections so the README
@@ -43,7 +44,8 @@ changes.
 - Create topic branches off `main` and keep pull requests focused.
 - Describe the problem and solution clearly in commit messages.
 - Keep commits small and avoid mixing unrelated changes.
-- Record TUI demos with `asciinema` and convert them to GIFs using
-  `asciinema-agg` for inclusion in the README. Store the `.cast` and
-  `.gif` files under `docs/` so they can be updated easily. Run
-  `agg docs/demo.cast docs/demo.gif` to regenerate the preview.
+- Record TUI demos with `asciinema` and keep the `.cast` files under `docs/`.
+- Generate GIF previews locally using `asciinema-agg` but do not commit them.
+- Run `agg docs/demo.cast docs/demo.gif` to regenerate previews when needed.
+- Use the `Dockerfile.cast` image if you do not want asciinema on your host.
+  Run it with `-it` so the TUI has a TTY.

@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/marang/goemqutiti/history"
-
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
@@ -66,11 +64,7 @@ func TestTraceStartAndStore(t *testing.T) {
 	tr.Stop()
 	time.Sleep(5 * time.Millisecond)
 
-	idx, err := history.OpenTrace("test")
-	if err != nil {
-		t.Fatalf("open history: %v", err)
-	}
-	keys, err := idx.TraceKeys("k1")
+	keys, err := Keys("test", "k1")
 	if err != nil {
 		t.Fatalf("trace keys: %v", err)
 	}
@@ -83,5 +77,4 @@ func TestTraceStartAndStore(t *testing.T) {
 			t.Fatalf("bad key %s", k)
 		}
 	}
-	idx.Close()
 }

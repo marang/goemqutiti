@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/marang/goemqutiti/internal/files"
+
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -144,8 +146,8 @@ func (m *Connections) DeleteConnection(index int) {
 }
 
 func deleteProfileData(name string) {
-	os.RemoveAll(filepath.Join(dataDir(name), "history"))
-	os.RemoveAll(filepath.Join(dataDir(name), "tracce"))
+	os.RemoveAll(filepath.Join(files.DataDir(name), "history"))
+	os.RemoveAll(filepath.Join(files.DataDir(name), "tracce"))
 }
 
 // refreshList rebuilds the list items from the current profiles.

@@ -42,3 +42,7 @@ app.log
 emqutiti
 goemqutiti
 
+# generated files
+docs/*.cast
+docs/*.gif
+

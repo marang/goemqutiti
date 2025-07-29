@@ -9,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/history"
 )
 
 type statusMessage string
@@ -103,7 +102,7 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	m.history.list.SetItems(items)
 	m.history.list.Select(len(items) - 1)
 	if m.history.store != nil {
-		m.history.store.Add(history.Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
+		m.history.store.Add(Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
 	}
 }
 
@@ -188,7 +187,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if m.history.store != nil {
 				m.history.store.Close()
 			}
-			if idx, err := history.Open(msg.profile.Name); err == nil {
+			if idx, err := openHistoryStore(msg.profile.Name); err == nil {
 				m.history.store = idx
 				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 				m.history.items = nil

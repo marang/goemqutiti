@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/history"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -170,7 +169,7 @@ func initialModel(conns *Connections) *model {
 	m.history.list.SetDelegate(hDel)
 	traceDel.m = m
 	m.traces.view.SetDelegate(traceDel)
-	if idx, err := history.Open(""); err == nil {
+	if idx, err := openHistoryStore(""); err == nil {
 		m.history.store = idx
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 		items := make([]list.Item, len(msgs))

@@ -9,7 +9,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/marang/goemqutiti/history"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -407,7 +406,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 
 	if m.history.list.FilterState() == list.Filtering {
 		q := m.history.list.FilterInput.Value()
-		topics, start, end, text := history.ParseQuery(q)
+		topics, start, end, text := parseHistoryQuery(q)
 		msgs := m.history.store.Search(topics, start, end, text)
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {

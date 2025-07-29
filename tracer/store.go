@@ -4,16 +4,31 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/marang/goemqutiti/history"
 )
+
+func dataDir(profile string) string {
+	if profile == "" {
+		profile = "default"
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join("data", profile)
+	}
+	return filepath.Join(home, ".emqutiti", "data", profile)
+}
+
+func traceDir(profile string) string {
+	return filepath.Join(dataDir(profile), "traces")
+}
 
 func openTraceDB(profile string, readonly bool) (*badger.DB, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := history.TraceDir(profile)
+	path := traceDir(profile)
 	os.MkdirAll(path, 0755)
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	if readonly {
@@ -23,7 +38,7 @@ func openTraceDB(profile string, readonly bool) (*badger.DB, error) {
 }
 
 // Add stores a trace message under the given key.
-func Add(profile, key string, msg history.Message) error {
+func Add(profile, key string, msg Message) error {
 	db, err := openTraceDB(profile, false)
 	if err != nil {
 		return err
@@ -38,7 +53,7 @@ func Add(profile, key string, msg history.Message) error {
 }
 
 // Messages returns all messages stored for the given trace key.
-func Messages(profile, key string) ([]history.Message, error) {
+func Messages(profile, key string) ([]Message, error) {
 	db, err := openTraceDB(profile, true)
 	if err != nil {
 		return nil, err
@@ -46,14 +61,14 @@ func Messages(profile, key string) ([]history.Message, error) {
 	defer db.Close()
 
 	prefix := []byte(fmt.Sprintf("trace/%s/", key))
-	var msgs []history.Message
+	var msgs []Message
 	err = db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
 			item := it.Item()
 			if err := item.Value(func(val []byte) error {
-				var m history.Message
+				var m Message
 				if err := json.Unmarshal(val, &m); err != nil {
 					return err
 				}

@@ -10,4 +10,38 @@ ENV PATH=/root/.cargo/bin:$PATH
 WORKDIR /app
 COPY . .
 RUN go build -o goemqutiti .
+RUN mkdir -p /root/.emqutiti \
+ && cat <<'EOF' >/root/.emqutiti/config.toml
+default_profile = "HiveMQ"
+
+[[profiles]]
+  name = "HiveMQ"
+  schema = "tcp"
+  host = "broker.hivemq.com"
+  port = 1883
+  client_id = "goemqutiti-client"
+  username = ""
+  password = ""
+  from_env = false
+  ssl_tls = true
+  mqtt_version = "3"
+  connect_timeout = 0
+  keep_alive = 0
+  qos = 0
+  auto_reconnect = false
+  reconnect_period = 0
+  clean_start = false
+  session_expiry_interval = 0
+  receive_maximum = 0
+  maximum_packet_size = 0
+  topic_alias_maximum = 0
+  request_response_info = true
+  request_problem_info = false
+  last_will_enabled = false
+  last_will_topic = ""
+  last_will_qos = 0
+  last_will_retain = false
+  last_will_payload = ""
+  random_id_suffix = true
+EOF
 ENTRYPOINT ["bash"]

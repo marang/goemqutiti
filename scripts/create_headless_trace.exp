@@ -1,4 +1,4 @@
-spawn ./goemqutiti --trace demo --topics "sensors/#" -p local
+spawn ./goemqutiti --trace demo --topics "sensors/#" -p HiveMQ
 sleep 1
 send \u0003
 expect eof

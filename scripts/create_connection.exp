@@ -1,4 +1,4 @@
-spawn ./goemqutiti
+spawn ./goemqutiti -p HiveMQ
 # wait for UI to initialize
 sleep 1
 # open broker manager

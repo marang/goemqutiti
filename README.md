@@ -106,12 +106,13 @@ All `Ctrl` shortcuts are global, so they work even when an input field is active
 
 ### Importing from CSV or XLS
 
-Run the program with `--import` (or `-i`) to launch an interactive wizard that guides you
-through selecting a file, mapping column names, defining the topic template and
-publishing the messages. During the mapping step each CSV column appears on the
-left with an editable field on the right so you can rename it for the JSON
-payload. Leaving a mapping blank keeps the original column name. Providing a
-path pre-selects the file in the wizard:
+The importer now lives in the main package, so use the same `emqutiti` binary to
+launch it. Run the program with `--import` (or `-i`) to start an interactive
+wizard that guides you through selecting a file, mapping column names, defining
+the topic template and publishing the messages. During the mapping step each CSV
+column appears on the left with an editable field on the right so you can rename
+it for the JSON payload. Leaving a mapping blank keeps the original column name.
+Providing a path pre-selects the file in the wizard:
 
 ```bash
 ./emqutiti -i data.csv -p local

@@ -80,4 +80,5 @@ This document tracks the tasks and goals for developing the GoEmqutiti MQTT clie
 - Regularly update this TODO list as tasks are completed or new requirements emerge.
 - Keep the documentation in `README.md`, `TODO.md`, and `AGENTS.md` aligned with the current implementation.
 - Ensure `Ctrl+D` quits the TUI from every screen.
+- The importer code is part of the main package and runs via the `--import`/`-i` flag.
 

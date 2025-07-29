@@ -22,7 +22,7 @@ go install github.com/marang/goemqutiti@latest
 ```
 
 Clone and `go build` if you prefer working from source. Arch users can simply
-install it from the AUR using `pacman -S goemqutiti` (or your favorite helper).
+install it from the AUR using `pacman -S emqutiti` (or your favorite helper).
 
 ## Usage
 

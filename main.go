@@ -11,7 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/goemqutiti/config"
-	"github.com/marang/goemqutiti/importer"
 	"github.com/marang/goemqutiti/tracer"
 )
 
@@ -174,7 +173,7 @@ func runImport(path, profile string) {
 	}
 	defer client.Disconnect()
 
-	w := importer.NewWizard(client, path)
+	w := NewWizard(client, path)
 	prog := tea.NewProgram(w, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		fmt.Println("import error:", err)

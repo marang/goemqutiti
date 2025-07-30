@@ -26,6 +26,14 @@ const (
 	idHelp        = "help"         // help icon
 )
 
+// defaultFocusOrder contains all known focusable elements. Views filter this
+// list based on what they render so new elements automatically participate in
+// tab order without extra bookkeeping.
+var defaultFocusOrder = []string{
+	idTopics, idTopic, idMessage, idHistory,
+	idConnList, idTopicList, idPayloadList, idHelp,
+}
+
 type connectionItem struct {
 	title  string
 	status string
@@ -60,13 +68,6 @@ type payloadItem struct{ topic, payload string }
 func (p payloadItem) FilterValue() string { return p.topic }
 func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
-
-var (
-	focusClient      = []string{idTopics, idTopic, idMessage, idHistory, idHelp}
-	focusConnections = []string{idConnList, idHelp}
-	focusTopics      = []string{idTopicList, idHelp}
-	focusPayloads    = []string{idPayloadList, idHelp}
-)
 
 type chipBound struct {
 	xPos, yPos    int

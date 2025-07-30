@@ -65,17 +65,24 @@ func (m *model) refreshConnectionItems() {
 // setMode updates the current mode and focus order.
 func (m *model) setMode(mode appMode) {
 	m.ui.mode = mode
-	switch mode {
-	case modeClient:
-		m.ui.focusOrder = focusClient
-	case modeConnections:
-		m.ui.focusOrder = focusConnections
-	case modeTopics:
-		m.ui.focusOrder = focusTopics
-	case modePayloads:
-		m.ui.focusOrder = focusPayloads
-	default:
+	m.ui.focusIndex = 0
+	if mode == modeHelp {
+		m.ui.focusOrder = []string{idHelp}
+	} else {
+		m.ui.focusOrder = defaultFocusOrder
+	}
+}
+
+// computeFocusOrder filters the default focus list based on elements present in
+// the current view.
+func (m *model) computeFocusOrder() {
+	m.ui.focusOrder = m.ui.focusOrder[:0]
+	for _, id := range defaultFocusOrder {
+		if _, ok := m.ui.elemPos[id]; ok {
+			m.ui.focusOrder = append(m.ui.focusOrder, id)
+		}
+	}
+	if len(m.ui.focusOrder) == 0 {
 		m.ui.focusOrder = []string{idHelp}
 	}
-	m.ui.focusIndex = 0
 }

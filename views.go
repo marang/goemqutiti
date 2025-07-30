@@ -16,6 +16,7 @@ func (m model) overlayHelp(view string) string {
 		help = ui.HelpFocused.Render("?")
 	}
 	m.ui.elemPos[idHelp] = 0
+	m.computeFocusOrder()
 	lines := strings.Split(view, "\n")
 	if len(lines) == 0 {
 		return help
@@ -64,6 +65,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
+	m.ui.elemPos = map[string]int{}
 	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
 	if m.mqttClient != nil {
@@ -192,6 +194,7 @@ func (m *model) viewClient() string {
 
 // viewConnections shows the list of saved broker profiles.
 func (m model) viewConnections() string {
+	m.ui.elemPos = map[string]int{}
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -201,6 +204,7 @@ func (m model) viewConnections() string {
 
 // viewForm renders the add/edit broker form alongside the list.
 func (m model) viewForm() string {
+	m.ui.elemPos = map[string]int{}
 	if m.connections.form == nil {
 		return ""
 	}
@@ -215,6 +219,7 @@ func (m model) viewForm() string {
 
 // viewConfirmDelete displays a confirmation dialog.
 func (m model) viewConfirmDelete() string {
+	m.ui.elemPos = map[string]int{}
 	content := m.confirmPrompt
 	if m.confirmInfo != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
@@ -225,6 +230,7 @@ func (m model) viewConfirmDelete() string {
 
 // viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
+	m.ui.elemPos = map[string]int{}
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -234,6 +240,7 @@ func (m model) viewTopics() string {
 
 // viewPayloads shows stored payloads for reuse.
 func (m model) viewPayloads() string {
+	m.ui.elemPos = map[string]int{}
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -243,6 +250,7 @@ func (m model) viewPayloads() string {
 
 // viewTraces lists configured traces and their state.
 func (m model) viewTraces() string {
+	m.ui.elemPos = map[string]int{}
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -252,6 +260,7 @@ func (m model) viewTraces() string {
 
 // viewTraceForm renders the form for new traces.
 func (m model) viewTraceForm() string {
+	m.ui.elemPos = map[string]int{}
 	content := m.traces.form.View()
 	view := ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
 	return m.overlayHelp(view)
@@ -259,6 +268,7 @@ func (m model) viewTraceForm() string {
 
 // viewTraceMessages shows captured messages for a trace.
 func (m model) viewTraceMessages() string {
+	m.ui.elemPos = map[string]int{}
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	listLines := strings.Split(m.traces.view.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
@@ -278,6 +288,7 @@ func (m model) viewTraceMessages() string {
 
 // viewImporter renders the importer wizard view.
 func (m model) viewImporter() string {
+	m.ui.elemPos = map[string]int{}
 	if m.importWizard == nil {
 		return ""
 	}
@@ -285,6 +296,7 @@ func (m model) viewImporter() string {
 }
 
 func (m model) viewHelp() string {
+	m.ui.elemPos = map[string]int{}
 	m.help.vp.SetContent(helpText)
 	content := m.help.vp.View()
 	sp := -1.0

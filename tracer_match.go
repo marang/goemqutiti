@@ -2,7 +2,7 @@ package main
 
 import "strings"
 
-// Match reports whether the topic matches the MQTT subscription filter.
+// tracerMatch reports whether the topic matches the MQTT subscription filter.
 func tracerMatch(filter, topic string) bool {
 	fp := strings.Split(filter, "/")
 	tp := strings.Split(topic, "/")

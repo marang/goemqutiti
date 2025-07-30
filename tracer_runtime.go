@@ -36,7 +36,7 @@ type Tracer struct {
 	done    chan struct{}
 }
 
-// New creates a new Tracer with the given config.
+// newTracer creates a new Tracer with the given config.
 func newTracer(cfg TracerConfig, c Client) *Tracer {
 	return &Tracer{cfg: cfg, client: c}
 }

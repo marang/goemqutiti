@@ -400,9 +400,15 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 			i := m.topics.list.Index()
 			if i >= 0 && i < len(m.topics.items) {
 				m.toggleTopic(i)
-				items := m.topics.list.Items()
-				items[i] = m.topics.items[i]
+				// Rebuild the list after sorting to keep
+				// indices in sync with the underlying data.
+				items := make([]list.Item, len(m.topics.items))
+				for j, t := range m.topics.items {
+					items[j] = t
+				}
+				m.topics.selected = i
 				m.topics.list.SetItems(items)
+				m.topics.list.Select(i)
 			}
 		}
 	}

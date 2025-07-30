@@ -16,10 +16,6 @@ func (m *model) overlayHelp(view string) string {
 		help = ui.HelpFocused.Render("?")
 	}
 	m.ui.elemPos[idHelp] = 0
-	m.computeFocusOrder()
-	if m.ui.focusIndex >= len(m.ui.focusOrder) {
-		m.ui.focusIndex = 0
-	}
 	lines := strings.Split(view, "\n")
 	if len(lines) == 0 {
 		return help

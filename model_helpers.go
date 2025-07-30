@@ -1,6 +1,9 @@
 package main
 
-import "github.com/charmbracelet/bubbles/list"
+import (
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 // topicAtPosition returns the index of the topic chip located at the
 // provided coordinates, or -1 if none exists.
@@ -36,7 +39,7 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmInfo = info
 	m.confirmAction = action
 	m.ui.prevMode = m.ui.mode
-	m.setMode(modeConfirmDelete)
+	_ = m.setMode(modeConfirmDelete)
 }
 
 // subscribeActiveTopics subscribes the MQTT client to all currently active topics.
@@ -63,32 +66,21 @@ func (m *model) refreshConnectionItems() {
 }
 
 // setMode updates the current mode and focus order.
-func (m *model) setMode(mode appMode) {
-	if m.ui.mode == modeHelp && mode != modeHelp {
-		m.help.Blur()
-	}
-	m.ui.mode = mode
-	m.ui.focusIndex = 0
-	if mode == modeHelp {
-		m.ui.focusOrder = []string{idHelp}
-		m.help.Focus()
-	}
-}
-
-// computeFocusOrder filters the default focus list based on elements present in
-// the current view.
-func (m *model) computeFocusOrder() {
-	focus := make([]string, 0, len(defaultFocusOrder))
-	for _, id := range defaultFocusOrder {
-		if _, ok := m.ui.elemPos[id]; ok {
-			focus = append(focus, id)
+func (m *model) setMode(mode appMode) tea.Cmd {
+	if len(m.ui.focusOrder) > 0 {
+		if f, ok := m.focusMap[m.ui.focusOrder[m.ui.focusIndex]]; ok && f != nil {
+			f.Blur()
 		}
 	}
-	if len(focus) == 0 {
-		focus = []string{idHelp}
+	m.ui.mode = mode
+	order, ok := focusByMode[mode]
+	if !ok || len(order) == 0 {
+		order = []string{idHelp}
 	}
-	if m.ui.focusIndex >= len(focus) {
-		m.ui.focusIndex = 0
+	m.ui.focusOrder = append([]string(nil), order...)
+	m.ui.focusIndex = 0
+	if f, ok := m.focusMap[m.ui.focusOrder[0]]; ok && f != nil {
+		return f.Focus()
 	}
-	m.ui.focusOrder = focus
+	return nil
 }

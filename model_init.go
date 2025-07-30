@@ -94,7 +94,7 @@ func initialModel(conns *Connections) *model {
 	traceView.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
-	order := append([]string(nil), defaultFocusOrder...)
+	order := append([]string(nil), focusByMode[modeClient]...)
 	saved := loadState()
 	tracesCfg := loadTraces()
 	var traceItems []list.Item

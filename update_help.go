@@ -9,8 +9,8 @@ func (m model) updateHelp(msg tea.Msg) (model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch t.String() {
 		case "esc":
-			m.setMode(m.ui.prevMode)
-			return m, nil
+			cmd := m.setMode(m.ui.prevMode)
+			return m, cmd
 		case "ctrl+d":
 			return m, tea.Quit
 		}

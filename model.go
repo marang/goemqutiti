@@ -27,12 +27,20 @@ const (
 	idHelp        = "help"         // help icon
 )
 
-// defaultFocusOrder contains all known focusable elements. Views filter this
-// list based on what they render so new elements automatically participate in
-// tab order without extra bookkeeping.
-var defaultFocusOrder = []string{
-	idTopics, idTopic, idMessage, idHistory,
-	idConnList, idTopicList, idPayloadList, idTraceList, idHelp,
+// focusByMode lists focusable elements for each view. The first element is
+// focused when switching to the corresponding mode.
+var focusByMode = map[appMode][]string{
+	modeClient:         {idTopics, idTopic, idMessage, idHistory, idHelp},
+	modeConnections:    {idConnList, idHelp},
+	modeEditConnection: {idConnList, idHelp},
+	modeConfirmDelete:  {idHelp},
+	modeTopics:         {idTopicList, idHelp},
+	modePayloads:       {idPayloadList, idHelp},
+	modeTracer:         {idTraceList, idHelp},
+	modeEditTrace:      {idHelp},
+	modeViewTrace:      {idHelp},
+	modeImporter:       {idHelp},
+	modeHelp:           {idHelp},
 }
 
 type connectionItem struct {

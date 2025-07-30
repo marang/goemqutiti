@@ -120,5 +120,5 @@ func (m *model) loadTraceMessages(index int) {
 	m.traces.view.SetItems(items)
 	m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
 	m.traces.viewKey = it.key
-	m.setMode(modeViewTrace)
+	_ = m.setMode(modeViewTrace)
 }

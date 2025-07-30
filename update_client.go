@@ -268,7 +268,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.refreshConnectionItems()
 			m.saveCurrent()
 			m.savePlannedTraces()
-			m.setMode(modeConnections)
+			cmds = append(cmds, m.setMode(modeConnections))
 		case "ctrl+t":
 			items := []list.Item{}
 			for _, tpc := range m.topics.items {
@@ -277,7 +277,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.topics.list.DisableQuitKeybindings()
 			m.topics.list.SetShowTitle(false)
-			m.setMode(modeTopics)
+			cmds = append(cmds, m.setMode(modeTopics))
 		case "ctrl+p":
 			items := []list.Item{}
 			for _, pld := range m.message.payloads {
@@ -286,10 +286,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.message.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.message.list.DisableQuitKeybindings()
 			m.message.list.SetShowTitle(false)
-			m.setMode(modePayloads)
+			cmds = append(cmds, m.setMode(modePayloads))
 		case "ctrl+r":
 			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
-			m.setMode(modeTracer)
+			cmds = append(cmds, m.setMode(modeTracer))
 		}
 	}
 	if len(cmds) == 0 {

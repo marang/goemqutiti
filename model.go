@@ -16,11 +16,14 @@ import (
 )
 
 const (
-	idTopics  = "topics"  // topics chip list
-	idTopic   = "topic"   // topic input box
-	idMessage = "message" // message input box
-	idHistory = "history" // history list
-	idHelp    = "help"    // help icon
+	idTopics      = "topics"       // topics chip list
+	idTopic       = "topic"        // topic input box
+	idMessage     = "message"      // message input box
+	idHistory     = "history"      // history list
+	idConnList    = "conn-list"    // broker list
+	idTopicList   = "topic-list"   // topics manager list
+	idPayloadList = "payload-list" // payload manager list
+	idHelp        = "help"         // help icon
 )
 
 type connectionItem struct {
@@ -58,7 +61,12 @@ func (p payloadItem) FilterValue() string { return p.topic }
 func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
-var defaultFocusOrder = []string{idTopics, idTopic, idMessage, idHistory, idHelp}
+var (
+	focusClient      = []string{idTopics, idTopic, idMessage, idHistory, idHelp}
+	focusConnections = []string{idConnList, idHelp}
+	focusTopics      = []string{idTopicList, idHelp}
+	focusPayloads    = []string{idPayloadList, idHelp}
+)
 
 type chipBound struct {
 	xPos, yPos    int

@@ -494,6 +494,27 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
 	case tea.KeyMsg:
+		switch msg.String() {
+		case "tab", "shift+tab":
+			if len(m.ui.focusOrder) > 0 {
+				step := 1
+				if msg.String() == "shift+tab" {
+					step = -1
+				}
+				next := (m.ui.focusIndex + step + len(m.ui.focusOrder)) % len(m.ui.focusOrder)
+				id := m.ui.focusOrder[next]
+				cmd := m.setFocus(id)
+				if id == idTopics {
+					if len(m.topics.items) > 0 {
+						m.topics.selected = 0
+						m.ensureTopicVisible()
+					} else {
+						m.topics.selected = -1
+					}
+				}
+				return m, cmd
+			}
+		}
 		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 			m.ui.focusOrder[m.ui.focusIndex] == idHelp {
 			m.ui.prevMode = m.ui.mode

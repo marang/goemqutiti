@@ -17,10 +17,16 @@ import (
 // selected entries.
 type historyDelegate struct{ m *model }
 
-func (d historyDelegate) Height() int                               { return 2 }
-func (d historyDelegate) Spacing() int                              { return 0 }
+// Height returns the fixed height for history entries.
+func (d historyDelegate) Height() int { return 2 }
+
+// Spacing returns the row spacing for history entries.
+func (d historyDelegate) Spacing() int { return 0 }
+
+// Update performs no update and returns nil.
 func (d historyDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
+// Render prints a history item with its label and payload.
 func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	hi := item.(historyItem)
 	width := m.Width()

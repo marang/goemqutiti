@@ -10,10 +10,10 @@ import (
 func TestDeleteTopic(t *testing.T) {
 	m := initialModel(nil)
 	m.topics.items = []topicItem{{title: "a", active: true}, {title: "b", active: false}}
-	m.setFocus("topics")
+	m.setFocus(idTopics)
 	m.topics.selected = 0
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	if cmd == nil || m.ui.mode != modeConfirmDelete {
+	if cmd == nil || m.currentMode() != modeConfirmDelete {
 		t.Fatalf("expected confirm delete mode")
 	}
 	if m.confirmAction == nil {

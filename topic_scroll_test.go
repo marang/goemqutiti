@@ -17,7 +17,7 @@ func TestTopicsScrollDown(t *testing.T) {
 	if m.topics.vp.YOffset != 0 {
 		t.Fatalf("expected initial scroll 0")
 	}
-	m.setFocus("topics")
+	m.setFocus(idTopics)
 	_, _ = m.Update(tea.KeyMsg{Type: tea.KeyDown})
 	rowH := lipgloss.Height(ui.ChipStyle.Render("t"))
 	if m.topics.vp.YOffset != rowH {
@@ -31,7 +31,7 @@ func TestTopicSelectionScroll(t *testing.T) {
 	setupManyTopics(m, 10)
 	m.layout.topics.height = 2
 	m.viewClient()
-	m.setFocus("topics")
+	m.setFocus(idTopics)
 	m.topics.selected = 0
 	// Move selection to the 9th item which resides on the third row
 	for i := 0; i < 8; i++ {

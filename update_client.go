@@ -121,7 +121,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.mqttClient = nil
 		}
 	case "space":
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			idx := m.history.list.Index()
 			if idx >= 0 {
 				if _, ok := m.history.selected[idx]; ok {
@@ -133,7 +133,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+up":
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				m.history.selected[m.history.selectionAnchor] = struct{}{}
@@ -145,7 +145,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+down":
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				m.history.selected[m.history.selectionAnchor] = struct{}{}
@@ -165,7 +165,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			next := (m.ui.focusIndex + step + len(m.ui.focusOrder)) % len(m.ui.focusOrder)
 			id := m.ui.focusOrder[next]
 			cmds = append(cmds, m.setFocus(id))
-			if id == "topics" {
+			if id == idTopics {
 				if len(m.topics.items) > 0 {
 					m.topics.selected = 0
 					m.ensureTopicVisible()
@@ -175,47 +175,47 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "left":
-		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
 			m.ensureTopicVisible()
 		}
 	case "right":
-		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && len(m.topics.items) > 0 {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
 			m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
 			m.ensureTopicVisible()
 		}
 	case "ctrl+shift+up":
 		id := m.ui.focusOrder[m.ui.focusIndex]
-		if id == "message" {
+		if id == idMessage {
 			if m.layout.message.height > 1 {
 				m.layout.message.height--
 				m.message.input.SetHeight(m.layout.message.height)
 			}
-		} else if id == "history" {
+		} else if id == idHistory {
 			if m.layout.history.height > 1 {
 				m.layout.history.height--
 				m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
 			}
-		} else if id == "topics" {
+		} else if id == idTopics {
 			if m.layout.topics.height > 1 {
 				m.layout.topics.height--
 			}
 		}
 	case "ctrl+shift+down":
 		id := m.ui.focusOrder[m.ui.focusIndex]
-		if id == "message" {
+		if id == idMessage {
 			m.layout.message.height++
 			m.message.input.SetHeight(m.layout.message.height)
-		} else if id == "history" {
+		} else if id == idHistory {
 			m.layout.history.height++
 			m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
-		} else if id == "topics" {
+		} else if id == idTopics {
 			m.layout.topics.height++
 		}
 	case "up", "down":
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			// keep current selection and anchor
-		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
 			delta := -1
 			if msg.String() == "down" {
 				delta = 1
@@ -223,7 +223,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.scrollTopics(delta)
 		}
 	case "ctrl+s", "ctrl+enter":
-		if m.ui.focusOrder[m.ui.focusIndex] == "message" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
 			payload := m.message.input.Value()
 			for _, t := range m.topics.items {
 				if t.active {
@@ -236,7 +236,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "enter":
-		if m.ui.focusOrder[m.ui.focusIndex] == "topic" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopic {
 			topic := strings.TrimSpace(m.topics.input.Value())
 			if topic != "" && !m.hasTopic(topic) {
 				m.topics.items = append(m.topics.items, topicItem{title: topic, active: true})
@@ -247,12 +247,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 				m.topics.input.SetValue("")
 			}
-		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			m.toggleTopic(m.topics.selected)
 			m.ensureTopicVisible()
 		}
 	case "d":
-		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			idx := m.topics.selected
 			name := m.topics.items[idx].title
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
@@ -268,7 +268,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.refreshConnectionItems()
 			m.saveCurrent()
 			m.savePlannedTraces()
-			m.ui.mode = modeConnections
+			cmds = append(cmds, m.setMode(modeConnections))
 		case "ctrl+t":
 			items := []list.Item{}
 			for _, tpc := range m.topics.items {
@@ -277,7 +277,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.topics.list.DisableQuitKeybindings()
 			m.topics.list.SetShowTitle(false)
-			m.ui.mode = modeTopics
+			cmds = append(cmds, m.setMode(modeTopics))
 		case "ctrl+p":
 			items := []list.Item{}
 			for _, pld := range m.message.payloads {
@@ -286,10 +286,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.message.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
 			m.message.list.DisableQuitKeybindings()
 			m.message.list.SetShowTitle(false)
-			m.ui.mode = modePayloads
+			cmds = append(cmds, m.setMode(modePayloads))
 		case "ctrl+r":
 			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
-			m.ui.mode = modeTracer
+			cmds = append(cmds, m.setMode(modeTracer))
 		}
 	}
 	if len(cmds) == 0 {
@@ -302,11 +302,11 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
-		} else if m.ui.focusOrder[m.ui.focusIndex] == "topics" {
+		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
 			delta := -1
 			if msg.Button == tea.MouseButtonWheelDown {
 				delta = 1
@@ -317,7 +317,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
-		if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			idx := m.historyIndexAt(msg.Y)
 			if idx >= 0 {
 				m.history.list.Select(idx)
@@ -391,7 +391,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	cmds = append(cmds, cmdMsg)
 	var vpCmd tea.Cmd
 	skipVP := false
-	if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 		switch mt := msg.(type) {
 		case tea.KeyMsg:
 			s := mt.String()
@@ -410,7 +410,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	}
 
 	var histCmd tea.Cmd
-	if m.ui.focusOrder[m.ui.focusIndex] == "history" {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 		m.history.list, histCmd = m.history.list.Update(msg)
 		cmds = append(cmds, histCmd)
 	}

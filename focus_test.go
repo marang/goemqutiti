@@ -12,7 +12,7 @@ func TestSetFocusMessage(t *testing.T) {
 	if m.message.input.Focused() {
 		t.Fatalf("message input should start blurred")
 	}
-	cmd := m.setFocus("message")
+	cmd := m.setFocus(idMessage)
 	if !m.message.input.Focused() {
 		t.Fatalf("message input not focused after setFocus")
 	}

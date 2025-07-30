@@ -15,6 +15,34 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	idTopics      = "topics"       // topics chip list
+	idTopic       = "topic"        // topic input box
+	idMessage     = "message"      // message input box
+	idHistory     = "history"      // history list
+	idConnList    = "conn-list"    // broker list
+	idTopicList   = "topic-list"   // topics manager list
+	idPayloadList = "payload-list" // payload manager list
+	idTraceList   = "trace-list"   // traces manager list
+	idHelp        = "help"         // help icon
+)
+
+// focusByMode lists focusable elements for each view. The first element is
+// focused when switching to the corresponding mode.
+var focusByMode = map[appMode][]string{
+	modeClient:         {idTopics, idTopic, idMessage, idHistory, idHelp},
+	modeConnections:    {idConnList, idHelp},
+	modeEditConnection: {idConnList, idHelp},
+	modeConfirmDelete:  {idHelp},
+	modeTopics:         {idTopicList, idHelp},
+	modePayloads:       {idPayloadList, idHelp},
+	modeTracer:         {idTraceList, idHelp},
+	modeEditTrace:      {idHelp},
+	modeViewTrace:      {idHelp},
+	modeImporter:       {idHelp},
+	modeHelp:           {idHelp},
+}
+
 type connectionItem struct {
 	title  string
 	status string
@@ -225,8 +253,7 @@ func (h *helpState) Blur() { h.focused = false }
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int            // index of the currently focused element
-	mode       appMode        // current application mode
-	prevMode   appMode        // mode prior to confirmations
+	modeStack  []appMode      // mode stack, index 0 is current
 	width      int            // terminal width
 	height     int            // terminal height
 	viewport   viewport.Model // scrolling container for the main view

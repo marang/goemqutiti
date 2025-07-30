@@ -10,12 +10,12 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
-func (m model) overlayHelp(view string) string {
+func (m *model) overlayHelp(view string) string {
 	help := ui.HelpStyle.Render("?")
 	if m.help.focused {
 		help = ui.HelpFocused.Render("?")
 	}
-	m.ui.elemPos["help"] = 0
+	m.ui.elemPos[idHelp] = 0
 	lines := strings.Split(view, "\n")
 	if len(lines) == 0 {
 		return help
@@ -64,6 +64,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
+	m.ui.elemPos = map[string]int{}
 	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
 	if m.mqttClient != nil {
@@ -86,15 +87,15 @@ func (m *model) viewClient() string {
 		if !t.active {
 			st = ui.ChipInactive
 		}
-		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && i == m.topics.selected {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.selected {
 			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == "topics"
-	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == "topic"
-	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == "message"
-	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == "history"
+	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
+	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopic
+	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == idMessage
+	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == idHistory
 
 	chipRows, bounds := layoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
@@ -165,16 +166,16 @@ func (m *model) viewClient() string {
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
 	y := 1
-	m.ui.elemPos["topics"] = y
+	m.ui.elemPos[idTopics] = y
 	y += lipgloss.Height(topicsBox)
-	m.ui.elemPos["topic"] = y
+	m.ui.elemPos[idTopic] = y
 	y += lipgloss.Height(topicBox)
-	m.ui.elemPos["message"] = y
+	m.ui.elemPos[idMessage] = y
 	y += lipgloss.Height(messageBox)
-	m.ui.elemPos["history"] = y
+	m.ui.elemPos[idHistory] = y
 
 	startX := 2
-	startY := m.ui.elemPos["topics"] + 1
+	startY := m.ui.elemPos[idTopics] + 1
 	m.topics.chipBounds = make([]chipBound, len(bounds))
 	for i, b := range bounds {
 		m.topics.chipBounds[i] = chipBound{xPos: startX + b.xPos, yPos: startY + b.yPos, width: b.width, height: b.height}
@@ -192,6 +193,8 @@ func (m *model) viewClient() string {
 
 // viewConnections shows the list of saved broker profiles.
 func (m model) viewConnections() string {
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idConnList] = 1
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -201,6 +204,8 @@ func (m model) viewConnections() string {
 
 // viewForm renders the add/edit broker form alongside the list.
 func (m model) viewForm() string {
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idConnList] = 1
 	if m.connections.form == nil {
 		return ""
 	}
@@ -215,6 +220,7 @@ func (m model) viewForm() string {
 
 // viewConfirmDelete displays a confirmation dialog.
 func (m model) viewConfirmDelete() string {
+	m.ui.elemPos = map[string]int{}
 	content := m.confirmPrompt
 	if m.confirmInfo != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
@@ -225,6 +231,8 @@ func (m model) viewConfirmDelete() string {
 
 // viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idTopicList] = 1
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -234,6 +242,8 @@ func (m model) viewTopics() string {
 
 // viewPayloads shows stored payloads for reuse.
 func (m model) viewPayloads() string {
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idPayloadList] = 1
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -243,6 +253,8 @@ func (m model) viewPayloads() string {
 
 // viewTraces lists configured traces and their state.
 func (m model) viewTraces() string {
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idTraceList] = 1
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -252,6 +264,7 @@ func (m model) viewTraces() string {
 
 // viewTraceForm renders the form for new traces.
 func (m model) viewTraceForm() string {
+	m.ui.elemPos = map[string]int{}
 	content := m.traces.form.View()
 	view := ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
 	return m.overlayHelp(view)
@@ -259,6 +272,7 @@ func (m model) viewTraceForm() string {
 
 // viewTraceMessages shows captured messages for a trace.
 func (m model) viewTraceMessages() string {
+	m.ui.elemPos = map[string]int{}
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	listLines := strings.Split(m.traces.view.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
@@ -278,6 +292,7 @@ func (m model) viewTraceMessages() string {
 
 // viewImporter renders the importer wizard view.
 func (m model) viewImporter() string {
+	m.ui.elemPos = map[string]int{}
 	if m.importWizard == nil {
 		return ""
 	}
@@ -285,6 +300,7 @@ func (m model) viewImporter() string {
 }
 
 func (m model) viewHelp() string {
+	m.ui.elemPos = map[string]int{}
 	m.help.vp.SetContent(helpText)
 	content := m.help.vp.View()
 	sp := -1.0
@@ -297,7 +313,7 @@ func (m model) viewHelp() string {
 
 // View renders the application UI based on the current mode.
 func (m *model) View() string {
-	switch m.ui.mode {
+	switch m.currentMode() {
 	case modeClient:
 		return m.viewClient()
 	case modeConnections:

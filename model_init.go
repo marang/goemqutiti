@@ -94,7 +94,7 @@ func initialModel(conns *Connections) *model {
 	traceView.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
-	order := []string{"topics", "topic", "message", "history", "help"}
+	order := append([]string(nil), focusByMode[modeClient]...)
 	saved := loadState()
 	tracesCfg := loadTraces()
 	var traceItems []list.Item
@@ -152,8 +152,7 @@ func initialModel(conns *Connections) *model {
 		},
 		ui: uiState{
 			focusIndex: 0,
-			mode:       modeClient,
-			prevMode:   modeClient,
+			modeStack:  []appMode{modeClient},
 			width:      0,
 			height:     0,
 			viewport:   vp,
@@ -168,9 +167,9 @@ func initialModel(conns *Connections) *model {
 		},
 	}
 	m.focusMap = map[string]focusable{
-		"topic":   &m.topics.input,
-		"message": &m.message.input,
-		"help":    &m.help,
+		idTopic:   &m.topics.input,
+		idMessage: &m.message.input,
+		idHelp:    &m.help,
 	}
 	hDel.m = m
 	m.history.list.SetDelegate(hDel)
@@ -218,7 +217,7 @@ func initialModel(conns *Connections) *model {
 				m.mqttClient = client
 				m.connections.active = cfg.Name
 				m.importWizard = NewImportWizard(client, importFile)
-				m.ui.mode = modeImporter
+				m.setMode(modeImporter)
 			} else {
 				fmt.Println("connect error:", err)
 			}

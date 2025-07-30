@@ -28,11 +28,18 @@ Press `Ctrl+D` from any screen to exit the program.
 - Present keyboard shortcuts consistently across views and ensure they behave the same everywhere.
 - Keep functions small and comment any exported ones for clarity.
 
+### Form Utilities
+- `formutil.go` centralizes shared form behavior.
+- Embed the `Form` type to manage focus with `CycleFocus` and `ApplyFocus`.
+- `newTextField`, `newSelectField`, and `newCheckField` build common inputs.
+- These helpers optionally call `setReadOnly` when values come from the environment.
+- New UI code should reuse this logic instead of writing custom forms.
+
 ## Test Info
 `ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
 
 ## Maintenance
-Keep `README.md`, `TODO.md`, and `AGENTS.md` in sync when changes are made to the project or development workflow.
+Keep `README.md`, `TODO.md`, `AGENTS.md`, and `docs/help.md` in sync when changes are made to the project or development workflow.
 
 ## Dependencies
 When adding or updating third-party packages, always consult the latest
@@ -47,5 +54,5 @@ changes.
 - Record TUI demos with `asciinema` and keep the `.cast` files under `docs/`.
 - Generate GIF previews locally using `asciinema-agg` but do not commit them.
 - Run `agg docs/demo.cast docs/demo.gif` to regenerate previews when needed.
-- Use the `Dockerfile.cast` image if you do not want asciinema on your host.
-  Run it with `-it` so the TUI has a TTY.
+- Example `.exp` scripts in `docs/scripts/` automate recording.
+- See the README for using `Dockerfile.cast` if you prefer not to install asciinema.

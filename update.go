@@ -493,6 +493,13 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
+	case tea.KeyMsg:
+		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
+			m.ui.focusOrder[m.ui.focusIndex] == "help" {
+			m.ui.prevMode = m.ui.mode
+			m.ui.mode = modeHelp
+			return m, nil
+		}
 	}
 
 	switch m.ui.mode {

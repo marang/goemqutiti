@@ -16,7 +16,7 @@ func (m *model) topicAtPosition(x, y int) int {
 
 // historyIndexAt converts a Y coordinate into an index within the history list.
 func (m *model) historyIndexAt(y int) int {
-	rel := y - (m.ui.elemPos["history"] + 1) + m.ui.viewport.YOffset
+	rel := y - (m.ui.elemPos[idHistory] + 1) + m.ui.viewport.YOffset
 	if rel < 0 {
 		return -1
 	}

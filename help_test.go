@@ -9,8 +9,8 @@ import (
 // Test that pressing enter with the help icon focused opens the help view.
 func TestEnterOpensHelp(t *testing.T) {
 	m := initialModel(nil)
-	m.setFocus("help")
-	if m.ui.focusOrder[m.ui.focusIndex] != "help" {
+	m.setFocus(idHelp)
+	if m.ui.focusOrder[m.ui.focusIndex] != idHelp {
 		t.Fatalf("help not focused")
 	}
 	if m.ui.mode != modeClient {
@@ -28,7 +28,7 @@ func TestEnterOpensHelp(t *testing.T) {
 // Test that space also opens help when focused.
 func TestSpaceOpensHelp(t *testing.T) {
 	m := initialModel(nil)
-	m.setFocus("help")
+	m.setFocus(idHelp)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{' '}})
 	if cmd != nil {
 		t.Fatalf("expected nil command")

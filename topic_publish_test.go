@@ -10,7 +10,7 @@ import (
 func TestEnterAddsTopic(t *testing.T) {
 	m := initialModel(nil)
 	m.topics.input.SetValue("foo")
-	m.setFocus("topic")
+	m.setFocus(idTopic)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if cmd == nil {
 		t.Fatalf("expected command on enter")
@@ -25,7 +25,7 @@ func TestCtrlSPublishesMessage(t *testing.T) {
 	m := initialModel(nil)
 	m.topics.items = []topicItem{{title: "foo", active: true}}
 	m.message.input.SetValue("hello")
-	m.setFocus("message")
+	m.setFocus(idMessage)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlS})
 	if cmd == nil {
 		t.Fatalf("expected command on ctrl+s")

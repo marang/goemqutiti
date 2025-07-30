@@ -50,7 +50,7 @@ func (p payloadItem) FilterValue() string { return p.topic }
 func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
-var defaultFocusOrder = []string{"topics", "topic", "message", "history", "help"}
+var defaultFocusOrder = []string{idTopics, idTopic, idMessage, idHistory, idHelp}
 
 type chipBound struct {
 	xPos, yPos    int

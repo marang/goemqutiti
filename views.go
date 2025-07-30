@@ -15,7 +15,7 @@ func (m model) overlayHelp(view string) string {
 	if m.help.focused {
 		help = ui.HelpFocused.Render("?")
 	}
-	m.ui.elemPos["help"] = 0
+	m.ui.elemPos[idHelp] = 0
 	lines := strings.Split(view, "\n")
 	if len(lines) == 0 {
 		return help
@@ -86,15 +86,15 @@ func (m *model) viewClient() string {
 		if !t.active {
 			st = ui.ChipInactive
 		}
-		if m.ui.focusOrder[m.ui.focusIndex] == "topics" && i == m.topics.selected {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.selected {
 			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.title))
 	}
-	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == "topics"
-	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == "topic"
-	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == "message"
-	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == "history"
+	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
+	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopic
+	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == idMessage
+	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == idHistory
 
 	chipRows, bounds := layoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
@@ -165,16 +165,16 @@ func (m *model) viewClient() string {
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
 	y := 1
-	m.ui.elemPos["topics"] = y
+	m.ui.elemPos[idTopics] = y
 	y += lipgloss.Height(topicsBox)
-	m.ui.elemPos["topic"] = y
+	m.ui.elemPos[idTopic] = y
 	y += lipgloss.Height(topicBox)
-	m.ui.elemPos["message"] = y
+	m.ui.elemPos[idMessage] = y
 	y += lipgloss.Height(messageBox)
-	m.ui.elemPos["history"] = y
+	m.ui.elemPos[idHistory] = y
 
 	startX := 2
-	startY := m.ui.elemPos["topics"] + 1
+	startY := m.ui.elemPos[idTopics] + 1
 	m.topics.chipBounds = make([]chipBound, len(bounds))
 	for i, b := range bounds {
 		m.topics.chipBounds[i] = chipBound{xPos: startX + b.xPos, yPos: startY + b.yPos, width: b.width, height: b.height}

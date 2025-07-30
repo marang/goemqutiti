@@ -168,9 +168,9 @@ func initialModel(conns *Connections) *model {
 		},
 	}
 	m.focusMap = map[string]focusable{
-		"topic":   &m.topics.input,
-		"message": &m.message.input,
-		"help":    &m.help,
+		idTopic:   &m.topics.input,
+		idMessage: &m.message.input,
+		idHelp:    &m.help,
 	}
 	hDel.m = m
 	m.history.list.SetDelegate(hDel)

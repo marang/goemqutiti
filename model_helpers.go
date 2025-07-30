@@ -72,24 +72,23 @@ func (m *model) setMode(mode appMode) {
 	if mode == modeHelp {
 		m.ui.focusOrder = []string{idHelp}
 		m.help.Focus()
-	} else {
-		m.ui.focusOrder = defaultFocusOrder
 	}
 }
 
 // computeFocusOrder filters the default focus list based on elements present in
 // the current view.
 func (m *model) computeFocusOrder() {
-	m.ui.focusOrder = m.ui.focusOrder[:0]
+	focus := make([]string, 0, len(defaultFocusOrder))
 	for _, id := range defaultFocusOrder {
 		if _, ok := m.ui.elemPos[id]; ok {
-			m.ui.focusOrder = append(m.ui.focusOrder, id)
+			focus = append(focus, id)
 		}
 	}
-	if len(m.ui.focusOrder) == 0 {
-		m.ui.focusOrder = []string{idHelp}
+	if len(focus) == 0 {
+		focus = []string{idHelp}
 	}
-	if m.ui.focusIndex >= len(m.ui.focusOrder) {
+	if m.ui.focusIndex >= len(focus) {
 		m.ui.focusIndex = 0
 	}
+	m.ui.focusOrder = focus
 }

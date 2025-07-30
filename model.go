@@ -252,14 +252,13 @@ func (h *helpState) Blur() { h.focused = false }
 
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
-	focusIndex int            // index of the currently focused element
-	mode       appMode        // current application mode
-	prevMode   appMode        // mode prior to confirmations
-	width      int            // terminal width
-	height     int            // terminal height
-	viewport   viewport.Model // scrolling container for the main view
-	elemPos    map[string]int // cached Y positions of each box
-	focusOrder []string       // order of focusable elements
+	focusIndex  int            // index of the currently focused element
+	modeHistory []appMode      // mode stack, index 0 is current
+	width       int            // terminal width
+	height      int            // terminal height
+	viewport    viewport.Model // scrolling container for the main view
+	elemPos     map[string]int // cached Y positions of each box
+	focusOrder  []string       // order of focusable elements
 }
 
 type model struct {

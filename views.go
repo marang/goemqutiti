@@ -313,7 +313,7 @@ func (m model) viewHelp() string {
 
 // View renders the application UI based on the current mode.
 func (m *model) View() string {
-	switch m.ui.mode {
+	switch m.currentMode() {
 	case modeClient:
 		return m.viewClient()
 	case modeConnections:

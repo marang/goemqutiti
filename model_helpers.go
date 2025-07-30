@@ -38,7 +38,6 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmPrompt = prompt
 	m.confirmInfo = info
 	m.confirmAction = action
-	m.ui.prevMode = m.ui.mode
 	_ = m.setMode(modeConfirmDelete)
 }
 
@@ -72,7 +71,23 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 			f.Blur()
 		}
 	}
-	m.ui.mode = mode
+	// push mode to history stack
+	if len(m.ui.modeHistory) == 0 || m.ui.modeHistory[0] != mode {
+		m.ui.modeHistory = append([]appMode{mode}, m.ui.modeHistory...)
+	} else {
+		m.ui.modeHistory[0] = mode
+	}
+	// remove any other occurrences of this mode to keep order meaningful
+	for i := 1; i < len(m.ui.modeHistory); {
+		if m.ui.modeHistory[i] == mode {
+			m.ui.modeHistory = append(m.ui.modeHistory[:i], m.ui.modeHistory[i+1:]...)
+		} else {
+			i++
+		}
+	}
+	if len(m.ui.modeHistory) > 10 {
+		m.ui.modeHistory = m.ui.modeHistory[:10]
+	}
 	order, ok := focusByMode[mode]
 	if !ok || len(order) == 0 {
 		order = []string{idHelp}
@@ -83,4 +98,20 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 		return f.Focus()
 	}
 	return nil
+}
+
+// currentMode returns the active application mode.
+func (m *model) currentMode() appMode {
+	if len(m.ui.modeHistory) == 0 {
+		return modeClient
+	}
+	return m.ui.modeHistory[0]
+}
+
+// previousMode returns the last mode before the current one.
+func (m *model) previousMode() appMode {
+	if len(m.ui.modeHistory) > 1 {
+		return m.ui.modeHistory[1]
+	}
+	return m.currentMode()
 }

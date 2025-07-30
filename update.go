@@ -371,11 +371,11 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction()
 				m.confirmAction = nil
 			}
-			cmd := m.setMode(m.ui.prevMode)
+			cmd := m.setMode(m.previousMode())
 			m.scrollToFocused()
 			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 		case "n", "esc":
-			cmd := m.setMode(m.ui.prevMode)
+			cmd := m.setMode(m.previousMode())
 			m.scrollToFocused()
 			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 		}
@@ -525,15 +525,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 			m.ui.focusOrder[m.ui.focusIndex] == idHelp {
-			if m.ui.mode != modeHelp {
-				m.ui.prevMode = m.ui.mode
-			}
 			cmd := m.setMode(modeHelp)
 			return m, cmd
 		}
 	}
 
-	switch m.ui.mode {
+	switch m.currentMode() {
 	case modeClient:
 		cmd := m.updateClient(msg)
 		return m, cmd

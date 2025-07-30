@@ -166,11 +166,22 @@ func initialModel(conns *Connections) *model {
 			trace:   boxConfig{height: 10},
 		},
 	}
-	m.focusMap = map[string]focusable{
-		idTopic:   &m.topics.input,
-		idMessage: &m.message.input,
-		idHelp:    &m.help,
+	m.focusables = map[string]Focusable{
+		idTopics:      &nullFocusable{},
+		idTopic:       adapt(&m.topics.input),
+		idMessage:     adapt(&m.message.input),
+		idHistory:     &nullFocusable{},
+		idConnList:    &nullFocusable{},
+		idTopicList:   &nullFocusable{},
+		idPayloadList: &nullFocusable{},
+		idTraceList:   &nullFocusable{},
+		idHelp:        adapt(&m.help),
 	}
+	fitems := make([]Focusable, len(order))
+	for i, id := range order {
+		fitems[i] = m.focusables[id]
+	}
+	m.focus = NewFocusMap(fitems)
 	hDel.m = m
 	m.history.list.SetDelegate(hDel)
 	traceDel.m = m

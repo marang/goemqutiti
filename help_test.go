@@ -10,7 +10,7 @@ import (
 func TestEnterOpensHelp(t *testing.T) {
 	m := initialModel(nil)
 	m.setFocus(idHelp)
-	if m.ui.focusOrder[m.ui.focusIndex] != idHelp {
+	if m.ui.focusOrder[m.focus.Index()] != idHelp {
 		t.Fatalf("help not focused")
 	}
 	if m.currentMode() != modeClient {

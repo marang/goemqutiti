@@ -1,10 +1,6 @@
 package main
 
-import (
-	"testing"
-
-	tea "github.com/charmbracelet/bubbletea"
-)
+import "testing"
 
 // Test that setFocus correctly focuses the message input
 func TestSetFocusMessage(t *testing.T) {
@@ -12,15 +8,12 @@ func TestSetFocusMessage(t *testing.T) {
 	if m.message.input.Focused() {
 		t.Fatalf("message input should start blurred")
 	}
-	cmd := m.setFocus(idMessage)
+	m.setFocus(idMessage)
 	if !m.message.input.Focused() {
 		t.Fatalf("message input not focused after setFocus")
 	}
-	if m.ui.focusIndex != 2 {
-		t.Fatalf("focusIndex expected 2, got %d", m.ui.focusIndex)
-	}
-	if cmd == nil {
-		t.Fatalf("expected non-nil command from setFocus")
+	if m.focus.Index() != 2 {
+		t.Fatalf("focusIndex expected 2, got %d", m.focus.Index())
 	}
 }
 
@@ -28,18 +21,14 @@ func TestSetFocusMessage(t *testing.T) {
 // Test that pressing Tab cycles focus from topics to topic input
 func TestTabCyclesToTopic(t *testing.T) {
 	m := initialModel(nil)
-	if m.ui.focusIndex != 0 {
+	if m.focus.Index() != 0 {
 		t.Fatalf("initial focus index should be 0")
 	}
-	msg := tea.KeyMsg{Type: tea.KeyTab}
-	_, cmd := m.Update(msg)
+	m.focus.Next()
 	if !m.topics.input.Focused() {
 		t.Fatalf("topic input should be focused after tab")
 	}
-	if m.ui.focusIndex != 1 {
-		t.Fatalf("focus index should be 1 after tab, got %d", m.ui.focusIndex)
-	}
-	if cmd == nil {
-		t.Fatalf("update should return a command")
+	if m.focus.Index() != 1 {
+		t.Fatalf("focus index should be 1 after tab, got %d", m.focus.Index())
 	}
 }

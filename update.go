@@ -115,25 +115,14 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 
 // setFocus moves focus to the given element id.
 func (m *model) setFocus(id string) tea.Cmd {
-	var cmds []tea.Cmd
 	for i, name := range m.ui.focusOrder {
-		if f, ok := m.focusMap[name]; ok && f != nil {
-			if name == id {
-				if c := f.Focus(); c != nil {
-					cmds = append(cmds, c)
-				}
-				m.ui.focusIndex = i
-			} else {
-				f.Blur()
-			}
-		} else if name == id {
-			m.ui.focusIndex = i
+		if name == id {
+			m.focus.Set(i)
+			m.ui.focusIndex = m.focus.Index()
+			break
 		}
 	}
 	m.scrollToFocused()
-	if len(cmds) > 0 {
-		return tea.Batch(cmds...)
-	}
 	return nil
 }
 
@@ -503,15 +492,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "tab", "shift+tab":
+		case "tab":
 			if len(m.ui.focusOrder) > 0 {
-				step := 1
-				if msg.String() == "shift+tab" {
-					step = -1
-				}
-				next := (m.ui.focusIndex + step + len(m.ui.focusOrder)) % len(m.ui.focusOrder)
-				id := m.ui.focusOrder[next]
-				cmd := m.setFocus(id)
+				m.focus.Next()
+				m.ui.focusIndex = m.focus.Index()
+				id := m.ui.focusOrder[m.ui.focusIndex]
+				m.setFocus(id)
 				if id == idTopics {
 					if len(m.topics.items) > 0 {
 						m.topics.selected = 0
@@ -520,7 +506,23 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.topics.selected = -1
 					}
 				}
-				return m, cmd
+				return m, nil
+			}
+		case "shift+tab":
+			if len(m.ui.focusOrder) > 0 {
+				m.focus.Prev()
+				m.ui.focusIndex = m.focus.Index()
+				id := m.ui.focusOrder[m.ui.focusIndex]
+				m.setFocus(id)
+				if id == idTopics {
+					if len(m.topics.items) > 0 {
+						m.topics.selected = 0
+						m.ensureTopicVisible()
+					} else {
+						m.topics.selected = -1
+					}
+				}
+				return m, nil
 			}
 		}
 		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&

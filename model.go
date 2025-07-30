@@ -130,11 +130,6 @@ type connectionData struct {
 	Payloads []payloadItem
 }
 
-type focusable interface {
-	Focus() tea.Cmd
-	Blur()
-}
-
 type boxConfig struct {
 	height int
 }
@@ -250,6 +245,10 @@ func (h *helpState) Focus() tea.Cmd {
 
 func (h *helpState) Blur() { h.focused = false }
 
+func (h helpState) Focused() bool { return h.focused }
+
+func (h helpState) View() string { return "" }
+
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int            // index of the currently focused element
@@ -280,5 +279,6 @@ type model struct {
 
 	layout layoutConfig
 
-	focusMap map[string]focusable
+	focusables map[string]Focusable
+	focus      *FocusMap
 }

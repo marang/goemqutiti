@@ -12,6 +12,7 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
+// handleStatusMessage processes broker status updates.
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 	m.appendHistory("", string(msg), "log", string(msg))
 	if strings.HasPrefix(string(msg), "Connected") && m.connections.active != "" {
@@ -25,11 +26,13 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 	return listenStatus(m.connections.statusChan)
 }
 
+// handleMQTTMessage appends received MQTT messages to history.
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 	m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
 }
 
+// scrollTopics scrolls the topics viewport by the given number of rows.
 func (m *model) scrollTopics(delta int) {
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	if delta > 0 {
@@ -39,6 +42,7 @@ func (m *model) scrollTopics(delta int) {
 	}
 }
 
+// ensureTopicVisible keeps the selected topic within the visible viewport.
 func (m *model) ensureTopicVisible() {
 	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.items) {
 		return
@@ -63,6 +67,7 @@ func (m *model) ensureTopicVisible() {
 	}
 }
 
+// handleClientKey processes keyboard events in client mode.
 func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	switch msg.String() {
@@ -293,6 +298,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	return tea.Batch(cmds...)
 }
 
+// handleClientMouse processes mouse events in client mode.
 func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
@@ -357,6 +363,7 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 	}
 }
 
+// updateClient updates the UI when in client mode.
 func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
 	switch t := msg.(type) {

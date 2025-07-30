@@ -256,6 +256,7 @@ func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return w, nil
 }
 
+// View renders the wizard at the current step.
 func (w *ImportWizard) View() string {
 	header := w.stepsView()
 	bw := w.width - 2
@@ -358,6 +359,7 @@ func (w *ImportWizard) View() string {
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
 
+// nextPublishCmd publishes the next row or records it during dry run.
 func (w *ImportWizard) nextPublishCmd() tea.Cmd {
 	if w.index >= len(w.rows) {
 		return nil
@@ -390,6 +392,7 @@ func (w *ImportWizard) nextPublishCmd() tea.Cmd {
 	}
 }
 
+// renameFields applies mapping names to row keys, leaving originals intact.
 func renameFields(row map[string]string, mapping map[string]string) map[string]string {
 	out := map[string]string{}
 	for k, v := range row {
@@ -407,6 +410,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 	return out
 }
 
+// mapping returns the column mapping defined by the user.
 func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
@@ -415,6 +419,7 @@ func (w *ImportWizard) mapping() map[string]string {
 	return m
 }
 
+// stepsView renders the progress header for the wizard.
 func (w *ImportWizard) stepsView() string {
 	var parts []string
 	for i, name := range wizardSteps {
@@ -429,6 +434,7 @@ func (w *ImportWizard) stepsView() string {
 
 type publishMsg struct{}
 
+// spacedLines inserts blank lines between each provided line for readability.
 func spacedLines(lines []string) []string {
 	out := make([]string, 0, len(lines)*2)
 	for _, l := range lines {
@@ -437,6 +443,7 @@ func spacedLines(lines []string) []string {
 	return out
 }
 
+// sampleSize determines how many sample lines to keep during publishing.
 func sampleSize(total int) int {
 	if total <= 5 {
 		return total
@@ -451,6 +458,7 @@ func sampleSize(total int) int {
 	return size
 }
 
+// lineLimit calculates the maximum lines of output based on window height.
 func (w *ImportWizard) lineLimit() int {
 	limit := w.height - 6
 	if limit < 3 {
@@ -459,6 +467,7 @@ func (w *ImportWizard) lineLimit() int {
 	return limit
 }
 
+// historyHeight returns the height of the history view section.
 func (w *ImportWizard) historyHeight() int {
 	h := w.lineLimit()
 	if h > 20 {

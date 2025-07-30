@@ -5,6 +5,7 @@ import (
 	"sort"
 )
 
+// hasTopic reports whether the given topic already exists in the list.
 func (m *model) hasTopic(topic string) bool {
 	for _, t := range m.topics.items {
 		if t.title == topic {
@@ -14,6 +15,7 @@ func (m *model) hasTopic(topic string) bool {
 	return false
 }
 
+// sortTopics orders the topic list with active topics first and keeps selection.
 func (m *model) sortTopics() {
 	if len(m.topics.items) == 0 {
 		return
@@ -38,6 +40,7 @@ func (m *model) sortTopics() {
 	}
 }
 
+// toggleTopic toggles the subscription state of the topic at index.
 func (m *model) toggleTopic(index int) {
 	if index < 0 || index >= len(m.topics.items) {
 		return
@@ -56,6 +59,7 @@ func (m *model) toggleTopic(index int) {
 	m.sortTopics()
 }
 
+// removeTopic unsubscribes and deletes the topic at index from the list.
 func (m *model) removeTopic(index int) {
 	if index < 0 || index >= len(m.topics.items) {
 		return

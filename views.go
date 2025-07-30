@@ -10,6 +10,7 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
+// layoutChips lays out chips horizontally wrapping within width.
 func layoutChips(chips []string, width int) ([]string, []chipBound) {
 	var lines []string
 	var row []string
@@ -43,6 +44,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 	return lines, bounds
 }
 
+// viewClient renders the main client view.
 func (m *model) viewClient() string {
 	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
@@ -170,6 +172,7 @@ func (m *model) viewClient() string {
 	return lipgloss.JoinVertical(lipgloss.Left, infoLine, view)
 }
 
+// viewConnections shows the list of saved broker profiles.
 func (m model) viewConnections() string {
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
@@ -177,6 +180,7 @@ func (m model) viewConnections() string {
 	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
 }
 
+// viewForm renders the add/edit broker form alongside the list.
 func (m model) viewForm() string {
 	if m.connections.form == nil {
 		return ""
@@ -190,6 +194,7 @@ func (m model) viewForm() string {
 	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
 }
 
+// viewConfirmDelete displays a confirmation dialog.
 func (m model) viewConfirmDelete() string {
 	content := m.confirmPrompt
 	if m.confirmInfo != "" {
@@ -199,6 +204,7 @@ func (m model) viewConfirmDelete() string {
 	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
 }
 
+// viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
@@ -206,6 +212,7 @@ func (m model) viewTopics() string {
 	return ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+// viewPayloads shows stored payloads for reuse.
 func (m model) viewPayloads() string {
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
@@ -213,6 +220,7 @@ func (m model) viewPayloads() string {
 	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+// viewTraces lists configured traces and their state.
 func (m model) viewTraces() string {
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
@@ -220,11 +228,13 @@ func (m model) viewTraces() string {
 	return ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+// viewTraceForm renders the form for new traces.
 func (m model) viewTraceForm() string {
 	content := m.traces.form.View()
 	return ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
 }
 
+// viewTraceMessages shows captured messages for a trace.
 func (m model) viewTraceMessages() string {
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	listLines := strings.Split(m.traces.view.View(), "\n")
@@ -242,6 +252,7 @@ func (m model) viewTraceMessages() string {
 	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
 }
 
+// viewImporter renders the importer wizard view.
 func (m model) viewImporter() string {
 	if m.importWizard == nil {
 		return ""
@@ -249,6 +260,7 @@ func (m model) viewImporter() string {
 	return m.importWizard.View()
 }
 
+// View renders the application UI based on the current mode.
 func (m *model) View() string {
 	switch m.ui.mode {
 	case modeClient:

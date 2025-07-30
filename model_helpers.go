@@ -66,10 +66,8 @@ func (m *model) refreshConnectionItems() {
 
 // setMode updates the current mode and focus order.
 func (m *model) setMode(mode appMode) tea.Cmd {
-	if len(m.ui.focusOrder) > 0 {
-		if f, ok := m.focusMap[m.ui.focusOrder[m.ui.focusIndex]]; ok && f != nil {
-			f.Blur()
-		}
+	if m.focus != nil && len(m.focus.items) > 0 {
+		m.focus.items[m.focus.focusIndex].Blur()
 	}
 	// push mode to stack
 	if len(m.ui.modeStack) == 0 || m.ui.modeStack[0] != mode {
@@ -93,10 +91,12 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 		order = []string{idHelp}
 	}
 	m.ui.focusOrder = append([]string(nil), order...)
-	m.ui.focusIndex = 0
-	if f, ok := m.focusMap[m.ui.focusOrder[0]]; ok && f != nil {
-		return f.Focus()
+	items := make([]Focusable, len(order))
+	for i, id := range order {
+		items[i] = m.focusables[id]
 	}
+	m.focus = NewFocusMap(items)
+	m.ui.focusIndex = m.focus.Index()
 	return nil
 }
 

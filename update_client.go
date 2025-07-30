@@ -156,15 +156,27 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.updateSelectionRange(idx)
 			}
 		}
-	case "tab", "shift+tab":
+	case "tab":
 		if len(m.ui.focusOrder) > 0 {
-			step := 1
-			if msg.String() == "shift+tab" {
-				step = -1
+			m.focus.Next()
+			m.ui.focusIndex = m.focus.Index()
+			id := m.ui.focusOrder[m.ui.focusIndex]
+			m.setFocus(id)
+			if id == idTopics {
+				if len(m.topics.items) > 0 {
+					m.topics.selected = 0
+					m.ensureTopicVisible()
+				} else {
+					m.topics.selected = -1
+				}
 			}
-			next := (m.ui.focusIndex + step + len(m.ui.focusOrder)) % len(m.ui.focusOrder)
-			id := m.ui.focusOrder[next]
-			cmds = append(cmds, m.setFocus(id))
+		}
+	case "shift+tab":
+		if len(m.ui.focusOrder) > 0 {
+			m.focus.Prev()
+			m.ui.focusIndex = m.focus.Index()
+			id := m.ui.focusOrder[m.ui.focusIndex]
+			m.setFocus(id)
 			if id == idTopics {
 				if len(m.topics.items) > 0 {
 					m.topics.selected = 0

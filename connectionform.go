@@ -10,181 +10,8 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
-type formField interface {
-	Focus()
-	Blur()
-	Update(msg tea.Msg) tea.Cmd
-	View() string
-	Value() string
-}
-
-type textField struct {
-	textinput.Model
-	readOnly bool
-}
-
-// newTextField creates a textField with the given value and placeholder. If opts[0] is true the field is masked for password entry.
-func newTextField(value, placeholder string, opts ...bool) *textField {
-	ti := textinput.New()
-	ti.Placeholder = placeholder
-	ti.SetValue(value)
-	if len(opts) > 0 && opts[0] {
-		ti.EchoMode = textinput.EchoPassword
-	}
-	return &textField{Model: ti}
-}
-
-// setReadOnly marks the field read only and blurs it when activated.
-func (t *textField) setReadOnly(ro bool) {
-	t.readOnly = ro
-	if ro {
-		t.Blur()
-	}
-}
-
-// Update forwards messages to the text input unless the field is read only.
-func (t *textField) Update(msg tea.Msg) tea.Cmd {
-	if t.readOnly {
-		return nil
-	}
-	var cmd tea.Cmd
-	t.Model, cmd = t.Model.Update(msg)
-	return cmd
-}
-
-// Value returns the text content of the field.
-func (t *textField) Value() string { return t.Model.Value() }
-
-type checkField struct {
-	value    bool
-	focused  bool
-	readOnly bool
-}
-
-type selectField struct {
-	options  []string
-	index    int
-	focused  bool
-	readOnly bool
-}
-
-// newSelectField creates a selectField with the given options and selects the provided value.
-func newSelectField(val string, opts []string) *selectField {
-	idx := 0
-	for i, o := range opts {
-		if o == val {
-			idx = i
-			break
-		}
-	}
-	return &selectField{options: opts, index: idx}
-}
-
-// Focus sets the field as focused unless it is read only.
-func (s *selectField) Focus() {
-	if !s.readOnly {
-		s.focused = true
-	}
-}
-
-// Blur removes focus from the field.
-func (s *selectField) Blur() { s.focused = false }
-
-// setReadOnly disables interaction and clears focus when true.
-func (s *selectField) setReadOnly(ro bool) {
-	s.readOnly = ro
-	if ro {
-		s.Blur()
-	}
-}
-
-// Update handles key presses when the field is focused.
-func (s *selectField) Update(msg tea.Msg) tea.Cmd {
-	if !s.focused || s.readOnly {
-		return nil
-	}
-	if km, ok := msg.(tea.KeyMsg); ok {
-		switch km.String() {
-		case "left", "h":
-			s.index--
-		case "right", "l", " ":
-			s.index++
-		}
-		if s.index < 0 {
-			s.index = len(s.options) - 1
-		}
-		if s.index >= len(s.options) {
-			s.index = 0
-		}
-	}
-	return nil
-}
-
-// View renders the current option and highlights it when focused.
-func (s *selectField) View() string {
-	val := s.options[s.index]
-	if s.focused {
-		return ui.FocusedStyle.Render(val)
-	}
-	return val
-}
-
-// Value returns the currently selected option.
-func (s *selectField) Value() string { return s.options[s.index] }
-
-// newCheckField returns a checkbox field with the given value.
-func newCheckField(val bool) *checkField { return &checkField{value: val} }
-
-// Focus sets the checkbox as active for input.
-func (c *checkField) Focus() { c.focused = true }
-
-// Blur removes focus from the checkbox.
-func (c *checkField) Blur() { c.focused = false }
-
-// setReadOnly prevents toggling the checkbox value.
-func (c *checkField) setReadOnly(ro bool) { c.readOnly = ro }
-
-// Update toggles the checkbox state on keyboard or mouse input.
-func (c *checkField) Update(msg tea.Msg) tea.Cmd {
-	switch m := msg.(type) {
-	case tea.KeyMsg:
-		if !c.readOnly && m.String() == " " {
-			c.value = !c.value
-		}
-	case tea.MouseMsg:
-		if !c.readOnly && m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-			c.value = !c.value
-		}
-	}
-	return nil
-}
-
-// View renders the checkbox with focus styling when selected.
-func (c *checkField) View() string {
-	box := "[ ]"
-	if c.value {
-		box = "[x]"
-	}
-	if c.focused {
-		return ui.FocusedStyle.Render(box)
-	}
-	return box
-}
-
-// Value returns "true" or "false" for the checkbox state.
-func (c *checkField) Value() string { return fmt.Sprintf("%v", c.value) }
-
-// Focus gives keyboard focus to the text field.
-// Blur removes keyboard focus from the text field.
-// View returns the underlying textinput view.
-
-func (t *textField) Focus()       { t.Model.Focus() }
-func (t *textField) Blur()        { t.Model.Blur() }
-func (t *textField) View() string { return t.Model.View() }
-
 type connectionForm struct {
-	fields  []formField
-	focus   int
+	Form
 	index   int  // -1 for new
 	fromEnv bool // current state of env loading
 }
@@ -350,8 +177,9 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 			}
 		}
 	}
-	fields[0].Focus()
-	return connectionForm{fields: fields, focus: 0, index: idx, fromEnv: p.FromEnv}
+	cf := connectionForm{Form: Form{fields: fields, focus: 0}, index: idx, fromEnv: p.FromEnv}
+	cf.ApplyFocus()
+	return cf
 }
 
 // Init sets up the text input blink command.
@@ -362,42 +190,19 @@ func (f connectionForm) Init() tea.Cmd {
 // Update handles keyboard and mouse events for the form.
 func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	var cmd tea.Cmd
-	switch msg := msg.(type) {
+	switch m := msg.(type) {
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "tab", "shift+tab", "up", "down", "k", "j":
-			step := 0
-			switch msg.String() {
-			case "shift+tab", "up", "k":
-				step = -1
-			default:
-				step = 1
-			}
-			f.focus += step
-			if f.focus < 0 {
-				f.focus = len(f.fields) - 1
-			}
-			if f.focus >= len(f.fields) {
-				f.focus = 0
-			}
-		}
+		f.CycleFocus(m)
 	case tea.MouseMsg:
-		if msg.Action == tea.MouseActionPress && msg.Button == tea.MouseButtonLeft {
-			// crude calculation: rows correspond to field order
-			if msg.Y >= 1 && msg.Y-1 < len(f.fields) {
-				f.focus = msg.Y - 1
+		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
+			if m.Y >= 1 && m.Y-1 < len(f.fields) {
+				f.focus = m.Y - 1
 			}
 		}
 	}
-	for i := range f.fields {
-		if i == f.focus {
-			f.fields[i].Focus()
-		} else {
-			f.fields[i].Blur()
-		}
-	}
+	f.ApplyFocus()
 	if len(f.fields) > 0 {
-		f.fields[f.focus].Update(msg)
+		cmd = f.fields[f.focus].Update(msg)
 	}
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value != f.fromEnv {
 		p := f.Profile()

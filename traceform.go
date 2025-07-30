@@ -11,8 +11,7 @@ import (
 )
 
 type traceForm struct {
-	fields []formField
-	focus  int
+	Form
 	errMsg string
 }
 
@@ -26,15 +25,14 @@ const (
 
 // newTraceForm builds a form for creating or editing a trace.
 func newTraceForm(profiles []string, current string, topics []string) traceForm {
-	tf := traceForm{}
 	keyField := newTextField("", "Key")
 	profileField := newSelectField(current, profiles)
 	topicsField := newTextField(strings.Join(topics, ","), "Topics")
 	startField := newTextField("", "2006-01-02T15:04:05Z")
 	endField := newTextField("", "2006-01-02T15:04:05Z")
-	tf.fields = []formField{keyField, profileField, topicsField, startField, endField}
-	tf.focus = 0
-	tf.fields[0].Focus()
+	fields := []formField{keyField, profileField, topicsField, startField, endField}
+	tf := traceForm{Form: Form{fields: fields, focus: 0}}
+	tf.ApplyFocus()
 	return tf
 }
 
@@ -46,20 +44,7 @@ func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		switch m.String() {
-		case "tab", "shift+tab", "up", "down", "k", "j":
-			step := 1
-			if m.String() == "shift+tab" || m.String() == "up" || m.String() == "k" {
-				step = -1
-			}
-			f.focus += step
-			if f.focus < 0 {
-				f.focus = len(f.fields) - 1
-			}
-			if f.focus >= len(f.fields) {
-				f.focus = 0
-			}
-		}
+		f.CycleFocus(m)
 	case tea.MouseMsg:
 		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
 			if m.Y >= 1 && m.Y-1 < len(f.fields) {
@@ -67,15 +52,9 @@ func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 			}
 		}
 	}
-	for i := range f.fields {
-		if i == f.focus {
-			f.fields[i].Focus()
-		} else {
-			f.fields[i].Blur()
-		}
-	}
+	f.ApplyFocus()
 	if len(f.fields) > 0 {
-		f.fields[f.focus].Update(msg)
+		cmd = f.fields[f.focus].Update(msg)
 	}
 	return f, cmd
 }

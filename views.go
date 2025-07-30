@@ -236,7 +236,8 @@ func (m model) viewTopics() string {
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	view := ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopicList
+	view := ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, focused, -1)
 	return m.overlayHelp(view)
 }
 
@@ -247,7 +248,8 @@ func (m model) viewPayloads() string {
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	view := ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	focused := m.ui.focusOrder[m.ui.focusIndex] == idPayloadList
+	view := ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, focused, -1)
 	return m.overlayHelp(view)
 }
 
@@ -258,7 +260,8 @@ func (m model) viewTraces() string {
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	view := ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	focused := m.ui.focusOrder[m.ui.focusIndex] == idTraceList
+	view := ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, focused, -1)
 	return m.overlayHelp(view)
 }
 
@@ -266,7 +269,7 @@ func (m model) viewTraces() string {
 func (m model) viewTraceForm() string {
 	m.ui.elemPos = map[string]int{}
 	content := m.traces.form.View()
-	view := ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, true, -1)
 	return m.overlayHelp(view)
 }
 
@@ -286,7 +289,7 @@ func (m model) viewTraceMessages() string {
 		target = minHeight
 	}
 	content := strings.Join(listLines, "\n")
-	view := ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, true, -1)
 	return m.overlayHelp(view)
 }
 

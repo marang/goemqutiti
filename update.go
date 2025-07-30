@@ -19,6 +19,7 @@ type connectResult struct {
 	err     error
 }
 
+// connectBroker attempts to connect to the given profile and reports status on the channel.
 func connectBroker(p Profile, ch chan string) tea.Cmd {
 	return func() tea.Msg {
 		if ch != nil {
@@ -30,6 +31,7 @@ func connectBroker(p Profile, ch chan string) tea.Cmd {
 	}
 }
 
+// listenMessages waits for incoming MQTT messages on the provided channel.
 func listenMessages(ch chan MQTTMessage) tea.Cmd {
 	return func() tea.Msg {
 		if ch == nil {
@@ -43,6 +45,7 @@ func listenMessages(ch chan MQTTMessage) tea.Cmd {
 	}
 }
 
+// listenStatus retrieves status updates from the status channel.
 func listenStatus(ch chan string) tea.Cmd {
 	return func() tea.Msg {
 		if ch == nil {
@@ -56,6 +59,7 @@ func listenStatus(ch chan string) tea.Cmd {
 	}
 }
 
+// flushStatus drains all pending messages from the status channel.
 func flushStatus(ch chan string) {
 	if ch == nil {
 		return
@@ -69,6 +73,7 @@ func flushStatus(ch chan string) {
 	}
 }
 
+// saveCurrent persists topics and payloads for the active connection.
 func (m *model) saveCurrent() {
 	if m.connections.active == "" {
 		return
@@ -77,6 +82,7 @@ func (m *model) saveCurrent() {
 	saveState(m.connections.saved)
 }
 
+// restoreState loads saved state for the named connection.
 func (m *model) restoreState(name string) {
 	if data, ok := m.connections.saved[name]; ok {
 		m.topics.items = data.Topics
@@ -88,6 +94,7 @@ func (m *model) restoreState(name string) {
 	}
 }
 
+// appendHistory stores a message in the history list and optional store.
 func (m *model) appendHistory(topic, payload, kind, logText string) {
 	text := payload
 	if kind == "log" {
@@ -106,6 +113,7 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	}
 }
 
+// setFocus moves focus to the given element id.
 func (m *model) setFocus(id string) tea.Cmd {
 	var cmds []tea.Cmd
 	for i, name := range m.ui.focusOrder {
@@ -129,6 +137,7 @@ func (m *model) setFocus(id string) tea.Cmd {
 	return nil
 }
 
+// focusFromMouse determines which element was clicked and focuses it.
 func (m *model) focusFromMouse(y int) tea.Cmd {
 	cy := y + m.ui.viewport.YOffset - 1
 	chosen := ""
@@ -151,6 +160,7 @@ func (m *model) focusFromMouse(y int) tea.Cmd {
 	return nil
 }
 
+// scrollToFocused ensures the focused element is visible in the viewport.
 func (m *model) scrollToFocused() {
 	if len(m.ui.focusOrder) == 0 {
 		return
@@ -171,6 +181,7 @@ func (m *model) scrollToFocused() {
 	}
 }
 
+// updateConnections processes input when the connections view is active.
 func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -300,6 +311,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
+// updateForm handles the add/edit connection form.
 func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	if m.connections.form == nil {
 		return m, nil
@@ -336,6 +348,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
+// updateConfirmDelete processes confirmation dialog key presses.
 func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -357,6 +370,7 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 	return *m, listenStatus(m.connections.statusChan)
 }
 
+// updateTopics manages the topics list UI.
 func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -393,6 +407,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
+// updatePayloads manages the stored payloads list.
 func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -429,6 +444,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
+// updateSelectionRange selects history entries from the anchor to idx.
 func (m *model) updateSelectionRange(idx int) {
 	start := m.history.selectionAnchor
 	end := idx
@@ -441,6 +457,7 @@ func (m *model) updateSelectionRange(idx int) {
 	}
 }
 
+// Update routes messages based on the current mode.
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:

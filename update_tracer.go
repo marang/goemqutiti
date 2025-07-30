@@ -13,10 +13,12 @@ import (
 
 type traceTickMsg struct{}
 
+// traceTicker schedules periodic refresh events while traces run.
 func traceTicker() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return traceTickMsg{} })
 }
 
+// updateTraces manages the traces list and responds to key presses.
 func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -83,6 +85,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 	return m, cmd
 }
 
+// updateTraceForm handles input for the new trace form.
 func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 	if m.traces.form == nil {
 		return m, nil
@@ -151,6 +154,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 	return m, cmd
 }
 
+// updateTraceView displays messages captured for a trace.
 func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {

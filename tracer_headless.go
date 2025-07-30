@@ -16,6 +16,7 @@ import (
 // mqttClient wraps the MQTT connection for the tracer.
 type mqttClient struct{ client mqtt.Client }
 
+// newMQTTClient establishes an MQTT connection using the provided profile.
 func newMQTTClient(p config.Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -61,16 +62,21 @@ func newMQTTClient(p config.Profile) (*mqttClient, error) {
 	return &mqttClient{client: client}, nil
 }
 
+// Subscribe wraps the underlying client's Subscribe call.
 func (m *mqttClient) Subscribe(topic string, qos byte, cb mqtt.MessageHandler) error {
 	token := m.client.Subscribe(topic, qos, cb)
 	token.Wait()
 	return token.Error()
 }
+
+// Unsubscribe wraps the underlying client's Unsubscribe call.
 func (m *mqttClient) Unsubscribe(topic string) error {
 	token := m.client.Unsubscribe(topic)
 	token.Wait()
 	return token.Error()
 }
+
+// Disconnect closes the MQTT connection gracefully.
 func (m *mqttClient) Disconnect() {
 	if m.client != nil && m.client.IsConnected() {
 		m.client.Disconnect(250)

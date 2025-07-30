@@ -19,17 +19,28 @@ type traceMsgItem struct {
 	msg TracerMessage
 }
 
+// FilterValue implements list.Item for filtering.
 func (t traceMsgItem) FilterValue() string { return t.msg.Payload }
-func (t traceMsgItem) Title() string       { return t.msg.Topic }
+
+// Title implements list.Item.
+func (t traceMsgItem) Title() string { return t.msg.Topic }
+
+// Description implements list.Item.
 func (t traceMsgItem) Description() string { return t.msg.Payload }
 
 // traceMsgDelegate renders trace messages with numbering and timestamp.
 type traceMsgDelegate struct{ m *model }
 
-func (d traceMsgDelegate) Height() int                               { return 2 }
-func (d traceMsgDelegate) Spacing() int                              { return 0 }
+// Height returns the line height for an item.
+func (d traceMsgDelegate) Height() int { return 2 }
+
+// Spacing satisfies list.ItemDelegate.
+func (d traceMsgDelegate) Spacing() int { return 0 }
+
+// Update is a no-op for this delegate.
 func (d traceMsgDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
+// Render draws a trace message item with numbering and timestamp.
 func (d traceMsgDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	it := item.(traceMsgItem)
 	width := m.Width()

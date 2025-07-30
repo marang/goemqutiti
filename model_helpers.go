@@ -2,6 +2,9 @@ package main
 
 import "github.com/charmbracelet/bubbles/list"
 
+// topicAtPosition returns the index of the topic chip located at the
+// provided coordinates, or -1 if none exists.
+
 func (m *model) topicAtPosition(x, y int) int {
 	for i, b := range m.topics.chipBounds {
 		if x >= b.xPos && x < b.xPos+b.width && y >= b.yPos && y < b.yPos+b.height {
@@ -11,6 +14,7 @@ func (m *model) topicAtPosition(x, y int) int {
 	return -1
 }
 
+// historyIndexAt converts a Y coordinate into an index within the history list.
 func (m *model) historyIndexAt(y int) int {
 	rel := y - (m.ui.elemPos["history"] + 1) + m.ui.viewport.YOffset
 	if rel < 0 {
@@ -26,6 +30,7 @@ func (m *model) historyIndexAt(y int) int {
 	return i
 }
 
+// startConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmPrompt = prompt
 	m.confirmInfo = info
@@ -34,6 +39,7 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.ui.mode = modeConfirmDelete
 }
 
+// subscribeActiveTopics subscribes the MQTT client to all currently active topics.
 func (m *model) subscribeActiveTopics() {
 	if m.mqttClient == nil {
 		return
@@ -45,6 +51,7 @@ func (m *model) subscribeActiveTopics() {
 	}
 }
 
+// refreshConnectionItems rebuilds the connections list to show status information.
 func (m *model) refreshConnectionItems() {
 	items := []list.Item{}
 	for _, p := range m.connections.manager.Profiles {

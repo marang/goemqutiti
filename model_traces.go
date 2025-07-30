@@ -10,6 +10,7 @@ import (
 	"github.com/marang/goemqutiti/config"
 )
 
+// forceStartTrace launches the tracer at index without checking existing data.
 func (m *model) forceStartTrace(index int) {
 	item := m.traces.items[index]
 	p, err := config.LoadProfile(item.cfg.Profile, "")
@@ -37,6 +38,7 @@ func (m *model) forceStartTrace(index int) {
 	addTrace(item.cfg)
 }
 
+// startTrace starts the tracer at index, prompting if data already exists.
 func (m *model) startTrace(index int) {
 	if index < 0 || index >= len(m.traces.items) {
 		return
@@ -57,6 +59,7 @@ func (m *model) startTrace(index int) {
 	m.forceStartTrace(index)
 }
 
+// stopTrace stops a running tracer at the given index.
 func (m *model) stopTrace(index int) {
 	if index < 0 || index >= len(m.traces.items) {
 		return
@@ -66,6 +69,7 @@ func (m *model) stopTrace(index int) {
 	}
 }
 
+// anyTraceRunning reports whether any tracer is currently active or planned.
 func (m *model) anyTraceRunning() bool {
 	for i := range m.traces.items {
 		if tr := m.traces.items[i].tracer; tr != nil && (tr.Running() || tr.Planned()) {
@@ -75,6 +79,7 @@ func (m *model) anyTraceRunning() bool {
 	return false
 }
 
+// traceIndex returns the index of the trace with the given key or -1.
 func (m *model) traceIndex(key string) int {
 	for i, it := range m.traces.items {
 		if it.key == key {
@@ -84,6 +89,7 @@ func (m *model) traceIndex(key string) int {
 	return -1
 }
 
+// savePlannedTraces persists trace configurations for later sessions.
 func (m *model) savePlannedTraces() {
 	data := map[string]TracerConfig{}
 	for _, it := range m.traces.items {
@@ -95,6 +101,8 @@ func (m *model) savePlannedTraces() {
 	}
 	saveTraces(data)
 }
+
+// loadTraceMessages loads messages for the trace at index and shows them.
 func (m *model) loadTraceMessages(index int) {
 	if index < 0 || index >= len(m.traces.items) {
 		return

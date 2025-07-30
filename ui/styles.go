@@ -14,4 +14,6 @@ var (
 	InfoStyle    = lipgloss.NewStyle().Foreground(ColBlue).PaddingLeft(1)
 	ErrorStyle   = lipgloss.NewStyle().Foreground(ColWarn).PaddingLeft(1)
 	ConnStyle    = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
+	HelpStyle    = lipgloss.NewStyle().Foreground(ColGreen)
+	HelpFocused  = HelpStyle.Foreground(ColPink)
 )

@@ -100,7 +100,7 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	if kind == "log" {
 		text = logText
 	}
-	hi := historyItem{topic: topic, payload: text, kind: kind}
+	hi := historyItem{timestamp: time.Now(), topic: topic, payload: text, kind: kind}
 	m.history.items = append(m.history.items, hi)
 	items := make([]list.Item, len(m.history.items))
 	for i, it := range m.history.items {
@@ -204,7 +204,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				m.history.items = nil
 				items := make([]list.Item, len(msgs))
 				for i, mmsg := range msgs {
-					items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+					items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
 					m.history.items = append(m.history.items, items[i].(historyItem))
 				}
 				m.history.list.SetItems(items)
@@ -487,6 +487,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.traces.view.SetSize(msg.Width-4, m.layout.trace.height)
 		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
+		m.help.vp.Width = msg.Width - 4
+		m.help.vp.Height = msg.Height - 4
 		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
@@ -531,6 +533,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case modeImporter:
 		nm, cmd := m.updateImporter(msg)
+		*m = nm
+		return m, cmd
+	case modeHelp:
+		nm, cmd := m.updateHelp(msg)
 		*m = nm
 		return m, cmd
 	default:

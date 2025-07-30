@@ -31,15 +31,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	hi := item.(historyItem)
 	width := m.Width()
 	var label string
+	ts := hi.timestamp.Format("2006-01-02 15:04:05.000")
 	var lblColor lipgloss.Color
 	var msgColor lipgloss.Color
 	switch hi.kind {
 	case "sub":
-		label = fmt.Sprintf("SUB %s:", hi.topic)
+		label = fmt.Sprintf("SUB %s", hi.topic)
 		lblColor = ui.ColPink
 		msgColor = ui.ColPub
 	case "pub":
-		label = fmt.Sprintf("PUB %s:", hi.topic)
+		label = fmt.Sprintf("PUB %s", hi.topic)
 		lblColor = ui.ColBlue
 		msgColor = ui.ColSub
 	default:
@@ -59,15 +60,22 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	// Support multi-line payloads by aligning each line individually
 	var lines []string
 	if hi.kind != "log" {
-		line1 := lipgloss.PlaceHorizontal(innerWidth, align,
-			lipgloss.NewStyle().Foreground(lblColor).Render(label))
+		header := lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Foreground(lblColor).Render(label),
+			lipgloss.NewStyle().Foreground(ui.ColGray).Render(" "+ts+":"))
+		line1 := lipgloss.PlaceHorizontal(innerWidth, align, header)
 		lines = append(lines, line1)
 	}
-	for _, l := range strings.Split(hi.payload, "\n") {
+	for idx, l := range strings.Split(hi.payload, "\n") {
 		wrapped := ansi.Wrap(l, innerWidth, " ")
 		for _, wl := range strings.Split(wrapped, "\n") {
+			fg := msgColor
+			if hi.kind == "log" && idx == 0 && len(lines) == 0 {
+				wl = ts + ": " + wl
+				fg = ui.ColGray
+			}
 			rendered := lipgloss.PlaceHorizontal(innerWidth, align,
-				lipgloss.NewStyle().Foreground(msgColor).Render(wl))
+				lipgloss.NewStyle().Foreground(fg).Render(wl))
 			lines = append(lines, rendered)
 		}
 	}

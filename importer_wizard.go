@@ -26,8 +26,7 @@ type ImportWizard struct {
 	step        int
 	file        textinput.Model
 	headers     []string
-	fields      []textinput.Model
-	focus       int
+	form        Form
 	tmpl        textinput.Model
 	rows        []map[string]string
 	index       int
@@ -103,38 +102,28 @@ func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return w, nil
 			}
 			w.rows = rows
+			var fields []formField
 			for k := range rows[0] {
 				w.headers = append(w.headers, k)
-				fi := textinput.New()
-				fi.SetValue(k)
-				w.fields = append(w.fields, fi)
+				fi := newTextField(k, "")
+				fields = append(fields, fi)
 			}
-			if len(w.fields) > 0 {
-				w.focus = 0
-				w.fields[0].Focus()
+			if len(fields) > 0 {
+				w.form = Form{fields: fields, focus: 0}
+				w.form.ApplyFocus()
 			}
 			w.step = stepMap
 		}
 		return w, cmd
 	case stepMap:
-		if len(w.fields) == 0 {
+		if len(w.form.fields) == 0 {
 			return w, nil
 		}
 		switch m := msg.(type) {
 		case tea.KeyMsg:
 			switch m.String() {
 			case "tab", "shift+tab", "up", "down", "k", "j":
-				step := 1
-				if m.String() == "shift+tab" || m.String() == "up" || m.String() == "k" {
-					step = -1
-				}
-				w.focus += step
-				if w.focus < 0 {
-					w.focus = len(w.fields) - 1
-				}
-				if w.focus >= len(w.fields) {
-					w.focus = 0
-				}
+				w.form.CycleFocus(m)
 			case "ctrl+n":
 				w.step = stepTemplate
 				w.tmpl.Focus()
@@ -145,20 +134,14 @@ func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case tea.MouseMsg:
 			if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-				if m.Y >= 1 && m.Y-1 < len(w.fields) {
-					w.focus = m.Y - 1
+				if m.Y >= 1 && m.Y-1 < len(w.form.fields) {
+					w.form.focus = m.Y - 1
 				}
 			}
 		}
-		for i := range w.fields {
-			if i == w.focus {
-				w.fields[i].Focus()
-			} else {
-				w.fields[i].Blur()
-			}
-		}
+		w.form.ApplyFocus()
 		var cmd tea.Cmd
-		w.fields[w.focus], cmd = w.fields[w.focus].Update(msg)
+		cmd = w.form.fields[w.form.focus].Update(msg)
 		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
 			w.step = stepTemplate
 			w.tmpl.Focus()
@@ -283,10 +266,10 @@ func (w *ImportWizard) View() string {
 		var b strings.Builder
 		for i, h := range w.headers {
 			label := h
-			if i == w.focus {
+			if i == w.form.focus {
 				label = ui.FocusedStyle.Render(h)
 			}
-			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.fields[i].View())
+			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.fields[i].View())
 		}
 		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 		box = ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)
@@ -414,7 +397,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
-		m[h] = strings.TrimSpace(w.fields[i].Value())
+		m[h] = strings.TrimSpace(w.form.fields[i].Value())
 	}
 	return m
 }

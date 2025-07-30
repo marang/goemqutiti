@@ -64,10 +64,14 @@ func (m *model) refreshConnectionItems() {
 
 // setMode updates the current mode and focus order.
 func (m *model) setMode(mode appMode) {
+	if m.ui.mode == modeHelp && mode != modeHelp {
+		m.help.Blur()
+	}
 	m.ui.mode = mode
 	m.ui.focusIndex = 0
 	if mode == modeHelp {
 		m.ui.focusOrder = []string{idHelp}
+		m.help.Focus()
 	} else {
 		m.ui.focusOrder = defaultFocusOrder
 	}
@@ -84,5 +88,8 @@ func (m *model) computeFocusOrder() {
 	}
 	if len(m.ui.focusOrder) == 0 {
 		m.ui.focusOrder = []string{idHelp}
+	}
+	if m.ui.focusIndex >= len(m.ui.focusOrder) {
+		m.ui.focusIndex = 0
 	}
 }

@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"github.com/charmbracelet/bubbles/list"
 )
 
 // hasTopic reports whether the given topic already exists in the list.
@@ -18,18 +20,30 @@ func (m *model) hasTopic(topic string) bool {
 // sortTopics orders the topic list with active topics first and keeps selection.
 func (m *model) sortTopics() {
 	if len(m.topics.items) == 0 {
+		m.topics.enabled.SetItems([]list.Item{})
+		m.topics.disabled.SetItems([]list.Item{})
 		return
 	}
 	sel := ""
 	if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 		sel = m.topics.items[m.topics.selected].title
 	}
-	sort.SliceStable(m.topics.items, func(i, j int) bool {
-		if m.topics.items[i].active != m.topics.items[j].active {
-			return m.topics.items[i].active && !m.topics.items[j].active
+	enabledSlice := make([]topicItem, 0, len(m.topics.items))
+	disabledSlice := make([]topicItem, 0, len(m.topics.items))
+	for _, t := range m.topics.items {
+		if t.active {
+			enabledSlice = append(enabledSlice, t)
+		} else {
+			disabledSlice = append(disabledSlice, t)
 		}
-		return m.topics.items[i].title < m.topics.items[j].title
+	}
+	sort.Slice(enabledSlice, func(i, j int) bool {
+		return enabledSlice[i].title < enabledSlice[j].title
 	})
+	sort.Slice(disabledSlice, func(i, j int) bool {
+		return disabledSlice[i].title < disabledSlice[j].title
+	})
+	m.topics.items = append(enabledSlice, disabledSlice...)
 	if sel != "" {
 		for i, t := range m.topics.items {
 			if t.title == sel {
@@ -37,6 +51,36 @@ func (m *model) sortTopics() {
 				break
 			}
 		}
+	}
+	if m.currentMode() == modeTopics {
+		enPage := m.topics.enabled.Paginator.Page
+		disPage := m.topics.disabled.Paginator.Page
+		var enItems []list.Item
+		var disItems []list.Item
+		for _, t := range m.topics.items {
+			if t.active {
+				enItems = append(enItems, t)
+			} else {
+				disItems = append(disItems, t)
+			}
+		}
+		m.topics.enabled.SetItems(enItems)
+		if enPage >= m.topics.enabled.Paginator.TotalPages {
+			enPage = m.topics.enabled.Paginator.TotalPages - 1
+		}
+		if enPage < 0 {
+			enPage = 0
+		}
+		m.topics.enabled.Paginator.Page = enPage
+
+		m.topics.disabled.SetItems(disItems)
+		if disPage >= m.topics.disabled.Paginator.TotalPages {
+			disPage = m.topics.disabled.Paginator.TotalPages - 1
+		}
+		if disPage < 0 {
+			disPage = 0
+		}
+		m.topics.disabled.Paginator.Page = disPage
 	}
 }
 

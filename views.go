@@ -233,12 +233,42 @@ func (m model) viewConfirmDelete() string {
 func (m model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idTopicList] = 1
-	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+
+	enPer := m.topics.enabled.Paginator.PerPage
+	enTotal := len(m.topics.enabled.Items())
+	enSP := -1.0
+	if enTotal > enPer {
+		start := m.topics.enabled.Paginator.Page * enPer
+		denom := enTotal - enPer
+		if denom > 0 {
+			enSP = float64(start) / float64(denom)
+		}
+	}
+	disPer := m.topics.disabled.Paginator.PerPage
+	disTotal := len(m.topics.disabled.Items())
+	disSP := -1.0
+	if disTotal > disPer {
+		start := m.topics.disabled.Paginator.Page * disPer
+		denom := disTotal - disPer
+		if denom > 0 {
+			disSP = float64(start) / float64(denom)
+		}
+	}
+
+	paneWidth := (m.ui.width - 4) / 2
+	m.topics.enabled.SetSize(paneWidth-2, m.ui.height-4)
+	m.topics.disabled.SetSize(paneWidth-2, m.ui.height-4)
+
 	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopicList
-	view := ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, focused, -1)
-	return m.overlayHelp(view)
+	enFocused := focused && m.topics.focusEnabled
+	disFocused := focused && !m.topics.focusEnabled
+
+	enBox := ui.LegendBox(m.topics.enabled.View(), "Enabled", paneWidth, 0, ui.ColBlue, enFocused, enSP)
+	disBox := ui.LegendBox(m.topics.disabled.View(), "Disabled", paneWidth, 0, ui.ColBlue, disFocused, disSP)
+	lists := lipgloss.JoinHorizontal(lipgloss.Top, enBox, disBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, lists, help)
+	return m.overlayHelp(content)
 }
 
 // viewPayloads shows stored payloads for reuse.

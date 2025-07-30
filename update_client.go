@@ -282,13 +282,25 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.savePlannedTraces()
 			cmds = append(cmds, m.setMode(modeConnections))
 		case "ctrl+t":
-			items := []list.Item{}
+			m.sortTopics()
+			var enItems []list.Item
+			var disItems []list.Item
 			for _, tpc := range m.topics.items {
-				items = append(items, topicItem{title: tpc.title, active: tpc.active})
+				if tpc.active {
+					enItems = append(enItems, topicItem{title: tpc.title, active: tpc.active})
+				} else {
+					disItems = append(disItems, topicItem{title: tpc.title, active: tpc.active})
+				}
 			}
-			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
-			m.topics.list.DisableQuitKeybindings()
-			m.topics.list.SetShowTitle(false)
+			w := (m.ui.width - 4) / 2
+			h := m.ui.height - 4
+			m.topics.enabled = list.New(enItems, list.NewDefaultDelegate(), w, h)
+			m.topics.enabled.DisableQuitKeybindings()
+			m.topics.enabled.SetShowTitle(false)
+			m.topics.disabled = list.New(disItems, list.NewDefaultDelegate(), w, h)
+			m.topics.disabled.DisableQuitKeybindings()
+			m.topics.disabled.SetShowTitle(false)
+			m.topics.focusEnabled = true
 			cmds = append(cmds, m.setMode(modeTopics))
 		case "ctrl+p":
 			items := []list.Item{}

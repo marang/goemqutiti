@@ -79,9 +79,12 @@ func initialModel(conns *Connections) *model {
 	hist.DisableQuitKeybindings()
 	statusChan := make(chan string, 10)
 
-	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	topicsList.DisableQuitKeybindings()
-	topicsList.SetShowTitle(false)
+	enabledList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	enabledList.DisableQuitKeybindings()
+	enabledList.SetShowTitle(false)
+	disabledList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
+	disabledList.DisableQuitKeybindings()
+	disabledList.SetShowTitle(false)
 	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	payloadList.DisableQuitKeybindings()
 	payloadList.SetShowTitle(false)
@@ -129,12 +132,14 @@ func initialModel(conns *Connections) *model {
 			selectionAnchor: -1,
 		},
 		topics: topicsState{
-			input:      ti,
-			items:      []topicItem{},
-			list:       topicsList,
-			selected:   -1,
-			chipBounds: []chipBound{},
-			vp:         viewport.New(0, 0),
+			input:        ti,
+			items:        []topicItem{},
+			enabled:      enabledList,
+			disabled:     disabledList,
+			focusEnabled: true,
+			selected:     -1,
+			chipBounds:   []chipBound{},
+			vp:           viewport.New(0, 0),
 		},
 		message: messageState{
 			input:    ta,

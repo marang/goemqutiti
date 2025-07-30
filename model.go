@@ -160,12 +160,14 @@ type historyState struct {
 }
 
 type topicsState struct {
-	input      textinput.Model
-	items      []topicItem
-	list       list.Model
-	selected   int
-	chipBounds []chipBound
-	vp         viewport.Model
+	input        textinput.Model
+	items        []topicItem
+	enabled      list.Model
+	disabled     list.Model
+	focusEnabled bool
+	selected     int
+	chipBounds   []chipBound
+	vp           viewport.Model
 }
 
 type messageState struct {

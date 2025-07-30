@@ -383,36 +383,88 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "esc":
 			cmd := m.setMode(modeClient)
 			return m, cmd
+		case "left", "right":
+			m.topics.focusEnabled = !m.topics.focusEnabled
 		case "d":
-			i := m.topics.list.Index()
-			if i >= 0 && i < len(m.topics.items) {
-				name := m.topics.items[i].title
-				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
-					m.removeTopic(i)
-					items := []list.Item{}
-					for _, t := range m.topics.items {
-						items = append(items, t)
-					}
-					m.topics.list.SetItems(items)
-				})
+			if m.topics.focusEnabled {
+				i := m.topics.enabled.Index()
+				items := m.topics.enabled.Items()
+				if i >= 0 && i < len(items) {
+					name := items[i].(topicItem).title
+					m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
+						for j, t := range m.topics.items {
+							if t.title == name {
+								m.removeTopic(j)
+								break
+							}
+						}
+					})
+				}
+			} else {
+				i := m.topics.disabled.Index()
+				items := m.topics.disabled.Items()
+				if i >= 0 && i < len(items) {
+					name := items[i].(topicItem).title
+					m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
+						for j, t := range m.topics.items {
+							if t.title == name {
+								m.removeTopic(j)
+								break
+							}
+						}
+					})
+				}
 			}
 		case "enter", " ":
-			i := m.topics.list.Index()
-			if i >= 0 && i < len(m.topics.items) {
-				m.toggleTopic(i)
-				// Rebuild the list after sorting to keep
-				// indices in sync with the underlying data.
-				items := make([]list.Item, len(m.topics.items))
-				for j, t := range m.topics.items {
-					items[j] = t
+			if m.topics.focusEnabled {
+				i := m.topics.enabled.Index()
+				items := m.topics.enabled.Items()
+				if i >= 0 && i < len(items) {
+					name := items[i].(topicItem).title
+					for j, t := range m.topics.items {
+						if t.title == name {
+							m.toggleTopic(j)
+							break
+						}
+					}
+					// reposition selection in other pane
+					disItems := m.topics.disabled.Items()
+					for j, it := range disItems {
+						if it.(topicItem).title == name {
+							m.topics.disabled.Select(j)
+							break
+						}
+					}
+					m.topics.focusEnabled = false
 				}
-				m.topics.selected = i
-				m.topics.list.SetItems(items)
-				m.topics.list.Select(i)
+			} else {
+				i := m.topics.disabled.Index()
+				items := m.topics.disabled.Items()
+				if i >= 0 && i < len(items) {
+					name := items[i].(topicItem).title
+					for j, t := range m.topics.items {
+						if t.title == name {
+							m.toggleTopic(j)
+							break
+						}
+					}
+					enItems := m.topics.enabled.Items()
+					for j, it := range enItems {
+						if it.(topicItem).title == name {
+							m.topics.enabled.Select(j)
+							break
+						}
+					}
+					m.topics.focusEnabled = true
+				}
 			}
 		}
 	}
-	m.topics.list, cmd = m.topics.list.Update(msg)
+	if m.topics.focusEnabled {
+		m.topics.enabled, cmd = m.topics.enabled.Update(msg)
+	} else {
+		m.topics.disabled, cmd = m.topics.disabled.Update(msg)
+	}
 	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 

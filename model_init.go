@@ -218,7 +218,7 @@ func initialModel(conns *Connections) *model {
 				m.mqttClient = client
 				m.connections.active = cfg.Name
 				m.importWizard = NewImportWizard(client, importFile)
-				m.ui.mode = modeImporter
+				m.setMode(modeImporter)
 			} else {
 				fmt.Println("connect error:", err)
 			}

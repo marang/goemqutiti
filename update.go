@@ -215,7 +215,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			m.connections.manager.Statuses[msg.profile.Name] = "connected"
 			m.connections.manager.Errors[msg.profile.Name] = ""
 			m.refreshConnectionItems()
-			m.ui.mode = modeClient
+			m.setMode(modeClient)
 		}
 		return m, listenStatus(m.connections.statusChan)
 	case tea.KeyMsg:
@@ -230,7 +230,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.connections.connection = "Connected to " + brokerURL
 						m.connections.manager.Errors[p.Name] = ""
 						m.refreshConnectionItems()
-						m.ui.mode = modeClient
+						m.setMode(modeClient)
 						return m, nil
 					}
 					flushStatus(m.connections.statusChan)
@@ -254,18 +254,18 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			return m, tea.Quit
 		case "ctrl+r":
 			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
-			m.ui.mode = modeTracer
+			m.setMode(modeTracer)
 			return m, nil
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connections.form = &f
-			m.ui.mode = modeEditConnection
+			m.setMode(modeEditConnection)
 		case "e":
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				f := newConnectionForm(m.connections.manager.Profiles[i], i)
 				m.connections.form = &f
-				m.ui.mode = modeEditConnection
+				m.setMode(modeEditConnection)
 			}
 		case "enter":
 			i := m.connections.manager.ConnectionsList.Index()
@@ -276,7 +276,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.connections.connection = "Connected to " + brokerURL
 					m.connections.manager.Errors[p.Name] = ""
 					m.refreshConnectionItems()
-					m.ui.mode = modeClient
+					m.setMode(modeClient)
 					return m, nil
 				}
 				flushStatus(m.connections.statusChan)
@@ -335,7 +335,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.ui.mode = modeConnections
+			m.setMode(modeConnections)
 			m.connections.form = nil
 			return m, nil
 		case "enter":
@@ -346,7 +346,7 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 				m.connections.manager.AddConnection(p)
 			}
 			m.refreshConnectionItems()
-			m.ui.mode = modeConnections
+			m.setMode(modeConnections)
 			m.connections.form = nil
 			return m, nil
 		}
@@ -368,10 +368,10 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction()
 				m.confirmAction = nil
 			}
-			m.ui.mode = m.ui.prevMode
+			m.setMode(m.ui.prevMode)
 			m.scrollToFocused()
 		case "n", "esc":
-			m.ui.mode = m.ui.prevMode
+			m.setMode(m.ui.prevMode)
 			m.scrollToFocused()
 		}
 	}
@@ -387,7 +387,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.ui.mode = modeClient
+			m.setMode(modeClient)
 		case "d":
 			i := m.topics.list.Index()
 			if i >= 0 && i < len(m.topics.items) {
@@ -424,7 +424,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 		case "ctrl+d":
 			return m, tea.Quit
 		case "esc":
-			m.ui.mode = modeClient
+			m.setMode(modeClient)
 		case "d":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -443,7 +443,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					pi := items[i].(payloadItem)
 					m.topics.input.SetValue(pi.topic)
 					m.message.input.SetValue(pi.payload)
-					m.ui.mode = modeClient
+					m.setMode(modeClient)
 				}
 			}
 		}
@@ -497,7 +497,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 			m.ui.focusOrder[m.ui.focusIndex] == "help" {
 			m.ui.prevMode = m.ui.mode
-			m.ui.mode = modeHelp
+			m.setMode(modeHelp)
 			return m, nil
 		}
 	}

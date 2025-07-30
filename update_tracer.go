@@ -31,7 +31,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 			return m, tea.Quit
 		case "esc":
 			m.savePlannedTraces()
-			m.ui.mode = modeClient
+			m.setMode(modeClient)
 		case "a":
 			opts := make([]string, len(m.connections.manager.Profiles))
 			for i, p := range m.connections.manager.Profiles {
@@ -45,7 +45,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 			}
 			f := newTraceForm(opts, m.connections.active, topics)
 			m.traces.form = &f
-			m.ui.mode = modeEditTrace
+			m.setMode(modeEditTrace)
 			return m, textinput.Blink
 		case "enter":
 			i := m.traces.list.Index()
@@ -98,7 +98,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			return m, tea.Quit
 		case "esc":
 			m.traces.form = nil
-			m.ui.mode = modeTracer
+			m.setMode(modeTracer)
 			return m, nil
 		case "enter":
 			cfg := m.traces.form.Config()
@@ -145,7 +145,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			m.traces.list.SetItems(items)
 			addTrace(cfg)
 			m.traces.form = nil
-			m.ui.mode = modeTracer
+			m.setMode(modeTracer)
 			return m, nil
 		}
 	}
@@ -161,7 +161,7 @@ func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			m.ui.mode = modeTracer
+			m.setMode(modeTracer)
 			return m, nil
 		case "ctrl+d":
 			return m, tea.Quit

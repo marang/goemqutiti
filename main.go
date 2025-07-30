@@ -84,7 +84,7 @@ func main() {
 	// Start Bubble Tea UI without connecting. The user can choose a profile
 	// from the connection manager once the program starts.
 	initial := initialModel(nil)
-	initial.ui.mode = modeConnections
+	initial.setMode(modeConnections)
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {

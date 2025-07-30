@@ -36,7 +36,7 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmInfo = info
 	m.confirmAction = action
 	m.ui.prevMode = m.ui.mode
-	m.ui.mode = modeConfirmDelete
+	m.setMode(modeConfirmDelete)
 }
 
 // subscribeActiveTopics subscribes the MQTT client to all currently active topics.
@@ -60,4 +60,16 @@ func (m *model) refreshConnectionItems() {
 		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
 	}
 	m.connections.manager.ConnectionsList.SetItems(items)
+}
+
+// setMode updates the current mode and focus order.
+func (m *model) setMode(mode appMode) {
+	m.ui.mode = mode
+	switch mode {
+	case modeClient:
+		m.ui.focusOrder = []string{"topics", "topic", "message", "history", "help"}
+	default:
+		m.ui.focusOrder = []string{"help"}
+	}
+	m.ui.focusIndex = 0
 }

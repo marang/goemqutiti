@@ -2,31 +2,46 @@ package main
 
 import (
 	_ "embed"
+	"strings"
 
-	"github.com/charmbracelet/glamour"
-	"github.com/charmbracelet/glamour/styles"
-	glowutils "github.com/charmbracelet/glow/v2/utils"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/marang/goemqutiti/ui"
 )
 
 //go:embed docs/help.md
 var helpMarkdown string
 
-// helpText is the rendered markdown displayed in the help viewport.
+// helpText is the formatted help page displayed in the viewport.
 var helpText = renderHelp()
 
-// renderHelp converts the embedded markdown to ANSI formatted text using
-// Glow's glamour helpers. On error it falls back to the raw markdown.
+// renderHelp parses the embedded Markdown and applies lipgloss styles.
 func renderHelp() string {
-	r, err := glamour.NewTermRenderer(
-		glowutils.GlamourStyle(styles.DarkStyle, false),
-		glamour.WithWordWrap(0),
+	lines := strings.Split(helpMarkdown, "\n")
+	var tableRows []string
+	var bullets []string
+	for _, l := range lines {
+		l = strings.TrimSpace(l)
+		if strings.HasPrefix(l, "|") {
+			parts := strings.Split(l, "|")
+			if len(parts) >= 3 && strings.TrimSpace(parts[1]) != "Key" {
+				key := strings.TrimSpace(parts[1])
+				action := strings.TrimSpace(parts[2])
+				row := lipgloss.JoinHorizontal(lipgloss.Left,
+					ui.HelpKey.Render(key), action)
+				tableRows = append(tableRows, row)
+			}
+		} else if strings.HasPrefix(l, "-") {
+			bullets = append(bullets, "• "+strings.TrimSpace(strings.TrimPrefix(l, "-")))
+		}
+	}
+	table := lipgloss.JoinVertical(lipgloss.Left, tableRows...)
+	list := lipgloss.JoinVertical(lipgloss.Left, bullets...)
+	content := lipgloss.JoinVertical(lipgloss.Left,
+		ui.HelpHeader.Render("Shortcuts"),
+		table,
+		"",
+		ui.HelpHeader.Render("Other Keys"),
+		list,
 	)
-	if err != nil {
-		return helpMarkdown
-	}
-	out, err := r.Render(helpMarkdown)
-	if err != nil {
-		return helpMarkdown
-	}
-	return out
+	return lipgloss.NewStyle().Margin(1, 2).Render(content)
 }

@@ -15,6 +15,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	idTopics  = "topics"  // topics chip list
+	idTopic   = "topic"   // topic input box
+	idMessage = "message" // message input box
+	idHistory = "history" // history list
+	idHelp    = "help"    // help icon
+)
+
 type connectionItem struct {
 	title  string
 	status string

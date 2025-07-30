@@ -71,22 +71,22 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 			f.Blur()
 		}
 	}
-	// push mode to history stack
-	if len(m.ui.modeHistory) == 0 || m.ui.modeHistory[0] != mode {
-		m.ui.modeHistory = append([]appMode{mode}, m.ui.modeHistory...)
+	// push mode to stack
+	if len(m.ui.modeStack) == 0 || m.ui.modeStack[0] != mode {
+		m.ui.modeStack = append([]appMode{mode}, m.ui.modeStack...)
 	} else {
-		m.ui.modeHistory[0] = mode
+		m.ui.modeStack[0] = mode
 	}
 	// remove any other occurrences of this mode to keep order meaningful
-	for i := 1; i < len(m.ui.modeHistory); {
-		if m.ui.modeHistory[i] == mode {
-			m.ui.modeHistory = append(m.ui.modeHistory[:i], m.ui.modeHistory[i+1:]...)
+	for i := 1; i < len(m.ui.modeStack); {
+		if m.ui.modeStack[i] == mode {
+			m.ui.modeStack = append(m.ui.modeStack[:i], m.ui.modeStack[i+1:]...)
 		} else {
 			i++
 		}
 	}
-	if len(m.ui.modeHistory) > 10 {
-		m.ui.modeHistory = m.ui.modeHistory[:10]
+	if len(m.ui.modeStack) > 10 {
+		m.ui.modeStack = m.ui.modeStack[:10]
 	}
 	order, ok := focusByMode[mode]
 	if !ok || len(order) == 0 {
@@ -102,16 +102,16 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 
 // currentMode returns the active application mode.
 func (m *model) currentMode() appMode {
-	if len(m.ui.modeHistory) == 0 {
+	if len(m.ui.modeStack) == 0 {
 		return modeClient
 	}
-	return m.ui.modeHistory[0]
+	return m.ui.modeStack[0]
 }
 
 // previousMode returns the last mode before the current one.
 func (m *model) previousMode() appMode {
-	if len(m.ui.modeHistory) > 1 {
-		return m.ui.modeHistory[1]
+	if len(m.ui.modeStack) > 1 {
+		return m.ui.modeStack[1]
 	}
 	return m.currentMode()
 }

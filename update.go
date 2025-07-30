@@ -215,6 +215,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if i >= 0 && i < len(m.connections.manager.Profiles) {
 					p := m.connections.manager.Profiles[i]
 					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+						m.connections.connection = "Connected to " + brokerURL
+						m.connections.manager.Errors[p.Name] = ""
+						m.refreshConnectionItems()
 						m.ui.mode = modeClient
 						return m, nil
 					}
@@ -257,6 +261,10 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				p := m.connections.manager.Profiles[i]
 				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					m.connections.connection = "Connected to " + brokerURL
+					m.connections.manager.Errors[p.Name] = ""
+					m.refreshConnectionItems()
 					m.ui.mode = modeClient
 					return m, nil
 				}

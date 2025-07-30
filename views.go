@@ -10,6 +10,24 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
+func (m model) overlayHelp(view string) string {
+	help := ui.HelpStyle.Render("?")
+	if m.help.focused {
+		help = ui.HelpFocused.Render("?")
+	}
+	m.ui.elemPos["help"] = 0
+	lines := strings.Split(view, "\n")
+	if len(lines) == 0 {
+		return help
+	}
+	first := lipgloss.NewStyle().Width(m.ui.width-lipgloss.Width(help)).Render(lines[0]) + help
+	if len(lines) == 1 {
+		return first
+	}
+	lines[0] = first
+	return strings.Join(lines, "\n")
+}
+
 func layoutChips(chips []string, width int) ([]string, []chipBound) {
 	var lines []string
 	var row []string
@@ -167,14 +185,15 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	return lipgloss.JoinVertical(lipgloss.Left, infoLine, view)
+	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, infoLine, view))
 }
 
 func (m model) viewConnections() string {
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
+	view := ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewForm() string {
@@ -187,7 +206,7 @@ func (m model) viewForm() string {
 		formLabel = "Edit Broker"
 	}
 	formView := ui.LegendBox(m.connections.form.View(), formLabel, m.ui.width/2-2, 0, ui.ColBlue, true, -1)
-	return lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
+	return m.overlayHelp(lipgloss.JoinHorizontal(lipgloss.Top, listView, formView))
 }
 
 func (m model) viewConfirmDelete() string {
@@ -196,33 +215,37 @@ func (m model) viewConfirmDelete() string {
 		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
 	}
 	box := ui.LegendBox(content, "Confirm", m.ui.width/2, 0, ui.ColBlue, true, -1)
-	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
+	return m.overlayHelp(lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box))
 }
 
 func (m model) viewTopics() string {
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewPayloads() string {
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewTraces() string {
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	return ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewTraceForm() string {
 	content := m.traces.form.View()
-	return ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, "New Trace", m.ui.width-2, 0, ui.ColBlue, false, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewTraceMessages() string {
@@ -239,14 +262,26 @@ func (m model) viewTraceMessages() string {
 		target = minHeight
 	}
 	content := strings.Join(listLines, "\n")
-	return ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
+	view := ui.LegendBox(content, title, m.ui.width-2, target, ui.ColBlue, false, -1)
+	return m.overlayHelp(view)
 }
 
 func (m model) viewImporter() string {
 	if m.importWizard == nil {
 		return ""
 	}
-	return m.importWizard.View()
+	return m.overlayHelp(m.importWizard.View())
+}
+
+func (m model) viewHelp() string {
+	m.help.vp.SetContent(helpText)
+	content := m.help.vp.View()
+	sp := -1.0
+	if m.help.vp.Height < lipgloss.Height(content) {
+		sp = m.help.vp.ScrollPercent()
+	}
+	box := ui.LegendBox(content, "Help", m.ui.width-2, m.ui.height-2, ui.ColGreen, true, sp)
+	return box
 }
 
 func (m *model) View() string {
@@ -271,6 +306,8 @@ func (m *model) View() string {
 		return m.viewTraceMessages()
 	case modeImporter:
 		return m.viewImporter()
+	case modeHelp:
+		return m.viewHelp()
 	default:
 		return ""
 	}

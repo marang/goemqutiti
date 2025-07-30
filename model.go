@@ -56,9 +56,10 @@ type chipBound struct {
 }
 
 type historyItem struct {
-	topic   string
-	payload string
-	kind    string // pub, sub, log
+	timestamp time.Time
+	topic     string
+	payload   string
+	kind      string // pub, sub, log
 }
 
 func (h historyItem) FilterValue() string { return h.payload }
@@ -93,6 +94,7 @@ const (
 	modeEditTrace
 	modeViewTrace
 	modeImporter
+	modeHelp
 )
 
 type connectionData struct {
@@ -208,6 +210,18 @@ type tracesState struct {
 	viewKey string
 }
 
+type helpState struct {
+	vp      viewport.Model
+	focused bool
+}
+
+func (h *helpState) Focus() tea.Cmd {
+	h.focused = true
+	return nil
+}
+
+func (h *helpState) Blur() { h.focused = false }
+
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int            // index of the currently focused element
@@ -228,6 +242,7 @@ type model struct {
 	topics       topicsState
 	message      messageState
 	traces       tracesState
+	help         helpState
 	importWizard *ImportWizard
 
 	ui uiState

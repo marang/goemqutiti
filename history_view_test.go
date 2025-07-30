@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -14,7 +15,7 @@ func TestHistoryDelegateWidth(t *testing.T) {
 	m := initialModel(nil)
 	d := historyDelegate{m: m}
 	m.history.list.SetSize(30, 4)
-	hi := historyItem{topic: "foo", payload: "bar", kind: "pub"}
+	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "bar", kind: "pub"}
 	var buf bytes.Buffer
 	d.Render(&buf, m.history.list, 0, hi)
 	lines := strings.Split(buf.String(), "\n")

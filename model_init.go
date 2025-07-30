@@ -93,7 +93,7 @@ func initialModel(conns *Connections) *model {
 	traceView.SetShowTitle(false)
 	vp := viewport.New(0, 0)
 
-	order := []string{"topics", "topic", "message", "history"}
+	order := []string{"topics", "topic", "message", "history", "help"}
 	saved := loadState()
 	tracesCfg := loadTraces()
 	var traceItems []list.Item
@@ -146,6 +146,9 @@ func initialModel(conns *Connections) *model {
 			form:  nil,
 			view:  traceView,
 		},
+		help: helpState{
+			vp: viewport.New(0, 0),
+		},
 		ui: uiState{
 			focusIndex: 0,
 			mode:       modeClient,
@@ -166,6 +169,7 @@ func initialModel(conns *Connections) *model {
 	m.focusMap = map[string]focusable{
 		"topic":   &m.topics.input,
 		"message": &m.message.input,
+		"help":    &m.help,
 	}
 	hDel.m = m
 	m.history.list.SetDelegate(hDel)
@@ -176,7 +180,7 @@ func initialModel(conns *Connections) *model {
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
 			m.history.items = append(m.history.items, items[i].(historyItem))
 		}
 		m.history.list.SetItems(items)

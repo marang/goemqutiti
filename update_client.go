@@ -414,7 +414,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		msgs := m.history.store.Search(topics, start, end, text)
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = historyItem{topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
 		}
 		m.history.list.SetItems(items)
 	} else {

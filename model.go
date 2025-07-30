@@ -33,7 +33,7 @@ var focusByMode = map[appMode][]string{
 	modeClient:         {idTopics, idTopic, idMessage, idHistory, idHelp},
 	modeConnections:    {idConnList, idHelp},
 	modeEditConnection: {idConnList, idHelp},
-	modeConfirmDelete:  {idHelp},
+	modeConfirmDelete:  {},
 	modeTopics:         {idTopicList, idHelp},
 	modePayloads:       {idPayloadList, idHelp},
 	modeTracer:         {idTraceList, idHelp},

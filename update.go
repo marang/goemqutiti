@@ -406,8 +406,9 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 				for j, t := range m.topics.items {
 					items[j] = t
 				}
+				m.topics.selected = i
 				m.topics.list.SetItems(items)
-				m.topics.list.Select(m.topics.selected)
+				m.topics.list.Select(i)
 			}
 		}
 	}

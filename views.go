@@ -226,7 +226,7 @@ func (m model) viewConfirmDelete() string {
 		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
 	}
 	box := ui.LegendBox(content, "Confirm", m.ui.width/2, 0, ui.ColBlue, true, -1)
-	return m.overlayHelp(lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box))
+	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
 }
 
 // viewTopics displays the topic manager list.

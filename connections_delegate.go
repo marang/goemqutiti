@@ -13,10 +13,16 @@ import (
 
 type connectionDelegate struct{}
 
-func (d connectionDelegate) Height() int                               { return 3 }
-func (d connectionDelegate) Spacing() int                              { return 0 }
+// Height returns the row height for connection entries.
+func (d connectionDelegate) Height() int { return 3 }
+
+// Spacing returns the spacing between connection entries.
+func (d connectionDelegate) Spacing() int { return 0 }
+
+// Update performs no action for connection items.
 func (d connectionDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
+// Render writes a single connection row to the list.
 func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	ci := item.(connectionItem)
 	width := m.Width()

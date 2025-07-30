@@ -13,42 +13,6 @@ import (
 	"github.com/marang/goemqutiti/config"
 )
 
-// type Profile struct {
-// 	Name     string `toml:"name"`
-// 	Broker   string `toml:"broker"`
-// 	ClientId string `toml:"client_id"`
-// 	Username string `toml:"username"`
-// 	Password string `toml:"password"`
-// }
-
-// type Config struct {
-// 	DefaultProfile string    `toml:"default_profile"`
-// 	Profiles       []Profile `toml:"profiles"`
-// }
-
-// func loadConfig() (*Config, error) {
-// 	var config Config
-
-// 	homeDir, err := os.UserHomeDir()
-// 	if err != nil {
-// 		fmt.Println("Error getting home directory:", err)
-// 		return nil, err
-// 	}
-// 	filePath := filepath.Join(homeDir, ".emqutiti", "config.toml")
-// 	file, err := os.Open(filePath)
-// 	if err != nil {
-// 		fmt.Println("Error opening file:", err)
-// 		return nil, err
-// 	}
-// 	defer file.Close()
-
-// 	if _, err = toml.NewDecoder(file).Decode(&config); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return &config, nil
-// }
-
 var (
 	importFile  string
 	profileName string
@@ -58,6 +22,7 @@ var (
 	traceEnd    string
 )
 
+// init registers CLI flags for tracing and import modes.
 func init() {
 	flag.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
 	flag.StringVar(&importFile, "i", "", "(shorthand)")
@@ -68,6 +33,8 @@ func init() {
 	flag.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
 	flag.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
 }
+
+// main parses flags, sets up logging, and launches the UI or other modes.
 
 func main() {
 	flag.Parse()

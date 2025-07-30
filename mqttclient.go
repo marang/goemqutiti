@@ -89,6 +89,9 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	return &MQTTClient{Client: client, StatusChan: statusChan, MessageChan: msgChan}, nil
 }
 
+// Publish sends the payload to the given topic using the underlying client.
+// It waits for the publish token to complete and returns any error from the
+// broker.
 func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {
 	token := m.Client.Publish(topic, qos, retained, payload)
 	token.Wait()
@@ -98,6 +101,9 @@ func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload inte
 	return nil
 }
 
+// Subscribe registers callback for messages on topic at the specified QoS.
+// The method blocks until the broker acknowledges the subscription and
+// returns an error if the request fails.
 func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) error {
 	token := m.Client.Subscribe(topic, qos, callback)
 	token.Wait()
@@ -107,6 +113,8 @@ func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHand
 	return nil
 }
 
+// Unsubscribe removes the subscription for the topic. It waits for
+// completion and returns an error if the unsubscribe request fails.
 func (m *MQTTClient) Unsubscribe(topic string) error {
 	token := m.Client.Unsubscribe(topic)
 	token.Wait()

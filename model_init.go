@@ -17,6 +17,7 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
+// initialModel creates the main program model with optional connection data.
 func initialModel(conns *Connections) *model {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
@@ -226,6 +227,7 @@ func initialModel(conns *Connections) *model {
 	return m
 }
 
+// Init enables initial Tea behavior such as mouse support.
 func (m model) Init() tea.Cmd {
 	return tea.EnableMouseCellMotion
 }

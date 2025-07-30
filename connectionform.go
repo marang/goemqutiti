@@ -23,6 +23,7 @@ type textField struct {
 	readOnly bool
 }
 
+// newTextField creates a textField with the given value and placeholder. If opts[0] is true the field is masked for password entry.
 func newTextField(value, placeholder string, opts ...bool) *textField {
 	ti := textinput.New()
 	ti.Placeholder = placeholder
@@ -33,6 +34,7 @@ func newTextField(value, placeholder string, opts ...bool) *textField {
 	return &textField{Model: ti}
 }
 
+// setReadOnly marks the field read only and blurs it when activated.
 func (t *textField) setReadOnly(ro bool) {
 	t.readOnly = ro
 	if ro {
@@ -40,6 +42,7 @@ func (t *textField) setReadOnly(ro bool) {
 	}
 }
 
+// Update forwards messages to the text input unless the field is read only.
 func (t *textField) Update(msg tea.Msg) tea.Cmd {
 	if t.readOnly {
 		return nil
@@ -49,6 +52,7 @@ func (t *textField) Update(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
+// Value returns the text content of the field.
 func (t *textField) Value() string { return t.Model.Value() }
 
 type checkField struct {
@@ -64,6 +68,7 @@ type selectField struct {
 	readOnly bool
 }
 
+// newSelectField creates a selectField with the given options and selects the provided value.
 func newSelectField(val string, opts []string) *selectField {
 	idx := 0
 	for i, o := range opts {
@@ -75,13 +80,17 @@ func newSelectField(val string, opts []string) *selectField {
 	return &selectField{options: opts, index: idx}
 }
 
+// Focus sets the field as focused unless it is read only.
 func (s *selectField) Focus() {
 	if !s.readOnly {
 		s.focused = true
 	}
 }
+
+// Blur removes focus from the field.
 func (s *selectField) Blur() { s.focused = false }
 
+// setReadOnly disables interaction and clears focus when true.
 func (s *selectField) setReadOnly(ro bool) {
 	s.readOnly = ro
 	if ro {
@@ -89,6 +98,7 @@ func (s *selectField) setReadOnly(ro bool) {
 	}
 }
 
+// Update handles key presses when the field is focused.
 func (s *selectField) Update(msg tea.Msg) tea.Cmd {
 	if !s.focused || s.readOnly {
 		return nil
@@ -110,6 +120,7 @@ func (s *selectField) Update(msg tea.Msg) tea.Cmd {
 	return nil
 }
 
+// View renders the current option and highlights it when focused.
 func (s *selectField) View() string {
 	val := s.options[s.index]
 	if s.focused {
@@ -118,15 +129,22 @@ func (s *selectField) View() string {
 	return val
 }
 
+// Value returns the currently selected option.
 func (s *selectField) Value() string { return s.options[s.index] }
 
+// newCheckField returns a checkbox field with the given value.
 func newCheckField(val bool) *checkField { return &checkField{value: val} }
 
+// Focus sets the checkbox as active for input.
 func (c *checkField) Focus() { c.focused = true }
-func (c *checkField) Blur()  { c.focused = false }
 
+// Blur removes focus from the checkbox.
+func (c *checkField) Blur() { c.focused = false }
+
+// setReadOnly prevents toggling the checkbox value.
 func (c *checkField) setReadOnly(ro bool) { c.readOnly = ro }
 
+// Update toggles the checkbox state on keyboard or mouse input.
 func (c *checkField) Update(msg tea.Msg) tea.Cmd {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
@@ -141,6 +159,7 @@ func (c *checkField) Update(msg tea.Msg) tea.Cmd {
 	return nil
 }
 
+// View renders the checkbox with focus styling when selected.
 func (c *checkField) View() string {
 	box := "[ ]"
 	if c.value {
@@ -152,7 +171,12 @@ func (c *checkField) View() string {
 	return box
 }
 
+// Value returns "true" or "false" for the checkbox state.
 func (c *checkField) Value() string { return fmt.Sprintf("%v", c.value) }
+
+// Focus gives keyboard focus to the text field.
+// Blur removes keyboard focus from the text field.
+// View returns the underlying textinput view.
 
 func (t *textField) Focus()       { t.Model.Focus() }
 func (t *textField) Blur()        { t.Model.Blur() }
@@ -196,6 +220,8 @@ const (
 	idxWillPayload
 )
 
+// newConnectionForm builds a form populated from the given profile.
+// idx is -1 when creating a new profile.
 func newConnectionForm(p Profile, idx int) connectionForm {
 	if p.FromEnv {
 		config.ApplyEnvVars(&p)
@@ -328,10 +354,12 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 	return connectionForm{fields: fields, focus: 0, index: idx, fromEnv: p.FromEnv}
 }
 
+// Init sets up the text input blink command.
 func (f connectionForm) Init() tea.Cmd {
 	return textinput.Blink
 }
 
+// Update handles keyboard and mouse events for the form.
 func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
@@ -380,6 +408,7 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	return f, cmd
 }
 
+// View renders the form with labels and field contents.
 func (f connectionForm) View() string {
 	var s string
 	labels := []string{
@@ -427,6 +456,7 @@ func (f connectionForm) View() string {
 	return s
 }
 
+// Profile builds a Profile struct from the form values.
 func (f connectionForm) Profile() Profile {
 	vals := make([]string, len(f.fields))
 	for i, in := range f.fields {

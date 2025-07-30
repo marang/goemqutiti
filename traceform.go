@@ -24,6 +24,7 @@ const (
 	idxTraceEnd
 )
 
+// newTraceForm builds a form for creating or editing a trace.
 func newTraceForm(profiles []string, current string, topics []string) traceForm {
 	tf := traceForm{}
 	keyField := newTextField("", "Key")
@@ -37,8 +38,10 @@ func newTraceForm(profiles []string, current string, topics []string) traceForm 
 	return tf
 }
 
+// Init implements tea.Model for the trace form.
 func (f traceForm) Init() tea.Cmd { return textinput.Blink }
 
+// Update handles user input and updates form fields.
 func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m := msg.(type) {
@@ -77,6 +80,7 @@ func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 	return f, cmd
 }
 
+// View renders the form interface.
 func (f traceForm) View() string {
 	labels := []string{"Key", "Profile", "Topics", "Start", "End"}
 	var b strings.Builder
@@ -94,6 +98,7 @@ func (f traceForm) View() string {
 	return b.String()
 }
 
+// Config returns the tracer configuration from the form values.
 func (f traceForm) Config() TracerConfig {
 	vals := make([]string, len(f.fields))
 	for i, fld := range f.fields {

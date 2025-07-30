@@ -195,6 +195,7 @@ func (m *model) viewClient() string {
 // viewConnections shows the list of saved broker profiles.
 func (m model) viewConnections() string {
 	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idConnList] = 1
 	listView := m.connections.manager.ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -205,6 +206,7 @@ func (m model) viewConnections() string {
 // viewForm renders the add/edit broker form alongside the list.
 func (m model) viewForm() string {
 	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idConnList] = 1
 	if m.connections.form == nil {
 		return ""
 	}
@@ -231,6 +233,7 @@ func (m model) viewConfirmDelete() string {
 // viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idTopicList] = 1
 	listView := m.topics.list.View()
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -241,6 +244,7 @@ func (m model) viewTopics() string {
 // viewPayloads shows stored payloads for reuse.
 func (m model) viewPayloads() string {
 	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idPayloadList] = 1
 	listView := m.message.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -251,6 +255,7 @@ func (m model) viewPayloads() string {
 // viewTraces lists configured traces and their state.
 func (m model) viewTraces() string {
 	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idTraceList] = 1
 	listView := m.traces.list.View()
 	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)

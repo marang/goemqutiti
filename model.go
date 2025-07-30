@@ -23,6 +23,7 @@ const (
 	idConnList    = "conn-list"    // broker list
 	idTopicList   = "topic-list"   // topics manager list
 	idPayloadList = "payload-list" // payload manager list
+	idTraceList   = "trace-list"   // traces manager list
 	idHelp        = "help"         // help icon
 )
 
@@ -31,7 +32,7 @@ const (
 // tab order without extra bookkeeping.
 var defaultFocusOrder = []string{
 	idTopics, idTopic, idMessage, idHistory,
-	idConnList, idTopicList, idPayloadList, idHelp,
+	idConnList, idTopicList, idPayloadList, idTraceList, idHelp,
 }
 
 type connectionItem struct {

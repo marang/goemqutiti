@@ -1,19 +1,32 @@
 package main
 
-const helpText = `Shortcuts
-Ctrl+B           Open broker manager
-Ctrl+S / Ctrl+Enter   Publish message
-Ctrl+T           Manage topics
-Ctrl+P           Manage payloads
-Ctrl+R           Manage traces
-Ctrl+C           Copy selected entry
-Ctrl+D           Exit the program
-Ctrl+Shift+Up    Resize panels (up)
-Ctrl+Shift+Down  Resize panels (down)
+import (
+	_ "embed"
 
-Tab/Shift+Tab cycle focus
-Enter subscribes to the typed topic
-'x' disconnects in the broker manager
-Esc navigates back
-Use arrows to move through lists
-Press '/' in history to filter`
+	"github.com/charmbracelet/glamour"
+	"github.com/charmbracelet/glamour/styles"
+	glowutils "github.com/charmbracelet/glow/v2/utils"
+)
+
+//go:embed docs/help.md
+var helpMarkdown string
+
+// helpText is the rendered markdown displayed in the help viewport.
+var helpText = renderHelp()
+
+// renderHelp converts the embedded markdown to ANSI formatted text using
+// Glow's glamour helpers. On error it falls back to the raw markdown.
+func renderHelp() string {
+	r, err := glamour.NewTermRenderer(
+		glowutils.GlamourStyle(styles.DarkStyle, false),
+		glamour.WithWordWrap(0),
+	)
+	if err != nil {
+		return helpMarkdown
+	}
+	out, err := r.Render(helpMarkdown)
+	if err != nil {
+		return helpMarkdown
+	}
+	return out
+}

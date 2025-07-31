@@ -291,8 +291,8 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.savePlannedTraces()
 			cmds = append(cmds, m.setMode(modeConnections))
 		case "ctrl+t":
-			m.topics.panes.subscribed = paneState{sel: 0, page: 0}
-			m.topics.panes.unsubscribed = paneState{sel: 0, page: 0}
+			m.topics.panes.subscribed = paneState{sel: 0, page: 0, index: 0, m: m}
+			m.topics.panes.unsubscribed = paneState{sel: 0, page: 0, index: 1, m: m}
 			m.topics.panes.active = 0
 			m.topics.list.SetSize(m.ui.width/2-2, m.ui.height-4)
 			m.rebuildActiveTopicList()

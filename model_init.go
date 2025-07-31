@@ -129,9 +129,14 @@ func initialModel(conns *Connections) *model {
 			selectionAnchor: -1,
 		},
 		topics: topicsState{
-			input:      ti,
-			items:      []topicItem{},
-			list:       topicsList,
+			input: ti,
+			items: []topicItem{},
+			list:  topicsList,
+			panes: topicsPanes{
+				subscribed:   paneState{sel: 0, page: 0, index: 0},
+				unsubscribed: paneState{sel: 0, page: 0, index: 1},
+				active:       0,
+			},
 			selected:   -1,
 			chipBounds: []chipBound{},
 			vp:         viewport.New(0, 0),
@@ -167,16 +172,19 @@ func initialModel(conns *Connections) *model {
 		},
 	}
 	m.focusables = map[string]Focusable{
-		idTopics:      &nullFocusable{},
-		idTopic:       adapt(&m.topics.input),
-		idMessage:     adapt(&m.message.input),
-		idHistory:     &nullFocusable{},
-		idConnList:    &nullFocusable{},
-		idTopicList:   &nullFocusable{},
-		idPayloadList: &nullFocusable{},
-		idTraceList:   &nullFocusable{},
-		idHelp:        adapt(&m.help),
+		idTopics:         &nullFocusable{},
+		idTopic:          adapt(&m.topics.input),
+		idMessage:        adapt(&m.message.input),
+		idHistory:        &nullFocusable{},
+		idConnList:       &nullFocusable{},
+		idTopicsEnabled:  &m.topics.panes.subscribed,
+		idTopicsDisabled: &m.topics.panes.unsubscribed,
+		idPayloadList:    &nullFocusable{},
+		idTraceList:      &nullFocusable{},
+		idHelp:           adapt(&m.help),
 	}
+	m.topics.panes.subscribed.m = m
+	m.topics.panes.unsubscribed.m = m
 	fitems := make([]Focusable, len(order))
 	for i, id := range order {
 		fitems[i] = m.focusables[id]
@@ -234,6 +242,7 @@ func initialModel(conns *Connections) *model {
 			}
 		}
 	}
+	m.rebuildActiveTopicList()
 	return m
 }
 

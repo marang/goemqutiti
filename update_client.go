@@ -50,7 +50,7 @@ func (m *model) ensureTopicVisible() {
 	var chips []string
 	for _, t := range m.topics.items {
 		st := ui.ChipStyle
-		if !t.active {
+		if !t.subscribed {
 			st = ui.ChipInactive
 		}
 		chips = append(chips, st.Render(t.title))
@@ -238,7 +238,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
 			payload := m.message.input.Value()
 			for _, t := range m.topics.items {
-				if t.active {
+				if t.subscribed {
 					m.message.payloads = append(m.message.payloads, payloadItem{topic: t.title, payload: payload})
 					m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 					if m.mqttClient != nil {
@@ -251,8 +251,11 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopic {
 			topic := strings.TrimSpace(m.topics.input.Value())
 			if topic != "" && !m.hasTopic(topic) {
-				m.topics.items = append(m.topics.items, topicItem{title: topic, active: true})
+				m.topics.items = append(m.topics.items, topicItem{title: topic, subscribed: true})
 				m.sortTopics()
+				if m.currentMode() == modeTopics {
+					m.rebuildActiveTopicList()
+				}
 				if m.mqttClient != nil {
 					m.mqttClient.Subscribe(topic, 0, nil)
 				}
@@ -262,6 +265,9 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			m.toggleTopic(m.topics.selected)
 			m.ensureTopicVisible()
+			if m.currentMode() == modeTopics {
+				m.rebuildActiveTopicList()
+			}
 		}
 	case "d":
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
@@ -269,6 +275,9 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			name := m.topics.items[idx].title
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 				m.removeTopic(idx)
+				if m.currentMode() == modeTopics {
+					m.rebuildActiveTopicList()
+				}
 			})
 		}
 	default:
@@ -282,13 +291,11 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.savePlannedTraces()
 			cmds = append(cmds, m.setMode(modeConnections))
 		case "ctrl+t":
-			items := []list.Item{}
-			for _, tpc := range m.topics.items {
-				items = append(items, topicItem{title: tpc.title, active: tpc.active})
-			}
-			m.topics.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
-			m.topics.list.DisableQuitKeybindings()
-			m.topics.list.SetShowTitle(false)
+			m.topics.panes.subscribed = paneState{sel: 0, page: 0}
+			m.topics.panes.unsubscribed = paneState{sel: 0, page: 0}
+			m.topics.panes.active = 0
+			m.topics.list.SetSize(m.ui.width/2-2, m.ui.height-4)
+			m.rebuildActiveTopicList()
 			cmds = append(cmds, m.setMode(modeTopics))
 		case "ctrl+p":
 			items := []list.Item{}
@@ -367,10 +374,16 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 	m.topics.selected = idx
 	if msg.Type == tea.MouseLeft {
 		m.toggleTopic(idx)
+		if m.currentMode() == modeTopics {
+			m.rebuildActiveTopicList()
+		}
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 			m.removeTopic(idx)
+			if m.currentMode() == modeTopics {
+				m.rebuildActiveTopicList()
+			}
 		})
 	}
 }

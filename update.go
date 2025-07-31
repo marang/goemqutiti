@@ -88,6 +88,7 @@ func (m *model) restoreState(name string) {
 		m.topics.items = data.Topics
 		m.message.payloads = data.Payloads
 		m.sortTopics()
+		m.rebuildActiveTopicList()
 	} else {
 		m.topics.items = []topicItem{}
 		m.message.payloads = []payloadItem{}
@@ -374,7 +375,7 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 
 // updateTopics manages the topics list UI.
 func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmd, fcmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -383,37 +384,41 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		case "esc":
 			cmd := m.setMode(modeClient)
 			return m, cmd
+		case "left":
+			if m.topics.panes.active == 1 {
+				fcmd = m.setFocus(idTopicsEnabled)
+			}
+		case "right":
+			if m.topics.panes.active == 0 {
+				fcmd = m.setFocus(idTopicsDisabled)
+			}
 		case "d":
-			i := m.topics.list.Index()
+			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
 				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 					m.removeTopic(i)
-					items := []list.Item{}
-					for _, t := range m.topics.items {
-						items = append(items, t)
-					}
-					m.topics.list.SetItems(items)
+					m.rebuildActiveTopicList()
 				})
 			}
 		case "enter", " ":
-			i := m.topics.list.Index()
+			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				m.toggleTopic(i)
-				// Rebuild the list after sorting to keep
-				// indices in sync with the underlying data.
-				items := make([]list.Item, len(m.topics.items))
-				for j, t := range m.topics.items {
-					items[j] = t
-				}
-				m.topics.selected = i
-				m.topics.list.SetItems(items)
-				m.topics.list.Select(i)
+				m.rebuildActiveTopicList()
 			}
 		}
 	}
 	m.topics.list, cmd = m.topics.list.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	if m.topics.panes.active == 0 {
+		m.topics.panes.subscribed.sel = m.topics.list.Index()
+		m.topics.panes.subscribed.page = m.topics.list.Paginator.Page
+	} else {
+		m.topics.panes.unsubscribed.sel = m.topics.list.Index()
+		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
+	}
+	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
+	return m, tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
 }
 
 // updatePayloads manages the stored payloads list.

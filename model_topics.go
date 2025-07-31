@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"sort"
+
+	"github.com/charmbracelet/bubbles/list"
 )
 
 // hasTopic reports whether the given topic already exists in the list.
@@ -25,8 +27,8 @@ func (m *model) sortTopics() {
 		sel = m.topics.items[m.topics.selected].title
 	}
 	sort.SliceStable(m.topics.items, func(i, j int) bool {
-		if m.topics.items[i].active != m.topics.items[j].active {
-			return m.topics.items[i].active && !m.topics.items[j].active
+		if m.topics.items[i].subscribed != m.topics.items[j].subscribed {
+			return m.topics.items[i].subscribed && !m.topics.items[j].subscribed
 		}
 		return m.topics.items[i].title < m.topics.items[j].title
 	})
@@ -40,15 +42,100 @@ func (m *model) sortTopics() {
 	}
 }
 
+// subscribedItems returns topics currently subscribed.
+func (m *model) subscribedItems() []list.Item {
+	var out []list.Item
+	for _, t := range m.topics.items {
+		if t.subscribed {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// unsubscribedItems returns topics that are not subscribed.
+func (m *model) unsubscribedItems() []list.Item {
+	var out []list.Item
+	for _, t := range m.topics.items {
+		if !t.subscribed {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// indexForPane converts a pane list index to a global topics index.
+func (m *model) indexForPane(pane, idx int) int {
+	count := -1
+	for i, t := range m.topics.items {
+		if (pane == 0 && t.subscribed) || (pane == 1 && !t.subscribed) {
+			count++
+			if count == idx {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// rebuildActiveTopicList updates the active list to show the current pane.
+func (m *model) rebuildActiveTopicList() {
+	if m.topics.panes.active == 0 {
+		items := m.subscribedItems()
+		if m.topics.panes.subscribed.sel >= len(items) {
+			m.topics.panes.subscribed.sel = len(items) - 1
+		}
+		if m.topics.panes.subscribed.sel < 0 && len(items) > 0 {
+			m.topics.panes.subscribed.sel = 0
+		}
+		m.topics.list.SetItems(items)
+		if len(items) > 0 {
+			m.topics.list.Select(m.topics.panes.subscribed.sel)
+		}
+		m.topics.list.Paginator.Page = m.topics.panes.subscribed.page
+		m.topics.selected = m.indexForPane(0, m.topics.panes.subscribed.sel)
+	} else {
+		items := m.unsubscribedItems()
+		if m.topics.panes.unsubscribed.sel >= len(items) {
+			m.topics.panes.unsubscribed.sel = len(items) - 1
+		}
+		if m.topics.panes.unsubscribed.sel < 0 && len(items) > 0 {
+			m.topics.panes.unsubscribed.sel = 0
+		}
+		m.topics.list.SetItems(items)
+		if len(items) > 0 {
+			m.topics.list.Select(m.topics.panes.unsubscribed.sel)
+		}
+		m.topics.list.Paginator.Page = m.topics.panes.unsubscribed.page
+		m.topics.selected = m.indexForPane(1, m.topics.panes.unsubscribed.sel)
+	}
+}
+
+// setActivePane switches focus to the given pane index and rebuilds the list.
+func (m *model) setActivePane(idx int) {
+	if idx == m.topics.panes.active {
+		return
+	}
+	if m.topics.panes.active == 0 {
+		m.topics.panes.subscribed.sel = m.topics.list.Index()
+		m.topics.panes.subscribed.page = m.topics.list.Paginator.Page
+	} else {
+		m.topics.panes.unsubscribed.sel = m.topics.list.Index()
+		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
+	}
+	m.topics.panes.active = idx
+	m.rebuildActiveTopicList()
+}
+
 // toggleTopic toggles the subscription state of the topic at index.
 func (m *model) toggleTopic(index int) {
 	if index < 0 || index >= len(m.topics.items) {
 		return
 	}
 	t := &m.topics.items[index]
-	t.active = !t.active
+	t.subscribed = !t.subscribed
 	if m.mqttClient != nil {
-		if t.active {
+		if t.subscribed {
 			m.mqttClient.Subscribe(t.title, 0, nil)
 			m.appendHistory(t.title, "", "log", fmt.Sprintf("Subscribed to topic: %s", t.title))
 		} else {
@@ -57,6 +144,7 @@ func (m *model) toggleTopic(index int) {
 		}
 	}
 	m.sortTopics()
+	m.rebuildActiveTopicList()
 }
 
 // removeTopic unsubscribes and deletes the topic at index from the list.
@@ -76,4 +164,5 @@ func (m *model) removeTopic(index int) {
 		m.topics.selected = len(m.topics.items) - 1
 	}
 	m.sortTopics()
+	m.rebuildActiveTopicList()
 }

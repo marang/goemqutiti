@@ -47,7 +47,7 @@ func (m *model) subscribeActiveTopics() {
 		return
 	}
 	for _, t := range m.topics.items {
-		if t.active {
+		if t.subscribed {
 			m.mqttClient.Subscribe(t.title, 0, nil)
 		}
 	}

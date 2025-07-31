@@ -5,6 +5,7 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/goemqutiti/ui"
@@ -84,7 +85,7 @@ func (m *model) viewClient() string {
 	var chips []string
 	for i, t := range m.topics.items {
 		st := ui.ChipStyle
-		if !t.active {
+		if !t.subscribed {
 			st = ui.ChipInactive
 		}
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.selected {
@@ -125,7 +126,7 @@ func (m *model) viewClient() string {
 	bounds = visible
 	active := 0
 	for _, t := range m.topics.items {
-		if t.active {
+		if t.subscribed {
 			active++
 		}
 	}
@@ -232,13 +233,31 @@ func (m model) viewConfirmDelete() string {
 // viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
-	m.ui.elemPos[idTopicList] = 1
-	listView := m.topics.list.View()
+	m.ui.elemPos[idTopicsEnabled] = 1
+	m.ui.elemPos[idTopicsDisabled] = 1
 	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
-	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopicList
-	view := ui.LegendBox(content, "Topics", m.ui.width-2, 0, ui.ColBlue, focused, -1)
-	return m.overlayHelp(view)
+	activeView := m.topics.list.View()
+	var left, right string
+	if m.topics.panes.active == 0 {
+		other := list.New(m.unsubscribedItems(), list.NewDefaultDelegate(), m.topics.list.Width(), m.topics.list.Height())
+		other.DisableQuitKeybindings()
+		other.SetShowTitle(false)
+		other.Paginator.Page = m.topics.panes.unsubscribed.page
+		other.Select(m.topics.panes.unsubscribed.sel)
+		left = ui.LegendBox(activeView, "Enabled", m.ui.width/2-2, 0, ui.ColBlue, m.ui.focusOrder[m.ui.focusIndex] == idTopicsEnabled, -1)
+		right = ui.LegendBox(other.View(), "Disabled", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
+	} else {
+		other := list.New(m.subscribedItems(), list.NewDefaultDelegate(), m.topics.list.Width(), m.topics.list.Height())
+		other.DisableQuitKeybindings()
+		other.SetShowTitle(false)
+		other.Paginator.Page = m.topics.panes.subscribed.page
+		other.Select(m.topics.panes.subscribed.sel)
+		left = ui.LegendBox(other.View(), "Enabled", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
+		right = ui.LegendBox(activeView, "Disabled", m.ui.width/2-2, 0, ui.ColBlue, m.ui.focusOrder[m.ui.focusIndex] == idTopicsDisabled, -1)
+	}
+	panes := lipgloss.JoinHorizontal(lipgloss.Top, left, right)
+	content := lipgloss.JoinVertical(lipgloss.Left, panes, help)
+	return m.overlayHelp(content)
 }
 
 // viewPayloads shows stored payloads for reuse.

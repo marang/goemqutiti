@@ -16,15 +16,16 @@ import (
 )
 
 const (
-	idTopics      = "topics"       // topics chip list
-	idTopic       = "topic"        // topic input box
-	idMessage     = "message"      // message input box
-	idHistory     = "history"      // history list
-	idConnList    = "conn-list"    // broker list
-	idTopicList   = "topic-list"   // topics manager list
-	idPayloadList = "payload-list" // payload manager list
-	idTraceList   = "trace-list"   // traces manager list
-	idHelp        = "help"         // help icon
+	idTopics         = "topics"          // topics chip list
+	idTopic          = "topic"           // topic input box
+	idMessage        = "message"         // message input box
+	idHistory        = "history"         // history list
+	idConnList       = "conn-list"       // broker list
+	idTopicsEnabled  = "topics-enabled"  // enabled topics pane
+	idTopicsDisabled = "topics-disabled" // disabled topics pane
+	idPayloadList    = "payload-list"    // payload manager list
+	idTraceList      = "trace-list"      // traces manager list
+	idHelp           = "help"            // help icon
 )
 
 // focusByMode lists focusable elements for each view. The first element is
@@ -34,7 +35,7 @@ var focusByMode = map[appMode][]string{
 	modeConnections:    {idConnList, idHelp},
 	modeEditConnection: {idConnList, idHelp},
 	modeConfirmDelete:  {},
-	modeTopics:         {idTopicList, idHelp},
+	modeTopics:         {idTopicsEnabled, idTopicsDisabled, idHelp},
 	modePayloads:       {idPayloadList, idHelp},
 	modeTracer:         {idTraceList, idHelp},
 	modeEditTrace:      {idHelp},
@@ -59,17 +60,17 @@ func (c connectionItem) Description() string {
 }
 
 type topicItem struct {
-	title  string
-	active bool
+	title      string
+	subscribed bool
 }
 
 func (t topicItem) FilterValue() string { return t.title }
 func (t topicItem) Title() string       { return t.title }
 func (t topicItem) Description() string {
-	if t.active {
-		return "enabled"
+	if t.subscribed {
+		return "subscribed"
 	}
-	return "disabled"
+	return "unsubscribed"
 }
 
 type payloadItem struct{ topic, payload string }
@@ -159,10 +160,41 @@ type historyState struct {
 	selectionAnchor int
 }
 
+type paneState struct {
+	sel     int
+	page    int
+	m       *model
+	index   int
+	focused bool
+}
+
+func (p *paneState) Focus() {
+	p.focused = true
+	if p.m != nil {
+		p.m.setActivePane(p.index)
+	}
+}
+
+func (p *paneState) Blur() { p.focused = false }
+
+func (p paneState) IsFocused() bool { return p.focused }
+
+func (p paneState) View() string { return "" }
+
+// topicsPanes holds state for the dual-pane topics view. Each pane keeps its
+// own selection and pagination. The active field tracks which pane currently
+// has focus: 0 for subscribed, 1 for unsubscribed.
+type topicsPanes struct {
+	subscribed   paneState
+	unsubscribed paneState
+	active       int
+}
+
 type topicsState struct {
 	input      textinput.Model
 	items      []topicItem
 	list       list.Model
+	panes      topicsPanes
 	selected   int
 	chipBounds []chipBound
 	vp         viewport.Model

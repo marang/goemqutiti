@@ -40,7 +40,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 			}
 			topics := []string{}
 			for _, t := range m.topics.items {
-				if t.active {
+				if t.subscribed {
 					topics = append(topics, t.title)
 				}
 			}

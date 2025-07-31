@@ -162,7 +162,9 @@ func (m *model) viewClient() string {
 			histSP = float64(start) / float64(denom)
 		}
 	}
-	messagesBox := ui.LegendBox(m.history.list.View(), "History (Ctrl+C copy)", m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
+	msgCount := len(m.history.items)
+	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", msgCount)
+	messagesBox := ui.LegendBox(m.history.list.View(), histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 

@@ -172,7 +172,7 @@ func (m *Connections) saveConfigToFile() {
 	for k, v := range saved {
 		var topics []persistedTopic
 		for _, t := range v.Topics {
-			topics = append(topics, persistedTopic{Title: t.title, Active: t.active})
+			topics = append(topics, persistedTopic{Title: t.title, Active: t.subscribed})
 		}
 		var payloads []persistedPayload
 		for _, p := range v.Payloads {

@@ -15,7 +15,7 @@ func TestEnterAddsTopic(t *testing.T) {
 	if cmd == nil {
 		t.Fatalf("expected command on enter")
 	}
-	if len(m.topics.items) != 1 || m.topics.items[0].title != "foo" || !m.topics.items[0].active {
+	if len(m.topics.items) != 1 || m.topics.items[0].title != "foo" || !m.topics.items[0].subscribed {
 		t.Fatalf("topic not added: %#v", m.topics.items)
 	}
 }
@@ -23,7 +23,7 @@ func TestEnterAddsTopic(t *testing.T) {
 // Test that ctrl+s publishes the message in the editor
 func TestCtrlSPublishesMessage(t *testing.T) {
 	m := initialModel(nil)
-	m.topics.items = []topicItem{{title: "foo", active: true}}
+	m.topics.items = []topicItem{{title: "foo", subscribed: true}}
 	m.message.input.SetValue("hello")
 	m.setFocus(idMessage)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyCtrlS})

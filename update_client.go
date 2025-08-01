@@ -355,7 +355,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.history.selectionAnchor = -1
 		}
 	case "delete":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.list.FilterState() != list.Filtering {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			if len(m.history.items) == 0 {
 				break
 			}

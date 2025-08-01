@@ -21,4 +21,5 @@
 - Esc navigates back
 - Use arrows or j/k to move through lists
 - Ctrl+Up/Down scrolls the view
-- Press '/' in history to filter
+- Press '/' in history to filter; use `topic=`, `start=` and `end=` to limit
+  results. Filters default to the last hour.

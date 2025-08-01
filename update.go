@@ -285,7 +285,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				m.refreshConnectionItems()
 				return m, connectBroker(p, m.connections.statusChan)
 			}
-		case "d":
+		case "delete":
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 {
 				name := m.connections.manager.Profiles[i].Name
@@ -295,6 +295,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
 				})
+				return m, listenStatus(m.connections.statusChan)
 			}
 		case "x":
 			if m.mqttClient != nil {
@@ -399,7 +400,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 			if m.topics.panes.active == 0 {
 				fcmd = m.setFocus(idTopicsDisabled)
 			}
-		case "d":
+		case "delete":
 			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
@@ -407,6 +408,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 					m.removeTopic(i)
 					m.rebuildActiveTopicList()
 				})
+				return m, listenStatus(m.connections.statusChan)
 			}
 		case "enter", " ":
 			i := m.topics.selected
@@ -439,7 +441,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 		case "esc":
 			cmd := m.setMode(modeClient)
 			return m, cmd
-		case "d":
+		case "delete":
 			i := m.message.list.Index()
 			if i >= 0 {
 				items := m.message.list.Items()
@@ -449,6 +451,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					m.message.list.SetItems(items)
 				}
 			}
+			return m, listenStatus(m.connections.statusChan)
 		case "enter":
 			i := m.message.list.Index()
 			if i >= 0 {

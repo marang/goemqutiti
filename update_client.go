@@ -288,8 +288,8 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.rebuildActiveTopicList()
 			}
 		}
-	case "d":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+	case "delete":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.list.FilterState() != list.Filtering {
 			if len(m.history.items) == 0 {
 				break
 			}
@@ -480,6 +480,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		if cmd != nil {
 			cmds = append(cmds, cmd)
 		}
+	}
+
+	if m.currentMode() == modeConfirmDelete {
+		cmds = append(cmds, listenStatus(m.connections.statusChan))
+		return tea.Batch(cmds...)
 	}
 
 	var cmd tea.Cmd

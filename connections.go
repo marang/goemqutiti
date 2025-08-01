@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -102,7 +103,9 @@ func (m *Connections) DeleteConnection(index int) {
 		delete(m.Errors, name)
 		// Persist removal so the connection no longer appears after a restart
 		saveConfig(m.Profiles, m.DefaultProfileName)
-		deleteProfileData(name)
+		if err := deleteProfileData(name); err != nil {
+			log.Printf("Failed to remove data for profile %s: %v", name, err)
+		}
 		m.refreshList()
 	}
 }

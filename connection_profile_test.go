@@ -101,11 +101,11 @@ from_env = true
 	if err := keyring.Set("svc", "u1", "secret"); err != nil {
 		t.Fatalf("keyring set: %v", err)
 	}
-	os.Setenv("GOEMQUTITI_ENV_HOST", "example.com")
-	os.Setenv("GOEMQUTITI_ENV_PORT", "1884")
+	os.Setenv("EMQUTITI_ENV_HOST", "example.com")
+	os.Setenv("EMQUTITI_ENV_PORT", "1884")
 	t.Cleanup(func() {
-		os.Unsetenv("GOEMQUTITI_ENV_HOST")
-		os.Unsetenv("GOEMQUTITI_ENV_PORT")
+		os.Unsetenv("EMQUTITI_ENV_HOST")
+		os.Unsetenv("EMQUTITI_ENV_PORT")
 	})
 
 	cfg, err := LoadConfig(cfgPath)

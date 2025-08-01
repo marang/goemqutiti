@@ -6,11 +6,11 @@ import (
 )
 
 func TestNewConnectionFormEnvReadOnly(t *testing.T) {
-	os.Setenv("GOEMQUTITI_ENV_HOST", "envhost")
-	os.Setenv("GOEMQUTITI_ENV_PORT", "1884")
+	os.Setenv("EMQUTITI_ENV_HOST", "envhost")
+	os.Setenv("EMQUTITI_ENV_PORT", "1884")
 	t.Cleanup(func() {
-		os.Unsetenv("GOEMQUTITI_ENV_HOST")
-		os.Unsetenv("GOEMQUTITI_ENV_PORT")
+		os.Unsetenv("EMQUTITI_ENV_HOST")
+		os.Unsetenv("EMQUTITI_ENV_PORT")
 	})
 	cf := newConnectionForm(Profile{Name: "env", FromEnv: true}, 0)
 	hostField, ok := cf.fields[fieldIndex["Host"]].(*textField)
@@ -62,7 +62,7 @@ func TestConnectionFormProfile(t *testing.T) {
 	cf.fields[fieldIndex["AutoReconnect"]].(*checkField).value = true
 	cf.fields[fieldIndex["QoS"]].(*selectField).index = 2
 
-	p := cf.Profile()
+	p, _ := cf.Profile()
 	if p.Name != "n1" || p.Port != 1883 || !p.AutoReconnect || p.QoS != 2 {
 		t.Fatalf("unexpected profile: %#v", p)
 	}
@@ -71,7 +71,7 @@ func TestConnectionFormProfile(t *testing.T) {
 func TestConnectionFormProfileInvalidInt(t *testing.T) {
 	cf := newConnectionForm(Profile{}, -1)
 	cf.fields[fieldIndex["Port"]].(*textField).SetValue("abc")
-	p := cf.Profile()
+	p, _ := cf.Profile()
 	if p.Port != 0 {
 		t.Fatalf("expected port 0, got %d", p.Port)
 	}

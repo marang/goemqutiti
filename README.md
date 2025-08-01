@@ -60,7 +60,7 @@ password = "keyring:emqutiti-local/user"
 Tips:
 - More options like TLS and session settings are available; see the `config` package for details.
 - Set `random_id_suffix = true` for unique client IDs.
-- Enable **Load from env** to read variables such as `GOEMQUTITI_LOCAL_BROKER_PASSWORD`.
+- Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_BROKER_PASSWORD`.
 
 ### Shortcuts
 

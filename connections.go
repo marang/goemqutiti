@@ -2,15 +2,10 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
-
-	"github.com/marang/goemqutiti/internal/files"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/zalando/go-keyring"
 )
 
 // Connections manages the state and logic for handling broker profiles.
@@ -75,7 +70,8 @@ func (m *Connections) AddConnection(p Profile) {
 		m.Errors = make(map[string]string)
 	}
 	m.Errors[p.Name] = ""
-	m.persistProfileChange(p, -1)
+	persistProfileChange(&m.Profiles, m.DefaultProfileName, p, -1)
+	m.refreshList()
 }
 
 // EditConnection updates an existing connection and saves changes to config.toml and keyring.
@@ -92,28 +88,9 @@ func (m *Connections) EditConnection(index int, p Profile) {
 				m.Errors[p.Name] = errMsg
 			}
 		}
-		m.persistProfileChange(p, index)
+		persistProfileChange(&m.Profiles, m.DefaultProfileName, p, index)
+		m.refreshList()
 	}
-}
-
-// persistProfileChange handles shared persistence steps for profiles.
-func (m *Connections) persistProfileChange(p Profile, idx int) {
-	plain := p.Password
-	if !p.FromEnv {
-		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
-	} else {
-		p.Password = ""
-	}
-	if idx >= 0 && idx < len(m.Profiles) {
-		m.Profiles[idx] = p
-	} else {
-		m.Profiles = append(m.Profiles, p)
-	}
-	m.saveConfigToFile()
-	if !p.FromEnv {
-		m.savePasswordToKeyring(p.Name, p.Username, plain)
-	}
-	m.refreshList()
 }
 
 // DeleteConnection removes a connection from the list and updates config.toml.
@@ -124,15 +101,10 @@ func (m *Connections) DeleteConnection(index int) {
 		delete(m.Statuses, name)
 		delete(m.Errors, name)
 		// Persist removal so the connection no longer appears after a restart
-		m.saveConfigToFile()
+		saveConfig(m.Profiles, m.DefaultProfileName)
 		deleteProfileData(name)
 		m.refreshList()
 	}
-}
-
-func deleteProfileData(name string) {
-	os.RemoveAll(filepath.Join(files.DataDir(name), "history"))
-	os.RemoveAll(filepath.Join(files.DataDir(name), "traces"))
 }
 
 // refreshList rebuilds the list items from the current profiles.
@@ -144,36 +116,6 @@ func (m *Connections) refreshList() {
 		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
 	}
 	m.ConnectionsList.SetItems(items)
-}
-
-// saveConfigToFile writes the current connections to the config.toml file using BurntSushi/toml.
-func (m *Connections) saveConfigToFile() {
-	saved := loadState()
-	cfg := userConfig{
-		DefaultProfileName: m.DefaultProfileName,
-		Profiles:           m.Profiles,
-		Saved:              make(map[string]persistedConn),
-	}
-	for k, v := range saved {
-		var topics []persistedTopic
-		for _, t := range v.Topics {
-			topics = append(topics, persistedTopic{Title: t.title, Active: t.subscribed})
-		}
-		var payloads []persistedPayload
-		for _, p := range v.Payloads {
-			payloads = append(payloads, persistedPayload{Topic: p.topic, Payload: p.payload})
-		}
-		cfg.Saved[k] = persistedConn{Topics: topics, Payloads: payloads}
-	}
-	writeConfig(cfg)
-}
-
-// savePasswordToKeyring stores the password in the keyring.
-func (m *Connections) savePasswordToKeyring(service, username, password string) {
-	err := keyring.Set("emqutiti-"+service, username, password)
-	if err != nil {
-		fmt.Println("Error saving password to keyring:", err)
-	}
 }
 
 // LoadFromConfig loads connection profiles from the config file.

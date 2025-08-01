@@ -8,6 +8,7 @@
 | Ctrl+P | Manage payloads |
 | Ctrl+R | Manage traces |
 | Ctrl+C | Copy selected entry |
+| Ctrl+Up/Down | Scroll view |
 | Ctrl+D | Exit the program |
 | Ctrl+Shift+Up | Resize panels (up) |
 | Ctrl+Shift+Down | Resize panels (down) |
@@ -18,5 +19,6 @@
 - Enter subscribes to the typed topic
 - 'x' disconnects in the broker manager
 - Esc navigates back
-- Use arrows to move through lists
+- Use arrows or j/k to move through lists
+- Ctrl+Up/Down scrolls the view
 - Press '/' in history to filter

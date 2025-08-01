@@ -290,6 +290,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if i >= 0 {
 				name := m.connections.manager.Profiles[i].Name
 				info := "This also deletes history and traces"
+				m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
 				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() {
 					m.connections.manager.DeleteConnection(i)
 					m.connections.manager.refreshList()
@@ -366,16 +367,28 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmCancel = nil
 			}
 			cmd := m.setMode(m.previousMode())
-			m.scrollToFocused()
-			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+			cmds := []tea.Cmd{cmd, listenStatus(m.connections.statusChan)}
+			if m.confirmReturnFocus != "" {
+				cmds = append(cmds, m.setFocus(m.confirmReturnFocus))
+				m.confirmReturnFocus = ""
+			} else {
+				m.scrollToFocused()
+			}
+			return *m, tea.Batch(cmds...)
 		case "n", "esc":
 			if m.confirmCancel != nil {
 				m.confirmCancel()
 				m.confirmCancel = nil
 			}
 			cmd := m.setMode(m.previousMode())
-			m.scrollToFocused()
-			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+			cmds := []tea.Cmd{cmd, listenStatus(m.connections.statusChan)}
+			if m.confirmReturnFocus != "" {
+				cmds = append(cmds, m.setFocus(m.confirmReturnFocus))
+				m.confirmReturnFocus = ""
+			} else {
+				m.scrollToFocused()
+			}
+			return *m, tea.Batch(cmds...)
 		}
 	}
 	return *m, listenStatus(m.connections.statusChan)
@@ -404,6 +417,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
+				m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
 				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 					m.removeTopic(i)
 					m.rebuildActiveTopicList()
@@ -516,6 +530,12 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
+		case "ctrl+up", "ctrl+k":
+			m.ui.viewport.ScrollUp(1)
+			return m, nil
+		case "ctrl+down", "ctrl+j":
+			m.ui.viewport.ScrollDown(1)
+			return m, nil
 		case "tab":
 			if len(m.ui.focusOrder) > 0 {
 				m.focus.Next()

@@ -18,7 +18,7 @@ func (m *model) forceStartTrace(index int) {
 	}
 	if p.FromEnv {
 		ApplyEnvVars(p)
-	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 		p.Password = env
 	}
 	client, err := NewMQTTClient(*p, nil)

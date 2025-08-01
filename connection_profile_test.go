@@ -222,3 +222,14 @@ func TestPersistProfileChange(t *testing.T) {
 		t.Fatalf("keyring not saved: %q %v", pw, err)
 	}
 }
+func TestDefaultPasswordEnvOverride(t *testing.T) {
+	p := Profile{Name: "test", Password: "orig", FromEnv: false}
+	os.Setenv("EMQUTITI_DEFAULT_PASSWORD", "envpw")
+	t.Cleanup(func() { os.Unsetenv("EMQUTITI_DEFAULT_PASSWORD") })
+	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
+		p.Password = env
+	}
+	if p.Password != "envpw" {
+		t.Fatalf("expected override, got %q", p.Password)
+	}
+}

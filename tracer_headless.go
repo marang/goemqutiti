@@ -107,7 +107,7 @@ func tracerRun(key, topics, profileName, startStr, endStr string) error {
 	if err != nil {
 		return err
 	}
-	if env := os.Getenv("MQTT_PASSWORD"); env != "" && !p.FromEnv {
+	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
 		p.Password = env
 	}
 	client, err := newMQTTClient(*p)

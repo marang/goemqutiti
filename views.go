@@ -102,7 +102,7 @@ func (m *model) viewClient() string {
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
-		maxRows = 3
+		maxRows = 1
 	}
 	topicsBoxHeight := maxRows * rowH
 	m.topics.vp.Width = m.ui.width - 4
@@ -199,7 +199,7 @@ func (m model) viewConnections() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idConnList] = 1
 	listView := m.connections.manager.ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [d]elete  Ctrl+R traces")
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	view := ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
 	return m.overlayHelp(view)
@@ -237,7 +237,7 @@ func (m model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idTopicsEnabled] = 1
 	m.ui.elemPos[idTopicsDisabled] = 1
-	help := ui.InfoStyle.Render("[space] toggle  [d]elete  [esc] back")
+	help := ui.InfoStyle.Render("[space] toggle  [del] delete  [esc] back")
 	activeView := m.topics.list.View()
 	var left, right string
 	if m.topics.panes.active == 0 {
@@ -267,7 +267,7 @@ func (m model) viewPayloads() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idPayloadList] = 1
 	listView := m.message.list.View()
-	help := ui.InfoStyle.Render("[enter] load  [d]elete  [esc] back")
+	help := ui.InfoStyle.Render("[enter] load  [del] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	focused := m.ui.focusOrder[m.ui.focusIndex] == idPayloadList
 	view := ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, focused, -1)
@@ -279,7 +279,7 @@ func (m model) viewTraces() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idTraceList] = 1
 	listView := m.traces.list.View()
-	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [d] delete  [esc] back")
+	help := ui.InfoStyle.Render("[a] add  [enter] start/stop  [v] view  [del] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	focused := m.ui.focusOrder[m.ui.focusIndex] == idTraceList
 	view := ui.LegendBox(content, "Traces", m.ui.width-2, 0, ui.ColBlue, focused, -1)

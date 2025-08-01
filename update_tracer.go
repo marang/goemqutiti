@@ -64,7 +64,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 				m.loadTraceMessages(i)
 				return m, nil
 			}
-		case "d":
+		case "delete":
 			i := m.traces.list.Index()
 			if i >= 0 && i < len(m.traces.items) {
 				key := m.traces.items[i].key
@@ -77,6 +77,10 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 				m.traces.list.SetItems(items)
 				removeTrace(key)
 			}
+			if m.anyTraceRunning() {
+				return m, traceTicker()
+			}
+			return m, nil
 		}
 	}
 	m.traces.list, cmd = m.traces.list.Update(msg)

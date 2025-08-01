@@ -166,7 +166,7 @@ func initialModel(conns *Connections) *model {
 		layout: layoutConfig{
 			message: boxConfig{height: 6},
 			history: boxConfig{height: 10},
-			topics:  boxConfig{height: 3},
+			topics:  boxConfig{height: 1},
 			trace:   boxConfig{height: 10},
 		},
 	}

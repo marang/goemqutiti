@@ -6,7 +6,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -51,7 +50,7 @@ const (
 // idx is -1 when creating a new profile.
 func newConnectionForm(p Profile, idx int) connectionForm {
 	if p.FromEnv {
-		config.ApplyEnvVars(&p)
+		ApplyEnvVars(&p)
 	}
 	pwKey := ""
 	if p.Name != "" && p.Username != "" {
@@ -254,7 +253,7 @@ func (f connectionForm) View() string {
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
-		prefix := config.EnvPrefix(f.fields[idxName].Value())
+		prefix := EnvPrefix(f.fields[idxName].Value())
 		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
 	}
 	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")

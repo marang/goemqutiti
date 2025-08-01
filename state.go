@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/BurntSushi/toml"
-	"github.com/marang/goemqutiti/config"
 )
 
 // persistedTopic mirrors topicItem for persistence in the config file.
@@ -43,7 +42,7 @@ type userConfig struct {
 
 // loadState retrieves saved topics and payloads from config.toml.
 func loadState() map[string]connectionData {
-	fp, err := config.DefaultUserConfigFile()
+	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return map[string]connectionData{}
 	}
@@ -68,7 +67,7 @@ func loadState() map[string]connectionData {
 
 // writeConfig writes the entire configuration back to disk.
 func writeConfig(cfg userConfig) {
-	fp, err := config.DefaultUserConfigFile()
+	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return
 	}
@@ -82,7 +81,7 @@ func writeConfig(cfg userConfig) {
 
 // saveState updates only the Saved section in config.toml.
 func saveState(data map[string]connectionData) {
-	fp, err := config.DefaultUserConfigFile()
+	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return
 	}
@@ -105,7 +104,7 @@ func saveState(data map[string]connectionData) {
 
 // loadTraces retrieves planned traces from config.toml.
 func loadTraces() map[string]TracerConfig {
-	fp, err := config.DefaultUserConfigFile()
+	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return map[string]TracerConfig{}
 	}
@@ -129,7 +128,7 @@ func loadTraces() map[string]TracerConfig {
 
 // saveTraces updates the Traces section in config.toml.
 func saveTraces(data map[string]TracerConfig) {
-	fp, err := config.DefaultUserConfigFile()
+	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return
 	}

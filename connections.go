@@ -11,11 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zalando/go-keyring"
-
-	"github.com/marang/goemqutiti/config"
 )
-
-type Profile = config.Profile
 
 // Connections manages the state and logic for handling broker profiles.
 type Connections struct {
@@ -71,13 +67,6 @@ func (m Connections) View() string {
 
 // AddConnection adds a new connection to the list and saves it to config.toml and keyring.
 func (m *Connections) AddConnection(p Profile) {
-	plain := p.Password
-	if !p.FromEnv {
-		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
-	} else {
-		p.Password = ""
-	}
-	m.Profiles = append(m.Profiles, p)
 	if m.Statuses == nil {
 		m.Statuses = make(map[string]string)
 	}
@@ -86,24 +75,13 @@ func (m *Connections) AddConnection(p Profile) {
 		m.Errors = make(map[string]string)
 	}
 	m.Errors[p.Name] = ""
-	m.saveConfigToFile()
-	if !p.FromEnv {
-		m.savePasswordToKeyring(p.Name, p.Username, plain)
-	}
-	m.refreshList()
+	m.persistProfileChange(p, -1)
 }
 
 // EditConnection updates an existing connection and saves changes to config.toml and keyring.
 func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
-		plain := p.Password
 		oldName := m.Profiles[index].Name
-		if !p.FromEnv {
-			p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
-		} else {
-			p.Password = ""
-		}
-		m.Profiles[index] = p
 		if oldName != p.Name {
 			if status, ok := m.Statuses[oldName]; ok {
 				delete(m.Statuses, oldName)
@@ -114,12 +92,28 @@ func (m *Connections) EditConnection(index int, p Profile) {
 				m.Errors[p.Name] = errMsg
 			}
 		}
-		m.saveConfigToFile()
-		if !p.FromEnv {
-			m.savePasswordToKeyring(p.Name, p.Username, plain)
-		}
-		m.refreshList()
+		m.persistProfileChange(p, index)
 	}
+}
+
+// persistProfileChange handles shared persistence steps for profiles.
+func (m *Connections) persistProfileChange(p Profile, idx int) {
+	plain := p.Password
+	if !p.FromEnv {
+		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+	} else {
+		p.Password = ""
+	}
+	if idx >= 0 && idx < len(m.Profiles) {
+		m.Profiles[idx] = p
+	} else {
+		m.Profiles = append(m.Profiles, p)
+	}
+	m.saveConfigToFile()
+	if !p.FromEnv {
+		m.savePasswordToKeyring(p.Name, p.Username, plain)
+	}
+	m.refreshList()
 }
 
 // DeleteConnection removes a connection from the list and updates config.toml.
@@ -138,7 +132,7 @@ func (m *Connections) DeleteConnection(index int) {
 
 func deleteProfileData(name string) {
 	os.RemoveAll(filepath.Join(files.DataDir(name), "history"))
-	os.RemoveAll(filepath.Join(files.DataDir(name), "tracce"))
+	os.RemoveAll(filepath.Join(files.DataDir(name), "traces"))
 }
 
 // refreshList rebuilds the list items from the current profiles.
@@ -182,10 +176,9 @@ func (m *Connections) savePasswordToKeyring(service, username, password string) 
 	}
 }
 
-// LoadFromConfig loads connection profiles from the config file using the
-// shared config package.
+// LoadFromConfig loads connection profiles from the config file.
 func LoadFromConfig(filePath string) (*Connections, error) {
-	cfg, err := config.LoadConfig(filePath)
+	cfg, err := LoadConfig(filePath)
 	if err != nil {
 		return nil, err
 	}

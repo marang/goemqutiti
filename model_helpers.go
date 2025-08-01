@@ -49,19 +49,19 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	for _, t := range m.topics.items {
 		topics = append(topics, t.title)
 	}
-	var topic string
+	var topic, payload string
 	var start, end time.Time
 	if m.history.filterQuery != "" {
-		ts, s, e, _ := parseHistoryQuery(m.history.filterQuery)
+		ts, s, e, p := parseHistoryQuery(m.history.filterQuery)
 		if len(ts) > 0 {
 			topic = ts[0]
 		}
-		start, end = s, e
+		start, end, payload = s, e, p
 	} else {
 		end = time.Now()
 		start = end.Add(-time.Hour)
 	}
-	hf := newHistoryFilterForm(topics, topic, start, end)
+	hf := newHistoryFilterForm(topics, topic, payload, start, end)
 	m.history.filterForm = &hf
 	return m.setMode(modeHistoryFilter)
 }

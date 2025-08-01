@@ -25,12 +25,12 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			return m, cmd
 		case "enter":
 			q := m.history.filterForm.query()
-			topics, start, end, _ := parseHistoryQuery(q)
+			topics, start, end, payload := parseHistoryQuery(q)
 			var msgs []Message
 			if m.history.showArchived {
-				msgs = m.history.store.SearchArchived(topics, start, end, "")
+				msgs = m.history.store.SearchArchived(topics, start, end, payload)
 			} else {
-				msgs = m.history.store.Search(topics, start, end, "")
+				msgs = m.history.store.Search(topics, start, end, payload)
 			}
 			items := make([]list.Item, len(msgs))
 			for i, mmsg := range msgs {

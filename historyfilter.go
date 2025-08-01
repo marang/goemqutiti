@@ -11,6 +11,7 @@ import (
 
 const (
 	idxFilterTopic = iota
+	idxFilterPayload
 	idxFilterStart
 	idxFilterEnd
 )
@@ -18,17 +19,21 @@ const (
 // historyFilterForm captures filter inputs for history searches.
 type historyFilterForm struct {
 	Form
-	topic *suggestField
-	start *textField
-	end   *textField
+	topic   *suggestField
+	payload *textField
+	start   *textField
+	end     *textField
 }
 
 // newHistoryFilterForm builds a form with optional prefilled values.
 // Start and end remain blank when zero, allowing searches across all time.
-func newHistoryFilterForm(topics []string, topic string, start, end time.Time) historyFilterForm {
+func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
 	sort.Strings(topics)
 	tf := newSuggestField(topics, "topic")
 	tf.SetValue(topic)
+
+	pf := newTextField("", "text contains")
+	pf.SetValue(payload)
 
 	sf := newTextField("", "start (RFC3339)")
 	if !start.IsZero() {
@@ -41,11 +46,12 @@ func newHistoryFilterForm(topics []string, topic string, start, end time.Time) h
 	}
 
 	f := historyFilterForm{
-		topic: tf,
-		start: sf,
-		end:   ef,
+		topic:   tf,
+		payload: pf,
+		start:   sf,
+		end:     ef,
 	}
-	f.fields = []formField{tf, sf, ef}
+	f.fields = []formField{tf, pf, sf, ef}
 	f.ApplyFocus()
 	return f
 }
@@ -86,6 +92,8 @@ func (f historyFilterForm) View() string {
 	}
 	lines = append(lines,
 		"",
+		fmt.Sprintf("Text:  %s", f.payload.View()),
+		"",
 		fmt.Sprintf("Start: %s", f.start.View()),
 		"",
 		fmt.Sprintf("End:   %s", f.end.View()),
@@ -98,6 +106,9 @@ func (f historyFilterForm) query() string {
 	var parts []string
 	if v := f.topic.Value(); v != "" {
 		parts = append(parts, "topic="+v)
+	}
+	if v := f.payload.Value(); v != "" {
+		parts = append(parts, "payload="+v)
 	}
 	if v := f.start.Value(); v != "" {
 		parts = append(parts, "start="+v)

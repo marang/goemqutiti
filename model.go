@@ -89,6 +89,7 @@ type historyItem struct {
 	topic               string
 	payload             string
 	kind                string // pub, sub, log
+	archived            bool
 	isSelected          *bool
 	isMarkedForDeletion *bool
 }
@@ -159,6 +160,7 @@ type historyState struct {
 	items           []historyItem
 	store           *HistoryStore
 	selectionAnchor int
+	showArchived    bool
 }
 
 type paneState struct {

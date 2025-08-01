@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
@@ -123,7 +124,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.mqttClient = nil
 		}
 	case "space":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			idx := m.history.list.Index()
 			if idx >= 0 && idx < len(m.history.items) {
 				if m.history.items[idx].isSelected != nil && *m.history.items[idx].isSelected {
@@ -136,7 +137,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+up":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
@@ -151,7 +152,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "shift+down":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
 				if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
@@ -234,13 +235,36 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.layout.topics.height++
 		}
 	case "ctrl+a":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			for i := range m.history.items {
 				v := true
 				m.history.items[i].isSelected = &v
 			}
 			if len(m.history.items) > 0 {
 				m.history.selectionAnchor = 0
+			}
+		}
+	case "ctrl+l":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.store != nil {
+			m.history.showArchived = !m.history.showArchived
+			var msgs []Message
+			if m.history.showArchived {
+				msgs = m.history.store.SearchArchived(nil, time.Time{}, time.Time{}, "")
+			} else {
+				msgs = m.history.store.Search(nil, time.Time{}, time.Time{}, "")
+			}
+			m.history.items = make([]historyItem, len(msgs))
+			items := make([]list.Item, len(msgs))
+			for i, mm := range msgs {
+				hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
+				m.history.items[i] = hi
+				items[i] = hi
+			}
+			m.history.list.SetItems(items)
+			if len(items) > 0 {
+				m.history.list.Select(len(items) - 1)
+			} else {
+				m.history.list.Select(-1)
 			}
 		}
 	case "up", "down", "k", "j":
@@ -287,6 +311,48 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			if m.currentMode() == modeTopics {
 				m.rebuildActiveTopicList()
 			}
+		}
+	case "a":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
+			if len(m.history.items) == 0 {
+				break
+			}
+			archived := false
+			for i := len(m.history.items) - 1; i >= 0; i-- {
+				it := m.history.items[i]
+				if it.isSelected != nil && *it.isSelected {
+					key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+					if m.history.store != nil {
+						_ = m.history.store.Archive(key)
+					}
+					m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
+					archived = true
+				}
+			}
+			if !archived {
+				idx := m.history.list.Index()
+				if idx >= 0 && idx < len(m.history.items) {
+					it := m.history.items[idx]
+					key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+					if m.history.store != nil {
+						_ = m.history.store.Archive(key)
+					}
+					m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
+				}
+			}
+			items := make([]list.Item, len(m.history.items))
+			for i, it := range m.history.items {
+				it.isSelected = nil
+				m.history.items[i] = it
+				items[i] = it
+			}
+			m.history.list.SetItems(items)
+			if len(m.history.items) == 0 {
+				m.history.list.Select(-1)
+			} else if m.history.list.Index() >= len(m.history.items) {
+				m.history.list.Select(len(m.history.items) - 1)
+			}
+			m.history.selectionAnchor = -1
 		}
 	case "delete":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.list.FilterState() != list.Filtering {
@@ -392,7 +458,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	var cmds []tea.Cmd
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
 			cmds = append(cmds, hCmd)
@@ -407,7 +473,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 	}
 	if msg.Type == tea.MouseLeft {
 		cmds = append(cmds, m.focusFromMouse(msg.Y))
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			idx := m.historyIndexAt(msg.Y)
 			if idx >= 0 {
 				m.history.list.Select(idx)
@@ -525,10 +591,15 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	if m.history.list.FilterState() == list.Filtering {
 		q := m.history.list.FilterInput.Value()
 		topics, start, end, text := parseHistoryQuery(q)
-		msgs := m.history.store.Search(topics, start, end, text)
+		var msgs []Message
+		if m.history.showArchived {
+			msgs = m.history.store.SearchArchived(topics, start, end, text)
+		} else {
+			msgs = m.history.store.Search(topics, start, end, text)
+		}
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
 		}
 		m.history.list.SetItems(items)
 	} else {

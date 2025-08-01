@@ -572,7 +572,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
-			m.ui.focusOrder[m.ui.focusIndex] == idHelp {
+			m.help.Focused() {
 			cmd := m.setMode(modeHelp)
 			return m, cmd
 		}

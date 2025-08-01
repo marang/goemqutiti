@@ -109,6 +109,7 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 	}
 	m.focus = NewFocusMap(items)
 	m.ui.focusIndex = m.focus.Index()
+	m.help.Blur()
 	return nil
 }
 

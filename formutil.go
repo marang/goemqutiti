@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -114,6 +115,83 @@ func (t *textField) Value() string { return t.Model.Value() }
 func (t *textField) Focus()       { t.Model.Focus() }
 func (t *textField) Blur()        { t.Model.Blur() }
 func (t *textField) View() string { return t.Model.View() }
+
+// suggestField is a text input with auto-completion suggestions.
+type suggestField struct {
+	*textField
+	options     []string
+	suggestions []string
+	sel         int
+}
+
+// newSuggestField creates a suggestField with the given options and placeholder.
+func newSuggestField(opts []string, placeholder string) *suggestField {
+	tf := newTextField("", placeholder)
+	return &suggestField{
+		textField:   tf,
+		options:     append([]string(nil), opts...),
+		suggestions: nil,
+		sel:         -1,
+	}
+}
+
+// Update processes key messages to cycle suggestions while forwarding other
+// messages to the underlying text field.
+func (s *suggestField) Update(msg tea.Msg) tea.Cmd {
+	switch m := msg.(type) {
+	case tea.KeyMsg:
+		switch m.String() {
+		case "tab", "down":
+			if len(s.suggestions) > 0 {
+				s.sel = (s.sel + 1) % len(s.suggestions)
+				s.SetValue(s.suggestions[s.sel])
+				s.CursorEnd()
+				return nil
+			}
+		case "shift+tab", "up":
+			if len(s.suggestions) > 0 {
+				s.sel--
+				if s.sel < 0 {
+					s.sel = len(s.suggestions) - 1
+				}
+				s.SetValue(s.suggestions[s.sel])
+				s.CursorEnd()
+				return nil
+			}
+		}
+	}
+	cmd := s.textField.Update(msg)
+	if s.Focused() {
+		prefix := s.Value()
+		s.suggestions = s.suggestions[:0]
+		s.sel = -1
+		for _, o := range s.options {
+			if prefix == "" || strings.HasPrefix(o, prefix) {
+				s.suggestions = append(s.suggestions, o)
+				if len(s.suggestions) == 5 {
+					break
+				}
+			}
+		}
+	}
+	return cmd
+}
+
+// SuggestionsView renders the suggestion list for the field.
+func (s *suggestField) SuggestionsView() string {
+	if !s.Focused() || len(s.suggestions) == 0 {
+		return ""
+	}
+	parts := make([]string, len(s.suggestions))
+	for i, sug := range s.suggestions {
+		if i == s.sel {
+			parts[i] = ui.FocusedStyle.Render(sug)
+		} else {
+			parts[i] = sug
+		}
+	}
+	return strings.Join(parts, " ")
+}
 
 // selectField allows choosing from a fixed list of options.
 type selectField struct {

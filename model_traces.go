@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -18,11 +17,7 @@ func (m *model) forceStartTrace(index int) {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
-	if p.FromEnv {
-		config.ApplyEnvVars(p)
-	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-		p.Password = env
-	}
+	config.OverridePasswordFromEnv(p)
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())

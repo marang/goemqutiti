@@ -128,11 +128,7 @@ func runImport(path, profile string) {
 		fmt.Println("no connection profile available")
 		return
 	}
-	if p.FromEnv {
-		config.ApplyEnvVars(p)
-	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-		p.Password = env
-	}
+	config.OverridePasswordFromEnv(p)
 
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {

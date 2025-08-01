@@ -1,7 +1,6 @@
 package main
 
 import (
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -132,11 +131,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 				m.traces.form.errMsg = err.Error()
 				return m, nil
 			}
-			if p.FromEnv {
-				config.ApplyEnvVars(p)
-			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-				p.Password = env
-			}
+			config.OverridePasswordFromEnv(p)
 			client, err := NewMQTTClient(*p, nil)
 			if err != nil {
 				m.traces.form.errMsg = err.Error()

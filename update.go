@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -247,11 +246,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						return m, cmd
 					}
 					flushStatus(m.connections.statusChan)
-					if p.FromEnv {
-						config.ApplyEnvVars(&p)
-					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-						p.Password = env
-					}
+					config.OverridePasswordFromEnv(&p)
 					m.connections.manager.Errors[p.Name] = ""
 					m.connections.manager.Statuses[p.Name] = "connecting"
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -295,11 +290,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					return m, cmd
 				}
 				flushStatus(m.connections.statusChan)
-				if p.FromEnv {
-					config.ApplyEnvVars(&p)
-				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-					p.Password = env
-				}
+				config.OverridePasswordFromEnv(&p)
 				m.connections.manager.Errors[p.Name] = ""
 				m.connections.manager.Statuses[p.Name] = "connecting"
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)

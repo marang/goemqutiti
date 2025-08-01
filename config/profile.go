@@ -133,6 +133,16 @@ func ApplyEnvVars(p *Profile) {
 	}
 }
 
+// OverridePasswordFromEnv applies environment variables when FromEnv is set
+// and otherwise overrides the password using the MQTT_PASSWORD variable.
+func OverridePasswordFromEnv(p *Profile) {
+	if p.FromEnv {
+		ApplyEnvVars(p)
+	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+		p.Password = env
+	}
+}
+
 // LoadConfig reads profiles from a TOML file and resolves keyring references.
 func LoadConfig(filePath string) (*Config, error) {
 	var err error

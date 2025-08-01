@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"sort"
 	"time"
 
@@ -227,11 +226,7 @@ func initialModel(conns *Connections) *model {
 		}
 		if p != nil {
 			cfg := *p
-			if cfg.FromEnv {
-				config.ApplyEnvVars(&cfg)
-			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
-				cfg.Password = env
-			}
+			config.OverridePasswordFromEnv(&cfg)
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
 				m.connections.active = cfg.Name

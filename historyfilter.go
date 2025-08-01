@@ -24,17 +24,22 @@ type historyFilterForm struct {
 }
 
 // newHistoryFilterForm builds a form with optional prefilled values.
-// If start and end are zero, it defaults to the last hour.
+// Start and end remain blank when zero, allowing searches across all time.
 func newHistoryFilterForm(topics []string, topic string, start, end time.Time) historyFilterForm {
-	if start.IsZero() && end.IsZero() {
-		end = time.Now()
-		start = end.Add(-time.Hour)
-	}
 	sort.Strings(topics)
 	tf := newSuggestField(topics, "topic")
 	tf.SetValue(topic)
-	sf := newTextField(start.Format(time.RFC3339), "start (RFC3339)")
-	ef := newTextField(end.Format(time.RFC3339), "end (RFC3339)")
+
+	sf := newTextField("", "start (RFC3339)")
+	if !start.IsZero() {
+		sf.SetValue(start.Format(time.RFC3339))
+	}
+
+	ef := newTextField("", "end (RFC3339)")
+	if !end.IsZero() {
+		ef.SetValue(end.Format(time.RFC3339))
+	}
+
 	f := historyFilterForm{
 		topic: tf,
 		start: sf,

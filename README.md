@@ -77,7 +77,7 @@ Tips:
 | Exit the program | `Ctrl+D` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 
-Other keys: `Tab` and `Shift+Tab` cycle focus, `Enter` subscribes to the typed topic, `x` disconnects in the broker manager and `Esc` navigates back. Use ↑/↓ or `j`/`k` to move through lists, hold `Shift` for range selection in history. Press `/` in the history view for a filter dialog with topic suggestions (Tab or arrows cycle matches; `Enter` or space accepts the highlight). Start and end default to the last hour and can be cleared to search all time. Active filters show above the history list and `Ctrl+F` clears them. `Ctrl+Up`/`Ctrl+Down` scrolls the view. All `Ctrl` shortcuts work even when an input is active.
+Other keys: `Tab` and `Shift+Tab` cycle focus, `Enter` subscribes to the typed topic, `x` disconnects in the broker manager and `Esc` navigates back. Use ↑/↓ or `j`/`k` to move through lists, hold `Shift` for range selection in history. Press `/` in the history view for a filter dialog with topic suggestions (Tab or arrows cycle matches; `Enter` or space accepts the highlight). Start and end default to the last hour on first open and stay blank once removed, letting you search all time. Active filters show above the history list and `Ctrl+F` clears them. `Ctrl+Up`/`Ctrl+Down` scrolls the view. All `Ctrl` shortcuts work even when an input is active.
 
 ## License
 

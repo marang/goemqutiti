@@ -24,6 +24,6 @@
 - Ctrl+Up/Down scrolls the view
 - Press '/' in history for a filter dialog with topic suggestions shown
   under the field; Tab or arrows cycle matches and Enter or space accepts
-  the highlight. Start and end fields default to the last hour and can be
-  cleared to search all time. Active filters appear above the history list
-  and `Ctrl+F` resets them.
+  the highlight. Start and end fields default to the last hour on first
+  open and stay blank once removed so you can search all time. Active
+  filters appear above the history list and `Ctrl+F` resets them.

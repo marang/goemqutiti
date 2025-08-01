@@ -57,6 +57,9 @@ func (m *model) startHistoryFilter() tea.Cmd {
 			topic = ts[0]
 		}
 		start, end = s, e
+	} else {
+		end = time.Now()
+		start = end.Add(-time.Hour)
 	}
 	hf := newHistoryFilterForm(topics, topic, start, end)
 	m.history.filterForm = &hf

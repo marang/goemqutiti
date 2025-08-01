@@ -208,7 +208,7 @@ func (s *suggestField) SuggestionsView() string {
 		}
 		items[i] = st.Render(sug)
 	}
-	return strings.Join(items, " ")
+	return strings.Join(items, "\n")
 }
 
 // WantsKey reports whether the field wants to handle the key itself to cycle

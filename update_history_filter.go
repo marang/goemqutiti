@@ -37,12 +37,8 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 				items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
 			}
 			m.history.list.SetItems(items)
-			m.history.list.FilterInput.SetValue(q)
-			if q == "" {
-				m.history.list.SetFilterState(list.Unfiltered)
-			} else {
-				m.history.list.SetFilterState(list.FilterApplied)
-			}
+			m.history.list.FilterInput.SetValue("")
+			m.history.list.SetFilterState(list.Unfiltered)
 			m.history.filterQuery = q
 			m.history.filterForm = nil
 			cmd := tea.Batch(m.setMode(m.previousMode()), m.setFocus(idHistory))

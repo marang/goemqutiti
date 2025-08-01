@@ -7,7 +7,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -47,18 +46,25 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		f.CycleFocus(m)
+		if c, ok := f.fields[f.focus].(keyConsumer); ok && c.WantsKey(m) {
+			cmd = f.fields[f.focus].Update(msg)
+		} else {
+			f.CycleFocus(m)
+			if len(f.fields) > 0 {
+				cmd = f.fields[f.focus].Update(msg)
+			}
+		}
 	case tea.MouseMsg:
 		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
 			if m.Y >= 1 && m.Y-1 < len(f.fields) {
 				f.focus = m.Y - 1
 			}
 		}
+		if len(f.fields) > 0 {
+			cmd = f.fields[f.focus].Update(msg)
+		}
 	}
 	f.ApplyFocus()
-	if len(f.fields) > 0 {
-		cmd = f.fields[f.focus].Update(msg)
-	}
 	return f, cmd
 }
 
@@ -67,11 +73,12 @@ func (f historyFilterForm) View() string {
 	line := fmt.Sprintf("Topic: %s", f.topic.View())
 	lines := []string{line}
 	if sugg := f.topic.SuggestionsView(); sugg != "" {
-		sep := strings.Repeat("─", lipgloss.Width(line))
-		lines = append(lines, sep, sugg)
+		lines = append(lines, sugg)
 	}
 	lines = append(lines,
+		"",
 		fmt.Sprintf("Start: %s", f.start.View()),
+		"",
 		fmt.Sprintf("End:   %s", f.end.View()),
 	)
 	return strings.Join(lines, "\n")

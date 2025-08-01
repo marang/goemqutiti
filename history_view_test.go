@@ -126,3 +126,37 @@ func TestHistoryLabelCounts(t *testing.T) {
 		t.Fatalf("expected filtered count in label, got %q", view)
 	}
 }
+
+// Test that a long filter query does not break the history box layout.
+func TestHistoryFilterLineWidth(t *testing.T) {
+	m := initialModel(nil)
+	long := strings.Repeat("x", 100)
+	m.history.filterQuery = "topic=" + long
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	lines := strings.Split(view, "\n")
+	var hist []string
+	collecting := false
+	for _, l := range lines {
+		if strings.Contains(l, "History") {
+			collecting = true
+		}
+		if collecting {
+			hist = append(hist, l)
+			if strings.Contains(l, "\u2518") {
+				break
+			}
+		}
+	}
+	if len(hist) == 0 {
+		t.Fatalf("history box not found in view")
+	}
+	width := lipgloss.Width(hist[0])
+	for i, l := range hist {
+		if lipgloss.Width(l) != width {
+			t.Fatalf("history line %d width=%d want=%d", i, lipgloss.Width(l), width)
+		}
+	}
+}

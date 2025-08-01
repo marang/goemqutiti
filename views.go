@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/marang/goemqutiti/ui"
 )
@@ -173,7 +174,10 @@ func (m *model) viewClient() string {
 	}
 	histContent := m.history.list.View()
 	if m.history.filterQuery != "" {
-		histContent = fmt.Sprintf("Filters: %s\n%s", m.history.filterQuery, histContent)
+		inner := m.ui.width - 4
+		filterLine := fmt.Sprintf("Filters: %s", m.history.filterQuery)
+		filterLine = ansi.Truncate(filterLine, inner, "")
+		histContent = fmt.Sprintf("%s\n%s", filterLine, histContent)
 	}
 	messagesBox := ui.LegendBox(histContent, histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
 

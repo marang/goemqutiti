@@ -107,7 +107,6 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 		m.history.store.Add(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}
 	if !m.history.showArchived {
-		m.history.items = append(m.history.items, hi)
 		if m.history.filterQuery != "" {
 			topics, start, end, pf := parseHistoryQuery(m.history.filterQuery)
 			var msgs []Message
@@ -117,12 +116,16 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 				msgs = m.history.store.Search(topics, start, end, pf)
 			}
 			items := make([]list.Item, len(msgs))
+			m.history.items = make([]historyItem, len(msgs))
 			for i, mmsg := range msgs {
-				items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+				hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+				items[i] = hi
+				m.history.items[i] = hi
 			}
 			m.history.list.SetItems(items)
 			m.history.list.Select(len(items) - 1)
 		} else {
+			m.history.items = append(m.history.items, hi)
 			items := make([]list.Item, len(m.history.items))
 			for i, it := range m.history.items {
 				items[i] = it

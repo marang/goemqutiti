@@ -135,9 +135,18 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.history.filterQuery = ""
 			m.history.list.FilterInput.SetValue("")
 			m.history.list.SetFilterState(list.Unfiltered)
-			items := make([]list.Item, len(m.history.items))
-			for i, it := range m.history.items {
-				items[i] = it
+			var msgs []Message
+			if m.history.showArchived {
+				msgs = m.history.store.SearchArchived(nil, time.Time{}, time.Time{}, "")
+			} else {
+				msgs = m.history.store.Search(nil, time.Time{}, time.Time{}, "")
+			}
+			m.history.items = make([]historyItem, len(msgs))
+			items := make([]list.Item, len(msgs))
+			for i, mm := range msgs {
+				hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
+				m.history.items[i] = hi
+				items[i] = hi
 			}
 			m.history.list.SetItems(items)
 		}

@@ -57,27 +57,32 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		innerWidth = 0
 	}
 
-	// Support multi-line payloads by aligning each line individually
+	// Render at most two lines so the list height stays consistent
 	var lines []string
 	if hi.kind != "log" {
 		header := lipgloss.JoinHorizontal(lipgloss.Top,
 			lipgloss.NewStyle().Foreground(lblColor).Render(label),
 			lipgloss.NewStyle().Foreground(ui.ColGray).Render(" "+ts+":"))
-		line1 := lipgloss.PlaceHorizontal(innerWidth, align, header)
-		lines = append(lines, line1)
+		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, header))
 	}
-	for idx, l := range strings.Split(hi.payload, "\n") {
-		wrapped := ansi.Wrap(l, innerWidth, " ")
-		for _, wl := range strings.Split(wrapped, "\n") {
-			fg := msgColor
-			if hi.kind == "log" && idx == 0 && len(lines) == 0 {
-				wl = ts + ": " + wl
-				fg = ui.ColGray
-			}
-			rendered := lipgloss.PlaceHorizontal(innerWidth, align,
-				lipgloss.NewStyle().Foreground(fg).Render(wl))
-			lines = append(lines, rendered)
+	first := strings.Split(hi.payload, "\n")[0]
+	more := strings.Contains(hi.payload, "\n")
+	trunc := ansi.Truncate(first, innerWidth, "")
+	if more || lipgloss.Width(first) > innerWidth {
+		if lipgloss.Width(trunc) >= innerWidth {
+			trunc = ansi.Truncate(trunc, innerWidth-1, "")
 		}
+		trunc += "\u2026"
+	}
+	fg := msgColor
+	if hi.kind == "log" && len(lines) == 0 {
+		trunc = ts + ": " + trunc
+		fg = ui.ColGray
+	}
+	lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align,
+		lipgloss.NewStyle().Foreground(fg).Render(trunc)))
+	if len(lines) < 2 {
+		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, ""))
 	}
 	if hi.isSelected != nil && *hi.isSelected {
 		for i, l := range lines {

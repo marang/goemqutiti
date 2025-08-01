@@ -52,14 +52,8 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.Focused {
-			// Handle key events when focused
-			switch msg.String() {
-			case "a": // Add new connection
-				m.TextInput.Focus()
-			case "e": // Edit selected connection
-			case "delete": // Delete selected connection
-			}
+		if m.Focused && msg.String() == "a" {
+			m.TextInput.Focus()
 		}
 	}
 	m.ConnectionsList, cmd = m.ConnectionsList.Update(msg)

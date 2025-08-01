@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strconv"
 	"strings"
 
@@ -97,40 +96,120 @@ func sanitizeEnvName(name string) string {
 // profile name.
 func EnvPrefix(name string) string { return "GOEMQUTITI_" + sanitizeEnvName(name) + "_" }
 
+type profileEnvSetter func(*Profile, string)
+
+var profileEnvSetters = map[string]profileEnvSetter{
+	"name":   func(p *Profile, v string) { p.Name = v },
+	"schema": func(p *Profile, v string) { p.Schema = v },
+	"host":   func(p *Profile, v string) { p.Host = v },
+	"port": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.Port = iv
+		}
+	},
+	"client_id": func(p *Profile, v string) { p.ClientID = v },
+	"username":  func(p *Profile, v string) { p.Username = v },
+	"password":  func(p *Profile, v string) { p.Password = v },
+	"ssl_tls": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.SSL = bv
+		}
+	},
+	"mqtt_version": func(p *Profile, v string) { p.MQTTVersion = v },
+	"connect_timeout": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.ConnectTimeout = iv
+		}
+	},
+	"keep_alive": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.KeepAlive = iv
+		}
+	},
+	"qos": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.QoS = iv
+		}
+	},
+	"auto_reconnect": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.AutoReconnect = bv
+		}
+	},
+	"reconnect_period": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.ReconnectPeriod = iv
+		}
+	},
+	"clean_start": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.CleanStart = bv
+		}
+	},
+	"session_expiry_interval": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.SessionExpiry = iv
+		}
+	},
+	"receive_maximum": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.ReceiveMaximum = iv
+		}
+	},
+	"maximum_packet_size": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.MaximumPacketSize = iv
+		}
+	},
+	"topic_alias_maximum": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.TopicAliasMaximum = iv
+		}
+	},
+	"request_response_info": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.RequestResponseInfo = bv
+		}
+	},
+	"request_problem_info": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.RequestProblemInfo = bv
+		}
+	},
+	"last_will_enabled": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.LastWillEnabled = bv
+		}
+	},
+	"last_will_topic": func(p *Profile, v string) { p.LastWillTopic = v },
+	"last_will_qos": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.LastWillQos = iv
+		}
+	},
+	"last_will_retain": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.LastWillRetain = bv
+		}
+	},
+	"last_will_payload": func(p *Profile, v string) { p.LastWillPayload = v },
+	"random_id_suffix": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.RandomIDSuffix = bv
+		}
+	},
+}
+
 // ApplyEnvVars loads profile fields from environment variables when FromEnv is set.
 func ApplyEnvVars(p *Profile) {
 	if !p.FromEnv {
 		return
 	}
 	prefix := EnvPrefix(p.Name)
-	rv := reflect.ValueOf(p).Elem()
-	rt := rv.Type()
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		if f.Name == "FromEnv" {
-			continue
-		}
-		tag := f.Tag.Get("toml")
-		if tag == "" {
-			continue
-		}
+	for tag, setter := range profileEnvSetters {
 		envName := prefix + strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
-		val, ok := os.LookupEnv(envName)
-		if !ok {
-			continue
-		}
-		field := rv.Field(i)
-		switch field.Kind() {
-		case reflect.String:
-			field.SetString(val)
-		case reflect.Int:
-			if iv, err := strconv.Atoi(val); err == nil {
-				field.SetInt(int64(iv))
-			}
-		case reflect.Bool:
-			if bv, err := strconv.ParseBool(val); err == nil {
-				field.SetBool(bv)
-			}
+		if val, ok := os.LookupEnv(envName); ok {
+			setter(p, val)
 		}
 	}
 }

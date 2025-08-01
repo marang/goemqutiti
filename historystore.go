@@ -19,6 +19,7 @@ type Message struct {
 	Topic     string
 	Payload   string
 	Kind      string
+	Archived  bool
 }
 
 // HistoryStore stores messages in memory and supports filtered searches.
@@ -112,6 +113,34 @@ func (i *HistoryStore) Delete(key string) error {
 	return nil
 }
 
+// Archive marks a message as archived without deleting it.
+// The key should use the format "<topic>/<timestamp>" matching Add.
+func (i *HistoryStore) Archive(key string) error {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	for idx, m := range i.msgs {
+		k := fmt.Sprintf("%s/%020d", m.Topic, m.Timestamp.UnixNano())
+		if k == key {
+			if i.db != nil {
+				m.Archived = true
+				val, _ := json.Marshal(m)
+				if err := i.db.Update(func(txn *badger.Txn) error {
+					return txn.Set([]byte(key), val)
+				}); err != nil {
+					return err
+				}
+				i.msgs[idx] = m
+			} else {
+				m.Archived = true
+				i.msgs[idx] = m
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("message %s not found", key)
+}
+
 // Search returns all messages matching the provided filters. Zero timestamps
 // disable the corresponding time constraints.
 func (i *HistoryStore) Search(topics []string, start, end time.Time, payload string) []Message {
@@ -128,6 +157,47 @@ func (i *HistoryStore) Search(topics []string, start, end time.Time, payload str
 	}
 
 	for _, m := range i.msgs {
+		if m.Archived {
+			continue
+		}
+		if len(topicSet) > 0 {
+			if _, ok := topicSet[m.Topic]; !ok {
+				continue
+			}
+		}
+		if !start.IsZero() && m.Timestamp.Before(start) {
+			continue
+		}
+		if !end.IsZero() && m.Timestamp.After(end) {
+			continue
+		}
+		if payload != "" && !strings.Contains(m.Payload, payload) {
+			continue
+		}
+		out = append(out, m)
+	}
+	return out
+}
+
+// SearchArchived returns archived messages matching the provided filters.
+// Zero timestamps disable the corresponding time constraints.
+func (i *HistoryStore) SearchArchived(topics []string, start, end time.Time, payload string) []Message {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+
+	var out []Message
+	topicSet := map[string]struct{}{}
+	for _, t := range topics {
+		if t == "" {
+			continue
+		}
+		topicSet[t] = struct{}{}
+	}
+
+	for _, m := range i.msgs {
+		if !m.Archived {
+			continue
+		}
 		if len(topicSet) > 0 {
 			if _, ok := topicSet[m.Topic]; !ok {
 				continue

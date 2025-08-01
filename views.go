@@ -102,7 +102,7 @@ func (m *model) viewClient() string {
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
-		maxRows = 3
+		maxRows = 1
 	}
 	topicsBoxHeight := maxRows * rowH
 	m.topics.vp.Width = m.ui.width - 4

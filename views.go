@@ -172,6 +172,11 @@ func (m *model) viewClient() string {
 	if m.history.filterQuery != "" && shown != total {
 		histLabel = fmt.Sprintf("History (%d/%d messages \u2013 Ctrl+C copy)", shown, total)
 	}
+	listHeight := m.layout.history.height
+	if m.history.filterQuery != "" && listHeight > 0 {
+		listHeight--
+	}
+	m.history.list.SetSize(m.ui.width-4, listHeight)
 	histContent := m.history.list.View()
 	if m.history.filterQuery != "" {
 		inner := m.ui.width - 4

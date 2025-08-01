@@ -160,3 +160,16 @@ func TestHistoryFilterLineWidth(t *testing.T) {
 		}
 	}
 }
+
+// Test that the history help legend remains visible after applying a filter.
+func TestHistoryHelpVisibleWithFilter(t *testing.T) {
+	m := initialModel(nil)
+	m.history.store = &HistoryStore{}
+	m.history.filterQuery = "topic=foo"
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	if !strings.Contains(view, "\u2191/k up") {
+		t.Fatalf("expected history shortcuts in view, got %q", view)
+	}
+}

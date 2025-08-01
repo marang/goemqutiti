@@ -88,6 +88,30 @@ func (i *HistoryStore) Add(msg Message) {
 	}
 }
 
+// Delete removes a message with the given key from the index.
+// The key should use the format "<topic>/<timestamp>" matching Add.
+func (i *HistoryStore) Delete(key string) error {
+	i.mu.Lock()
+	defer i.mu.Unlock()
+
+	if i.db != nil {
+		if err := i.db.Update(func(txn *badger.Txn) error {
+			return txn.Delete([]byte(key))
+		}); err != nil {
+			return err
+		}
+	}
+
+	for idx, m := range i.msgs {
+		k := fmt.Sprintf("%s/%020d", m.Topic, m.Timestamp.UnixNano())
+		if k == key {
+			i.msgs = append(i.msgs[:idx], i.msgs[idx+1:]...)
+			break
+		}
+	}
+	return nil
+}
+
 // Search returns all messages matching the provided filters. Zero timestamps
 // disable the corresponding time constraints.
 func (i *HistoryStore) Search(topics []string, start, end time.Time, payload string) []Message {

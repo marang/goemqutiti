@@ -85,10 +85,12 @@ type chipBound struct {
 }
 
 type historyItem struct {
-	timestamp time.Time
-	topic     string
-	payload   string
-	kind      string // pub, sub, log
+	timestamp           time.Time
+	topic               string
+	payload             string
+	kind                string // pub, sub, log
+	isSelected          *bool
+	isMarkedForDeletion *bool
 }
 
 func (h historyItem) FilterValue() string { return h.payload }
@@ -156,7 +158,6 @@ type historyState struct {
 	list            list.Model
 	items           []historyItem
 	store           *HistoryStore
-	selected        map[int]struct{}
 	selectionAnchor int
 }
 
@@ -308,6 +309,7 @@ type model struct {
 	confirmPrompt string
 	confirmInfo   string
 	confirmAction func()
+	confirmCancel func()
 
 	layout layoutConfig
 

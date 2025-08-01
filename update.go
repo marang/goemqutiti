@@ -361,10 +361,17 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 				m.confirmAction()
 				m.confirmAction = nil
 			}
+			if m.confirmCancel != nil {
+				m.confirmCancel = nil
+			}
 			cmd := m.setMode(m.previousMode())
 			m.scrollToFocused()
 			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
 		case "n", "esc":
+			if m.confirmCancel != nil {
+				m.confirmCancel()
+				m.confirmCancel = nil
+			}
 			cmd := m.setMode(m.previousMode())
 			m.scrollToFocused()
 			return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
@@ -467,9 +474,12 @@ func (m *model) updateSelectionRange(idx int) {
 	if start > end {
 		start, end = end, start
 	}
-	m.history.selected = map[int]struct{}{}
-	for i := start; i <= end; i++ {
-		m.history.selected[i] = struct{}{}
+	for i := range m.history.items {
+		m.history.items[i].isSelected = nil
+	}
+	for i := start; i <= end && i < len(m.history.items); i++ {
+		v := true
+		m.history.items[i].isSelected = &v
 	}
 }
 

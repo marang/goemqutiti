@@ -38,6 +38,7 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmPrompt = prompt
 	m.confirmInfo = info
 	m.confirmAction = action
+	m.confirmCancel = nil
 	_ = m.setMode(modeConfirmDelete)
 }
 

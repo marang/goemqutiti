@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -303,10 +305,22 @@ func savePasswordToKeyring(service, username, password string) {
 	}
 }
 
-// deleteProfileData removes profile-specific persisted history and traces.
-func deleteProfileData(name string) {
-	os.RemoveAll(filepath.Join(files.DataDir(name), "history"))
-	os.RemoveAll(filepath.Join(files.DataDir(name), "traces"))
+// deleteProfileData removes profile-specific persisted history and traces and
+// returns any cleanup errors.
+func deleteProfileData(name string) error {
+	historyPath := filepath.Join(files.DataDir(name), "history")
+	historyErr := os.RemoveAll(historyPath)
+	if historyErr != nil {
+		log.Printf("Error removing %s: %v", historyPath, historyErr)
+	}
+
+	tracesPath := filepath.Join(files.DataDir(name), "traces")
+	tracesErr := os.RemoveAll(tracesPath)
+	if tracesErr != nil {
+		log.Printf("Error removing %s: %v", tracesPath, tracesErr)
+	}
+
+	return errors.Join(historyErr, tracesErr)
 }
 
 // persistProfileChange applies a profile update, saves config and keyring.

@@ -236,12 +236,26 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		}
 	case "ctrl+a":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
+			allSelected := true
 			for i := range m.history.items {
-				v := true
-				m.history.items[i].isSelected = &v
+				if m.history.items[i].isSelected == nil || !*m.history.items[i].isSelected {
+					allSelected = false
+					break
+				}
 			}
-			if len(m.history.items) > 0 {
-				m.history.selectionAnchor = 0
+			if allSelected {
+				for i := range m.history.items {
+					m.history.items[i].isSelected = nil
+				}
+				m.history.selectionAnchor = -1
+			} else {
+				for i := range m.history.items {
+					v := true
+					m.history.items[i].isSelected = &v
+				}
+				if len(m.history.items) > 0 {
+					m.history.selectionAnchor = 0
+				}
 			}
 		}
 	case "ctrl+l":

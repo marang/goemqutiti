@@ -101,16 +101,18 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	if kind == "log" {
 		text = logText
 	}
-	hi := historyItem{timestamp: time.Now(), topic: topic, payload: text, kind: kind}
-	m.history.items = append(m.history.items, hi)
-	items := make([]list.Item, len(m.history.items))
-	for i, it := range m.history.items {
-		items[i] = it
+	hi := historyItem{timestamp: time.Now(), topic: topic, payload: text, kind: kind, archived: false}
+	if !m.history.showArchived {
+		m.history.items = append(m.history.items, hi)
+		items := make([]list.Item, len(m.history.items))
+		for i, it := range m.history.items {
+			items[i] = it
+		}
+		m.history.list.SetItems(items)
+		m.history.list.Select(len(items) - 1)
 	}
-	m.history.list.SetItems(items)
-	m.history.list.Select(len(items) - 1)
 	if m.history.store != nil {
-		m.history.store.Add(Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind})
+		m.history.store.Add(Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}
 }
 

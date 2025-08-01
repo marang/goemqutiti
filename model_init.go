@@ -198,8 +198,9 @@ func initialModel(conns *Connections) *model {
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-			m.history.items = append(m.history.items, items[i].(historyItem))
+			hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+			items[i] = hi
+			m.history.items = append(m.history.items, hi)
 		}
 		m.history.list.SetItems(items)
 	}

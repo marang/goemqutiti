@@ -24,6 +24,23 @@ go install github.com/marang/goemqutiti@latest
 yay -S emqutiti
 ```
 
+### Debian / Ubuntu
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/marang/emqutiti/setup.deb.sh' | sudo -E bash
+sudo apt install emqutiti
+```
+
+### Fedora
+```bash
+curl -1sLf 'https://dl.cloudsmith.io/public/marang/emqutiti/setup.rpm.sh' | sudo -E bash
+sudo dnf install emqutiti
+```
+
+### Flatpak
+```bash
+flatpak install flathub io.marang.GoEmqutiti
+```
+
 ## Usage
 
 ```bash

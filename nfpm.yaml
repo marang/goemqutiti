@@ -1,0 +1,16 @@
+name: emqutiti
+arch: amd64
+platform: linux
+version: 0.0.0
+section: default
+priority: extra
+maintainer: Emqutiti Maintainers <maintainers@example.com>
+description: |
+  GoEmqutiti is a polished MQTT client for the terminal.
+license: MIT
+homepage: https://github.com/marang/goemqutiti
+contents:
+  - src: build/emqutiti
+    dst: /usr/bin/emqutiti
+    file_info:
+      mode: 0755

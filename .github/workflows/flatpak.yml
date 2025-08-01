@@ -1,0 +1,46 @@
+name: Publish Flatpak
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  flatpak:
+    runs-on: ubuntu-latest
+
+    env:
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            flatpak flatpak-builder golang-go
+          flatpak remote-add --if-not-exists flathub \
+            https://flathub.org/repo/flathub.flatpakrepo
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Strip leading v from tag
+        id: v
+        run: echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Flatpak
+        run: flatpak-builder --force-clean build-dir flatpak/io.marang.GoEmqutiti.yml
+
+      - name: Create bundle
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          flatpak build-bundle build-dir emqutiti-${ver}.flatpak io.marang.GoEmqutiti
+
+      - name: Publish Flatpak
+        run: |
+          curl -H "Authorization: Bearer $FLATPAK_TOKEN" \
+            -F "file=@emqutiti-${{ steps.v.outputs.version }}.flatpak" \
+            $FLATPAK_REPO_URL
+        env:
+          FLATPAK_TOKEN: ${{ secrets.FLATPAK_TOKEN }}
+          FLATPAK_REPO_URL: ${{ secrets.FLATPAK_REPO_URL }}

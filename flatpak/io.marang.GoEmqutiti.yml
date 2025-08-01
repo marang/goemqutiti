@@ -1,0 +1,19 @@
+id: io.marang.GoEmqutiti
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.golang
+command: emqutiti
+finish-args:
+  - --share=network
+modules:
+  - name: goemqutiti
+    buildsystem: simple
+    build-options:
+      append-path: /usr/lib/sdk/golang/bin
+    build-commands:
+      - go build -o /app/bin/emqutiti
+    sources:
+      - type: dir
+        path: ../

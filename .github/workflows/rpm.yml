@@ -1,0 +1,47 @@
+name: Publish RPM
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  rpm:
+    runs-on: ubuntu-latest
+    container: fedora:latest
+
+    env:
+      PKGNAME: emqutiti
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Install deps
+        run: |
+          dnf -y install git golang make rpm-build curl
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Strip leading v from tag
+        id: v
+        run: echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build binary
+        run: go build -ldflags "-s -w" -o build/emqutiti
+
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
+      - name: Build RPM package
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          nfpm pkg --config nfpm.yaml --packager rpm \
+            --target emqutiti-${ver}-1.x86_64.rpm --version ${ver}
+
+      - name: Publish RPM
+        uses: cloudsmith-io/github-action@v1
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          owner: ${{ secrets.CLOUDSMITH_OWNER }}
+          repo: ${{ secrets.CLOUDSMITH_REPO_RPM }}
+          file: emqutiti-${{ steps.v.outputs.version }}-1.x86_64.rpm

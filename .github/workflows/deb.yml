@@ -1,0 +1,49 @@
+name: Publish DEB
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deb:
+    runs-on: ubuntu-latest
+    container: ubuntu:latest
+
+    env:
+      PKGNAME: emqutiti
+      VERSION: ${{ github.ref_name }}
+
+    steps:
+      - name: Install deps
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            curl git golang-go build-essential
+
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Strip leading v from tag
+        id: v
+        run: echo "version=${VERSION#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Build binary
+        run: go build -ldflags "-s -w" -o build/emqutiti
+
+      - name: Install nfpm
+        run: go install github.com/goreleaser/nfpm/v2/cmd/nfpm@latest
+
+      - name: Build DEB package
+        run: |
+          ver="${{ steps.v.outputs.version }}"
+          nfpm pkg --config nfpm.yaml --packager deb \
+            --target emqutiti_${ver}_amd64.deb --version ${ver}
+
+      - name: Publish DEB
+        uses: cloudsmith-io/github-action@v1
+        with:
+          api-key: ${{ secrets.CLOUDSMITH_API_KEY }}
+          owner: ${{ secrets.CLOUDSMITH_OWNER }}
+          repo: ${{ secrets.CLOUDSMITH_REPO_DEB }}
+          file: emqutiti_${{ steps.v.outputs.version }}_amd64.deb

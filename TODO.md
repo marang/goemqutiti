@@ -21,8 +21,9 @@ This file tracks planned improvements for GoEmqutiti.
 
 ## Packaging
 - [x] Provide a `PKGBUILD` for Arch Linux
-- [ ] Debian/Ubuntu package
-- [ ] Fedora RPM
+- [x] Debian/Ubuntu package
+- [x] Fedora RPM
+- [x] Flatpak package
 - [ ] Homebrew formula for macOS users
 
 ## Documentation

@@ -10,7 +10,7 @@ import (
 
 // Test that ctrl+a toggles history selection
 func TestCtrlATogglesHistorySelection(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.history.items = []historyItem{
 		{timestamp: time.Now(), topic: "t1", payload: "p1", kind: "pub"},
 		{timestamp: time.Now(), topic: "t2", payload: "p2", kind: "pub"},

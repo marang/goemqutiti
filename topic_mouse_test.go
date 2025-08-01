@@ -27,7 +27,7 @@ func setupTopics(m *model) {
 }
 
 func TestMouseToggleFirstTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupTopics(m)
 	m.viewClient()
@@ -50,7 +50,7 @@ func TestMouseToggleFirstTopic(t *testing.T) {
 }
 
 func TestMouseToggleThirdRowTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupTopics(m)
 	m.viewClient()
@@ -74,7 +74,7 @@ func TestMouseToggleThirdRowTopic(t *testing.T) {
 }
 
 func TestMouseToggleFourthRowTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupTopics(m)
 	m.viewClient()
@@ -107,7 +107,7 @@ func setupManyTopics(m *model, n int) {
 
 func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 	for offset := 0; offset < lipgloss.Height(ui.ChipStyle.Render("test")); offset++ {
-		m := initialModel(nil)
+		m, _ := initialModel(nil)
 		m.Update(tea.WindowSizeMsg{Width: 40, Height: 80})
 		setupManyTopics(m, 50)
 		m.viewClient()
@@ -135,7 +135,7 @@ func TestMouseToggleFifteenthRowTopic(t *testing.T) {
 
 func TestMouseToggleWithScroll(t *testing.T) {
 	for offset := 0; offset < lipgloss.Height(ui.ChipStyle.Render("test")); offset++ {
-		m := initialModel(nil)
+		m, _ := initialModel(nil)
 		// Small height so we need to scroll to reach later rows
 		m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
 		setupManyTopics(m, 30)

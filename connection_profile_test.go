@@ -143,7 +143,9 @@ password = "keyring:svc/u1"
 
 func TestSavePasswordToKeyring(t *testing.T) {
 	keyring.MockInit()
-	savePasswordToKeyring("svc", "user", "pw")
+	if err := savePasswordToKeyring("svc", "user", "pw"); err != nil {
+		t.Fatalf("savePasswordToKeyring: %v", err)
+	}
 	got, err := keyring.Get("emqutiti-svc", "user")
 	if err != nil || got != "pw" {
 		t.Fatalf("got %q err %v", got, err)
@@ -197,7 +199,9 @@ func TestPersistProfileChange(t *testing.T) {
 
 	profiles := []Profile{}
 	p := Profile{Name: "test", Username: "user", Password: "secret"}
-	persistProfileChange(&profiles, "test", p, -1)
+	if err := persistProfileChange(&profiles, "test", p, -1); err != nil {
+		t.Fatalf("persistProfileChange: %v", err)
+	}
 
 	if len(profiles) != 1 {
 		t.Fatalf("expected 1 profile, got %d", len(profiles))

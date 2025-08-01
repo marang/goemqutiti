@@ -17,7 +17,7 @@ import (
 )
 
 // initialModel creates the main program model with optional connection data.
-func initialModel(conns *Connections) *model {
+func initialModel(conns *Connections) (*model, error) {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
 	ti.Focus()
@@ -49,12 +49,13 @@ func initialModel(conns *Connections) *model {
 	ta.BlurredStyle.CursorLine = ui.BlurredStyle
 
 	var connModel Connections
+	var loadErr error
 	if conns != nil {
 		connModel = *conns
 	} else {
 		connModel = NewConnectionsModel()
 		if err := connModel.LoadProfiles(""); err != nil {
-			fmt.Println("Warning:", err)
+			loadErr = err
 		}
 	}
 	connModel.ConnectionsList.SetShowStatusBar(false)
@@ -237,12 +238,12 @@ func initialModel(conns *Connections) *model {
 				m.importWizard = NewImportWizard(client, importFile)
 				m.setMode(modeImporter)
 			} else {
-				fmt.Println("connect error:", err)
+				return nil, fmt.Errorf("connect error: %w", err)
 			}
 		}
 	}
 	m.rebuildActiveTopicList()
-	return m
+	return m, loadErr
 }
 
 // Init enables initial Tea behavior such as mouse support.

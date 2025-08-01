@@ -9,7 +9,7 @@ import (
 )
 
 func TestTopicsScrollDown(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupManyTopics(m, 10)
 	m.layout.topics.height = 2
@@ -26,7 +26,7 @@ func TestTopicsScrollDown(t *testing.T) {
 }
 
 func TestTopicsScrollDownJ(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupManyTopics(m, 10)
 	m.layout.topics.height = 2
@@ -43,7 +43,7 @@ func TestTopicsScrollDownJ(t *testing.T) {
 }
 
 func TestTopicSelectionScroll(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupManyTopics(m, 10)
 	m.layout.topics.height = 2

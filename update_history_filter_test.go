@@ -10,7 +10,7 @@ import (
 
 // Test that applying history filters populates the list with results.
 func TestUpdateHistoryFilter(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	hs := &HistoryStore{}
 	m.history.store = hs
 	ts := time.Now()
@@ -33,7 +33,7 @@ func TestUpdateHistoryFilter(t *testing.T) {
 
 // Test that filtered results persist after the next update cycle.
 func TestHistoryFilterPersists(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	hs := &HistoryStore{}
 	m.history.store = hs
 	ts := time.Now()
@@ -65,7 +65,7 @@ func TestHistoryFilterPersists(t *testing.T) {
 
 // Test that filtering updates the history label counts.
 func TestHistoryFilterUpdatesCounts(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	hs := &HistoryStore{}
 	m.history.store = hs
 	ts := time.Now()

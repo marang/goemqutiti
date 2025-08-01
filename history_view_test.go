@@ -13,7 +13,7 @@ import (
 
 // Test that historyDelegate renders lines that fit the list width
 func TestHistoryDelegateWidth(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	d := historyDelegate{m: m}
 	m.history.list.SetSize(30, 4)
 	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "bar", kind: "pub"}
@@ -29,7 +29,7 @@ func TestHistoryDelegateWidth(t *testing.T) {
 
 // Test that the history box has aligned borders when rendered
 func TestHistoryBoxLayout(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	m.appendHistory("foo", "bar", "pub", "")
 	view := m.viewClient()
@@ -60,7 +60,7 @@ func TestHistoryBoxLayout(t *testing.T) {
 
 // Test that active filters are shown inside the history box rather than in the border.
 func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.history.filterQuery = "topic=foo"
 	m.history.store = &HistoryStore{}
 	m.appendHistory("foo", "bar", "pub", "")
@@ -100,7 +100,7 @@ func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 
 // Test that the history label reports total and filtered message counts.
 func TestHistoryLabelCounts(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.history.store = &HistoryStore{}
 	m.appendHistory("foo", "bar", "pub", "")
 	m.appendHistory("bar", "baz", "sub", "")
@@ -129,7 +129,7 @@ func TestHistoryLabelCounts(t *testing.T) {
 
 // Test that a long filter query does not break the history box layout.
 func TestHistoryFilterLineWidth(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	long := strings.Repeat("x", 100)
 	m.history.filterQuery = "topic=" + long
 	m.history.store = &HistoryStore{}
@@ -163,7 +163,7 @@ func TestHistoryFilterLineWidth(t *testing.T) {
 
 // Test that the history help legend remains visible after applying a filter.
 func TestHistoryHelpVisibleWithFilter(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.history.store = &HistoryStore{}
 	m.history.filterQuery = "topic=foo"
 	m.appendHistory("foo", "bar", "pub", "")

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -71,7 +70,9 @@ func (m *Connections) AddConnection(p Profile) {
 		m.Errors = make(map[string]string)
 	}
 	m.Errors[p.Name] = ""
-	persistProfileChange(&m.Profiles, m.DefaultProfileName, p, -1)
+	if err := persistProfileChange(&m.Profiles, m.DefaultProfileName, p, -1); err != nil {
+		log.Printf("Failed to persist profile %s: %v", p.Name, err)
+	}
 	m.refreshList()
 }
 
@@ -89,7 +90,9 @@ func (m *Connections) EditConnection(index int, p Profile) {
 				m.Errors[p.Name] = errMsg
 			}
 		}
-		persistProfileChange(&m.Profiles, m.DefaultProfileName, p, index)
+		if err := persistProfileChange(&m.Profiles, m.DefaultProfileName, p, index); err != nil {
+			log.Printf("Failed to persist profile %s: %v", p.Name, err)
+		}
 		m.refreshList()
 	}
 }
@@ -135,7 +138,7 @@ func LoadFromConfig(filePath string) (*Connections, error) {
 func (c *Connections) LoadProfiles(filePath string) error {
 	loaded, err := LoadFromConfig(filePath)
 	if err != nil {
-		fmt.Println("Warning:", err)
+		log.Printf("Warning: %v", err)
 		return err
 	}
 	c.DefaultProfileName = loaded.DefaultProfileName

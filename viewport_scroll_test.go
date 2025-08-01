@@ -7,7 +7,7 @@ import (
 )
 
 func TestViewportScrollCtrlJ(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
 	for i := 0; i < 50; i++ {
 		m.appendHistory("t", "msg", "pub", "")

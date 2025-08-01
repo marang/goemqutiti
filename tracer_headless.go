@@ -9,15 +9,13 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 // mqttClient wraps the MQTT connection for the tracer.
 type mqttClient struct{ client mqtt.Client }
 
 // newMQTTClient establishes an MQTT connection using the provided profile.
-func newMQTTClient(p config.Profile) (*mqttClient, error) {
+func newMQTTClient(p Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	opts.AddBroker(brokerURL)
@@ -102,7 +100,7 @@ func tracerRun(key, topics, profileName, startStr, endStr string) error {
 			return fmt.Errorf("invalid end time: %w", err)
 		}
 	}
-	p, err := config.LoadProfile(profileName, "")
+	p, err := LoadProfile(profileName, "")
 	if err != nil {
 		return err
 	}

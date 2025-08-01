@@ -7,8 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 type traceTickMsg struct{}
@@ -127,13 +125,13 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 				m.traces.form.errMsg = "trace key exists"
 				return m, nil
 			}
-			p, err := config.LoadProfile(cfg.Profile, "")
+			p, err := LoadProfile(cfg.Profile, "")
 			if err != nil {
 				m.traces.form.errMsg = err.Error()
 				return m, nil
 			}
 			if p.FromEnv {
-				config.ApplyEnvVars(p)
+				ApplyEnvVars(p)
 			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
 				p.Password = env
 			}

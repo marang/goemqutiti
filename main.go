@@ -9,8 +9,6 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 var (
@@ -100,37 +98,12 @@ func main() {
 // runImport launches the interactive import wizard using the provided file
 // path and profile name.
 func runImport(path, profile string) {
-	conns := NewConnectionsModel()
-	if err := conns.LoadProfiles(""); err != nil {
-		fmt.Println("Error loading profiles:", err)
+	p, err := LoadProfile(profile, "")
+	if err != nil {
+		fmt.Println("Error loading profile:", err)
 		return
 	}
-	var p *Profile
-	if profile != "" {
-		for i := range conns.Profiles {
-			if conns.Profiles[i].Name == profile {
-				p = &conns.Profiles[i]
-				break
-			}
-		}
-	} else if conns.DefaultProfileName != "" {
-		for i := range conns.Profiles {
-			if conns.Profiles[i].Name == conns.DefaultProfileName {
-				p = &conns.Profiles[i]
-				break
-			}
-		}
-	}
-	if p == nil && len(conns.Profiles) > 0 {
-		p = &conns.Profiles[0]
-	}
-	if p == nil {
-		fmt.Println("no connection profile available")
-		return
-	}
-	if p.FromEnv {
-		config.ApplyEnvVars(p)
-	} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+	if env := os.Getenv("MQTT_PASSWORD"); env != "" && !p.FromEnv {
 		p.Password = env
 	}
 

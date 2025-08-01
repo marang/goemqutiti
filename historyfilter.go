@@ -23,12 +23,16 @@ type historyFilterForm struct {
 	end   *textField
 }
 
-// newHistoryFilterForm builds a form prefilled with the last hour.
-func newHistoryFilterForm(topics []string) historyFilterForm {
-	end := time.Now()
-	start := end.Add(-time.Hour)
+// newHistoryFilterForm builds a form with optional prefilled values.
+// If start and end are zero, it defaults to the last hour.
+func newHistoryFilterForm(topics []string, topic string, start, end time.Time) historyFilterForm {
+	if start.IsZero() && end.IsZero() {
+		end = time.Now()
+		start = end.Add(-time.Hour)
+	}
 	sort.Strings(topics)
 	tf := newSuggestField(topics, "topic")
+	tf.SetValue(topic)
 	sf := newTextField(start.Format(time.RFC3339), "start (RFC3339)")
 	ef := newTextField(end.Format(time.RFC3339), "end (RFC3339)")
 	f := historyFilterForm{

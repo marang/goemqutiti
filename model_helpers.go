@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"time"
 )
 
 // topicAtPosition returns the index of the topic chip located at the
@@ -48,7 +49,16 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	for _, t := range m.topics.items {
 		topics = append(topics, t.title)
 	}
-	hf := newHistoryFilterForm(topics)
+	var topic string
+	var start, end time.Time
+	if m.history.filterQuery != "" {
+		ts, s, e, _ := parseHistoryQuery(m.history.filterQuery)
+		if len(ts) > 0 {
+			topic = ts[0]
+		}
+		start, end = s, e
+	}
+	hf := newHistoryFilterForm(topics, topic, start, end)
 	m.history.filterForm = &hf
 	return m.setMode(modeHistoryFilter)
 }

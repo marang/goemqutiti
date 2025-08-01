@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -28,10 +26,6 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 		case "enter":
 			q := m.history.filterForm.query()
 			topics, start, end, _ := parseHistoryQuery(q)
-			if start.IsZero() && end.IsZero() {
-				end = time.Now()
-				start = end.Add(-time.Hour)
-			}
 			var msgs []Message
 			if m.history.showArchived {
 				msgs = m.history.store.SearchArchived(topics, start, end, "")
@@ -44,7 +38,12 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			}
 			m.history.list.SetItems(items)
 			m.history.list.FilterInput.SetValue(q)
-			m.history.list.SetFilterState(list.FilterApplied)
+			if q == "" {
+				m.history.list.SetFilterState(list.Unfiltered)
+			} else {
+				m.history.list.SetFilterState(list.FilterApplied)
+			}
+			m.history.filterQuery = q
 			m.history.filterForm = nil
 			cmd := tea.Batch(m.setMode(m.previousMode()), m.setFocus(idHistory))
 			return m, cmd

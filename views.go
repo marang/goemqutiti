@@ -164,6 +164,9 @@ func (m *model) viewClient() string {
 	}
 	msgCount := len(m.history.items)
 	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", msgCount)
+	if m.history.filterQuery != "" {
+		histLabel += " [" + m.history.filterQuery + "]"
+	}
 	messagesBox := ui.LegendBox(m.history.list.View(), histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)

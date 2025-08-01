@@ -130,6 +130,17 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				cmds = append(cmds, cmd)
 			}
 		}
+	case "ctrl+f":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			m.history.filterQuery = ""
+			m.history.list.FilterInput.SetValue("")
+			m.history.list.SetFilterState(list.Unfiltered)
+			items := make([]list.Item, len(m.history.items))
+			for i, it := range m.history.items {
+				items[i] = it
+			}
+			m.history.list.SetItems(items)
+		}
 	case "space":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			idx := m.history.list.Index()
@@ -598,10 +609,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.list.FilterInput.Value()
 		topics, start, end, text := parseHistoryQuery(q)
-		if start.IsZero() && end.IsZero() {
-			end = time.Now()
-			start = end.Add(-time.Hour)
-		}
+		m.history.filterQuery = q
 		var msgs []Message
 		if m.history.showArchived {
 			msgs = m.history.store.SearchArchived(topics, start, end, text)

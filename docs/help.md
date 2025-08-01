@@ -7,6 +7,7 @@
 | Ctrl+T | Manage topics |
 | Ctrl+P | Manage payloads |
 | Ctrl+R | Manage traces |
+| Ctrl+F | Clear history filters |
 | Ctrl+C | Copy selected entry |
 | Ctrl+Up/Down | Scroll view |
 | Ctrl+D | Exit the program |
@@ -23,4 +24,6 @@
 - Ctrl+Up/Down scrolls the view
 - Press '/' in history for a filter dialog with topic suggestions shown
   under the field; Tab or arrows cycle matches and Enter or space accepts
-  the highlight. Start and end fields default to the last hour.
+  the highlight. Start and end fields default to the last hour and can be
+  cleared to search all time. Active filters appear above the history list
+  and `Ctrl+F` resets them.

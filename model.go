@@ -164,6 +164,7 @@ type historyState struct {
 	selectionAnchor int
 	showArchived    bool
 	filterForm      *historyFilterForm
+	filterQuery     string
 }
 
 type paneState struct {

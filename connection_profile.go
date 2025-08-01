@@ -96,7 +96,7 @@ func sanitizeEnvName(name string) string {
 
 // EnvPrefix returns the prefix used for environment variables derived from a
 // profile name.
-func EnvPrefix(name string) string { return "GOEMQUTITI_" + sanitizeEnvName(name) + "_" }
+func EnvPrefix(name string) string { return "EMQUTITI_" + sanitizeEnvName(name) + "_" }
 
 type profileEnvSetter func(*Profile, string)
 
@@ -208,9 +208,17 @@ func ApplyEnvVars(p *Profile) {
 		return
 	}
 	prefix := EnvPrefix(p.Name)
+	// For a limited time, also check the old GOEMQUTITI_ prefix for
+	// backward compatibility.
+	oldPrefix := "GO" + prefix
 	for tag, setter := range profileEnvSetters {
-		envName := prefix + strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
+		key := strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
+		envName := prefix + key
 		if val, ok := os.LookupEnv(envName); ok {
+			setter(p, val)
+			continue
+		}
+		if val, ok := os.LookupEnv(oldPrefix + key); ok {
 			setter(p, val)
 		}
 	}

@@ -48,13 +48,13 @@ from_env = true
 	if err := os.WriteFile(cfg, []byte(data), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
-	os.Setenv("GOEMQUTITI_TEST_HOST", "example.com")
-	os.Setenv("GOEMQUTITI_TEST_PORT", "1884")
-	os.Setenv("GOEMQUTITI_TEST_SCHEMA", "ssl")
+	os.Setenv("EMQUTITI_TEST_HOST", "example.com")
+	os.Setenv("EMQUTITI_TEST_PORT", "1884")
+	os.Setenv("EMQUTITI_TEST_SCHEMA", "ssl")
 	defer func() {
-		os.Unsetenv("GOEMQUTITI_TEST_HOST")
-		os.Unsetenv("GOEMQUTITI_TEST_PORT")
-		os.Unsetenv("GOEMQUTITI_TEST_SCHEMA")
+		os.Unsetenv("EMQUTITI_TEST_HOST")
+		os.Unsetenv("EMQUTITI_TEST_PORT")
+		os.Unsetenv("EMQUTITI_TEST_SCHEMA")
 	}()
 
 	c, err := LoadFromConfig(cfg)

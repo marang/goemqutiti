@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"time"
 
@@ -29,10 +30,12 @@ func newMQTTClient(p Profile) (*mqttClient, error) {
 		opts.SetPassword(p.Password)
 	}
 	if p.MQTTVersion != "" {
-		var ver uint
-		fmt.Sscan(p.MQTTVersion, &ver)
+		ver, err := strconv.Atoi(p.MQTTVersion)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MQTT version %q: %w", p.MQTTVersion, err)
+		}
 		if ver != 0 {
-			opts.SetProtocolVersion(ver)
+			opts.SetProtocolVersion(uint(ver))
 		}
 	}
 	if p.ConnectTimeout > 0 {

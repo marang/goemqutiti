@@ -41,6 +41,7 @@ var focusByMode = map[appMode][]string{
 	modeEditTrace:      {idHelp},
 	modeViewTrace:      {idHelp},
 	modeImporter:       {idHelp},
+	modeHistoryFilter:  {idHelp},
 	modeHelp:           {idHelp},
 }
 
@@ -126,6 +127,7 @@ const (
 	modeEditTrace
 	modeViewTrace
 	modeImporter
+	modeHistoryFilter
 	modeHelp
 )
 
@@ -161,6 +163,8 @@ type historyState struct {
 	store           *HistoryStore
 	selectionAnchor int
 	showArchived    bool
+	filterForm      *historyFilterForm
+	filterQuery     string
 }
 
 type paneState struct {

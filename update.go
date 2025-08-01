@@ -97,22 +97,42 @@ func (m *model) restoreState(name string) {
 
 // appendHistory stores a message in the history list and optional store.
 func (m *model) appendHistory(topic, payload, kind, logText string) {
+	ts := time.Now()
 	text := payload
 	if kind == "log" {
 		text = logText
 	}
-	hi := historyItem{timestamp: time.Now(), topic: topic, payload: text, kind: kind, archived: false}
-	if !m.history.showArchived {
-		m.history.items = append(m.history.items, hi)
-		items := make([]list.Item, len(m.history.items))
-		for i, it := range m.history.items {
-			items[i] = it
-		}
-		m.history.list.SetItems(items)
-		m.history.list.Select(len(items) - 1)
-	}
+	hi := historyItem{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
 	if m.history.store != nil {
-		m.history.store.Add(Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind, Archived: false})
+		m.history.store.Add(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
+	}
+	if !m.history.showArchived {
+		if m.history.filterQuery != "" {
+			topics, start, end, pf := parseHistoryQuery(m.history.filterQuery)
+			var msgs []Message
+			if m.history.showArchived {
+				msgs = m.history.store.SearchArchived(topics, start, end, pf)
+			} else {
+				msgs = m.history.store.Search(topics, start, end, pf)
+			}
+			items := make([]list.Item, len(msgs))
+			m.history.items = make([]historyItem, len(msgs))
+			for i, mmsg := range msgs {
+				hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+				items[i] = hi
+				m.history.items[i] = hi
+			}
+			m.history.list.SetItems(items)
+			m.history.list.Select(len(items) - 1)
+		} else {
+			m.history.items = append(m.history.items, hi)
+			items := make([]list.Item, len(m.history.items))
+			for i, it := range m.history.items {
+				items[i] = it
+			}
+			m.history.list.SetItems(items)
+			m.history.list.Select(len(items) - 1)
+		}
 	}
 }
 
@@ -539,6 +559,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ui.viewport.ScrollDown(1)
 			return m, nil
 		case "tab":
+			if m.currentMode() == modeHistoryFilter {
+				nm, cmd := m.updateHistoryFilter(msg)
+				*m = nm
+				return m, cmd
+			}
 			if len(m.ui.focusOrder) > 0 {
 				m.focus.Next()
 				m.ui.focusIndex = m.focus.Index()
@@ -555,6 +580,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "shift+tab":
+			if m.currentMode() == modeHistoryFilter {
+				nm, cmd := m.updateHistoryFilter(msg)
+				*m = nm
+				return m, cmd
+			}
 			if len(m.ui.focusOrder) > 0 {
 				m.focus.Prev()
 				m.ui.focusIndex = m.focus.Index()
@@ -571,8 +601,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		}
-		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
-			m.ui.focusOrder[m.ui.focusIndex] == idHelp {
+		if m.currentMode() != modeHistoryFilter &&
+			(msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
+			m.help.Focused() {
 			cmd := m.setMode(modeHelp)
 			return m, cmd
 		}
@@ -616,6 +647,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case modeImporter:
 		nm, cmd := m.updateImporter(msg)
+		*m = nm
+		return m, cmd
+	case modeHistoryFilter:
+		nm, cmd := m.updateHistoryFilter(msg)
 		*m = nm
 		return m, cmd
 	case modeHelp:

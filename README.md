@@ -75,6 +75,7 @@ Tips:
 | Manage traces | `Ctrl+R` |
 | Open broker manager | `Ctrl+B` |
 | Publish message | `Ctrl+S` or `Ctrl+Enter` |
+| Clear history filters | `Ctrl+F` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 | Scroll view | `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J` |
 

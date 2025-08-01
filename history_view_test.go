@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -54,5 +55,121 @@ func TestHistoryBoxLayout(t *testing.T) {
 		if lipgloss.Width(l) != width {
 			t.Fatalf("history line %d width=%d want=%d", i, lipgloss.Width(l), width)
 		}
+	}
+}
+
+// Test that active filters are shown inside the history box rather than in the border.
+func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
+	m := initialModel(nil)
+	m.history.filterQuery = "topic=foo"
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	lines := strings.Split(view, "\n")
+	var hist []string
+	collecting := false
+	for _, l := range lines {
+		if strings.Contains(l, "History") {
+			collecting = true
+		}
+		if collecting {
+			hist = append(hist, l)
+			if strings.Contains(l, "\u2518") {
+				break
+			}
+		}
+	}
+	if len(hist) < 2 {
+		t.Fatalf("history box not found in view")
+	}
+	if strings.Contains(hist[0], "topic=foo") {
+		t.Fatalf("filter query should not appear in border")
+	}
+	found := false
+	for _, l := range hist[1:] {
+		if strings.Contains(l, "topic=foo") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("filter query not found inside history box")
+	}
+}
+
+// Test that the history label reports total and filtered message counts.
+func TestHistoryLabelCounts(t *testing.T) {
+	m := initialModel(nil)
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.appendHistory("bar", "baz", "sub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	if !strings.Contains(view, "History (2 messages") {
+		t.Fatalf("expected total count in label, got %q", view)
+	}
+
+	// apply filter showing only "foo"
+	m.history.filterQuery = "topic=foo"
+	msgs := m.history.store.Search([]string{"foo"}, time.Time{}, time.Time{}, "")
+	items := make([]list.Item, len(msgs))
+	m.history.items = make([]historyItem, len(msgs))
+	for i, mm := range msgs {
+		hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
+		items[i] = hi
+		m.history.items[i] = hi
+	}
+	m.history.list.SetItems(items)
+	view = m.viewClient()
+	if !strings.Contains(view, "History (1/2 messages") {
+		t.Fatalf("expected filtered count in label, got %q", view)
+	}
+}
+
+// Test that a long filter query does not break the history box layout.
+func TestHistoryFilterLineWidth(t *testing.T) {
+	m := initialModel(nil)
+	long := strings.Repeat("x", 100)
+	m.history.filterQuery = "topic=" + long
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	lines := strings.Split(view, "\n")
+	var hist []string
+	collecting := false
+	for _, l := range lines {
+		if strings.Contains(l, "History") {
+			collecting = true
+		}
+		if collecting {
+			hist = append(hist, l)
+			if strings.Contains(l, "\u2518") {
+				break
+			}
+		}
+	}
+	if len(hist) == 0 {
+		t.Fatalf("history box not found in view")
+	}
+	width := lipgloss.Width(hist[0])
+	for i, l := range hist {
+		if lipgloss.Width(l) != width {
+			t.Fatalf("history line %d width=%d want=%d", i, lipgloss.Width(l), width)
+		}
+	}
+}
+
+// Test that the history help legend remains visible after applying a filter.
+func TestHistoryHelpVisibleWithFilter(t *testing.T) {
+	m := initialModel(nil)
+	m.history.store = &HistoryStore{}
+	m.history.filterQuery = "topic=foo"
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	if !strings.Contains(view, "\u2191/k up") {
+		t.Fatalf("expected history shortcuts in view, got %q", view)
 	}
 }

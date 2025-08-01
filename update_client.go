@@ -123,6 +123,33 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.connections.active = ""
 			m.mqttClient = nil
 		}
+	case "/":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			cmd := m.startHistoryFilter()
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+	case "ctrl+f":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			m.history.filterQuery = ""
+			m.history.list.FilterInput.SetValue("")
+			m.history.list.SetFilterState(list.Unfiltered)
+			var msgs []Message
+			if m.history.showArchived {
+				msgs = m.history.store.SearchArchived(nil, time.Time{}, time.Time{}, "")
+			} else {
+				msgs = m.history.store.Search(nil, time.Time{}, time.Time{}, "")
+			}
+			m.history.items = make([]historyItem, len(msgs))
+			items := make([]list.Item, len(msgs))
+			for i, mm := range msgs {
+				hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
+				m.history.items[i] = hi
+				items[i] = hi
+			}
+			m.history.list.SetItems(items)
+		}
 	case "space":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			idx := m.history.list.Index()
@@ -605,10 +632,20 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.list.FilterInput.Value()
 		topics, start, end, text := parseHistoryQuery(q)
-		if start.IsZero() && end.IsZero() {
-			end = time.Now()
-			start = end.Add(-time.Hour)
+		m.history.filterQuery = q
+		var msgs []Message
+		if m.history.showArchived {
+			msgs = m.history.store.SearchArchived(topics, start, end, text)
+		} else {
+			msgs = m.history.store.Search(topics, start, end, text)
 		}
+		items := make([]list.Item, len(msgs))
+		for i, mmsg := range msgs {
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+		}
+		m.history.list.SetItems(items)
+	} else if m.history.filterQuery != "" {
+		topics, start, end, text := parseHistoryQuery(m.history.filterQuery)
 		var msgs []Message
 		if m.history.showArchived {
 			msgs = m.history.store.SearchArchived(topics, start, end, text)

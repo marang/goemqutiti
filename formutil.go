@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/goemqutiti/ui"
 )
@@ -18,6 +20,12 @@ type formField interface {
 	Value() string
 }
 
+// keyConsumer reports whether a field wants to handle a key itself instead of
+// having the form advance focus.
+type keyConsumer interface {
+	WantsKey(tea.KeyMsg) bool
+}
+
 // Form groups a slice of formField and tracks which one has focus.
 type Form struct {
 	fields []formField
@@ -26,6 +34,9 @@ type Form struct {
 
 // CycleFocus moves focus based on the provided key message.
 func (f *Form) CycleFocus(msg tea.KeyMsg) {
+	if c, ok := f.fields[f.focus].(keyConsumer); ok && c.WantsKey(msg) {
+		return
+	}
 	switch msg.String() {
 	case "tab", "down", "j":
 		f.focus++
@@ -114,6 +125,102 @@ func (t *textField) Value() string { return t.Model.Value() }
 func (t *textField) Focus()       { t.Model.Focus() }
 func (t *textField) Blur()        { t.Model.Blur() }
 func (t *textField) View() string { return t.Model.View() }
+
+// suggestField is a text input with auto-completion suggestions.
+type suggestField struct {
+	*textField
+	options     []string
+	suggestions []string
+	sel         int
+}
+
+// newSuggestField creates a suggestField with the given options and placeholder.
+func newSuggestField(opts []string, placeholder string) *suggestField {
+	tf := newTextField("", placeholder)
+	return &suggestField{
+		textField:   tf,
+		options:     append([]string(nil), opts...),
+		suggestions: nil,
+		sel:         -1,
+	}
+}
+
+// Update processes key messages to cycle suggestions while forwarding other
+// messages to the underlying text field.
+func (s *suggestField) Update(msg tea.Msg) tea.Cmd {
+	switch m := msg.(type) {
+	case tea.KeyMsg:
+		switch m.String() {
+		case "tab", "down":
+			if len(s.suggestions) > 0 {
+				s.sel = (s.sel + 1) % len(s.suggestions)
+				s.SetValue(s.suggestions[s.sel])
+				s.CursorEnd()
+				return nil
+			}
+		case "shift+tab", "up":
+			if len(s.suggestions) > 0 {
+				s.sel--
+				if s.sel < 0 {
+					s.sel = len(s.suggestions) - 1
+				}
+				s.SetValue(s.suggestions[s.sel])
+				s.CursorEnd()
+				return nil
+			}
+		case "enter", " ", "space":
+			if len(s.suggestions) > 0 && s.sel >= 0 {
+				s.SetValue(s.suggestions[s.sel])
+				s.suggestions = nil
+				s.sel = -1
+				s.CursorEnd()
+				return nil
+			}
+		}
+	}
+	cmd := s.textField.Update(msg)
+	if s.Focused() {
+		prefix := s.Value()
+		s.suggestions = s.suggestions[:0]
+		s.sel = -1
+		for _, o := range s.options {
+			if prefix == "" || strings.HasPrefix(o, prefix) {
+				s.suggestions = append(s.suggestions, o)
+				if len(s.suggestions) == 5 {
+					break
+				}
+			}
+		}
+	}
+	return cmd
+}
+
+// SuggestionsView renders the suggestion list for the field.
+func (s *suggestField) SuggestionsView() string {
+	if !s.Focused() || len(s.suggestions) == 0 {
+		return ""
+	}
+	items := make([]string, len(s.suggestions))
+	for i, sug := range s.suggestions {
+		st := lipgloss.NewStyle().Foreground(ui.ColBlue)
+		if i == s.sel {
+			st = st.Foreground(ui.ColPink)
+		}
+		items[i] = st.Render(sug)
+	}
+	return strings.Join(items, "\n")
+}
+
+// WantsKey reports whether the field wants to handle the key itself to cycle
+// suggestions instead of moving focus.
+func (s *suggestField) WantsKey(k tea.KeyMsg) bool {
+	switch k.String() {
+	case "tab", "shift+tab", "up", "down", "enter", " ", "space":
+		return len(s.suggestions) > 0
+	default:
+		return false
+	}
+}
 
 // selectField allows choosing from a fixed list of options.
 type selectField struct {

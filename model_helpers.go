@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"time"
 )
 
 // topicAtPosition returns the index of the topic chip located at the
@@ -40,6 +41,29 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	m.confirmAction = action
 	m.confirmCancel = nil
 	_ = m.setMode(modeConfirmDelete)
+}
+
+// startHistoryFilter opens the history filter form.
+func (m *model) startHistoryFilter() tea.Cmd {
+	var topics []string
+	for _, t := range m.topics.items {
+		topics = append(topics, t.title)
+	}
+	var topic, payload string
+	var start, end time.Time
+	if m.history.filterQuery != "" {
+		ts, s, e, p := parseHistoryQuery(m.history.filterQuery)
+		if len(ts) > 0 {
+			topic = ts[0]
+		}
+		start, end, payload = s, e, p
+	} else {
+		end = time.Now()
+		start = end.Add(-time.Hour)
+	}
+	hf := newHistoryFilterForm(topics, topic, payload, start, end)
+	m.history.filterForm = &hf
+	return m.setMode(modeHistoryFilter)
 }
 
 // subscribeActiveTopics subscribes the MQTT client to all currently active topics.
@@ -98,6 +122,7 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 	}
 	m.focus = NewFocusMap(items)
 	m.ui.focusIndex = m.focus.Index()
+	m.help.Blur()
 	return nil
 }
 

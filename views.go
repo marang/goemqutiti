@@ -7,6 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/marang/goemqutiti/ui"
 )
@@ -153,18 +154,37 @@ func (m *model) viewClient() string {
 	messageBox := ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", m.ui.width-2, msgHeight, ui.ColBlue, messageFocused, msgSP)
 	// Calculate scroll percent for the history list
 	per := m.history.list.Paginator.PerPage
-	total := len(m.history.list.Items())
+	totalItems := len(m.history.list.Items())
 	histSP := -1.0
-	if total > per {
+	if totalItems > per {
 		start := m.history.list.Paginator.Page * per
-		denom := total - per
+		denom := totalItems - per
 		if denom > 0 {
 			histSP = float64(start) / float64(denom)
 		}
 	}
-	msgCount := len(m.history.items)
-	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", msgCount)
-	messagesBox := ui.LegendBox(m.history.list.View(), histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
+	total := len(m.history.items)
+	if m.history.store != nil {
+		total = m.history.store.Count(m.history.showArchived)
+	}
+	shown := len(m.history.items)
+	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", total)
+	if m.history.filterQuery != "" && shown != total {
+		histLabel = fmt.Sprintf("History (%d/%d messages \u2013 Ctrl+C copy)", shown, total)
+	}
+	listHeight := m.layout.history.height
+	if m.history.filterQuery != "" && listHeight > 0 {
+		listHeight--
+	}
+	m.history.list.SetSize(m.ui.width-4, listHeight)
+	histContent := m.history.list.View()
+	if m.history.filterQuery != "" {
+		inner := m.ui.width - 4
+		filterLine := fmt.Sprintf("Filters: %s", m.history.filterQuery)
+		filterLine = ansi.Truncate(filterLine, inner, "")
+		histContent = fmt.Sprintf("%s\n%s", filterLine, histContent)
+	}
+	messagesBox := ui.LegendBox(histContent, histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 
@@ -228,7 +248,19 @@ func (m model) viewConfirmDelete() string {
 	if m.confirmInfo != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, m.confirmPrompt, m.confirmInfo)
 	}
+	content = lipgloss.NewStyle().Padding(1, 2).Render(content)
 	box := ui.LegendBox(content, "Confirm", m.ui.width/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
+}
+
+// viewHistoryFilter displays the history filter form.
+func (m model) viewHistoryFilter() string {
+	m.ui.elemPos = map[string]int{}
+	if m.history.filterForm == nil {
+		return ""
+	}
+	content := lipgloss.NewStyle().Padding(1, 2).Render(m.history.filterForm.View())
+	box := ui.LegendBox(content, "Filter", m.ui.width/2, 0, ui.ColBlue, true, -1)
 	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
 }
 
@@ -358,6 +390,8 @@ func (m *model) View() string {
 		return m.viewTraceMessages()
 	case modeImporter:
 		return m.viewImporter()
+	case modeHistoryFilter:
+		return m.viewHistoryFilter()
 	case modeHelp:
 		return m.viewHelp()
 	default:

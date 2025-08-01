@@ -217,6 +217,21 @@ func (i *HistoryStore) SearchArchived(topics []string, start, end time.Time, pay
 	return out
 }
 
+// Count reports the number of stored messages. When archived is true,
+// only archived messages are counted; otherwise only unarchived messages
+// are included.
+func (i *HistoryStore) Count(archived bool) int {
+	i.mu.RLock()
+	defer i.mu.RUnlock()
+	c := 0
+	for _, m := range i.msgs {
+		if m.Archived == archived {
+			c++
+		}
+	}
+	return c
+}
+
 // parseHistoryQuery interprets a filter string in the form:
 //
 //	"topic=a,b start=2023-01-02T15:04:05Z end=2023-01-02T16:00 payload=foo".

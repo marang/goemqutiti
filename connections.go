@@ -80,13 +80,6 @@ func (m Connections) View() string {
 
 // AddConnection adds a new connection to the list and saves it to config.toml and keyring.
 func (m *Connections) AddConnection(p Profile) {
-	plain := p.Password
-	if !p.FromEnv {
-		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
-	} else {
-		p.Password = ""
-	}
-	m.Profiles = append(m.Profiles, p)
 	if m.Statuses == nil {
 		m.Statuses = make(map[string]string)
 	}
@@ -95,24 +88,13 @@ func (m *Connections) AddConnection(p Profile) {
 		m.Errors = make(map[string]string)
 	}
 	m.Errors[p.Name] = ""
-	m.saveConfigToFile()
-	if !p.FromEnv {
-		m.savePasswordToKeyring(p.Name, p.Username, plain)
-	}
-	m.refreshList()
+	m.persistProfileChange(p, -1)
 }
 
 // EditConnection updates an existing connection and saves changes to config.toml and keyring.
 func (m *Connections) EditConnection(index int, p Profile) {
 	if index >= 0 && index < len(m.Profiles) {
-		plain := p.Password
 		oldName := m.Profiles[index].Name
-		if !p.FromEnv {
-			p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
-		} else {
-			p.Password = ""
-		}
-		m.Profiles[index] = p
 		if oldName != p.Name {
 			if status, ok := m.Statuses[oldName]; ok {
 				delete(m.Statuses, oldName)
@@ -123,12 +105,28 @@ func (m *Connections) EditConnection(index int, p Profile) {
 				m.Errors[p.Name] = errMsg
 			}
 		}
-		m.saveConfigToFile()
-		if !p.FromEnv {
-			m.savePasswordToKeyring(p.Name, p.Username, plain)
-		}
-		m.refreshList()
+		m.persistProfileChange(p, index)
 	}
+}
+
+// persistProfileChange handles shared persistence steps for profiles.
+func (m *Connections) persistProfileChange(p Profile, idx int) {
+	plain := p.Password
+	if !p.FromEnv {
+		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
+	} else {
+		p.Password = ""
+	}
+	if idx >= 0 && idx < len(m.Profiles) {
+		m.Profiles[idx] = p
+	} else {
+		m.Profiles = append(m.Profiles, p)
+	}
+	m.saveConfigToFile()
+	if !p.FromEnv {
+		m.savePasswordToKeyring(p.Name, p.Username, plain)
+	}
+	m.refreshList()
 }
 
 // DeleteConnection removes a connection from the list and updates config.toml.

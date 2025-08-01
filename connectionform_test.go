@@ -6,11 +6,11 @@ import (
 )
 
 func TestNewConnectionFormEnvReadOnly(t *testing.T) {
-	os.Setenv("GOEMQUTITI_ENV_HOST", "envhost")
-	os.Setenv("GOEMQUTITI_ENV_PORT", "1884")
+	os.Setenv("EMQUTITI_ENV_HOST", "envhost")
+	os.Setenv("EMQUTITI_ENV_PORT", "1884")
 	t.Cleanup(func() {
-		os.Unsetenv("GOEMQUTITI_ENV_HOST")
-		os.Unsetenv("GOEMQUTITI_ENV_PORT")
+		os.Unsetenv("EMQUTITI_ENV_HOST")
+		os.Unsetenv("EMQUTITI_ENV_PORT")
 	})
 	cf := newConnectionForm(Profile{Name: "env", FromEnv: true}, 0)
 	hostField, ok := cf.fields[fieldIndex["Host"]].(*textField)

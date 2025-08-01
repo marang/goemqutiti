@@ -8,7 +8,7 @@ import (
 
 // Test that deleting a topic via confirmation removes it from the list
 func TestDeleteTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.topics.items = []topicItem{{title: "a", subscribed: true}, {title: "b", subscribed: false}}
 	m.setFocus(idTopics)
 	m.topics.selected = 0

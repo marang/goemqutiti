@@ -4,7 +4,7 @@ import "testing"
 
 // Test that setFocus correctly focuses the message input
 func TestSetFocusMessage(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	if m.message.input.Focused() {
 		t.Fatalf("message input should start blurred")
 	}
@@ -20,7 +20,7 @@ func TestSetFocusMessage(t *testing.T) {
 // Test that pressing Tab cycles focus from topic to message
 // Test that pressing Tab cycles focus from topics to topic input
 func TestTabCyclesToTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	if m.focus.Index() != 0 {
 		t.Fatalf("initial focus index should be 0")
 	}

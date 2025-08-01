@@ -37,15 +37,6 @@ func init() {
 func main() {
 	flag.Parse()
 
-	logFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
-	if err != nil {
-		fmt.Println("Failed to open log file:", err)
-		return
-	}
-	defer logFile.Close()
-	// Set log output to file
-	log.SetOutput(logFile)
-
 	if traceKey != "" {
 		tlist := strings.Split(traceTopics, ",")
 		for i := range tlist {
@@ -58,30 +49,35 @@ func main() {
 		if traceEnd != "" {
 			end, _ = time.Parse(time.RFC3339, traceEnd)
 			if end.Before(time.Now()) {
-				fmt.Println("trace end time already passed")
+				log.Println("trace end time already passed")
 				return
 			}
 		}
 		exists, _ := tracerHasData(profileName, traceKey)
 		if exists {
-			fmt.Println("trace key already exists")
+			log.Println("trace key already exists")
 			return
 		}
 		addTrace(TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
 		if err := tracerRun(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
-			fmt.Println(err)
+			log.Println(err)
 		}
 		return
 	}
 
 	if importFile != "" {
-		runImport(importFile, profileName)
+		if err := runImport(importFile, profileName); err != nil {
+			log.Println(err)
+		}
 		return
 	}
 
 	// Start Bubble Tea UI without connecting. The user can choose a profile
 	// from the connection manager once the program starts.
-	initial := initialModel(nil)
+	initial, err := initialModel(nil)
+	if err != nil {
+		log.Printf("Warning: %v", err)
+	}
 	_ = initial.setMode(modeConnections)
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
@@ -97,11 +93,10 @@ func main() {
 
 // runImport launches the interactive import wizard using the provided file
 // path and profile name.
-func runImport(path, profile string) {
+func runImport(path, profile string) error {
 	p, err := LoadProfile(profile, "")
 	if err != nil {
-		fmt.Println("Error loading profile:", err)
-		return
+		return fmt.Errorf("error loading profile: %w", err)
 	}
 	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
 		p.Password = env
@@ -109,14 +104,14 @@ func runImport(path, profile string) {
 
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
-		fmt.Println("connect error:", err)
-		return
+		return fmt.Errorf("connect error: %w", err)
 	}
 	defer client.Disconnect()
 
 	w := NewImportWizard(client, path)
 	prog := tea.NewProgram(w, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
-		fmt.Println("import error:", err)
+		return fmt.Errorf("import error: %w", err)
 	}
+	return nil
 }

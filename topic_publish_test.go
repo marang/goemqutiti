@@ -8,7 +8,7 @@ import (
 
 // Test that pressing enter in the topic input subscribes to that topic
 func TestEnterAddsTopic(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.topics.input.SetValue("foo")
 	m.setFocus(idTopic)
 	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyEnter})
@@ -22,7 +22,7 @@ func TestEnterAddsTopic(t *testing.T) {
 
 // Test that ctrl+s publishes the message in the editor
 func TestCtrlSPublishesMessage(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	m.topics.items = []topicItem{{title: "foo", subscribed: true}}
 	m.message.input.SetValue("hello")
 	m.setFocus(idMessage)

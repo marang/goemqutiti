@@ -307,10 +307,8 @@ func saveConfig(profiles []Profile, defaultName string) {
 }
 
 // savePasswordToKeyring stores a password in the system keyring.
-func savePasswordToKeyring(service, username, password string) {
-	if err := keyring.Set("emqutiti-"+service, username, password); err != nil {
-		fmt.Println("Error saving password to keyring:", err)
-	}
+func savePasswordToKeyring(service, username, password string) error {
+	return keyring.Set("emqutiti-"+service, username, password)
 }
 
 // deleteProfileData removes profile-specific persisted history and traces and
@@ -332,7 +330,7 @@ func deleteProfileData(name string) error {
 }
 
 // persistProfileChange applies a profile update, saves config and keyring.
-func persistProfileChange(profiles *[]Profile, defaultName string, p Profile, idx int) {
+func persistProfileChange(profiles *[]Profile, defaultName string, p Profile, idx int) error {
 	plain := p.Password
 	if !p.FromEnv {
 		p.Password = "keyring:emqutiti-" + p.Name + "/" + p.Username
@@ -346,6 +344,9 @@ func persistProfileChange(profiles *[]Profile, defaultName string, p Profile, id
 	}
 	saveConfig(*profiles, defaultName)
 	if !p.FromEnv {
-		savePasswordToKeyring(p.Name, p.Username, plain)
+		if err := savePasswordToKeyring(p.Name, p.Username, plain); err != nil {
+			return err
+		}
 	}
+	return nil
 }

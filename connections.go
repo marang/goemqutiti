@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
@@ -57,17 +56,8 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.Focused {
-			// Handle key events when focused
-			switch msg.String() {
-			case "a": // Add new connection
-				m.TextInput.Focus()
-				log.Println("Add new connection")
-			case "e": // Edit selected connection
-				log.Println("Edit selected connection")
-			case "delete": // Delete selected connection
-				log.Println("Delete selected connection")
-			}
+		if m.Focused && msg.String() == "a" {
+			m.TextInput.Focus()
 		}
 	}
 	m.ConnectionsList, cmd = m.ConnectionsList.Update(msg)

@@ -243,12 +243,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.history.selectionAnchor = 0
 			}
 		}
-	case "up", "down":
+	case "up", "down", "k", "j":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			// keep current selection and anchor
 		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
 			delta := -1
-			if msg.String() == "down" {
+			if msg.String() == "down" || msg.String() == "j" {
 				delta = 1
 			}
 			m.scrollTopics(delta)
@@ -288,8 +288,8 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 				m.rebuildActiveTopicList()
 			}
 		}
-	case "d":
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+	case "delete":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.list.FilterState() != list.Filtering {
 			if len(m.history.items) == 0 {
 				break
 			}
@@ -308,6 +308,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 					m.history.items[idx].isMarkedForDeletion = &v
 				}
 			}
+			m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
 			m.startConfirm("Delete selected messages? [y/n]", "", func() {
 				for i := len(m.history.items) - 1; i >= 0; i-- {
 					it := m.history.items[i]
@@ -342,6 +343,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			idx := m.topics.selected
 			name := m.topics.items[idx].title
+			m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 				m.removeTopic(idx)
 				if m.currentMode() == modeTopics {
@@ -453,6 +455,7 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 		}
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
+		m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 			m.removeTopic(idx)
 			if m.currentMode() == modeTopics {
@@ -482,6 +485,11 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 	}
 
+	if m.currentMode() == modeConfirmDelete {
+		cmds = append(cmds, listenStatus(m.connections.statusChan))
+		return tea.Batch(cmds...)
+	}
+
 	var cmd tea.Cmd
 	m.topics.input, cmd = m.topics.input.Update(msg)
 	cmds = append(cmds, cmd)
@@ -494,7 +502,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		switch mt := msg.(type) {
 		case tea.KeyMsg:
 			s := mt.String()
-			if s == "up" || s == "down" || s == "pgup" || s == "pgdown" {
+			if s == "up" || s == "down" || s == "pgup" || s == "pgdown" || s == "k" || s == "j" {
 				skipVP = true
 			}
 		case tea.MouseMsg:

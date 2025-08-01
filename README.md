@@ -72,10 +72,11 @@ Tips:
 | Manage payloads | `Ctrl+P` |
 | Manage traces | `Ctrl+R` |
 | Copy selected entry | `Ctrl+C` |
+| Scroll view | `Ctrl+Up` / `Ctrl+Down` |
 | Exit the program | `Ctrl+D` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 
-Other keys: `Tab` and `Shift+Tab` cycle focus, `Enter` subscribes to the typed topic, `x` disconnects in the broker manager and `Esc` navigates back. Use ↑/↓ or `j`/`k` to move through lists, hold `Shift` for range selection in history. Press `/` in the history view to filter messages. All `Ctrl` shortcuts work even when an input is active.
+Other keys: `Tab` and `Shift+Tab` cycle focus, `Enter` subscribes to the typed topic, `x` disconnects in the broker manager and `Esc` navigates back. Use ↑/↓ or `j`/`k` to move through lists, hold `Shift` for range selection in history. Press `/` in the history view to filter messages. `Ctrl+Up`/`Ctrl+Down` scrolls the view. All `Ctrl` shortcuts work even when an input is active.
 
 ## License
 

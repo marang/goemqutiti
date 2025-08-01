@@ -194,14 +194,13 @@ func (s *suggestField) SuggestionsView() string {
 	}
 	items := make([]string, len(s.suggestions))
 	for i, sug := range s.suggestions {
-		st := ui.ChipInactive
+		st := lipgloss.NewStyle().Foreground(ui.ColBlue)
 		if i == s.sel {
-			st = ui.ChipStyle.Copy().BorderForeground(ui.ColPink).Foreground(ui.ColPink).Faint(false)
+			st = st.Foreground(ui.ColPink)
 		}
 		items[i] = st.Render(sug)
 	}
-	row := lipgloss.JoinHorizontal(lipgloss.Top, items...)
-	return ui.BorderStyle.Render(row)
+	return strings.Join(items, " ")
 }
 
 // WantsKey reports whether the field wants to handle the key itself to cycle

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -63,11 +64,11 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 
 // View renders the filter fields with labels.
 func (f historyFilterForm) View() string {
-	lines := []string{
-		fmt.Sprintf("Topic: %s", f.topic.View()),
-	}
+	line := fmt.Sprintf("Topic: %s", f.topic.View())
+	lines := []string{line}
 	if sugg := f.topic.SuggestionsView(); sugg != "" {
-		lines = append(lines, "       "+sugg)
+		sep := strings.Repeat("─", lipgloss.Width(line))
+		lines = append(lines, sep, sugg)
 	}
 	lines = append(lines,
 		fmt.Sprintf("Start: %s", f.start.View()),

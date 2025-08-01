@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -61,11 +62,11 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "a": // Add new connection
 				m.TextInput.Focus()
-				fmt.Println("Add new connection")
+				log.Println("Add new connection")
 			case "e": // Edit selected connection
-				fmt.Println("Edit selected connection")
+				log.Println("Edit selected connection")
 			case "delete": // Delete selected connection
-				fmt.Println("Delete selected connection")
+				log.Println("Delete selected connection")
 			}
 		}
 	}

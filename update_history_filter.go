@@ -17,7 +17,13 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 		switch t.String() {
 		case "esc":
 			m.history.filterForm = nil
-			cmd := m.setMode(m.previousMode())
+			if len(m.ui.modeStack) > 0 {
+				m.ui.modeStack = m.ui.modeStack[1:]
+			}
+			if len(m.ui.modeStack) > 0 && m.ui.modeStack[0] == modeHelp {
+				m.ui.modeStack = m.ui.modeStack[1:]
+			}
+			cmd := m.setMode(m.currentMode())
 			return m, cmd
 		case "enter":
 			q := m.history.filterForm.query()

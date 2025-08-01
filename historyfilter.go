@@ -18,10 +18,12 @@ const (
 // historyFilterForm captures filter inputs for history searches.
 type historyFilterForm struct {
 	Form
-	topic  *textField
-	start  *textField
-	end    *textField
-	topics []string
+	topic       *textField
+	start       *textField
+	end         *textField
+	topics      []string
+	suggestions []string
+	suggestIdx  int
 }
 
 // newHistoryFilterForm builds a form prefilled with the last hour.
@@ -49,13 +51,18 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
 		if f.focus == idxFilterTopic && m.String() == "tab" {
-			prefix := f.topic.Value()
-			for _, t := range f.topics {
-				if strings.HasPrefix(t, prefix) {
-					f.topic.SetValue(t)
-					f.topic.CursorEnd()
-					break
+			if len(f.suggestions) == 0 {
+				prefix := f.topic.Value()
+				for _, t := range f.topics {
+					if strings.HasPrefix(t, prefix) {
+						f.suggestions = append(f.suggestions, t)
+					}
 				}
+			}
+			if len(f.suggestions) > 0 {
+				f.topic.SetValue(f.suggestions[f.suggestIdx])
+				f.topic.CursorEnd()
+				f.suggestIdx = (f.suggestIdx + 1) % len(f.suggestions)
 			}
 			return f, nil
 		}
@@ -71,6 +78,19 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	if len(f.fields) > 0 {
 		cmd = f.fields[f.focus].Update(msg)
 	}
+	if f.focus == idxFilterTopic {
+		prefix := f.topic.Value()
+		f.suggestions = f.suggestions[:0]
+		f.suggestIdx = 0
+		for _, t := range f.topics {
+			if prefix == "" || strings.HasPrefix(t, prefix) {
+				f.suggestions = append(f.suggestions, t)
+				if len(f.suggestions) == 5 {
+					break
+				}
+			}
+		}
+	}
 	return f, cmd
 }
 
@@ -78,9 +98,14 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 func (f historyFilterForm) View() string {
 	lines := []string{
 		fmt.Sprintf("Topic: %s", f.topic.View()),
+	}
+	if f.focus == idxFilterTopic && len(f.suggestions) > 0 {
+		lines = append(lines, "       "+strings.Join(f.suggestions, " "))
+	}
+	lines = append(lines,
 		fmt.Sprintf("Start: %s", f.start.View()),
 		fmt.Sprintf("End:   %s", f.end.View()),
-	}
+	)
 	return strings.Join(lines, "\n")
 }
 

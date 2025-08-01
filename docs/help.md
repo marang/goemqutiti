@@ -21,5 +21,6 @@
 - Esc navigates back
 - Use arrows or j/k to move through lists
 - Ctrl+Up/Down scrolls the view
-- Press '/' in history for a filter dialog with topic suggestions (Tab to
-  complete) and start/end fields defaulting to the last hour.
+- Press '/' in history for a filter dialog with topic suggestions shown
+  under the field; Tab cycles matches. Start and end fields default to the
+  last hour.

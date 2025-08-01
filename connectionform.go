@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -134,7 +137,7 @@ func (f connectionForm) Init() tea.Cmd {
 
 // Update handles keyboard and mouse events for the form.
 func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
 		f.CycleFocus(m)
@@ -147,16 +150,23 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	}
 	f.ApplyFocus()
 	if len(f.fields) > 0 {
-		cmd = f.fields[f.focus].Update(msg)
+		if cmd := f.fields[f.focus].Update(msg); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	}
 	idxFromEnv := fieldIndex["FromEnv"]
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value != f.fromEnv {
-		p := f.Profile()
-		f = newConnectionForm(p, f.index)
-		f.focus = idxFromEnv
-		f.fromEnv = chk.value
+		p, err := f.Profile()
+		if err != nil {
+			chk.value = f.fromEnv
+			cmds = append(cmds, func() tea.Msg { return statusMessage(err.Error()) })
+		} else {
+			f = newConnectionForm(p, f.index)
+			f.focus = idxFromEnv
+			f.fromEnv = chk.value
+		}
 	}
-	return f, cmd
+	return f, tea.Batch(cmds...)
 }
 
 // View renders the form with labels and field contents.
@@ -180,8 +190,11 @@ func (f connectionForm) View() string {
 }
 
 // Profile builds a Profile struct from the form values.
-func (f connectionForm) Profile() Profile {
+// It returns a populated Profile and any validation errors encountered
+// while parsing numeric or boolean fields.
+func (f connectionForm) Profile() (Profile, error) {
 	p := Profile{}
+	var errs []string
 	rv := reflect.ValueOf(&p).Elem()
 	for i, fd := range formFields {
 		field := rv.FieldByName(fd.key)
@@ -190,14 +203,27 @@ func (f connectionForm) Profile() Profile {
 		case reflect.String:
 			field.SetString(val)
 		case reflect.Int:
-			var iv int
-			fmt.Sscan(val, &iv)
+			if val == "" {
+				field.SetInt(0)
+				continue
+			}
+			iv, err := strconv.Atoi(val)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", fd.label, err))
+				continue
+			}
 			field.SetInt(int64(iv))
 		case reflect.Bool:
-			var bv bool
-			fmt.Sscan(val, &bv)
+			bv, err := strconv.ParseBool(val)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", fd.label, err))
+				continue
+			}
 			field.SetBool(bv)
 		}
 	}
-	return p
+	if len(errs) > 0 {
+		return p, errors.New(strings.Join(errs, "; "))
+	}
+	return p, nil
 }

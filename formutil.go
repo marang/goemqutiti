@@ -168,6 +168,14 @@ func (s *suggestField) Update(msg tea.Msg) tea.Cmd {
 				s.CursorEnd()
 				return nil
 			}
+		case "enter", " ", "space":
+			if len(s.suggestions) > 0 && s.sel >= 0 {
+				s.SetValue(s.suggestions[s.sel])
+				s.suggestions = nil
+				s.sel = -1
+				s.CursorEnd()
+				return nil
+			}
 		}
 	}
 	cmd := s.textField.Update(msg)
@@ -207,7 +215,7 @@ func (s *suggestField) SuggestionsView() string {
 // suggestions instead of moving focus.
 func (s *suggestField) WantsKey(k tea.KeyMsg) bool {
 	switch k.String() {
-	case "tab", "shift+tab", "up", "down":
+	case "tab", "shift+tab", "up", "down", "enter", " ", "space":
 		return len(s.suggestions) > 0
 	default:
 		return false

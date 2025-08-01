@@ -22,5 +22,5 @@
 - Use arrows or j/k to move through lists
 - Ctrl+Up/Down scrolls the view
 - Press '/' in history for a filter dialog with topic suggestions shown
-  under the field; Tab or arrows cycle matches. Start and end fields
-  default to the last hour.
+  under the field; Tab or arrows cycle matches and Enter or space accepts
+  the highlight. Start and end fields default to the last hour.

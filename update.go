@@ -539,6 +539,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ui.viewport.ScrollDown(1)
 			return m, nil
 		case "tab":
+			if m.currentMode() == modeHistoryFilter {
+				nm, cmd := m.updateHistoryFilter(msg)
+				*m = nm
+				return m, cmd
+			}
 			if len(m.ui.focusOrder) > 0 {
 				m.focus.Next()
 				m.ui.focusIndex = m.focus.Index()
@@ -555,6 +560,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		case "shift+tab":
+			if m.currentMode() == modeHistoryFilter {
+				nm, cmd := m.updateHistoryFilter(msg)
+				*m = nm
+				return m, cmd
+			}
 			if len(m.ui.focusOrder) > 0 {
 				m.focus.Prev()
 				m.ui.focusIndex = m.focus.Index()
@@ -571,7 +581,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 		}
-		if (msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
+		if m.currentMode() != modeHistoryFilter &&
+			(msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 			m.help.Focused() {
 			cmd := m.setMode(modeHelp)
 			return m, cmd

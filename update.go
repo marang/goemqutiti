@@ -247,7 +247,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					flushStatus(m.connections.statusChan)
 					if p.FromEnv {
 						ApplyEnvVars(&p)
-					} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+					} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 						p.Password = env
 					}
 					m.connections.manager.Errors[p.Name] = ""
@@ -295,7 +295,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				flushStatus(m.connections.statusChan)
 				if p.FromEnv {
 					ApplyEnvVars(&p)
-				} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+				} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 					p.Password = env
 				}
 				m.connections.manager.Errors[p.Name] = ""

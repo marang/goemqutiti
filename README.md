@@ -62,6 +62,8 @@ Tips:
 - Set `random_id_suffix = true` for unique client IDs.
 - Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_BROKER_PASSWORD`.
 
+- Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.
+
 ### Shortcuts
 
 #### Global

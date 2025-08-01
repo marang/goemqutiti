@@ -62,7 +62,10 @@ func TestConnectionFormProfile(t *testing.T) {
 	cf.fields[fieldIndex["AutoReconnect"]].(*checkField).value = true
 	cf.fields[fieldIndex["QoS"]].(*selectField).index = 2
 
-	p, _ := cf.Profile()
+	p, err := cf.Profile()
+	if err != nil {
+		t.Fatalf("Profile error: %v", err)
+	}
 	if p.Name != "n1" || p.Port != 1883 || !p.AutoReconnect || p.QoS != 2 {
 		t.Fatalf("unexpected profile: %#v", p)
 	}
@@ -71,7 +74,10 @@ func TestConnectionFormProfile(t *testing.T) {
 func TestConnectionFormProfileInvalidInt(t *testing.T) {
 	cf := newConnectionForm(Profile{}, -1)
 	cf.fields[fieldIndex["Port"]].(*textField).SetValue("abc")
-	p, _ := cf.Profile()
+	p, err := cf.Profile()
+	if err == nil {
+		t.Fatalf("expected error for invalid port")
+	}
 	if p.Port != 0 {
 		t.Fatalf("expected port 0, got %d", p.Port)
 	}

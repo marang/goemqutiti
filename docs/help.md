@@ -41,3 +41,7 @@
 - Delete removes selected messages
 - Ctrl+L toggles archived view
 - Press '/' to filter messages
+
+## Tips
+
+- Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.

@@ -103,7 +103,7 @@ func runImport(path, profile string) {
 		fmt.Println("Error loading profile:", err)
 		return
 	}
-	if env := os.Getenv("MQTT_PASSWORD"); env != "" && !p.FromEnv {
+	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
 		p.Password = env
 	}
 

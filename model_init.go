@@ -228,7 +228,7 @@ func initialModel(conns *Connections) *model {
 			cfg := *p
 			if cfg.FromEnv {
 				ApplyEnvVars(&cfg)
-			} else if env := os.Getenv("MQTT_PASSWORD"); env != "" {
+			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 				cfg.Password = env
 			}
 			if client, err := NewMQTTClient(cfg, nil); err == nil {

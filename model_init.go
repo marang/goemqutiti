@@ -125,7 +125,6 @@ func initialModel(conns *Connections) *model {
 			list:            hist,
 			items:           []historyItem{},
 			store:           nil,
-			selected:        make(map[int]struct{}),
 			selectionAnchor: -1,
 		},
 		topics: topicsState{

@@ -76,11 +76,13 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		m.savePlannedTraces()
 		return tea.Quit
 	case "ctrl+c":
-		if len(m.history.selected) > 0 {
-			var idxs []int
-			for i := range m.history.selected {
+		var idxs []int
+		for i, it := range m.history.items {
+			if it.isSelected != nil && *it.isSelected {
 				idxs = append(idxs, i)
 			}
+		}
+		if len(idxs) > 0 {
 			sort.Ints(idxs)
 			var parts []string
 			items := m.history.list.Items()
@@ -123,11 +125,12 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 	case "space":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			idx := m.history.list.Index()
-			if idx >= 0 {
-				if _, ok := m.history.selected[idx]; ok {
-					delete(m.history.selected, idx)
+			if idx >= 0 && idx < len(m.history.items) {
+				if m.history.items[idx].isSelected != nil && *m.history.items[idx].isSelected {
+					m.history.items[idx].isSelected = nil
 				} else {
-					m.history.selected[idx] = struct{}{}
+					v := true
+					m.history.items[idx].isSelected = &v
 				}
 				m.history.selectionAnchor = idx
 			}
@@ -136,7 +139,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
-				m.history.selected[m.history.selectionAnchor] = struct{}{}
+				if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+					v := true
+					m.history.items[m.history.selectionAnchor].isSelected = &v
+				}
 			}
 			if m.history.list.Index() > 0 {
 				m.history.list.CursorUp()
@@ -148,7 +154,10 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			if m.history.selectionAnchor == -1 {
 				m.history.selectionAnchor = m.history.list.Index()
-				m.history.selected[m.history.selectionAnchor] = struct{}{}
+				if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+					v := true
+					m.history.items[m.history.selectionAnchor].isSelected = &v
+				}
 			}
 			if m.history.list.Index() < len(m.history.list.Items())-1 {
 				m.history.list.CursorDown()
@@ -224,6 +233,16 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 		} else if id == idTopics {
 			m.layout.topics.height++
 		}
+	case "ctrl+a":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			for i := range m.history.items {
+				v := true
+				m.history.items[i].isSelected = &v
+			}
+			if len(m.history.items) > 0 {
+				m.history.selectionAnchor = 0
+			}
+		}
 	case "up", "down":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 			// keep current selection and anchor
@@ -270,7 +289,57 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			}
 		}
 	case "d":
-		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			if len(m.history.items) == 0 {
+				break
+			}
+			hasSelection := false
+			for i := range m.history.items {
+				if m.history.items[i].isSelected != nil && *m.history.items[i].isSelected {
+					v := true
+					m.history.items[i].isMarkedForDeletion = &v
+					hasSelection = true
+				}
+			}
+			if !hasSelection {
+				idx := m.history.list.Index()
+				if idx >= 0 && idx < len(m.history.items) {
+					v := true
+					m.history.items[idx].isMarkedForDeletion = &v
+				}
+			}
+			m.startConfirm("Delete selected messages? [y/n]", "", func() {
+				for i := len(m.history.items) - 1; i >= 0; i-- {
+					it := m.history.items[i]
+					if it.isMarkedForDeletion != nil && *it.isMarkedForDeletion {
+						key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+						if m.history.store != nil {
+							_ = m.history.store.Delete(key)
+						}
+						m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
+					}
+				}
+				items := make([]list.Item, len(m.history.items))
+				for i, it := range m.history.items {
+					it.isSelected = nil
+					it.isMarkedForDeletion = nil
+					m.history.items[i] = it
+					items[i] = it
+				}
+				m.history.list.SetItems(items)
+				if len(m.history.items) == 0 {
+					m.history.list.Select(-1)
+				} else if m.history.list.Index() >= len(m.history.items) {
+					m.history.list.Select(len(m.history.items) - 1)
+				}
+				m.history.selectionAnchor = -1
+			})
+			m.confirmCancel = func() {
+				for i := range m.history.items {
+					m.history.items[i].isMarkedForDeletion = nil
+				}
+			}
+		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
 			idx := m.topics.selected
 			name := m.topics.items[idx].title
 			m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
@@ -343,11 +412,16 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 				if msg.Shift {
 					if m.history.selectionAnchor == -1 {
 						m.history.selectionAnchor = m.history.list.Index()
-						m.history.selected[m.history.selectionAnchor] = struct{}{}
+						if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+							v := true
+							m.history.items[m.history.selectionAnchor].isSelected = &v
+						}
 					}
 					m.updateSelectionRange(idx)
 				} else {
-					m.history.selected = map[int]struct{}{}
+					for i := range m.history.items {
+						m.history.items[i].isSelected = nil
+					}
 					m.history.selectionAnchor = -1
 				}
 			}

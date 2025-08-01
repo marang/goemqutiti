@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/goemqutiti/ui"
 )
@@ -19,6 +20,12 @@ type formField interface {
 	Value() string
 }
 
+// keyConsumer reports whether a field wants to handle a key itself instead of
+// having the form advance focus.
+type keyConsumer interface {
+	WantsKey(tea.KeyMsg) bool
+}
+
 // Form groups a slice of formField and tracks which one has focus.
 type Form struct {
 	fields []formField
@@ -27,6 +34,9 @@ type Form struct {
 
 // CycleFocus moves focus based on the provided key message.
 func (f *Form) CycleFocus(msg tea.KeyMsg) {
+	if c, ok := f.fields[f.focus].(keyConsumer); ok && c.WantsKey(msg) {
+		return
+	}
 	switch msg.String() {
 	case "tab", "down", "j":
 		f.focus++
@@ -182,15 +192,27 @@ func (s *suggestField) SuggestionsView() string {
 	if !s.Focused() || len(s.suggestions) == 0 {
 		return ""
 	}
-	parts := make([]string, len(s.suggestions))
+	items := make([]string, len(s.suggestions))
 	for i, sug := range s.suggestions {
+		st := ui.ChipInactive
 		if i == s.sel {
-			parts[i] = ui.FocusedStyle.Render(sug)
-		} else {
-			parts[i] = sug
+			st = ui.ChipStyle.Copy().BorderForeground(ui.ColPink).Foreground(ui.ColPink).Faint(false)
 		}
+		items[i] = st.Render(sug)
 	}
-	return strings.Join(parts, " ")
+	row := lipgloss.JoinHorizontal(lipgloss.Top, items...)
+	return ui.BorderStyle.Render(row)
+}
+
+// WantsKey reports whether the field wants to handle the key itself to cycle
+// suggestions instead of moving focus.
+func (s *suggestField) WantsKey(k tea.KeyMsg) bool {
+	switch k.String() {
+	case "tab", "shift+tab", "up", "down":
+		return len(s.suggestions) > 0
+	default:
+		return false
+	}
 }
 
 // selectField allows choosing from a fixed list of options.

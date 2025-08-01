@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -94,5 +95,34 @@ func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 	}
 	if !found {
 		t.Fatalf("filter query not found inside history box")
+	}
+}
+
+// Test that the history label reports total and filtered message counts.
+func TestHistoryLabelCounts(t *testing.T) {
+	m := initialModel(nil)
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.appendHistory("bar", "baz", "sub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	if !strings.Contains(view, "History (2 messages") {
+		t.Fatalf("expected total count in label, got %q", view)
+	}
+
+	// apply filter showing only "foo"
+	m.history.filterQuery = "topic=foo"
+	msgs := m.history.store.Search([]string{"foo"}, time.Time{}, time.Time{}, "")
+	items := make([]list.Item, len(msgs))
+	m.history.items = make([]historyItem, len(msgs))
+	for i, mm := range msgs {
+		hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
+		items[i] = hi
+		m.history.items[i] = hi
+	}
+	m.history.list.SetItems(items)
+	view = m.viewClient()
+	if !strings.Contains(view, "History (1/2 messages") {
+		t.Fatalf("expected filtered count in label, got %q", view)
 	}
 }

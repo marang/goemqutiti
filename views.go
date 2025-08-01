@@ -153,17 +153,24 @@ func (m *model) viewClient() string {
 	messageBox := ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", m.ui.width-2, msgHeight, ui.ColBlue, messageFocused, msgSP)
 	// Calculate scroll percent for the history list
 	per := m.history.list.Paginator.PerPage
-	total := len(m.history.list.Items())
+	totalItems := len(m.history.list.Items())
 	histSP := -1.0
-	if total > per {
+	if totalItems > per {
 		start := m.history.list.Paginator.Page * per
-		denom := total - per
+		denom := totalItems - per
 		if denom > 0 {
 			histSP = float64(start) / float64(denom)
 		}
 	}
-	msgCount := len(m.history.items)
-	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", msgCount)
+	total := len(m.history.items)
+	if m.history.store != nil {
+		total = m.history.store.Count(m.history.showArchived)
+	}
+	shown := len(m.history.items)
+	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", total)
+	if m.history.filterQuery != "" && shown != total {
+		histLabel = fmt.Sprintf("History (%d/%d messages \u2013 Ctrl+C copy)", shown, total)
+	}
 	histContent := m.history.list.View()
 	if m.history.filterQuery != "" {
 		histContent = fmt.Sprintf("Filters: %s\n%s", m.history.filterQuery, histContent)

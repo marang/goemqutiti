@@ -1,12 +1,15 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
+	"strconv"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -16,158 +19,103 @@ type connectionForm struct {
 	fromEnv bool // current state of env loading
 }
 
+type fieldType int
+
 const (
-	idxName = iota
-	idxSchema
-	idxHost
-	idxPort
-	idxClientID
-	idxIDSuffix
-	idxUsername
-	idxPassword
-	idxFromEnv
-	idxSSL
-	idxMQTTVersion
-	idxConnectTimeout
-	idxKeepAlive
-	idxQoS
-	idxAutoReconnect
-	idxReconnectPeriod
-	idxCleanStart
-	idxSessionExpiry
-	idxReceiveMaximum
-	idxMaximumPacket
-	idxTopicAlias
-	idxRequestResp
-	idxRequestProb
-	idxWillEnable
-	idxWillTopic
-	idxWillQos
-	idxWillRetain
-	idxWillPayload
+	ftText fieldType = iota
+	ftPassword
+	ftBool
+	ftSelect
 )
+
+type fieldDef struct {
+	key, label, placeholder string
+	fieldType               fieldType
+	options                 []string
+}
+
+var formFields = []fieldDef{
+	{key: "Name", label: "Name", placeholder: "Name", fieldType: ftText},
+	{key: "Schema", label: "Schema", placeholder: "Schema", fieldType: ftSelect, options: []string{"tcp", "ssl", "ws", "wss"}},
+	{key: "Host", label: "Host", placeholder: "Host", fieldType: ftText},
+	{key: "Port", label: "Port", placeholder: "Port", fieldType: ftText},
+	{key: "ClientID", label: "Client ID", placeholder: "Client ID", fieldType: ftText},
+	{key: "RandomIDSuffix", label: "Random ID suffix", placeholder: "Random ID suffix", fieldType: ftBool},
+	{key: "Username", label: "Username", placeholder: "Username", fieldType: ftText},
+	{key: "Password", label: "Password", fieldType: ftPassword},
+	{key: "FromEnv", label: "Load from env", placeholder: "Values from env", fieldType: ftBool},
+	{key: "SSL", label: "SSL/TLS", placeholder: "SSL/TLS", fieldType: ftBool},
+	{key: "MQTTVersion", label: "MQTT Version", placeholder: "MQTT Version", fieldType: ftSelect, options: []string{"3", "4", "5"}},
+	{key: "ConnectTimeout", label: "Connect Timeout (s)", placeholder: "Connect Timeout (s)", fieldType: ftText},
+	{key: "KeepAlive", label: "Keep Alive (s)", placeholder: "Keep Alive (s)", fieldType: ftText},
+	{key: "QoS", label: "QoS", placeholder: "QoS", fieldType: ftSelect, options: []string{"0", "1", "2"}},
+	{key: "AutoReconnect", label: "Auto Reconnect", placeholder: "Auto Reconnect", fieldType: ftBool},
+	{key: "ReconnectPeriod", label: "Reconnect Period (s)", placeholder: "Reconnect Period (s)", fieldType: ftText},
+	{key: "CleanStart", label: "Clean Start", placeholder: "Clean Start", fieldType: ftBool},
+	{key: "SessionExpiry", label: "Session Expiry (s)", placeholder: "Session Expiry (s)", fieldType: ftText},
+	{key: "ReceiveMaximum", label: "Receive Maximum", placeholder: "Receive Maximum", fieldType: ftText},
+	{key: "MaximumPacketSize", label: "Maximum Packet Size", placeholder: "Maximum Packet Size", fieldType: ftText},
+	{key: "TopicAliasMaximum", label: "Topic Alias Maximum", placeholder: "Topic Alias Maximum", fieldType: ftText},
+	{key: "RequestResponseInfo", label: "Request Response Info", placeholder: "Request Response Info", fieldType: ftBool},
+	{key: "RequestProblemInfo", label: "Request Problem Info", placeholder: "Request Problem Info", fieldType: ftBool},
+	{key: "LastWillEnabled", label: "Use Last Will", placeholder: "Use Last Will", fieldType: ftBool},
+	{key: "LastWillTopic", label: "Last Will Topic", placeholder: "Last Will Topic", fieldType: ftText},
+	{key: "LastWillQos", label: "Last Will QoS", placeholder: "Last Will QoS", fieldType: ftSelect, options: []string{"0", "1", "2"}},
+	{key: "LastWillRetain", label: "Last Will Retain", placeholder: "Last Will Retain", fieldType: ftBool},
+	{key: "LastWillPayload", label: "Last Will Payload", placeholder: "Last Will Payload", fieldType: ftText},
+}
+
+var fieldIndex = func() map[string]int {
+	m := make(map[string]int, len(formFields))
+	for i, fd := range formFields {
+		m[fd.key] = i
+	}
+	return m
+}()
 
 // newConnectionForm builds a form populated from the given profile.
 // idx is -1 when creating a new profile.
 func newConnectionForm(p Profile, idx int) connectionForm {
 	if p.FromEnv {
-		config.ApplyEnvVars(&p)
+		ApplyEnvVars(&p)
 	}
 	pwKey := ""
 	if p.Name != "" && p.Username != "" {
 		pwKey = fmt.Sprintf("keyring:emqutiti-%s/%s", p.Name, p.Username)
 	}
-	values := []string{
-		p.Name,
-		p.Schema,
-		p.Host,
-		fmt.Sprintf("%d", p.Port),
-		p.ClientID,
-		"", // checkbox for rand suffix
-		p.Username,
-		p.Password,
-		"", // checkbox: load from env
-		"", // SSL checkbox
-		p.MQTTVersion,
-		fmt.Sprintf("%d", p.ConnectTimeout),
-		fmt.Sprintf("%d", p.KeepAlive),
-		fmt.Sprintf("%d", p.QoS),
-		"", // auto reconnect checkbox
-		fmt.Sprintf("%d", p.ReconnectPeriod),
-		"", // clean start checkbox
-		fmt.Sprintf("%d", p.SessionExpiry),
-		fmt.Sprintf("%d", p.ReceiveMaximum),
-		fmt.Sprintf("%d", p.MaximumPacketSize),
-		fmt.Sprintf("%d", p.TopicAliasMaximum),
-		"", // request response info checkbox
-		"", // request problem info checkbox
-		"", // last will enabled checkbox
-		p.LastWillTopic,
-		fmt.Sprintf("%d", p.LastWillQos),
-		"", // last will retain checkbox
-		p.LastWillPayload,
-	}
-
-	placeholders := []string{
-		"Name",
-		"Schema",
-		"Host",
-		"Port",
-		"Client ID",
-		"Random ID suffix",
-		"Username",
-		pwKey,
-		"Values from env",
-		"SSL/TLS",
-		"MQTT Version",
-		"Connect Timeout (s)",
-		"Keep Alive (s)",
-		"QoS",
-		"Auto Reconnect",
-		"Reconnect Period (s)",
-		"Clean Start",
-		"Session Expiry (s)",
-		"Receive Maximum",
-		"Maximum Packet Size",
-		"Topic Alias Maximum",
-		"Request Response Info",
-		"Request Problem Info",
-		"Use Last Will",
-		"Last Will Topic",
-		"Last Will QoS",
-		"Last Will Retain",
-		"Last Will Payload",
-	}
-
-	fields := make([]formField, len(values))
-	boolIndices := map[int]bool{
-		idxIDSuffix:      true,
-		idxFromEnv:       true,
-		idxSSL:           true,
-		idxAutoReconnect: true,
-		idxCleanStart:    true,
-		idxRequestResp:   true,
-		idxRequestProb:   true,
-		idxWillEnable:    true,
-		idxWillRetain:    true,
-	}
-
-	selectOptions := map[int][]string{
-		idxSchema:      {"tcp", "ssl", "ws", "wss"},
-		idxMQTTVersion: {"3", "4", "5"},
-		idxQoS:         {"0", "1", "2"},
-		idxWillQos:     {"0", "1", "2"},
-	}
-
-	boolValues := []bool{
-		p.RandomIDSuffix,
-		p.FromEnv,
-		p.SSL,
-		p.AutoReconnect,
-		p.CleanStart,
-		p.RequestResponseInfo,
-		p.RequestProblemInfo,
-		p.LastWillEnabled,
-		p.LastWillRetain,
-	}
-	bi := 0
-	for i := range fields {
-		if boolIndices[i] {
-			fields[i] = newCheckField(boolValues[bi])
-			bi++
-			continue
+	rv := reflect.ValueOf(p)
+	fields := make([]formField, len(formFields))
+	for i, fd := range formFields {
+		placeholder := fd.placeholder
+		if fd.key == "Password" && pwKey != "" {
+			placeholder = pwKey
 		}
-		if opts, ok := selectOptions[i]; ok {
-			fields[i] = newSelectField(values[i], opts)
-			continue
+		fv := rv.FieldByName(fd.key)
+		var strVal string
+		var boolVal bool
+		switch fv.Kind() {
+		case reflect.String:
+			strVal = fv.String()
+		case reflect.Int:
+			strVal = fmt.Sprintf("%d", fv.Int())
+		case reflect.Bool:
+			boolVal = fv.Bool()
+			strVal = fmt.Sprintf("%v", boolVal)
 		}
-		if i == idxPassword {
-			fields[i] = newTextField(values[i], placeholders[i], true)
-		} else {
-			fields[i] = newTextField(values[i], placeholders[i])
+		switch fd.fieldType {
+		case ftBool:
+			fields[i] = newCheckField(boolVal)
+		case ftSelect:
+			fields[i] = newSelectField(strVal, fd.options)
+		case ftPassword:
+			fields[i] = newTextField(strVal, placeholder, true)
+		default:
+			fields[i] = newTextField(strVal, placeholder)
 		}
 	}
 	if p.FromEnv {
+		idxName := fieldIndex["Name"]
+		idxFromEnv := fieldIndex["FromEnv"]
 		for i, fld := range fields {
 			if i == idxName || i == idxFromEnv {
 				continue
@@ -189,7 +137,7 @@ func (f connectionForm) Init() tea.Cmd {
 
 // Update handles keyboard and mouse events for the form.
 func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
-	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
 		f.CycleFocus(m)
@@ -202,59 +150,39 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 	}
 	f.ApplyFocus()
 	if len(f.fields) > 0 {
-		cmd = f.fields[f.focus].Update(msg)
+		if cmd := f.fields[f.focus].Update(msg); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	}
+	idxFromEnv := fieldIndex["FromEnv"]
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value != f.fromEnv {
-		p := f.Profile()
-		f = newConnectionForm(p, f.index)
-		f.focus = idxFromEnv
-		f.fromEnv = chk.value
+		p, err := f.Profile()
+		if err != nil {
+			chk.value = f.fromEnv
+			cmds = append(cmds, func() tea.Msg { return statusMessage(err.Error()) })
+		} else {
+			f = newConnectionForm(p, f.index)
+			f.focus = idxFromEnv
+			f.fromEnv = chk.value
+		}
 	}
-	return f, cmd
+	return f, tea.Batch(cmds...)
 }
 
 // View renders the form with labels and field contents.
 func (f connectionForm) View() string {
 	var s string
-	labels := []string{
-		"Name",
-		"Schema",
-		"Host",
-		"Port",
-		"Client ID",
-		"Random ID suffix",
-		"Username",
-		"Password",
-		"Load from env",
-		"SSL/TLS",
-		"MQTT Version",
-		"Connect Timeout (s)",
-		"Keep Alive (s)",
-		"QoS",
-		"Auto Reconnect",
-		"Reconnect Period (s)",
-		"Clean Start",
-		"Session Expiry (s)",
-		"Receive Maximum",
-		"Maximum Packet Size",
-		"Topic Alias Maximum",
-		"Request Response Info",
-		"Request Problem Info",
-		"Use Last Will",
-		"Last Will Topic",
-		"Last Will QoS",
-		"Last Will Retain",
-		"Last Will Payload",
-	}
 	for i, in := range f.fields {
-		label := labels[i]
+		label := formFields[i].label
 		if i == f.focus {
 			label = ui.FocusedStyle.Render(label)
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
+	idxFromEnv := fieldIndex["FromEnv"]
+	idxName := fieldIndex["Name"]
 	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
-		prefix := config.EnvPrefix(f.fields[idxName].Value())
+		prefix := EnvPrefix(f.fields[idxName].Value())
 		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
 	}
 	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")
@@ -262,39 +190,40 @@ func (f connectionForm) View() string {
 }
 
 // Profile builds a Profile struct from the form values.
-func (f connectionForm) Profile() Profile {
-	vals := make([]string, len(f.fields))
-	for i, in := range f.fields {
-		vals[i] = in.Value()
-	}
+// It returns a populated Profile and any validation errors encountered
+// while parsing numeric or boolean fields.
+func (f connectionForm) Profile() (Profile, error) {
 	p := Profile{}
-	p.Name = vals[idxName]
-	p.Schema = vals[idxSchema]
-	p.Host = vals[idxHost]
-	fmt.Sscan(vals[idxPort], &p.Port)
-	p.ClientID = vals[idxClientID]
-	p.Username = vals[idxUsername]
-	p.Password = vals[idxPassword]
-	fmt.Sscan(vals[idxFromEnv], &p.FromEnv)
-	fmt.Sscan(vals[idxSSL], &p.SSL)
-	p.MQTTVersion = vals[idxMQTTVersion]
-	fmt.Sscan(vals[idxConnectTimeout], &p.ConnectTimeout)
-	fmt.Sscan(vals[idxKeepAlive], &p.KeepAlive)
-	fmt.Sscan(vals[idxQoS], &p.QoS)
-	fmt.Sscan(vals[idxAutoReconnect], &p.AutoReconnect)
-	fmt.Sscan(vals[idxReconnectPeriod], &p.ReconnectPeriod)
-	fmt.Sscan(vals[idxCleanStart], &p.CleanStart)
-	fmt.Sscan(vals[idxSessionExpiry], &p.SessionExpiry)
-	fmt.Sscan(vals[idxReceiveMaximum], &p.ReceiveMaximum)
-	fmt.Sscan(vals[idxMaximumPacket], &p.MaximumPacketSize)
-	fmt.Sscan(vals[idxTopicAlias], &p.TopicAliasMaximum)
-	fmt.Sscan(vals[idxRequestResp], &p.RequestResponseInfo)
-	fmt.Sscan(vals[idxRequestProb], &p.RequestProblemInfo)
-	fmt.Sscan(vals[idxWillEnable], &p.LastWillEnabled)
-	p.LastWillTopic = vals[idxWillTopic]
-	fmt.Sscan(vals[idxWillQos], &p.LastWillQos)
-	fmt.Sscan(vals[idxWillRetain], &p.LastWillRetain)
-	p.LastWillPayload = vals[idxWillPayload]
-	fmt.Sscan(vals[idxIDSuffix], &p.RandomIDSuffix)
-	return p
+	var errs []string
+	rv := reflect.ValueOf(&p).Elem()
+	for i, fd := range formFields {
+		field := rv.FieldByName(fd.key)
+		val := f.fields[i].Value()
+		switch field.Kind() {
+		case reflect.String:
+			field.SetString(val)
+		case reflect.Int:
+			if val == "" {
+				field.SetInt(0)
+				continue
+			}
+			iv, err := strconv.Atoi(val)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", fd.label, err))
+				continue
+			}
+			field.SetInt(int64(iv))
+		case reflect.Bool:
+			bv, err := strconv.ParseBool(val)
+			if err != nil {
+				errs = append(errs, fmt.Sprintf("%s: %v", fd.label, err))
+				continue
+			}
+			field.SetBool(bv)
+		}
+	}
+	if len(errs) > 0 {
+		return p, errors.New(strings.Join(errs, "; "))
+	}
+	return p, nil
 }

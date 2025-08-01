@@ -6,8 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 type statusMessage string
@@ -246,7 +244,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						return m, cmd
 					}
 					flushStatus(m.connections.statusChan)
-					config.OverridePasswordFromEnv(&p)
+					OverridePasswordFromEnv(&p)
 					m.connections.manager.Errors[p.Name] = ""
 					m.connections.manager.Statuses[p.Name] = "connecting"
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -290,7 +288,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					return m, cmd
 				}
 				flushStatus(m.connections.statusChan)
-				config.OverridePasswordFromEnv(&p)
+				OverridePasswordFromEnv(&p)
 				m.connections.manager.Errors[p.Name] = ""
 				m.connections.manager.Statuses[p.Name] = "connecting"
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
@@ -347,7 +345,13 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 			m.connections.form = nil
 			return m, cmd
 		case "enter":
-			p := m.connections.form.Profile()
+			p, err := m.connections.form.Profile()
+			if err != nil {
+				if m.connections.statusChan != nil {
+					m.connections.statusChan <- err.Error()
+				}
+				return m, listenStatus(m.connections.statusChan)
+			}
 			if m.connections.form.index >= 0 {
 				m.connections.manager.EditConnection(m.connections.form.index, p)
 			} else {

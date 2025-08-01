@@ -12,7 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/config"
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -226,7 +225,7 @@ func initialModel(conns *Connections) *model {
 		}
 		if p != nil {
 			cfg := *p
-			config.OverridePasswordFromEnv(&cfg)
+			OverridePasswordFromEnv(&cfg)
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
 				m.connections.active = cfg.Name

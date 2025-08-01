@@ -5,19 +5,17 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 // forceStartTrace launches the tracer at index without checking existing data.
 func (m *model) forceStartTrace(index int) {
 	item := m.traces.items[index]
-	p, err := config.LoadProfile(item.cfg.Profile, "")
+	p, err := LoadProfile(item.cfg.Profile, "")
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
-	config.OverridePasswordFromEnv(p)
+	OverridePasswordFromEnv(p)
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
 		m.appendHistory("", err.Error(), "log", err.Error())

@@ -5,19 +5,18 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
-
-	"github.com/marang/goemqutiti/config"
 )
 
 // mqttClient wraps the MQTT connection for the tracer.
 type mqttClient struct{ client mqtt.Client }
 
 // newMQTTClient establishes an MQTT connection using the provided profile.
-func newMQTTClient(p config.Profile) (*mqttClient, error) {
+func newMQTTClient(p Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	opts.AddBroker(brokerURL)
@@ -31,10 +30,12 @@ func newMQTTClient(p config.Profile) (*mqttClient, error) {
 		opts.SetPassword(p.Password)
 	}
 	if p.MQTTVersion != "" {
-		var ver uint
-		fmt.Sscan(p.MQTTVersion, &ver)
+		ver, err := strconv.Atoi(p.MQTTVersion)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MQTT version %q: %w", p.MQTTVersion, err)
+		}
 		if ver != 0 {
-			opts.SetProtocolVersion(ver)
+			opts.SetProtocolVersion(uint(ver))
 		}
 	}
 	if p.ConnectTimeout > 0 {
@@ -102,11 +103,11 @@ func tracerRun(key, topics, profileName, startStr, endStr string) error {
 			return fmt.Errorf("invalid end time: %w", err)
 		}
 	}
-	p, err := config.LoadProfile(profileName, "")
+	p, err := LoadProfile(profileName, "")
 	if err != nil {
 		return err
 	}
-	config.OverridePasswordFromEnv(p)
+	OverridePasswordFromEnv(p)
 	client, err := newMQTTClient(*p)
 	if err != nil {
 		return fmt.Errorf("connect error: %w", err)

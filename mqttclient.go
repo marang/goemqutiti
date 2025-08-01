@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -38,10 +39,12 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	}
 
 	if p.MQTTVersion != "" {
-		var ver uint
-		fmt.Sscan(p.MQTTVersion, &ver)
+		ver, err := strconv.Atoi(p.MQTTVersion)
+		if err != nil {
+			return nil, fmt.Errorf("invalid MQTT version %q: %w", p.MQTTVersion, err)
+		}
 		if ver != 0 {
-			opts.SetProtocolVersion(ver)
+			opts.SetProtocolVersion(uint(ver))
 		}
 	}
 	if p.ConnectTimeout > 0 {

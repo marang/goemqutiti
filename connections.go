@@ -147,7 +147,7 @@ func (m *Connections) DeleteConnection(index int) {
 
 func deleteProfileData(name string) {
 	os.RemoveAll(filepath.Join(files.DataDir(name), "history"))
-	os.RemoveAll(filepath.Join(files.DataDir(name), "tracce"))
+	os.RemoveAll(filepath.Join(files.DataDir(name), "traces"))
 }
 
 // refreshList rebuilds the list items from the current profiles.

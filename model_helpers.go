@@ -42,6 +42,17 @@ func (m *model) startConfirm(prompt, info string, action func()) {
 	_ = m.setMode(modeConfirmDelete)
 }
 
+// startHistoryFilter opens the history filter form.
+func (m *model) startHistoryFilter() tea.Cmd {
+	var topics []string
+	for _, t := range m.topics.items {
+		topics = append(topics, t.title)
+	}
+	hf := newHistoryFilterForm(topics)
+	m.history.filterForm = &hf
+	return m.setMode(modeHistoryFilter)
+}
+
 // subscribeActiveTopics subscribes the MQTT client to all currently active topics.
 func (m *model) subscribeActiveTopics() {
 	if m.mqttClient == nil {

@@ -123,6 +123,13 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 			m.connections.active = ""
 			m.mqttClient = nil
 		}
+	case "/":
+		if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+			cmd := m.startHistoryFilter()
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
 	case "space":
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			idx := m.history.list.Index()
@@ -588,9 +595,13 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, histCmd)
 	}
 
-	if m.history.list.FilterState() == list.Filtering {
+	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.list.FilterInput.Value()
 		topics, start, end, text := parseHistoryQuery(q)
+		if start.IsZero() && end.IsZero() {
+			end = time.Now()
+			start = end.Add(-time.Hour)
+		}
 		var msgs []Message
 		if m.history.showArchived {
 			msgs = m.history.store.SearchArchived(topics, start, end, text)

@@ -21,4 +21,5 @@
 - Esc navigates back
 - Use arrows or j/k to move through lists
 - Ctrl+Up/Down scrolls the view
-- Press '/' in history to filter
+- Press '/' in history for a filter dialog with topic suggestions (Tab to
+  complete) and start/end fields defaulting to the last hour.

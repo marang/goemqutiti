@@ -618,6 +618,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		nm, cmd := m.updateImporter(msg)
 		*m = nm
 		return m, cmd
+	case modeHistoryFilter:
+		nm, cmd := m.updateHistoryFilter(msg)
+		*m = nm
+		return m, cmd
 	case modeHelp:
 		nm, cmd := m.updateHelp(msg)
 		*m = nm

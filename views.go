@@ -232,6 +232,16 @@ func (m model) viewConfirmDelete() string {
 	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
 }
 
+// viewHistoryFilter displays the history filter form.
+func (m model) viewHistoryFilter() string {
+	m.ui.elemPos = map[string]int{}
+	if m.history.filterForm == nil {
+		return ""
+	}
+	box := ui.LegendBox(m.history.filterForm.View(), "Filter", m.ui.width/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(m.ui.width, m.ui.height, lipgloss.Center, lipgloss.Center, box)
+}
+
 // viewTopics displays the topic manager list.
 func (m model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
@@ -358,6 +368,8 @@ func (m *model) View() string {
 		return m.viewTraceMessages()
 	case modeImporter:
 		return m.viewImporter()
+	case modeHistoryFilter:
+		return m.viewHistoryFilter()
 	case modeHelp:
 		return m.viewHelp()
 	default:

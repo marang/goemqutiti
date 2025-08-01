@@ -64,7 +64,7 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				fmt.Println("Add new connection")
 			case "e": // Edit selected connection
 				fmt.Println("Edit selected connection")
-			case "d": // Delete selected connection
+			case "delete": // Delete selected connection
 				fmt.Println("Delete selected connection")
 			}
 		}

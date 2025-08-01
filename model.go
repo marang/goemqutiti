@@ -308,10 +308,11 @@ type model struct {
 
 	ui uiState
 
-	confirmPrompt string
-	confirmInfo   string
-	confirmAction func()
-	confirmCancel func()
+	confirmPrompt      string
+	confirmInfo        string
+	confirmAction      func()
+	confirmCancel      func()
+	confirmReturnFocus string
 
 	layout layoutConfig
 

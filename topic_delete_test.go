@@ -12,7 +12,7 @@ func TestDeleteTopic(t *testing.T) {
 	m.topics.items = []topicItem{{title: "a", subscribed: true}, {title: "b", subscribed: false}}
 	m.setFocus(idTopics)
 	m.topics.selected = 0
-	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyDelete})
 	if cmd == nil || m.currentMode() != modeConfirmDelete {
 		t.Fatalf("expected confirm delete mode")
 	}

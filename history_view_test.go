@@ -56,3 +56,43 @@ func TestHistoryBoxLayout(t *testing.T) {
 		}
 	}
 }
+
+// Test that active filters are shown inside the history box rather than in the border.
+func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
+	m := initialModel(nil)
+	m.history.filterQuery = "topic=foo"
+	m.history.store = &HistoryStore{}
+	m.appendHistory("foo", "bar", "pub", "")
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
+	view := m.viewClient()
+	lines := strings.Split(view, "\n")
+	var hist []string
+	collecting := false
+	for _, l := range lines {
+		if strings.Contains(l, "History") {
+			collecting = true
+		}
+		if collecting {
+			hist = append(hist, l)
+			if strings.Contains(l, "\u2518") {
+				break
+			}
+		}
+	}
+	if len(hist) < 2 {
+		t.Fatalf("history box not found in view")
+	}
+	if strings.Contains(hist[0], "topic=foo") {
+		t.Fatalf("filter query should not appear in border")
+	}
+	found := false
+	for _, l := range hist[1:] {
+		if strings.Contains(l, "topic=foo") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("filter query not found inside history box")
+	}
+}

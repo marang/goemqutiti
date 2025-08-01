@@ -97,22 +97,39 @@ func (m *model) restoreState(name string) {
 
 // appendHistory stores a message in the history list and optional store.
 func (m *model) appendHistory(topic, payload, kind, logText string) {
+	ts := time.Now()
 	text := payload
 	if kind == "log" {
 		text = logText
 	}
-	hi := historyItem{timestamp: time.Now(), topic: topic, payload: text, kind: kind, archived: false}
+	hi := historyItem{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
+	if m.history.store != nil {
+		m.history.store.Add(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
+	}
 	if !m.history.showArchived {
 		m.history.items = append(m.history.items, hi)
-		items := make([]list.Item, len(m.history.items))
-		for i, it := range m.history.items {
-			items[i] = it
+		if m.history.filterQuery != "" {
+			topics, start, end, pf := parseHistoryQuery(m.history.filterQuery)
+			var msgs []Message
+			if m.history.showArchived {
+				msgs = m.history.store.SearchArchived(topics, start, end, pf)
+			} else {
+				msgs = m.history.store.Search(topics, start, end, pf)
+			}
+			items := make([]list.Item, len(msgs))
+			for i, mmsg := range msgs {
+				items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+			}
+			m.history.list.SetItems(items)
+			m.history.list.Select(len(items) - 1)
+		} else {
+			items := make([]list.Item, len(m.history.items))
+			for i, it := range m.history.items {
+				items[i] = it
+			}
+			m.history.list.SetItems(items)
+			m.history.list.Select(len(items) - 1)
 		}
-		m.history.list.SetItems(items)
-		m.history.list.Select(len(items) - 1)
-	}
-	if m.history.store != nil {
-		m.history.store.Add(Message{Timestamp: time.Now(), Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}
 }
 

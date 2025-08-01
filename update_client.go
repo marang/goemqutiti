@@ -621,6 +621,19 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
 		}
 		m.history.list.SetItems(items)
+	} else if m.history.filterQuery != "" {
+		topics, start, end, text := parseHistoryQuery(m.history.filterQuery)
+		var msgs []Message
+		if m.history.showArchived {
+			msgs = m.history.store.SearchArchived(topics, start, end, text)
+		} else {
+			msgs = m.history.store.Search(topics, start, end, text)
+		}
+		items := make([]list.Item, len(msgs))
+		for i, mmsg := range msgs {
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
+		}
+		m.history.list.SetItems(items)
 	} else {
 		items := make([]list.Item, len(m.history.items))
 		for i, it := range m.history.items {

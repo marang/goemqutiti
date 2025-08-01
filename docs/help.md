@@ -1,25 +1,35 @@
 # Shortcuts
 
+## Global
+
 | Key | Action |
 | --- | ------ |
+| Ctrl+C | Copy selected entry |
+| Ctrl+D | Exit the program |
+| Ctrl+P | Manage payloads |
+| Ctrl+T | Manage topics |
+| Ctrl+R | Manage traces |
 | Ctrl+B | Open broker manager |
 | Ctrl+S / Ctrl+Enter | Publish message |
-| Ctrl+T | Manage topics |
-| Ctrl+P | Manage payloads |
-| Ctrl+R | Manage traces |
-| Ctrl+C | Copy selected entry |
-| Ctrl+Up/Down | Scroll view |
-| Ctrl+D | Exit the program |
-| Ctrl+Shift+Up | Resize panels (up) |
-| Ctrl+Shift+Down | Resize panels (down) |
+| Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
+| Ctrl+Up/Down or Ctrl+K/J | Scroll view |
 
-## Other Keys
+## Navigation
 
-- Tab/Shift+Tab cycle focus
-- Enter subscribes to the typed topic
-- 'x' disconnects in the broker manager
 - Esc navigates back
+- Enter subscribes to the typed topic
+- Tab/Shift+Tab cycle focus
 - Use arrows or j/k to move through lists
-- Ctrl+Up/Down scrolls the view
-- Press '/' in history to filter; use `topic=`, `start=` and `end=` to limit
-  results. Filters default to the last hour.
+- All Ctrl shortcuts work even when an input is active
+
+## Broker Manager
+
+- 'x' disconnects the selected profile
+
+## History View
+
+- Shift selects ranges; Ctrl+A selects all
+- 'a' archives selected messages
+- Delete removes selected messages
+- Ctrl+L toggles archived view
+- Press '/' to filter messages

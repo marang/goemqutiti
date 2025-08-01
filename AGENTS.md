@@ -12,6 +12,8 @@
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name. The importer code lives in the main package and runs via these flags.
 Press `Ctrl+D` from any screen to exit the program.
+Scroll with `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J`. In history,
+`a` archives messages and `Delete` removes them.
 
 ### Recent Experience
 - Keyboard shortcuts bound to plain letters can interfere with text entry. Use `Ctrl` combinations for global actions.

@@ -64,19 +64,39 @@ Tips:
 
 ### Shortcuts
 
+#### Global
+
 | Action | Key |
 | --- | --- |
+| Copy selected entry | `Ctrl+C` |
+| Exit the program | `Ctrl+D` |
+| Manage payloads | `Ctrl+P` |
+| Manage topics | `Ctrl+T` |
+| Manage traces | `Ctrl+R` |
 | Open broker manager | `Ctrl+B` |
 | Publish message | `Ctrl+S` or `Ctrl+Enter` |
-| Manage topics | `Ctrl+T` |
-| Manage payloads | `Ctrl+P` |
-| Manage traces | `Ctrl+R` |
-| Copy selected entry | `Ctrl+C` |
-| Scroll view | `Ctrl+Up` / `Ctrl+Down` |
-| Exit the program | `Ctrl+D` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
+| Scroll view | `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J` |
 
-Other keys: `Tab` and `Shift+Tab` cycle focus, `Enter` subscribes to the typed topic, `x` disconnects in the broker manager and `Esc` navigates back. Use ↑/↓ or `j`/`k` to move through lists, hold `Shift` for range selection in history. Press `/` in the history view to filter messages. Filters accept tokens like `topic=`, `start=` and `end=` and default to showing the last hour. `Ctrl+Up`/`Ctrl+Down` scrolls the view. All `Ctrl` shortcuts work even when an input is active.
+#### Navigation
+
+- `Esc` navigates back
+- Enter subscribes to the typed topic
+- Tab/Shift+Tab cycle focus
+- Use ↑/↓ or `j`/`k` to move through lists
+- All `Ctrl` shortcuts work even when an input is active
+
+#### Broker Manager
+
+- `x` disconnects the selected profile
+
+#### History View
+
+- Shift selects ranges; `Ctrl+A` selects all
+- `a` archives selected messages
+- `Delete` removes selected messages
+- `Ctrl+L` toggles archived view
+- Press `/` to filter messages
 
 ## License
 

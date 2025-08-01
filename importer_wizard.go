@@ -39,6 +39,7 @@ type ImportWizard struct {
 	width       int
 	height      int
 	history     ui.HistoryView
+	rnd         *rand.Rand
 }
 
 const (
@@ -60,9 +61,9 @@ func NewImportWizard(client Publisher, path string) *ImportWizard {
 	ti.SetValue(path)
 	tmpl := textinput.New()
 	tmpl.Placeholder = "Topic template"
-	rand.Seed(time.Now().UnixNano())
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	hv := ui.NewHistoryView(50, 10)
-	return &ImportWizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv}
+	return &ImportWizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv, rnd: r}
 }
 
 func (w *ImportWizard) Init() tea.Cmd { return textinput.Blink }
@@ -85,156 +86,17 @@ func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 	switch w.step {
 	case stepFile:
-		var cmd tea.Cmd
-		w.file, cmd = w.file.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && (km.Type == tea.KeyEnter || km.Type == tea.KeyCtrlN) {
-			path := strings.TrimSpace(w.file.Value())
-			if path == "" {
-				return w, nil
-			}
-			rows, err := ReadFile(path)
-			if err != nil {
-				w.file.SetValue(path + " (" + err.Error() + ")")
-				return w, nil
-			}
-			if len(rows) == 0 {
-				w.file.SetValue(path + " (no data)")
-				return w, nil
-			}
-			w.rows = rows
-			var fields []formField
-			for k := range rows[0] {
-				w.headers = append(w.headers, k)
-				fi := newTextField(k, "")
-				fields = append(fields, fi)
-			}
-			if len(fields) > 0 {
-				w.form = Form{fields: fields, focus: 0}
-				w.form.ApplyFocus()
-			}
-			w.step = stepMap
-		}
-		return w, cmd
+		return w.updateFile(msg)
 	case stepMap:
-		if len(w.form.fields) == 0 {
-			return w, nil
-		}
-		switch m := msg.(type) {
-		case tea.KeyMsg:
-			switch m.String() {
-			case "tab", "shift+tab", "up", "down", "k", "j":
-				w.form.CycleFocus(m)
-			case "ctrl+n":
-				w.step = stepTemplate
-				w.tmpl.Focus()
-				return w, nil
-			case "ctrl+p":
-				w.step = stepFile
-				return w, nil
-			}
-		case tea.MouseMsg:
-			if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-				if m.Y >= 1 && m.Y-1 < len(w.form.fields) {
-					w.form.focus = m.Y - 1
-				}
-			}
-		}
-		w.form.ApplyFocus()
-		var cmd tea.Cmd
-		cmd = w.form.fields[w.form.focus].Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
-			w.step = stepTemplate
-			w.tmpl.Focus()
-		}
-		return w, cmd
+		return w.updateMap(msg)
 	case stepTemplate:
-		var cmd tea.Cmd
-		w.tmpl, cmd = w.tmpl.Update(msg)
-		if km, ok := msg.(tea.KeyMsg); ok {
-			switch km.Type {
-			case tea.KeyCtrlP:
-				w.step = stepMap
-			case tea.KeyCtrlN, tea.KeyEnter:
-				if strings.TrimSpace(w.tmpl.Value()) != "" {
-					w.step = stepReview
-				}
-			}
-		}
-		return w, cmd
+		return w.updateTemplate(msg)
 	case stepReview:
-		if km, ok := msg.(tea.KeyMsg); ok {
-			switch km.String() {
-			case "p":
-				w.dryRun = false
-				w.index = 0
-				w.published = nil
-				w.finished = false
-				w.history.GotoTop()
-				w.step = stepPublish
-				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
-			case "d":
-				w.dryRun = true
-				w.index = 0
-				w.published = nil
-				w.finished = false
-				w.history.GotoTop()
-				w.step = stepPublish
-				return w, tea.Batch(w.progress.SetPercent(0), w.nextPublishCmd())
-			case "e":
-				w.step = stepMap
-			case "q":
-				w.step = stepDone
-			case "ctrl+p":
-				w.step = stepTemplate
-				w.tmpl.Focus()
-			}
-		}
-		return w, nil
+		return w.updateReview(msg)
 	case stepPublish:
-		switch m := msg.(type) {
-		case publishMsg:
-			w.index++
-			p := float64(w.index) / float64(len(w.rows))
-			if p > 1 {
-				p = 1
-			}
-			cmd := w.progress.SetPercent(p)
-			if w.index >= len(w.rows) {
-				w.finished = true
-				return w, cmd
-			}
-			return w, tea.Batch(cmd, w.nextPublishCmd())
-		case tea.KeyMsg:
-			switch m.Type {
-			case tea.KeyCtrlN:
-				if w.finished {
-					w.step = stepDone
-				}
-			case tea.KeyCtrlP:
-				if w.finished {
-					w.step = stepReview
-					w.finished = false
-				}
-			}
-			cmd := w.history.Update(m)
-			return w, cmd
-		}
-		return w, nil
+		return w.updatePublish(msg)
 	case stepDone:
-		if km, ok := msg.(tea.KeyMsg); ok {
-			switch km.Type {
-			case tea.KeyCtrlP:
-				w.step = stepReview
-				w.finished = false
-			}
-			if cmd := w.history.Update(km); cmd != nil {
-				return w, cmd
-			}
-			if km.String() == "q" {
-				return w, tea.Quit
-			}
-		}
-		return w, nil
+		return w.updateDone(msg)
 	}
 	return w, nil
 }
@@ -364,7 +226,7 @@ func (w *ImportWizard) nextPublishCmd() tea.Cmd {
 		} else {
 			if len(w.published) < limit {
 				w.published = append(w.published, line)
-			} else if r := rand.Intn(i + 1); r < limit {
+			} else if r := w.rnd.Intn(i + 1); r < limit {
 				w.published[r] = line
 			}
 			w.client.Publish(topic, 0, false, payload)

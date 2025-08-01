@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/goemqutiti/ui"
 )
 
 const (
@@ -34,10 +35,11 @@ func newHistoryFilterForm(topics []string) historyFilterForm {
 	sf := newTextField(start.Format(time.RFC3339), "start (RFC3339)")
 	ef := newTextField(end.Format(time.RFC3339), "end (RFC3339)")
 	f := historyFilterForm{
-		topic:  tf,
-		start:  sf,
-		end:    ef,
-		topics: append([]string(nil), topics...),
+		topic:      tf,
+		start:      sf,
+		end:        ef,
+		topics:     append([]string(nil), topics...),
+		suggestIdx: -1,
 	}
 	f.fields = []formField{tf, sf, ef}
 	sort.Strings(f.topics)
@@ -50,21 +52,42 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		if f.focus == idxFilterTopic && m.String() == "tab" {
-			if len(f.suggestions) == 0 {
-				prefix := f.topic.Value()
-				for _, t := range f.topics {
-					if strings.HasPrefix(t, prefix) {
-						f.suggestions = append(f.suggestions, t)
+		if f.focus == idxFilterTopic {
+			switch m.String() {
+			case "tab", "down":
+				if len(f.suggestions) == 0 {
+					prefix := f.topic.Value()
+					for _, t := range f.topics {
+						if strings.HasPrefix(t, prefix) {
+							f.suggestions = append(f.suggestions, t)
+						}
 					}
 				}
+				if len(f.suggestions) > 0 {
+					f.suggestIdx = (f.suggestIdx + 1) % len(f.suggestions)
+					f.topic.SetValue(f.suggestions[f.suggestIdx])
+					f.topic.CursorEnd()
+				}
+				return f, nil
+			case "shift+tab", "up":
+				if len(f.suggestions) == 0 {
+					prefix := f.topic.Value()
+					for _, t := range f.topics {
+						if strings.HasPrefix(t, prefix) {
+							f.suggestions = append(f.suggestions, t)
+						}
+					}
+				}
+				if len(f.suggestions) > 0 {
+					f.suggestIdx--
+					if f.suggestIdx < 0 {
+						f.suggestIdx = len(f.suggestions) - 1
+					}
+					f.topic.SetValue(f.suggestions[f.suggestIdx])
+					f.topic.CursorEnd()
+				}
+				return f, nil
 			}
-			if len(f.suggestions) > 0 {
-				f.topic.SetValue(f.suggestions[f.suggestIdx])
-				f.topic.CursorEnd()
-				f.suggestIdx = (f.suggestIdx + 1) % len(f.suggestions)
-			}
-			return f, nil
 		}
 		f.CycleFocus(m)
 	case tea.MouseMsg:
@@ -81,7 +104,7 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	if f.focus == idxFilterTopic {
 		prefix := f.topic.Value()
 		f.suggestions = f.suggestions[:0]
-		f.suggestIdx = 0
+		f.suggestIdx = -1
 		for _, t := range f.topics {
 			if prefix == "" || strings.HasPrefix(t, prefix) {
 				f.suggestions = append(f.suggestions, t)
@@ -100,7 +123,15 @@ func (f historyFilterForm) View() string {
 		fmt.Sprintf("Topic: %s", f.topic.View()),
 	}
 	if f.focus == idxFilterTopic && len(f.suggestions) > 0 {
-		lines = append(lines, "       "+strings.Join(f.suggestions, " "))
+		suggs := make([]string, len(f.suggestions))
+		for i, s := range f.suggestions {
+			if i == f.suggestIdx {
+				suggs[i] = ui.FocusedStyle.Render(s)
+			} else {
+				suggs[i] = s
+			}
+		}
+		lines = append(lines, "       "+strings.Join(suggs, " "))
 	}
 	lines = append(lines,
 		fmt.Sprintf("Start: %s", f.start.View()),

@@ -23,7 +23,7 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			if len(m.ui.modeStack) > 0 && m.ui.modeStack[0] == modeHelp {
 				m.ui.modeStack = m.ui.modeStack[1:]
 			}
-			cmd := m.setMode(m.currentMode())
+			cmd := tea.Batch(m.setMode(m.currentMode()), m.setFocus(idHistory))
 			return m, cmd
 		case "enter":
 			q := m.history.filterForm.query()
@@ -46,7 +46,7 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			m.history.list.FilterInput.SetValue(q)
 			m.history.list.SetFilterState(list.FilterApplied)
 			m.history.filterForm = nil
-			cmd := m.setMode(m.previousMode())
+			cmd := tea.Batch(m.setMode(m.previousMode()), m.setFocus(idHistory))
 			return m, cmd
 		}
 	}

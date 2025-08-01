@@ -11,11 +11,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/zalando/go-keyring"
-
-	"github.com/marang/goemqutiti/config"
 )
-
-type Profile = config.Profile
 
 // Connections manages the state and logic for handling broker profiles.
 type Connections struct {
@@ -61,11 +57,8 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "a": // Add new connection
 				m.TextInput.Focus()
-				fmt.Println("Add new connection")
 			case "e": // Edit selected connection
-				fmt.Println("Edit selected connection")
 			case "delete": // Delete selected connection
-				fmt.Println("Delete selected connection")
 			}
 		}
 	}
@@ -191,10 +184,9 @@ func (m *Connections) savePasswordToKeyring(service, username, password string) 
 	}
 }
 
-// LoadFromConfig loads connection profiles from the config file using the
-// shared config package.
+// LoadFromConfig loads connection profiles from the config file.
 func LoadFromConfig(filePath string) (*Connections, error) {
-	cfg, err := config.LoadConfig(filePath)
+	cfg, err := LoadConfig(filePath)
 	if err != nil {
 		return nil, err
 	}

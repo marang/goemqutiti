@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -76,5 +77,51 @@ func TestFilterHistoryList(t *testing.T) {
 	hi := items[0].(historyItem)
 	if hi.topic != "foo" {
 		t.Fatalf("unexpected topic %q", hi.topic)
+	}
+}
+
+func TestHandleHistoryClick(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
+	m.history.items = []historyItem{{timestamp: time.Now(), topic: "t1", payload: "p1", kind: "pub"}}
+	items := []list.Item{m.history.items[0]}
+	m.history.list.SetItems(items)
+	m.viewClient()
+	m.setFocus(idHistory)
+	y := m.ui.elemPos[idHistory] + 1
+	m.handleHistoryClick(tea.MouseMsg{Y: y})
+	if m.history.list.Index() != 0 {
+		t.Fatalf("expected index 0 got %d", m.history.list.Index())
+	}
+}
+
+func TestHistoryScroll(t *testing.T) {
+	m, _ := initialModel(nil)
+	for i := 0; i < 30; i++ {
+		hi := historyItem{timestamp: time.Now(), topic: fmt.Sprintf("t%d", i), payload: "p", kind: "pub"}
+		m.history.items = append(m.history.items, hi)
+	}
+	items := make([]list.Item, len(m.history.items))
+	for i, it := range m.history.items {
+		items[i] = it
+	}
+	m.history.list.SetItems(items)
+	m.setFocus(idHistory)
+	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
+	if !handled {
+		t.Fatalf("expected scroll event handled")
+	}
+}
+
+func TestUpdateClientStatus(t *testing.T) {
+	m, _ := initialModel(nil)
+	cmds := m.updateClientStatus()
+	if len(cmds) != 1 {
+		t.Fatalf("expected 1 cmd got %d", len(cmds))
+	}
+	m.mqttClient = &MQTTClient{MessageChan: make(chan MQTTMessage)}
+	cmds = m.updateClientStatus()
+	if len(cmds) != 2 {
+		t.Fatalf("expected 2 cmds got %d", len(cmds))
 	}
 }

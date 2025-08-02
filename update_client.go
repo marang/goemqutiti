@@ -65,21 +65,41 @@ func (m *model) ensureTopicVisible() {
 	}
 }
 
+// isHistoryFocused reports if the history list has focus.
+func (m *model) isHistoryFocused() bool {
+	return m.ui.focusOrder[m.ui.focusIndex] == idHistory
+}
+
+// isTopicsFocused reports if the topics view has focus.
+func (m *model) isTopicsFocused() bool {
+	return m.ui.focusOrder[m.ui.focusIndex] == idTopics
+}
+
+// historyScroll forwards scroll events to the history list.
+func (m *model) historyScroll(msg tea.MouseMsg) tea.Cmd {
+	var hCmd tea.Cmd
+	m.history.list, hCmd = m.history.list.Update(msg)
+	return hCmd
+}
+
+// topicsScroll adjusts the topics viewport based on the mouse wheel.
+func (m *model) topicsScroll(msg tea.MouseMsg) {
+	delta := -1
+	if msg.Button == tea.MouseButtonWheelDown {
+		delta = 1
+	}
+	m.scrollTopics(delta)
+}
+
 // handleMouseScroll processes scroll wheel events.
 // It returns a command and a boolean indicating if the event was handled.
 func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-			var hCmd tea.Cmd
-			m.history.list, hCmd = m.history.list.Update(msg)
-			return hCmd, true
+		if m.isHistoryFocused() && !m.history.showArchived {
+			return m.historyScroll(msg), true
 		}
-		if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
-			delta := -1
-			if msg.Button == tea.MouseButtonWheelDown {
-				delta = 1
-			}
-			m.scrollTopics(delta)
+		if m.isTopicsFocused() {
+			m.topicsScroll(msg)
 			return nil, true
 		}
 		return nil, true
@@ -110,13 +130,18 @@ func (m *model) handleHistorySelection(idx int, shift bool) {
 // handleMouseLeft manages left-click focus and selection.
 func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 	cmd := m.focusFromMouse(msg.Y)
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-		idx := m.historyIndexAt(msg.Y)
-		if idx >= 0 {
-			m.handleHistorySelection(idx, msg.Shift)
-		}
+	if m.isHistoryFocused() && !m.history.showArchived {
+		m.handleHistoryClick(msg)
 	}
 	return cmd
+}
+
+// handleHistoryClick selects a history item based on the mouse position.
+func (m *model) handleHistoryClick(msg tea.MouseMsg) {
+	idx := m.historyIndexAt(msg.Y)
+	if idx >= 0 {
+		m.handleHistorySelection(idx, msg.Shift)
+	}
 }
 
 // handleClientMouse processes mouse events in client mode.
@@ -175,19 +200,22 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
-	if m.currentMode() == modeConfirmDelete {
-		cmds = append(cmds, listenStatus(m.connections.statusChan))
-		return tea.Batch(cmds...)
+	if m.currentMode() != modeConfirmDelete {
+		cmds = append(cmds, m.updateClientInputs(msg)...)
+		m.filterHistoryList()
 	}
 
-	cmds = append(cmds, m.updateClientInputs(msg)...)
-	m.filterHistoryList()
+	cmds = append(cmds, m.updateClientStatus()...)
+	return tea.Batch(cmds...)
+}
 
-	cmds = append(cmds, listenStatus(m.connections.statusChan))
+// updateClientStatus returns commands to listen for connection and message updates.
+func (m *model) updateClientStatus() []tea.Cmd {
+	cmds := []tea.Cmd{listenStatus(m.connections.statusChan)}
 	if m.mqttClient != nil {
 		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
 	}
-	return tea.Batch(cmds...)
+	return cmds
 }
 
 // handleClientMsg dispatches client messages and returns a command.

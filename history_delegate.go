@@ -73,6 +73,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		hi.payload = ansi.Truncate(hi.payload, historyPreviewLimit, "")
 	}
 	trunc := ansi.Truncate(hi.payload, innerWidth, "")
+	trunc = strings.NewReplacer("\r\n", "\u23ce", "\n", "\u23ce").Replace(trunc)
 	if more || lipgloss.Width(hi.payload) > innerWidth {
 		if lipgloss.Width(trunc) >= innerWidth {
 			trunc = ansi.Truncate(trunc, innerWidth-1, "")

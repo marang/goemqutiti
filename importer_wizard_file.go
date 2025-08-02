@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 // updateFile handles the file selection step.
@@ -38,4 +40,10 @@ func (w *ImportWizard) updateFile(msg tea.Msg) (tea.Model, tea.Cmd) {
 		w.step = stepMap
 	}
 	return w, cmd
+}
+
+// viewFile renders the file selection step.
+func (w *ImportWizard) viewFile(bw, _ int) string {
+	content := w.file.View() + "\n[enter] load file  [ctrl+n] next"
+	return ui.LegendBox(content, "Import", bw, 0, ui.ColBlue, true, -1)
 }

@@ -1,7 +1,13 @@
 package main
 
 import (
+	"fmt"
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 // updateMap handles mapping columns to fields.
@@ -36,4 +42,24 @@ func (w *ImportWizard) updateMap(msg tea.Msg) (tea.Model, tea.Cmd) {
 		w.tmpl.Focus()
 	}
 	return w, cmd
+}
+
+// viewMap renders the column mapping step.
+func (w *ImportWizard) viewMap(bw, _ int) string {
+	colw := 0
+	for _, h := range w.headers {
+		if w := lipgloss.Width(h); w > colw {
+			colw = w
+		}
+	}
+	var b strings.Builder
+	for i, h := range w.headers {
+		label := h
+		if i == w.form.focus {
+			label = ui.FocusedStyle.Render(h)
+		}
+		fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.fields[i].View())
+	}
+	b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
+	return ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)
 }

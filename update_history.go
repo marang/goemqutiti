@@ -37,7 +37,8 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 	}
 	hi := historyItem{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
 	if m.history.store != nil {
-		m.history.store.Add(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
+		var app historyAppender = m.history.store
+		app.Add(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}
 	if !m.history.showArchived {
 		if m.history.filterQuery != "" {

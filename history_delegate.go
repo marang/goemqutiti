@@ -18,7 +18,7 @@ const historyPreviewLimit = 256
 
 // historyDelegate renders history items with two lines and supports highlighting
 // selected entries.
-type historyDelegate struct{ m *model }
+type historyDelegate struct{}
 
 // Height returns the fixed height for history entries.
 func (d historyDelegate) Height() int { return 2 }
@@ -104,7 +104,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	if hi.isSelected != nil && *hi.isSelected {
 		barColor = ui.ColBlue
 	}
-	if index == d.m.history.list.Index() {
+	if index == m.Index() {
 		barColor = ui.ColPurple
 	}
 	bar := lipgloss.NewStyle().Foreground(barColor)

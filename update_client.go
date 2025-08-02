@@ -275,16 +275,6 @@ func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-// updateHistoryList updates the history list when focused.
-func (m *model) updateHistoryList(msg tea.Msg) tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
-		return nil
-	}
-	var cmd tea.Cmd
-	m.history.list, cmd = m.history.list.Update(msg)
-	return cmd
-}
-
 // filterHistoryList refreshes history items based on the current filter state.
 func (m *model) filterHistoryList() {
 	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {

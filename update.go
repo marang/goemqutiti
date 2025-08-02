@@ -50,16 +50,16 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 }
 
 // updateTopics manages the topics list UI.
-func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateTopics(msg tea.Msg) tea.Cmd {
 	var cmd, fcmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "esc":
 			cmd := m.setMode(modeClient)
-			return m, cmd
+			return cmd
 		case "left":
 			if m.topics.panes.active == 1 {
 				fcmd = m.setFocus(idTopicsEnabled)
@@ -77,7 +77,7 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 					m.removeTopic(i)
 					m.rebuildActiveTopicList()
 				})
-				return m, listenStatus(m.connections.statusChan)
+				return listenStatus(m.connections.statusChan)
 			}
 		case "enter", " ":
 			i := m.topics.selected
@@ -96,20 +96,20 @@ func (m model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
 	}
 	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
-	return m, tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
 }
 
 // updatePayloads manages the stored payloads list.
-func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updatePayloads(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "esc":
 			cmd := m.setMode(modeClient)
-			return m, cmd
+			return cmd
 		case "delete":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -120,7 +120,7 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					m.message.list.SetItems(items)
 				}
 			}
-			return m, listenStatus(m.connections.statusChan)
+			return listenStatus(m.connections.statusChan)
 		case "enter":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -130,13 +130,13 @@ func (m model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					m.topics.input.SetValue(pi.topic)
 					m.message.input.SetValue(pi.payload)
 					cmd := m.setMode(modeClient)
-					return m, cmd
+					return cmd
 				}
 			}
 		}
 	}
 	m.message.list, cmd = m.message.list.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
 
 // updateSelectionRange selects history entries from the anchor to idx.
@@ -195,8 +195,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "tab":
 			if m.currentMode() == modeHistoryFilter {
-				nm, cmd := m.updateHistoryFilter(msg)
-				*m = nm
+				cmd := m.updateHistoryFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {
@@ -216,8 +215,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "shift+tab":
 			if m.currentMode() == modeHistoryFilter {
-				nm, cmd := m.updateHistoryFilter(msg)
-				*m = nm
+				cmd := m.updateHistoryFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {
@@ -249,48 +247,38 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.updateClient(msg)
 		return m, cmd
 	case modeConnections:
-		nm, cmd := m.updateConnections(msg)
-		*m = nm
+		cmd := m.updateConnections(msg)
 		return m, cmd
 	case modeEditConnection:
-		nm, cmd := m.updateForm(msg)
-		*m = nm
+		cmd := m.updateForm(msg)
 		return m, cmd
 	case modeConfirmDelete:
 		nm, cmd := m.updateConfirmDelete(msg)
 		*m = nm
 		return m, cmd
 	case modeTopics:
-		nm, cmd := m.updateTopics(msg)
-		*m = nm
+		cmd := m.updateTopics(msg)
 		return m, cmd
 	case modePayloads:
-		nm, cmd := m.updatePayloads(msg)
-		*m = nm
+		cmd := m.updatePayloads(msg)
 		return m, cmd
 	case modeTracer:
-		nm, cmd := m.updateTraces(msg)
-		*m = nm
+		cmd := m.updateTraces(msg)
 		return m, cmd
 	case modeEditTrace:
-		nm, cmd := m.updateTraceForm(msg)
-		*m = nm
+		cmd := m.updateTraceForm(msg)
 		return m, cmd
 	case modeViewTrace:
-		nm, cmd := m.updateTraceView(msg)
-		*m = nm
+		cmd := m.updateTraceView(msg)
 		return m, cmd
 	case modeImporter:
-		nm, cmd := m.updateImporter(msg)
-		*m = nm
+		cmd := m.updateImporter(msg)
 		return m, cmd
 	case modeHistoryFilter:
-		nm, cmd := m.updateHistoryFilter(msg)
-		*m = nm
+		cmd := m.updateHistoryFilter(msg)
 		return m, cmd
 	case modeHistoryDetail:
-		nm, cmd := m.updateHistoryDetail(msg)
-		*m = nm
+		cmd := m.updateHistoryDetail(msg)
 		return m, cmd
 	case modeHelp:
 		nm, cmd := m.updateHelp(msg)

@@ -27,6 +27,23 @@ func TestHistoryDelegateWidth(t *testing.T) {
 	}
 }
 
+// Test that short multiline payloads are shown without truncation.
+func TestHistoryPreviewShortMultiline(t *testing.T) {
+	m, _ := initialModel(nil)
+	d := historyDelegate{m: m}
+	m.history.list.SetSize(80, 4)
+	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "one\ntwo", kind: "pub"}
+	var buf bytes.Buffer
+	d.Render(&buf, m.history.list, 0, hi)
+	out := buf.String()
+	if strings.Contains(out, "\u2026") {
+		t.Fatalf("expected no ellipsis, got %q", out)
+	}
+	if !strings.Contains(out, "one two") {
+		t.Fatalf("expected joined payload, got %q", out)
+	}
+}
+
 // Test that the history box has aligned borders when rendered
 func TestHistoryBoxLayout(t *testing.T) {
 	m, _ := initialModel(nil)

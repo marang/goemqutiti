@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
@@ -96,7 +97,7 @@ func (m *model) handleHistoryViewKey() tea.Cmd {
 		return nil
 	}
 	hi := m.history.list.Items()[idx].(historyItem)
-	if lipgloss.Width(hi.payload) <= historyPreviewLimit {
+	if utf8.RuneCountInString(hi.payload) <= historyPreviewLimit {
 		return nil
 	}
 	m.history.detailItem = hi

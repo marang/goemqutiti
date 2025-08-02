@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -67,13 +68,13 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lipgloss.NewStyle().Foreground(ui.ColGray).Render(" "+ts+":"))
 		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, header))
 	}
-	first := strings.Split(hi.payload, "\n")[0]
-	more := strings.Contains(hi.payload, "\n") || lipgloss.Width(hi.payload) > historyPreviewLimit
-	if lipgloss.Width(first) > historyPreviewLimit {
-		first = ansi.Truncate(first, historyPreviewLimit, "")
+	text := strings.ReplaceAll(hi.payload, "\n", " ")
+	more := utf8.RuneCountInString(text) > historyPreviewLimit
+	if more {
+		text = ansi.Truncate(text, historyPreviewLimit, "")
 	}
-	trunc := ansi.Truncate(first, innerWidth, "")
-	if more || lipgloss.Width(first) > innerWidth {
+	trunc := ansi.Truncate(text, innerWidth, "")
+	if more || lipgloss.Width(text) > innerWidth {
 		if lipgloss.Width(trunc) >= innerWidth {
 			trunc = ansi.Truncate(trunc, innerWidth-1, "")
 		}

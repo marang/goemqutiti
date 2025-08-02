@@ -17,7 +17,7 @@ func traceTicker() tea.Cmd {
 }
 
 // updateTraces manages the traces list and responds to key presses.
-func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateTraces(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case traceTickMsg:
@@ -26,11 +26,11 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 		switch msg.String() {
 		case "ctrl+d":
 			m.savePlannedTraces()
-			return m, tea.Quit
+			return tea.Quit
 		case "esc":
 			m.savePlannedTraces()
 			cmd := m.setMode(modeClient)
-			return m, cmd
+			return cmd
 		case "a":
 			opts := make([]string, len(m.connections.manager.Profiles))
 			for i, p := range m.connections.manager.Profiles {
@@ -45,7 +45,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 			f := newTraceForm(opts, m.connections.active, topics)
 			m.traces.form = &f
 			cmd := m.setMode(modeEditTrace)
-			return m, tea.Batch(cmd, textinput.Blink)
+			return tea.Batch(cmd, textinput.Blink)
 		case "enter":
 			i := m.traces.list.Index()
 			if i >= 0 && i < len(m.traces.items) {
@@ -60,7 +60,7 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 			i := m.traces.list.Index()
 			if i >= 0 && i < len(m.traces.items) {
 				m.loadTraceMessages(i)
-				return m, nil
+				return nil
 			}
 		case "delete":
 			i := m.traces.list.Index()
@@ -76,38 +76,38 @@ func (m model) updateTraces(msg tea.Msg) (model, tea.Cmd) {
 				removeTrace(key)
 			}
 			if m.anyTraceRunning() {
-				return m, traceTicker()
+				return traceTicker()
 			}
-			return m, nil
+			return nil
 		}
 	}
 	m.traces.list, cmd = m.traces.list.Update(msg)
 	if m.anyTraceRunning() {
-		return m, tea.Batch(cmd, traceTicker())
+		return tea.Batch(cmd, traceTicker())
 	}
-	return m, cmd
+	return cmd
 }
 
 // updateTraceForm handles input for the new trace form.
-func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateTraceForm(msg tea.Msg) tea.Cmd {
 	if m.traces.form == nil {
-		return m, nil
+		return nil
 	}
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "esc":
 			m.traces.form = nil
 			cmd := m.setMode(modeTracer)
-			return m, cmd
+			return cmd
 		case "enter":
 			cfg := m.traces.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
 				m.traces.form.errMsg = "key, profile and topics required"
-				return m, nil
+				return nil
 			}
 			if cfg.Start.IsZero() {
 				cfg.Start = time.Now().Round(time.Second)
@@ -123,12 +123,12 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			}
 			if m.traceIndex(cfg.Key) >= 0 {
 				m.traces.form.errMsg = "trace key exists"
-				return m, nil
+				return nil
 			}
 			p, err := LoadProfile(cfg.Profile, "")
 			if err != nil {
 				m.traces.form.errMsg = err.Error()
-				return m, nil
+				return nil
 			}
 			if p.FromEnv {
 				ApplyEnvVars(p)
@@ -138,7 +138,7 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			client, err := NewMQTTClient(*p, nil)
 			if err != nil {
 				m.traces.form.errMsg = err.Error()
-				return m, nil
+				return nil
 			}
 			client.Disconnect()
 			newItem := &traceItem{key: cfg.Key, cfg: cfg}
@@ -149,25 +149,25 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			addTrace(cfg)
 			m.traces.form = nil
 			cmd := m.setMode(modeTracer)
-			return m, cmd
+			return cmd
 		}
 	}
 	f, cmd := m.traces.form.Update(msg)
 	m.traces.form = &f
-	return m, cmd
+	return cmd
 }
 
 // updateTraceView displays messages captured for a trace.
-func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateTraceView(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
 			cmd := m.setMode(modeTracer)
-			return m, cmd
+			return cmd
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "ctrl+shift+up":
 			if m.layout.trace.height > 1 {
 				m.layout.trace.height--
@@ -179,5 +179,5 @@ func (m model) updateTraceView(msg tea.Msg) (model, tea.Cmd) {
 		}
 	}
 	m.traces.view, cmd = m.traces.view.Update(msg)
-	return m, cmd
+	return cmd
 }

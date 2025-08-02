@@ -9,7 +9,7 @@ import (
 
 // Test copy behavior when history items are selected.
 func TestHandleClientKeyCopySelected(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	sel := true
 	hi := historyItem{topic: "t1", payload: "msg1", kind: "pub", isSelected: &sel}
 	m.history.items = []historyItem{hi}
@@ -33,7 +33,7 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 	conn.Statuses["test"] = "connected"
 	conn.Errors["test"] = "oops"
 
-	m := initialModel(&conn)
+	m, _ := initialModel(&conn)
 	m.mqttClient = &MQTTClient{}
 	m.connections.connection = "test"
 	m.connections.active = "test"
@@ -58,7 +58,7 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 
 // Test that pressing '/' while history is focused starts the filter form.
 func TestHandleClientKeyFilterInitiation(t *testing.T) {
-	m := initialModel(nil)
+	m, _ := initialModel(nil)
 	idx := 3 // history index in focus order
 	m.focus.Set(idx)
 	m.ui.focusIndex = idx

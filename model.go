@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/internal/importer"
 )
 
 type boxConfig struct {
@@ -52,7 +54,7 @@ type model struct {
 	message      messageState
 	traces       tracesState
 	help         helpState
-	importWizard *ImportWizard
+	importWizard *importer.ImportWizard
 
 	ui uiState
 

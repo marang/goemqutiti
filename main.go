@@ -9,6 +9,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/internal/importer"
 )
 
 var (
@@ -108,7 +110,7 @@ func runImport(path, profile string) error {
 	}
 	defer client.Disconnect()
 
-	w := NewImportWizard(client, path)
+	w := importer.NewImportWizard(client, path)
 	prog := tea.NewProgram(w, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		return fmt.Errorf("import error: %w", err)

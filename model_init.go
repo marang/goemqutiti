@@ -13,6 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/internal/importer"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -232,7 +233,7 @@ func initialModel(conns *Connections) (*model, error) {
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
 				m.connections.active = cfg.Name
-				m.importWizard = NewImportWizard(client, importFile)
+				m.importWizard = importer.NewImportWizard(client, importFile)
 				m.setMode(modeImporter)
 			} else {
 				return nil, fmt.Errorf("connect error: %w", err)

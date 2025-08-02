@@ -3,70 +3,10 @@ package emqutiti
 import (
 	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 )
-
-type traceItem struct {
-	key    string
-	cfg    TracerConfig
-	tracer *Tracer
-	counts map[string]int
-	loaded bool
-}
-
-func (t *traceItem) FilterValue() string { return t.key }
-func (t *traceItem) Title() string       { return t.key }
-func (t *traceItem) Description() string {
-	status := "stopped"
-	if t.tracer != nil {
-		if t.tracer.Running() {
-			status = "running"
-		} else if t.tracer.Planned() {
-			status = "planned"
-		}
-	} else if time.Now().Before(t.cfg.Start) {
-		status = "planned"
-	}
-	var parts []string
-	counts := t.counts
-	if t.tracer != nil {
-		counts = t.tracer.Counts()
-	} else if !t.loaded {
-		if c, err := tracerLoadCounts(t.cfg.Profile, t.cfg.Key, t.cfg.Topics); err == nil {
-			t.counts = c
-			t.loaded = true
-			counts = c
-		}
-	}
-	for _, tp := range t.cfg.Topics {
-		parts = append(parts, fmt.Sprintf("%s:%d", tp, counts[tp]))
-	}
-	if len(parts) > 0 {
-		status += " " + strings.Join(parts, " ")
-	}
-	var times []string
-	if !t.cfg.Start.IsZero() {
-		times = append(times, t.cfg.Start.Format(time.RFC3339))
-	}
-	if !t.cfg.End.IsZero() {
-		times = append(times, t.cfg.End.Format(time.RFC3339))
-	}
-	if len(times) > 0 {
-		status += " " + strings.Join(times, " -> ")
-	}
-	return status
-}
-
-type tracesState struct {
-	list    list.Model
-	items   []*traceItem
-	form    *traceForm
-	view    list.Model
-	viewKey string
-}
 
 // forceStartTrace launches the tracer at index without checking existing data.
 func (m *model) forceStartTrace(index int) {

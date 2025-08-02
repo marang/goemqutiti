@@ -225,7 +225,6 @@ func initialModel(conns *Connections) (*model, error) {
 		fitems[i] = m.focusables[id]
 	}
 	m.focus = NewFocusMap(fitems)
-	hDel.m = m
 	m.history.list.SetDelegate(hDel)
 	traceDel.m = m
 	m.traces.view.SetDelegate(traceDel)

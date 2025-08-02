@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/ui"
@@ -42,15 +40,3 @@ func (h historyItem) Title() string {
 	)
 }
 func (h historyItem) Description() string { return "" }
-
-type historyState struct {
-	list            list.Model
-	items           []historyItem
-	store           *HistoryStore
-	selectionAnchor int
-	showArchived    bool
-	filterForm      *historyFilterForm
-	filterQuery     string
-	detail          viewport.Model
-	detailItem      historyItem
-}

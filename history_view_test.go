@@ -15,7 +15,7 @@ import (
 // Test that historyDelegate renders lines that fit the list width
 func TestHistoryDelegateWidth(t *testing.T) {
 	m, _ := initialModel(nil)
-	d := historyDelegate{m: m}
+	d := historyDelegate{}
 	m.history.list.SetSize(30, 4)
 	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "bar", kind: "pub"}
 	var buf bytes.Buffer
@@ -31,7 +31,7 @@ func TestHistoryDelegateWidth(t *testing.T) {
 // Test that short multiline payloads are shown without truncation.
 func TestHistoryPreviewShortMultiline(t *testing.T) {
 	m, _ := initialModel(nil)
-	d := historyDelegate{m: m}
+	d := historyDelegate{}
 	m.history.list.SetSize(80, 4)
 	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "one\ntwo", kind: "pub"}
 	var buf bytes.Buffer
@@ -48,7 +48,7 @@ func TestHistoryPreviewShortMultiline(t *testing.T) {
 // Test that short payloads with CRLF line endings are shown without truncation.
 func TestHistoryPreviewShortMultilineCRLF(t *testing.T) {
 	m, _ := initialModel(nil)
-	d := historyDelegate{m: m}
+	d := historyDelegate{}
 	m.history.list.SetSize(80, 4)
 	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "one\r\ntwo", kind: "pub"}
 	var buf bytes.Buffer

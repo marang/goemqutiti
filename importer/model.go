@@ -1,4 +1,4 @@
-package emqutiti
+package importer
 
 import (
 	"fmt"
@@ -20,7 +20,7 @@ type Publisher interface {
 }
 
 // Wizard runs an interactive import wizard.
-type ImportWizard struct {
+type Model struct {
 	step        int
 	file        textinput.Model
 	headers     []string
@@ -51,8 +51,8 @@ const (
 
 var wizardSteps = []string{"File", "Map", "Template", "Review", "Publish", "Done"}
 
-// NewImportWizard creates a new wizard. A non-empty path pre-fills the file field.
-func NewImportWizard(client Publisher, path string) *ImportWizard {
+// New creates a new wizard. A non-empty path pre-fills the file field.
+func New(client Publisher, path string) *Model {
 	ti := textinput.New()
 	ti.Placeholder = "CSV or XLS file"
 	ti.Focus()
@@ -61,46 +61,52 @@ func NewImportWizard(client Publisher, path string) *ImportWizard {
 	tmpl.Placeholder = "Topic template"
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	hv := ui.NewHistoryView(50, 10)
-	return &ImportWizard{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv, rnd: r}
+	return &Model{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv, rnd: r}
 }
 
-func (w *ImportWizard) Init() tea.Cmd { return textinput.Blink }
+func (m *Model) Init() tea.Cmd { return textinput.Blink }
 
-func (w *ImportWizard) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *Model) Update(msg tea.Msg) tea.Cmd {
 	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyCtrlD {
-		return w, tea.Quit
+		return tea.Quit
 	}
-	switch m := msg.(type) {
+	switch v := msg.(type) {
 	case tea.WindowSizeMsg:
-		w.width = m.Width
-		w.height = m.Height
-		w.progress.Width = m.Width - 4
-		w.history.SetSize(m.Width-2, w.historyHeight())
-		return w, nil
+		m.width = v.Width
+		m.height = v.Height
+		m.progress.Width = v.Width - 4
+		m.history.SetSize(v.Width-2, m.historyHeight())
+		return nil
 	case progress.FrameMsg:
-		nm, cmd := w.progress.Update(msg)
-		w.progress = nm.(progress.Model)
-		return w, cmd
+		nm, cmd := m.progress.Update(msg)
+		m.progress = nm.(progress.Model)
+		return cmd
 	}
-	switch w.step {
+	switch m.step {
 	case stepFile:
-		return w.updateFile(msg)
+		return m.updateFile(msg)
 	case stepMap:
-		return w.updateMap(msg)
+		return m.updateMap(msg)
 	case stepTemplate:
-		return w.updateTemplate(msg)
+		return m.updateTemplate(msg)
 	case stepReview:
-		return w.updateReview(msg)
+		return m.updateReview(msg)
 	case stepPublish:
-		return w.updatePublish(msg)
+		return m.updatePublish(msg)
 	case stepDone:
-		return w.updateDone(msg)
+		return m.updateDone(msg)
 	}
-	return w, nil
+	return nil
 }
+
+// Focus satisfies Component.
+func (m *Model) Focus() tea.Cmd { return textinput.Blink }
+
+// Blur satisfies Component.
+func (m *Model) Blur() {}
 
 // View renders the wizard at the current step.
-func (w *ImportWizard) View() string {
+func (w *Model) View() string {
 	header := w.stepsView()
 	bw := w.width - 2
 	if bw <= 0 {
@@ -130,7 +136,7 @@ func (w *ImportWizard) View() string {
 }
 
 // nextPublishCmd publishes the next row or records it during dry run.
-func (w *ImportWizard) nextPublishCmd() tea.Cmd {
+func (w *Model) nextPublishCmd() tea.Cmd {
 	if w.index >= len(w.rows) {
 		return nil
 	}
@@ -185,7 +191,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 }
 
 // mapping returns the column mapping defined by the user.
-func (w *ImportWizard) mapping() map[string]string {
+func (w *Model) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
 		m[h] = strings.TrimSpace(w.form.Fields[i].Value())
@@ -194,7 +200,7 @@ func (w *ImportWizard) mapping() map[string]string {
 }
 
 // stepsView renders the progress header for the wizard.
-func (w *ImportWizard) stepsView() string {
+func (w *Model) stepsView() string {
 	var parts []string
 	for i, name := range wizardSteps {
 		st := ui.BlurredStyle
@@ -233,7 +239,7 @@ func sampleSize(total int) int {
 }
 
 // lineLimit calculates the maximum lines of output based on window height.
-func (w *ImportWizard) lineLimit() int {
+func (w *Model) lineLimit() int {
 	limit := w.height - 6
 	if limit < 3 {
 		limit = 3
@@ -242,7 +248,7 @@ func (w *ImportWizard) lineLimit() int {
 }
 
 // historyHeight returns the height of the history view section.
-func (w *ImportWizard) historyHeight() int {
+func (w *Model) historyHeight() int {
 	h := w.lineLimit()
 	if h > 20 {
 		h = 20

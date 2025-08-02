@@ -167,10 +167,6 @@ func initTraces() (tracesState, traceMsgDelegate) {
 	return ts, traceDel
 }
 
-func initHelp() helpState {
-	return helpState{vp: viewport.New(0, 0)}
-}
-
 func initUI(order []string) uiState {
 	vp := viewport.New(0, 0)
 	return uiState{
@@ -207,10 +203,10 @@ func initialModel(conns *Connections) (*model, error) {
 		topics:      ts,
 		message:     ms,
 		traces:      tr,
-		help:        initHelp(),
 		ui:          initUI(order),
 		layout:      initLayout(),
 	}
+	m.help = newHelpComponent(m)
 	m.focusables = map[string]Focusable{
 		idTopics:         &nullFocusable{},
 		idTopic:          adapt(&m.topics.input),
@@ -221,7 +217,7 @@ func initialModel(conns *Connections) (*model, error) {
 		idTopicsDisabled: &m.topics.panes.unsubscribed,
 		idPayloadList:    &nullFocusable{},
 		idTraceList:      &nullFocusable{},
-		idHelp:           adapt(&m.help),
+		idHelp:           adapt(m.help),
 	}
 	m.topics.panes.subscribed.m = m
 	m.topics.panes.unsubscribed.m = m
@@ -248,14 +244,7 @@ func initialModel(conns *Connections) (*model, error) {
 		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},
 		modeHistoryFilter:  component{update: m.updateHistoryFilter, view: m.viewHistoryFilter},
 		modeHistoryDetail:  component{update: m.updateHistoryDetail, view: m.viewHistoryDetail},
-		modeHelp: component{
-			update: func(msg tea.Msg) tea.Cmd {
-				nm, cmd := m.updateHelp(msg)
-				*m = nm
-				return cmd
-			},
-			view: m.viewHelp,
-		},
+		modeHelp:           m.help,
 	}
 
 	if importFile != "" {

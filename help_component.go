@@ -9,7 +9,7 @@ import (
 )
 
 type helpComponent struct {
-	nav     Navigator
+	nav     navigator
 	width   *int
 	height  *int
 	elemPos *map[string]int
@@ -17,7 +17,7 @@ type helpComponent struct {
 	focused bool
 }
 
-func newHelpComponent(nav Navigator, width, height *int, elemPos *map[string]int) *helpComponent {
+func newHelpComponent(nav navigator, width, height *int, elemPos *map[string]int) *helpComponent {
 	return &helpComponent{
 		nav:     nav,
 		width:   width,

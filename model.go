@@ -89,7 +89,7 @@ type model struct {
 
 	connections connectionsState
 	history     historyState
-	topics      topicsState
+	topics      *topicsComponent
 	message     messageState
 	traces      tracesState
 	payloads    *payloadsComponent

@@ -189,13 +189,11 @@ func initialModel(conns *Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[modeClient]...)
 	cs, loadErr := initConnections(conns)
 	hs, hDel := initHistory()
-	ts := initTopics()
 	ms := initMessage()
 	tr, traceDel := initTraces()
 	m := &model{
 		connections: cs,
 		history:     hs,
-		topics:      ts,
 		message:     ms,
 		traces:      tr,
 		ui:          initUI(order),
@@ -205,7 +203,8 @@ func initialModel(conns *Connections) (*model, error) {
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
-	m.payloads = newPayloadsComponent(m)
+	m.topics = topicsComp
+	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
 	m.topics.panes.subscribed.m = m
 	m.topics.panes.unsubscribed.m = m
 

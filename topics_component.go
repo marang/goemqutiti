@@ -26,9 +26,16 @@ type topicsState struct {
 func (t *topicsState) setTopic(topic string) { t.input.SetValue(topic) }
 
 // topicsComponent implements the Component interface for topic management.
-type topicsComponent struct{ m *model }
+type topicsComponent struct {
+	*topicsState
+	m *model
+}
 
-func newTopicsComponent(nav navigator) *topicsComponent { return &topicsComponent{m: nav.(*model)} }
+func newTopicsComponent(nav navigator) *topicsComponent {
+	m := nav.(*model)
+	ts := initTopics()
+	return &topicsComponent{topicsState: &ts, m: m}
+}
 
 func (c *topicsComponent) Init() tea.Cmd { return nil }
 
@@ -45,17 +52,17 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 			cmd := m.setMode(modeClient)
 			return cmd
 		case "left":
-			if m.topics.panes.active == 1 {
+			if c.panes.active == 1 {
 				fcmd = m.setFocus(idTopicsEnabled)
 			}
 		case "right":
-			if m.topics.panes.active == 0 {
+			if c.panes.active == 0 {
 				fcmd = m.setFocus(idTopicsDisabled)
 			}
 		case "delete":
-			i := m.topics.selected
-			if i >= 0 && i < len(m.topics.items) {
-				name := m.topics.items[i].title
+			i := c.selected
+			if i >= 0 && i < len(c.items) {
+				name := c.items[i].title
 				rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 					cmd := m.removeTopic(i)
@@ -65,21 +72,21 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 				return m.connections.ListenStatus()
 			}
 		case "enter", " ":
-			i := m.topics.selected
-			if i >= 0 && i < len(m.topics.items) {
+			i := c.selected
+			if i >= 0 && i < len(c.items) {
 				tcmd = m.toggleTopic(i)
 			}
 		}
 	}
-	m.topics.list, cmd = m.topics.list.Update(msg)
-	if m.topics.panes.active == 0 {
-		m.topics.panes.subscribed.sel = m.topics.list.Index()
-		m.topics.panes.subscribed.page = m.topics.list.Paginator.Page
+	c.list, cmd = c.list.Update(msg)
+	if c.panes.active == 0 {
+		c.panes.subscribed.sel = c.list.Index()
+		c.panes.subscribed.page = c.list.Paginator.Page
 	} else {
-		m.topics.panes.unsubscribed.sel = m.topics.list.Index()
-		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
+		c.panes.unsubscribed.sel = c.list.Index()
+		c.panes.unsubscribed.page = c.list.Paginator.Page
 	}
-	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
+	c.selected = m.indexForPane(c.panes.active, c.list.Index())
 	return tea.Batch(fcmd, tcmd, cmd, m.connections.ListenStatus())
 }
 
@@ -90,22 +97,22 @@ func (c *topicsComponent) View() string {
 	m.ui.elemPos[idTopicsEnabled] = 1
 	m.ui.elemPos[idTopicsDisabled] = 1
 	help := ui.InfoStyle.Render("[space] toggle  [del] delete  [esc] back")
-	activeView := m.topics.list.View()
+	activeView := c.list.View()
 	var left, right string
-	if m.topics.panes.active == 0 {
-		other := list.New(m.unsubscribedItems(), list.NewDefaultDelegate(), m.topics.list.Width(), m.topics.list.Height())
+	if c.panes.active == 0 {
+		other := list.New(m.unsubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
 		other.DisableQuitKeybindings()
 		other.SetShowTitle(false)
-		other.Paginator.Page = m.topics.panes.unsubscribed.page
-		other.Select(m.topics.panes.unsubscribed.sel)
+		other.Paginator.Page = c.panes.unsubscribed.page
+		other.Select(c.panes.unsubscribed.sel)
 		left = ui.LegendBox(activeView, "Enabled", m.ui.width/2-2, 0, ui.ColBlue, m.ui.focusOrder[m.ui.focusIndex] == idTopicsEnabled, -1)
 		right = ui.LegendBox(other.View(), "Disabled", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
 	} else {
-		other := list.New(m.subscribedItems(), list.NewDefaultDelegate(), m.topics.list.Width(), m.topics.list.Height())
+		other := list.New(m.subscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
 		other.DisableQuitKeybindings()
 		other.SetShowTitle(false)
-		other.Paginator.Page = m.topics.panes.subscribed.page
-		other.Select(m.topics.panes.subscribed.sel)
+		other.Paginator.Page = c.panes.subscribed.page
+		other.Select(c.panes.subscribed.sel)
 		left = ui.LegendBox(other.View(), "Enabled", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
 		right = ui.LegendBox(activeView, "Disabled", m.ui.width/2-2, 0, ui.ColBlue, m.ui.focusOrder[m.ui.focusIndex] == idTopicsDisabled, -1)
 	}
@@ -121,7 +128,7 @@ func (c *topicsComponent) Blur() {}
 // Focusables exposes focusable elements for the topics component.
 func (c *topicsComponent) Focusables() map[string]Focusable {
 	return map[string]Focusable{
-		idTopicsEnabled:  &c.m.topics.panes.subscribed,
-		idTopicsDisabled: &c.m.topics.panes.unsubscribed,
+		idTopicsEnabled:  &c.panes.subscribed,
+		idTopicsDisabled: &c.panes.unsubscribed,
 	}
 }

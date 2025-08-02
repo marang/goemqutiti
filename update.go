@@ -1,143 +1,8 @@
 package main
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-// updateConfirmDelete processes confirmation dialog key presses.
-func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+d":
-			return *m, tea.Quit
-		case "y":
-			if m.confirmAction != nil {
-				m.confirmAction()
-				m.confirmAction = nil
-			}
-			if m.confirmCancel != nil {
-				m.confirmCancel = nil
-			}
-			cmd := m.setMode(m.previousMode())
-			cmds := []tea.Cmd{cmd, listenStatus(m.connections.statusChan)}
-			if m.confirmReturnFocus != "" {
-				cmds = append(cmds, m.setFocus(m.confirmReturnFocus))
-				m.confirmReturnFocus = ""
-			} else {
-				m.scrollToFocused()
-			}
-			return *m, tea.Batch(cmds...)
-		case "n", "esc":
-			if m.confirmCancel != nil {
-				m.confirmCancel()
-				m.confirmCancel = nil
-			}
-			cmd := m.setMode(m.previousMode())
-			cmds := []tea.Cmd{cmd, listenStatus(m.connections.statusChan)}
-			if m.confirmReturnFocus != "" {
-				cmds = append(cmds, m.setFocus(m.confirmReturnFocus))
-				m.confirmReturnFocus = ""
-			} else {
-				m.scrollToFocused()
-			}
-			return *m, tea.Batch(cmds...)
-		}
-	}
-	return *m, listenStatus(m.connections.statusChan)
-}
-
-// updateTopics manages the topics list UI.
-func (m *model) updateTopics(msg tea.Msg) tea.Cmd {
-	var cmd, fcmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+d":
-			return tea.Quit
-		case "esc":
-			cmd := m.setMode(modeClient)
-			return cmd
-		case "left":
-			if m.topics.panes.active == 1 {
-				fcmd = m.setFocus(idTopicsEnabled)
-			}
-		case "right":
-			if m.topics.panes.active == 0 {
-				fcmd = m.setFocus(idTopicsDisabled)
-			}
-		case "delete":
-			i := m.topics.selected
-			if i >= 0 && i < len(m.topics.items) {
-				name := m.topics.items[i].title
-				m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
-				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
-					m.removeTopic(i)
-					m.rebuildActiveTopicList()
-				})
-				return listenStatus(m.connections.statusChan)
-			}
-		case "enter", " ":
-			i := m.topics.selected
-			if i >= 0 && i < len(m.topics.items) {
-				m.toggleTopic(i)
-				m.rebuildActiveTopicList()
-			}
-		}
-	}
-	m.topics.list, cmd = m.topics.list.Update(msg)
-	if m.topics.panes.active == 0 {
-		m.topics.panes.subscribed.sel = m.topics.list.Index()
-		m.topics.panes.subscribed.page = m.topics.list.Paginator.Page
-	} else {
-		m.topics.panes.unsubscribed.sel = m.topics.list.Index()
-		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
-	}
-	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
-	return tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
-}
-
-// updatePayloads manages the stored payloads list.
-func (m *model) updatePayloads(msg tea.Msg) tea.Cmd {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case "ctrl+d":
-			return tea.Quit
-		case "esc":
-			cmd := m.setMode(modeClient)
-			return cmd
-		case "delete":
-			i := m.message.list.Index()
-			if i >= 0 {
-				items := m.message.list.Items()
-				if i < len(items) {
-					m.message.payloads = append(m.message.payloads[:i], m.message.payloads[i+1:]...)
-					items = append(items[:i], items[i+1:]...)
-					m.message.list.SetItems(items)
-				}
-			}
-			return listenStatus(m.connections.statusChan)
-		case "enter":
-			i := m.message.list.Index()
-			if i >= 0 {
-				items := m.message.list.Items()
-				if i < len(items) {
-					pi := items[i].(payloadItem)
-					m.topics.input.SetValue(pi.topic)
-					m.message.input.SetValue(pi.payload)
-					cmd := m.setMode(modeClient)
-					return cmd
-				}
-			}
-		}
-	}
-	m.message.list, cmd = m.message.list.Update(msg)
-	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
-}
 
 // updateSelectionRange selects history entries from the anchor to idx.
 func (m *model) updateSelectionRange(idx int) {
@@ -253,8 +118,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.updateForm(msg)
 		return m, cmd
 	case modeConfirmDelete:
-		nm, cmd := m.updateConfirmDelete(msg)
-		*m = nm
+		cmd := m.updateConfirmDelete(msg)
 		return m, cmd
 	case modeTopics:
 		cmd := m.updateTopics(msg)

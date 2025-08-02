@@ -194,6 +194,31 @@ func initialModel(conns *Connections) (*model, error) {
 	m.history.list.SetDelegate(hDel)
 	traceDel.m = m
 	m.traces.view.SetDelegate(traceDel)
+
+	// Register mode components so that view and update logic can be
+	// delegated based on the current application mode.
+	m.components = map[appMode]Component{
+		modeClient:         component{update: m.updateClient, view: m.viewClient},
+		modeConnections:    component{update: m.updateConnections, view: m.viewConnections},
+		modeEditConnection: component{update: m.updateForm, view: m.viewForm},
+		modeConfirmDelete:  component{update: m.updateConfirmDelete, view: m.viewConfirmDelete},
+		modeTopics:         component{update: m.updateTopics, view: m.viewTopics},
+		modePayloads:       component{update: m.updatePayloads, view: m.viewPayloads},
+		modeTracer:         component{update: m.updateTraces, view: m.viewTraces},
+		modeEditTrace:      component{update: m.updateTraceForm, view: m.viewTraceForm},
+		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},
+		modeImporter:       component{update: m.updateImporter, view: m.viewImporter},
+		modeHistoryFilter:  component{update: m.updateHistoryFilter, view: m.viewHistoryFilter},
+		modeHistoryDetail:  component{update: m.updateHistoryDetail, view: m.viewHistoryDetail},
+		modeHelp: component{
+			update: func(msg tea.Msg) tea.Cmd {
+				nm, cmd := m.updateHelp(msg)
+				*m = nm
+				return cmd
+			},
+			view: m.viewHelp,
+		},
+	}
 	if idx, err := openHistoryStore(""); err == nil {
 		m.history.store = idx
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")

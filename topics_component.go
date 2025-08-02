@@ -23,6 +23,8 @@ type topicsState struct {
 	vp         viewport.Model
 }
 
+func (t *topicsState) setTopic(topic string) { t.input.SetValue(topic) }
+
 // topicsComponent implements the Component interface for topic management.
 type topicsComponent struct{ m *model }
 

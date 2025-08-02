@@ -1,7 +1,6 @@
 package emqutiti
 
 import (
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -98,13 +97,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.rebuildActiveTopicList()
 		return m.setMode(modeTopics)
 	case "ctrl+p":
-		items := []list.Item{}
-		for _, pld := range m.message.payloads {
-			items = append(items, payloadItem{topic: pld.topic, payload: pld.payload})
-		}
-		m.message.list = list.New(items, list.NewDefaultDelegate(), m.ui.width-4, m.ui.height-4)
-		m.message.list.DisableQuitKeybindings()
-		m.message.list.SetShowTitle(false)
+		m.payloads.list.SetSize(m.ui.width-4, m.ui.height-4)
 		return m.setMode(modePayloads)
 	case "ctrl+r":
 		m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)

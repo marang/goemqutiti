@@ -125,13 +125,8 @@ func initMessage() messageState {
 	ta.SetHeight(6)
 	ta.FocusedStyle.CursorLine = ui.FocusedStyle
 	ta.BlurredStyle.CursorLine = ui.BlurredStyle
-	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	payloadList.DisableQuitKeybindings()
-	payloadList.SetShowTitle(false)
 	ms := messageState{
-		input:    ta,
-		payloads: []payloadItem{},
-		list:     payloadList,
+		input: ta,
 	}
 	return ms
 }
@@ -210,6 +205,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.confirm = newConfirmComponent(m)
 	connComp := newConnectionsComponent(m)
 	topicsComp := newTopicsComponent(m)
+	m.payloads = newPayloadsComponent(m)
 	m.focusables = map[string]Focusable{
 		idTopics:         &nullFocusable{},
 		idTopic:          adapt(&m.topics.input),
@@ -241,7 +237,7 @@ func initialModel(conns *Connections) (*model, error) {
 		modeEditConnection: component{update: m.updateForm, view: m.viewForm},
 		modeConfirmDelete:  m.confirm,
 		modeTopics:         topicsComp,
-		modePayloads:       component{update: m.updatePayloads, view: m.viewPayloads},
+		modePayloads:       m.payloads,
 		modeTracer:         component{update: m.updateTraces, view: m.viewTraces},
 		modeEditTrace:      component{update: m.updateTraceForm, view: m.viewTraceForm},
 		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},

@@ -24,10 +24,8 @@ func (m *model) updateForm(msg tea.Msg) tea.Cmd {
 		case "enter":
 			p, err := m.connections.form.Profile()
 			if err != nil {
-				if m.connections.statusChan != nil {
-					m.connections.statusChan <- err.Error()
-				}
-				return listenStatus(m.connections.statusChan)
+				m.connections.SendStatus(err.Error())
+				return m.connections.ListenStatus()
 			}
 			if m.connections.form.index >= 0 {
 				m.connections.manager.EditConnection(m.connections.form.index, p)
@@ -42,5 +40,5 @@ func (m *model) updateForm(msg tea.Msg) tea.Cmd {
 	}
 	f, cmd := m.connections.form.Update(msg)
 	m.connections.form = &f
-	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, m.connections.ListenStatus())
 }

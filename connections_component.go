@@ -72,6 +72,21 @@ func (c *connectionsState) SetDisconnected(name, detail string) {
 	c.manager.Errors[name] = detail
 }
 
+// ListenStatus returns a command to receive connection status updates.
+func (c *connectionsState) ListenStatus() tea.Cmd {
+	return listenStatus(c.statusChan)
+}
+
+// SendStatus reports a status message if the channel is available.
+func (c *connectionsState) SendStatus(msg string) {
+	if c.statusChan != nil {
+		c.statusChan <- msg
+	}
+}
+
+// FlushStatus discards any pending status messages.
+func (c *connectionsState) FlushStatus() { flushStatus(c.statusChan) }
+
 // connectionsComponent implements the Component interface for managing brokers.
 type connectionsComponent struct{ m *model }
 
@@ -113,9 +128,9 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 			m.connections.SetConnected(msg.profile.Name)
 			m.refreshConnectionItems()
 			cmd := m.setMode(modeClient)
-			return tea.Batch(cmd, listenStatus(m.connections.statusChan))
+			return tea.Batch(cmd, m.connections.ListenStatus())
 		}
-		return listenStatus(m.connections.statusChan)
+		return m.connections.ListenStatus()
 	case tea.KeyMsg:
 		if m.connections.manager.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
@@ -131,7 +146,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 						cmd := m.setMode(modeClient)
 						return cmd
 					}
-					flushStatus(m.connections.statusChan)
+					m.connections.FlushStatus()
 					if p.FromEnv {
 						ApplyEnvVars(&p)
 					} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
@@ -141,7 +156,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connections.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
-					return connectBroker(p, m.connections.statusChan)
+					return connectBroker(p, m.connections.SendStatus)
 				}
 			}
 			break
@@ -178,7 +193,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 					cmd := m.setMode(modeClient)
 					return cmd
 				}
-				flushStatus(m.connections.statusChan)
+				m.connections.FlushStatus()
 				if p.FromEnv {
 					ApplyEnvVars(&p)
 				} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
@@ -188,7 +203,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 				m.connections.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
-				return connectBroker(p, m.connections.statusChan)
+				return connectBroker(p, m.connections.SendStatus)
 			}
 		case "delete":
 			i := m.connections.manager.ConnectionsList.Index()
@@ -201,7 +216,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
 				})
-				return listenStatus(m.connections.statusChan)
+				return m.connections.ListenStatus()
 			}
 		case "x":
 			if m.mqttClient != nil {
@@ -215,7 +230,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 		}
 	}
 	m.connections.manager.ConnectionsList, cmd = m.connections.manager.ConnectionsList.Update(msg)
-	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, m.connections.ListenStatus())
 }
 
 // View renders the connections UI component.

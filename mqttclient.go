@@ -17,13 +17,12 @@ type MQTTMessage struct {
 
 type MQTTClient struct {
 	Client      mqtt.Client
-	StatusChan  chan string
 	MessageChan chan MQTTMessage
 }
 
 // NewMQTTClient creates and configures a new MQTT client based on the profile
-// details. The status channel receives connection status updates.
-func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
+// details. Status updates are delivered via the provided callback.
+func NewMQTTClient(p Profile, fn statusFunc) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(p.BrokerURL())
 	cid := p.ClientID
@@ -67,14 +66,14 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	}
 	opts.OnConnect = func(client mqtt.Client) {
 		log.Println("Connected to MQTT broker")
-		if statusChan != nil {
-			statusChan <- "Connected to MQTT broker"
+		if fn != nil {
+			fn("Connected to MQTT broker")
 		}
 	}
 	opts.OnConnectionLost = func(client mqtt.Client, err error) {
 		log.Printf("Connection lost: %v", err)
-		if statusChan != nil {
-			statusChan <- fmt.Sprintf("Connection lost: %v", err)
+		if fn != nil {
+			fn(fmt.Sprintf("Connection lost: %v", err))
 		}
 	}
 
@@ -88,7 +87,7 @@ func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 		return nil, fmt.Errorf("failed to connect: %w", token.Error())
 	}
 
-	return &MQTTClient{Client: client, StatusChan: statusChan, MessageChan: msgChan}, nil
+	return &MQTTClient{Client: client, MessageChan: msgChan}, nil
 }
 
 // Publish sends the payload to the given topic using the underlying client.

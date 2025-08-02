@@ -25,7 +25,7 @@ func (m *model) updatePayloads(msg tea.Msg) tea.Cmd {
 					m.message.list.SetItems(items)
 				}
 			}
-			return listenStatus(m.connections.statusChan)
+			return m.connections.ListenStatus()
 		case "enter":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -41,5 +41,5 @@ func (m *model) updatePayloads(msg tea.Msg) tea.Cmd {
 		}
 	}
 	m.message.list, cmd = m.message.list.Update(msg)
-	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, m.connections.ListenStatus())
 }

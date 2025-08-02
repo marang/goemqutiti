@@ -73,22 +73,6 @@ type layoutConfig struct {
 	trace   boxConfig
 }
 
-type helpState struct {
-	vp      viewport.Model
-	focused bool
-}
-
-func (h *helpState) Focus() tea.Cmd {
-	h.focused = true
-	return nil
-}
-
-func (h *helpState) Blur() { h.focused = false }
-
-func (h helpState) Focused() bool { return h.focused }
-
-func (h helpState) View() string { return "" }
-
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int            // index of the currently focused element
@@ -108,7 +92,7 @@ type model struct {
 	topics      topicsState
 	message     messageState
 	traces      tracesState
-	help        helpState
+	help        *helpComponent
 	importer    *importer.Model
 
 	ui uiState

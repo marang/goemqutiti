@@ -35,9 +35,10 @@ func (m *model) handleTopicScroll(key string) tea.Cmd {
 	return nil
 }
 
-// handleEnterKey handles Enter for topic input and toggling.
+// handleEnterKey handles Enter for topic input, toggling, and history detail.
 func (m *model) handleEnterKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idTopic {
+	switch m.ui.focusOrder[m.ui.focusIndex] {
+	case idTopic:
 		topic := strings.TrimSpace(m.topics.input.Value())
 		if topic != "" && !m.hasTopic(topic) {
 			m.topics.items = append(m.topics.items, topicItem{title: topic, subscribed: true})
@@ -51,12 +52,16 @@ func (m *model) handleEnterKey() tea.Cmd {
 			m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 			m.topics.input.SetValue("")
 		}
-	} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics && m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
-		m.toggleTopic(m.topics.selected)
-		m.ensureTopicVisible()
-		if m.currentMode() == modeTopics {
-			m.rebuildActiveTopicList()
+	case idTopics:
+		if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+			m.toggleTopic(m.topics.selected)
+			m.ensureTopicVisible()
+			if m.currentMode() == modeTopics {
+				m.rebuildActiveTopicList()
+			}
 		}
+	case idHistory:
+		return m.handleHistoryViewKey()
 	}
 	return nil
 }

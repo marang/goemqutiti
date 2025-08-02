@@ -47,6 +47,11 @@ type Profile struct {
 	RandomIDSuffix      bool   `toml:"random_id_suffix"`
 }
 
+// BrokerURL returns the formatted broker URL.
+func (p Profile) BrokerURL() string {
+	return fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+}
+
 type Config struct {
 	DefaultProfile string    `toml:"default_profile"`
 	Profiles       []Profile `toml:"profiles"`

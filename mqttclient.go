@@ -25,8 +25,7 @@ type MQTTClient struct {
 // details. The status channel receives connection status updates.
 func NewMQTTClient(p Profile, statusChan chan string) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
-	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-	opts.AddBroker(brokerURL)
+	opts.AddBroker(p.BrokerURL())
 	cid := p.ClientID
 	if p.RandomIDSuffix {
 		cid = fmt.Sprintf("%s-%d", cid, time.Now().UnixNano())

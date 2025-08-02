@@ -231,6 +231,21 @@ func (m model) viewTraceMessages() string {
 	return m.overlayHelp(view)
 }
 
+// viewHistoryDetail renders the full payload of a history message.
+func (m model) viewHistoryDetail() string {
+	m.ui.elemPos = map[string]int{}
+	lines := strings.Split(m.history.detail.View(), "\n")
+	help := ui.InfoStyle.Render("[esc] back")
+	lines = append(lines, help)
+	content := strings.Join(lines, "\n")
+	sp := -1.0
+	if m.history.detail.Height < lipgloss.Height(content) {
+		sp = m.history.detail.ScrollPercent()
+	}
+	view := ui.LegendBox(content, "Message", m.ui.width-2, m.ui.height-2, ui.ColGreen, true, sp)
+	return m.overlayHelp(view)
+}
+
 // viewImporter renders the importer wizard view.
 func (m model) viewImporter() string {
 	m.ui.elemPos = map[string]int{}
@@ -277,6 +292,8 @@ func (m *model) View() string {
 		return m.viewImporter()
 	case modeHistoryFilter:
 		return m.viewHistoryFilter()
+	case modeHistoryDetail:
+		return m.viewHistoryDetail()
 	case modeHelp:
 		return m.viewHelp()
 	default:

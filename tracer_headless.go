@@ -18,8 +18,7 @@ type mqttClient struct{ client mqtt.Client }
 // newMQTTClient establishes an MQTT connection using the provided profile.
 func newMQTTClient(p Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
-	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-	opts.AddBroker(brokerURL)
+	opts.AddBroker(p.BrokerURL())
 	cid := p.ClientID
 	if p.RandomIDSuffix {
 		cid = fmt.Sprintf("%s-%d", cid, time.Now().UnixNano())

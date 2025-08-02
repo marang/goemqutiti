@@ -28,6 +28,23 @@ func TestHistoryDelegateWidth(t *testing.T) {
 	}
 }
 
+// Test that short multiline payloads are shown without truncation.
+func TestHistoryPreviewShortMultiline(t *testing.T) {
+	m, _ := initialModel(nil)
+	d := historyDelegate{m: m}
+	m.history.list.SetSize(80, 4)
+	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "one\ntwo", kind: "pub"}
+	var buf bytes.Buffer
+	d.Render(&buf, m.history.list, 0, hi)
+	out := buf.String()
+	if strings.Contains(out, "\u2026") {
+		t.Fatalf("expected no ellipsis, got %q", out)
+	}
+	if !strings.Contains(out, "one two") {
+		t.Fatalf("expected joined payload, got %q", out)
+	}
+}
+
 // Test that the history box has aligned borders when rendered
 func TestHistoryBoxLayout(t *testing.T) {
 	m, _ := initialModel(nil)
@@ -214,5 +231,20 @@ func TestDeleteErrorFeedback(t *testing.T) {
 	last := m.history.items[1]
 	if last.kind != "log" || !strings.Contains(last.payload, "Failed to delete") {
 		t.Fatalf("expected delete error log, got %#v", last)
+ 	}
+}
+
+// Test that triggering the detail view shows the complete payload.
+func TestHistoryDetailViewShowsPayload(t *testing.T) {
+	m, _ := initialModel(nil)
+	long := strings.Repeat("x", historyPreviewLimit+10)
+	m.appendHistory("foo", long, "pub", "")
+	m.setFocus(idHistory)
+	m.handleEnterKey()
+	if m.currentMode() != modeHistoryDetail {
+		t.Fatalf("expected detail mode, got %v", m.currentMode())
+	}
+	if m.history.detailItem.payload != long {
+		t.Fatalf("payload not preserved in detail view")
 	}
 }

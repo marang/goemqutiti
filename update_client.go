@@ -65,45 +65,69 @@ func (m *model) ensureTopicVisible() {
 	}
 }
 
-// handleClientMouse processes mouse events in client mode.
-func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
-	var cmds []tea.Cmd
+// handleMouseScroll processes scroll wheel events.
+// It returns a command and a boolean indicating if the event was handled.
+func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
 		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
 			var hCmd tea.Cmd
 			m.history.list, hCmd = m.history.list.Update(msg)
-			cmds = append(cmds, hCmd)
-		} else if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
+			return hCmd, true
+		}
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
 			delta := -1
 			if msg.Button == tea.MouseButtonWheelDown {
 				delta = 1
 			}
 			m.scrollTopics(delta)
+			return nil, true
 		}
-		return tea.Batch(cmds...)
+		return nil, true
 	}
-	if msg.Type == tea.MouseLeft {
-		cmds = append(cmds, m.focusFromMouse(msg.Y))
-		if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-			idx := m.historyIndexAt(msg.Y)
-			if idx >= 0 {
-				m.history.list.Select(idx)
-				if msg.Shift {
-					if m.history.selectionAnchor == -1 {
-						m.history.selectionAnchor = m.history.list.Index()
-						if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
-							v := true
-							m.history.items[m.history.selectionAnchor].isSelected = &v
-						}
-					}
-					m.updateSelectionRange(idx)
-				} else {
-					for i := range m.history.items {
-						m.history.items[i].isSelected = nil
-					}
-					m.history.selectionAnchor = -1
-				}
+	return nil, false
+}
+
+// handleHistorySelection updates history selection based on index and shift key.
+func (m *model) handleHistorySelection(idx int, shift bool) {
+	m.history.list.Select(idx)
+	if shift {
+		if m.history.selectionAnchor == -1 {
+			m.history.selectionAnchor = m.history.list.Index()
+			if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+				v := true
+				m.history.items[m.history.selectionAnchor].isSelected = &v
 			}
+		}
+		m.updateSelectionRange(idx)
+	} else {
+		for i := range m.history.items {
+			m.history.items[i].isSelected = nil
+		}
+		m.history.selectionAnchor = -1
+	}
+}
+
+// handleMouseLeft manages left-click focus and selection.
+func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
+	cmd := m.focusFromMouse(msg.Y)
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
+		idx := m.historyIndexAt(msg.Y)
+		if idx >= 0 {
+			m.handleHistorySelection(idx, msg.Shift)
+		}
+	}
+	return cmd
+}
+
+// handleClientMouse processes mouse events in client mode.
+func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
+	if cmd, handled := m.handleMouseScroll(msg); handled {
+		return cmd
+	}
+	var cmds []tea.Cmd
+	if msg.Type == tea.MouseLeft {
+		if cmd := m.handleMouseLeft(msg); cmd != nil {
+			cmds = append(cmds, cmd)
 		}
 	}
 	if msg.Type == tea.MouseLeft || msg.Type == tea.MouseRight {
@@ -145,21 +169,10 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 // updateClient updates the UI when in client mode.
 func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 	var cmds []tea.Cmd
-	switch t := msg.(type) {
-	case statusMessage:
-		return m.handleStatusMessage(t)
-	case MQTTMessage:
-		return m.handleMQTTMessage(t)
-	case tea.KeyMsg:
-		cmd := m.handleClientKey(t)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
-	case tea.MouseMsg:
-		cmd := m.handleClientMouse(t)
-		if cmd != nil {
-			cmds = append(cmds, cmd)
-		}
+	if cmd, done := m.handleClientMsg(msg); done {
+		return cmd
+	} else if cmd != nil {
+		cmds = append(cmds, cmd)
 	}
 
 	if m.currentMode() == modeConfirmDelete {
@@ -167,13 +180,51 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		return tea.Batch(cmds...)
 	}
 
+	cmds = append(cmds, m.updateClientInputs(msg)...)
+	m.filterHistoryList()
+
+	cmds = append(cmds, listenStatus(m.connections.statusChan))
+	if m.mqttClient != nil {
+		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
+	}
+	return tea.Batch(cmds...)
+}
+
+// handleClientMsg dispatches client messages and returns a command.
+// The boolean indicates if processing should stop after the command.
+func (m *model) handleClientMsg(msg tea.Msg) (tea.Cmd, bool) {
+	switch t := msg.(type) {
+	case statusMessage:
+		return m.handleStatusMessage(t), true
+	case MQTTMessage:
+		return m.handleMQTTMessage(t), true
+	case tea.KeyMsg:
+		return m.handleClientKey(t), false
+	case tea.MouseMsg:
+		return m.handleClientMouse(t), false
+	}
+	return nil, false
+}
+
+// updateClientInputs updates form inputs, viewport and history list.
+func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
+	var cmds []tea.Cmd
 	var cmd tea.Cmd
 	m.topics.input, cmd = m.topics.input.Update(msg)
 	cmds = append(cmds, cmd)
-	var cmdMsg tea.Cmd
-	m.message.input, cmdMsg = m.message.input.Update(msg)
-	cmds = append(cmds, cmdMsg)
-	var vpCmd tea.Cmd
+	m.message.input, cmd = m.message.input.Update(msg)
+	cmds = append(cmds, cmd)
+	if vpCmd := m.updateViewport(msg); vpCmd != nil {
+		cmds = append(cmds, vpCmd)
+	}
+	if histCmd := m.updateHistoryList(msg); histCmd != nil {
+		cmds = append(cmds, histCmd)
+	}
+	return cmds
+}
+
+// updateViewport updates the main viewport unless history handles the scroll.
+func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 	skipVP := false
 	if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
 		switch mt := msg.(type) {
@@ -188,17 +239,26 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 			}
 		}
 	}
-	if !skipVP {
-		m.ui.viewport, vpCmd = m.ui.viewport.Update(msg)
-		cmds = append(cmds, vpCmd)
+	if skipVP {
+		return nil
 	}
+	var cmd tea.Cmd
+	m.ui.viewport, cmd = m.ui.viewport.Update(msg)
+	return cmd
+}
 
-	var histCmd tea.Cmd
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
-		m.history.list, histCmd = m.history.list.Update(msg)
-		cmds = append(cmds, histCmd)
+// updateHistoryList updates the history list when focused.
+func (m *model) updateHistoryList(msg tea.Msg) tea.Cmd {
+	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
+		return nil
 	}
+	var cmd tea.Cmd
+	m.history.list, cmd = m.history.list.Update(msg)
+	return cmd
+}
 
+// filterHistoryList refreshes history items based on the current filter state.
+func (m *model) filterHistoryList() {
 	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.list.FilterInput.Value()
 		var items []list.Item
@@ -216,9 +276,4 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		}
 		m.history.list.SetItems(items)
 	}
-	cmds = append(cmds, listenStatus(m.connections.statusChan))
-	if m.mqttClient != nil {
-		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
-	}
-	return tea.Batch(cmds...)
 }

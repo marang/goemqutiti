@@ -26,7 +26,7 @@ type ImportWizard struct {
 	step        int
 	file        textinput.Model
 	headers     []string
-	form        Form
+	form        ui.Form
 	tmpl        textinput.Model
 	rows        []map[string]string
 	index       int
@@ -128,10 +128,10 @@ func (w *ImportWizard) View() string {
 		var b strings.Builder
 		for i, h := range w.headers {
 			label := h
-			if i == w.form.focus {
+			if i == w.form.Focus {
 				label = ui.FocusedStyle.Render(h)
 			}
-			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.fields[i].View())
+			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.Fields[i].View())
 		}
 		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 		box = ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)
@@ -259,7 +259,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
-		m[h] = strings.TrimSpace(w.form.fields[i].Value())
+		m[h] = strings.TrimSpace(w.form.Fields[i].Value())
 	}
 	return m
 }

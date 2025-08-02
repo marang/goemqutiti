@@ -11,8 +11,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
-
 	"github.com/marang/goemqutiti/ui"
 )
 
@@ -26,7 +24,7 @@ type ImportWizard struct {
 	step        int
 	file        textinput.Model
 	headers     []string
-	form        Form
+	form        ui.Form
 	tmpl        textinput.Model
 	rows        []map[string]string
 	index       int
@@ -116,90 +114,17 @@ func (w *ImportWizard) View() string {
 	var box string
 	switch w.step {
 	case stepFile:
-		content := w.file.View() + "\n[enter] load file  [ctrl+n] next"
-		box = ui.LegendBox(content, "Import", bw, 0, ui.ColBlue, true, -1)
+		box = w.viewFile(bw, wrap)
 	case stepMap:
-		colw := 0
-		for _, h := range w.headers {
-			if w := lipgloss.Width(h); w > colw {
-				colw = w
-			}
-		}
-		var b strings.Builder
-		for i, h := range w.headers {
-			label := h
-			if i == w.form.focus {
-				label = ui.FocusedStyle.Render(h)
-			}
-			fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.fields[i].View())
-		}
-		b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
-		box = ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)
+		box = w.viewMap(bw, wrap)
 	case stepTemplate:
-		names := make([]string, len(w.headers))
-		for i, h := range w.headers {
-			names[i] = "{" + h + "}"
-		}
-		help := "Available fields: " + strings.Join(names, " ")
-		help = ansi.Wrap(help, wrap, " ")
-		content := w.tmpl.View() + "\n" + help + "\n[enter] continue  [ctrl+n] next  [ctrl+p] back"
-		box = ui.LegendBox(content, "Topic Template", bw, 0, ui.ColBlue, true, -1)
+		box = w.viewTemplate(bw, wrap)
 	case stepReview:
-		topic := w.tmpl.Value()
-		mapping := w.mapping()
-		previews := ""
-		max := 3
-		if len(w.rows) < max {
-			max = len(w.rows)
-		}
-		for i := 0; i < max; i++ {
-			t := BuildTopic(topic, renameFields(w.rows[i], mapping))
-			p, _ := RowToJSON(w.rows[i], mapping)
-			line := fmt.Sprintf("%s -> %s", t, string(p))
-			previews += ansi.Wrap(line, wrap, " ") + "\n"
-		}
-		s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
-		box = ui.LegendBox(s, "Review", bw, 0, ui.ColBlue, true, -1)
+		box = w.viewReview(bw, wrap)
 	case stepPublish:
-		bar := w.progress.View()
-		lines := w.published
-		limit := w.sampleLimit
-		if limit == 0 {
-			limit = sampleSize(len(w.rows))
-			w.sampleLimit = limit
-		}
-		if len(lines) > limit {
-			lines = lines[len(lines)-limit:]
-		}
-		w.history.SetSize(bw, w.historyHeight())
-		w.history.SetLines(spacedLines(lines))
-		recent := w.history.View()
-		if recent != "" {
-			recent += "\n"
-		}
-		headerLine := ""
-		if w.finished {
-			headerLine = fmt.Sprintf("Published %d messages", len(w.rows))
-		} else {
-			headerLine = fmt.Sprintf("Publishing %d/%d", w.index, len(w.rows))
-		}
-		msg := fmt.Sprintf("%s\n%s\n%s", headerLine, bar, recent)
-		msg = ansi.Wrap(msg, wrap, " ")
-		box = ui.LegendBox(msg, "Progress", bw, 0, ui.ColGreen, true, w.history.ScrollPercent())
+		box = w.viewPublish(bw, wrap)
 	case stepDone:
-		if w.dryRun {
-			w.history.SetSize(bw, w.historyHeight())
-			w.history.SetLines(spacedLines(w.published))
-			out := w.history.View()
-			out = ansi.Wrap(out, wrap, " ") + "\n[ctrl+p] back  [q] quit"
-			box = ui.LegendBox(out, "Dry Run", bw, 0, ui.ColGreen, true, w.history.ScrollPercent())
-		} else if w.finished {
-			msg := fmt.Sprintf("Published %d messages\n[ctrl+p] back  [q] quit", len(w.rows))
-			msg = ansi.Wrap(msg, wrap, " ")
-			box = ui.LegendBox(msg, "Import", bw, 0, ui.ColBlue, true, -1)
-		} else {
-			box = ui.LegendBox("Done", "Import", bw, 0, ui.ColBlue, true, -1)
-		}
+		box = w.viewDone(bw, wrap)
 	}
 	return lipgloss.JoinVertical(lipgloss.Left, header, box)
 }
@@ -224,12 +149,16 @@ func (w *ImportWizard) nextPublishCmd() tea.Cmd {
 		if w.dryRun {
 			w.published = append(w.published, line)
 		} else {
-			if len(w.published) < limit {
-				w.published = append(w.published, line)
-			} else if r := w.rnd.Intn(i + 1); r < limit {
-				w.published[r] = line
+			if err := w.client.Publish(topic, 0, false, payload); err != nil {
+				errLine := fmt.Sprintf("error publishing %s: %v", topic, err)
+				w.published = append(w.published, errLine)
+			} else {
+				if len(w.published) < limit {
+					w.published = append(w.published, line)
+				} else if r := w.rnd.Intn(i + 1); r < limit {
+					w.published[r] = line
+				}
 			}
-			w.client.Publish(topic, 0, false, payload)
 		}
 		w.history.SetLines(w.published)
 		w.history.GotoBottom()
@@ -259,7 +188,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
-		m[h] = strings.TrimSpace(w.form.fields[i].Value())
+		m[h] = strings.TrimSpace(w.form.Fields[i].Value())
 	}
 	return m
 }

@@ -4,6 +4,8 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 // updateFile handles the file selection step.
@@ -25,17 +27,23 @@ func (w *ImportWizard) updateFile(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return w, nil
 		}
 		w.rows = rows
-		var fields []formField
+		var fields []ui.Field
 		for k := range rows[0] {
 			w.headers = append(w.headers, k)
-			fi := newTextField(k, "")
+			fi := ui.NewTextField(k, "")
 			fields = append(fields, fi)
 		}
 		if len(fields) > 0 {
-			w.form = Form{fields: fields, focus: 0}
+			w.form = ui.Form{Fields: fields, Focus: 0}
 			w.form.ApplyFocus()
 		}
 		w.step = stepMap
 	}
 	return w, cmd
+}
+
+// viewFile renders the file selection step.
+func (w *ImportWizard) viewFile(bw, _ int) string {
+	content := w.file.View() + "\n[enter] load file  [ctrl+n] next"
+	return ui.LegendBox(content, "Import", bw, 0, ui.ColBlue, true, -1)
 }

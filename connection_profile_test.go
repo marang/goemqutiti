@@ -31,10 +31,7 @@ func TestApplyEnvVars(t *testing.T) {
 	var envs []string
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
-		if f.Name == "FromEnv" {
-			continue
-		}
-		tag := f.Tag.Get("toml")
+		tag := f.Tag.Get("env")
 		if tag == "" {
 			continue
 		}
@@ -63,10 +60,7 @@ func TestApplyEnvVars(t *testing.T) {
 
 	for i := 0; i < rt.NumField(); i++ {
 		f := rt.Field(i)
-		if f.Name == "FromEnv" {
-			continue
-		}
-		tag := f.Tag.Get("toml")
+		tag := f.Tag.Get("env")
 		if tag == "" {
 			continue
 		}

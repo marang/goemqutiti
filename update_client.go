@@ -201,25 +201,13 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 
 	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.list.FilterInput.Value()
-		topics, start, end, text := parseHistoryQuery(q)
+		var items []list.Item
+		m.history.items, items = applyHistoryFilter(q, m.history.store, m.history.showArchived)
 		m.history.filterQuery = q
-		var msgs []Message
-		if m.history.showArchived {
-			msgs = m.history.store.Search(true, topics, start, end, text)
-		} else {
-			msgs = m.history.store.Search(false, topics, start, end, text)
-		}
-		_, items := messagesToHistoryItems(msgs)
 		m.history.list.SetItems(items)
 	} else if m.history.filterQuery != "" {
-		topics, start, end, text := parseHistoryQuery(m.history.filterQuery)
-		var msgs []Message
-		if m.history.showArchived {
-			msgs = m.history.store.Search(true, topics, start, end, text)
-		} else {
-			msgs = m.history.store.Search(false, topics, start, end, text)
-		}
-		_, items := messagesToHistoryItems(msgs)
+		var items []list.Item
+		m.history.items, items = applyHistoryFilter(m.history.filterQuery, m.history.store, m.history.showArchived)
 		m.history.list.SetItems(items)
 	} else {
 		items := make([]list.Item, len(m.history.items))

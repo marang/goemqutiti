@@ -6,9 +6,9 @@ import (
 )
 
 // updateHistoryFilter handles the history filter form interaction.
-func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateHistoryFilter(msg tea.Msg) tea.Cmd {
 	if m.history.filterForm == nil {
-		return m, nil
+		return nil
 	}
 	switch t := msg.(type) {
 	case tea.KeyMsg:
@@ -22,7 +22,7 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 				m.ui.modeStack = m.ui.modeStack[1:]
 			}
 			cmd := tea.Batch(m.setMode(m.currentMode()), m.setFocus(idHistory))
-			return m, cmd
+			return cmd
 		case "enter":
 			q := m.history.filterForm.query()
 			topics, start, end, payload := parseHistoryQuery(q)
@@ -40,10 +40,10 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			m.history.filterQuery = q
 			m.history.filterForm = nil
 			cmd := tea.Batch(m.setMode(m.previousMode()), m.setFocus(idHistory))
-			return m, cmd
+			return cmd
 		}
 	}
 	f, cmd := m.history.filterForm.Update(msg)
 	m.history.filterForm = &f
-	return m, cmd
+	return cmd
 }

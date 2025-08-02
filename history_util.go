@@ -20,3 +20,18 @@ func messagesToHistoryItems(msgs []Message) ([]historyItem, []list.Item) {
 	}
 	return hitems, litems
 }
+
+// applyHistoryFilter parses the query and retrieves matching messages from the store.
+func applyHistoryFilter(q string, store *HistoryStore, archived bool) ([]historyItem, []list.Item) {
+	if store == nil {
+		return nil, nil
+	}
+	topics, start, end, payload := parseHistoryQuery(q)
+	var msgs []Message
+	if archived {
+		msgs = store.Search(true, topics, start, end, payload)
+	} else {
+		msgs = store.Search(false, topics, start, end, payload)
+	}
+	return messagesToHistoryItems(msgs)
+}

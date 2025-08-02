@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"testing"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 func TestNewConnectionFormEnvReadOnly(t *testing.T) {
@@ -13,31 +15,31 @@ func TestNewConnectionFormEnvReadOnly(t *testing.T) {
 		os.Unsetenv("EMQUTITI_ENV_PORT")
 	})
 	cf := newConnectionForm(Profile{Name: "env", FromEnv: true}, 0)
-	hostField, ok := cf.fields[fieldIndex["Host"]].(*textField)
+	hostField, ok := cf.Fields[fieldIndex["Host"]].(*ui.TextField)
 	if !ok || hostField.Value() != "envhost" {
 		t.Fatalf("host not loaded from env: %v", hostField)
 	}
-	portField := cf.fields[fieldIndex["Port"]].(*textField)
+	portField := cf.Fields[fieldIndex["Port"]].(*ui.TextField)
 	if portField.Value() != "1884" {
 		t.Fatalf("port not loaded from env: %s", portField.Value())
 	}
 	idxName := fieldIndex["Name"]
 	idxFromEnv := fieldIndex["FromEnv"]
-	for i, fld := range cf.fields {
+	for i, fld := range cf.Fields {
 		if i == idxName || i == idxFromEnv {
 			continue
 		}
 		switch f := fld.(type) {
-		case *textField:
-			if !f.readOnly {
+		case *ui.TextField:
+			if !f.ReadOnly() {
 				t.Errorf("field %s not read-only", formFields[i].key)
 			}
-		case *selectField:
-			if !f.readOnly {
+		case *ui.SelectField:
+			if !f.ReadOnly() {
 				t.Errorf("field %s not read-only", formFields[i].key)
 			}
-		case *checkField:
-			if !f.readOnly {
+		case *ui.CheckField:
+			if !f.ReadOnly() {
 				t.Errorf("field %s not read-only", formFields[i].key)
 			}
 		}
@@ -46,7 +48,7 @@ func TestNewConnectionFormEnvReadOnly(t *testing.T) {
 
 func TestNewConnectionFormPasswordPlaceholder(t *testing.T) {
 	cf := newConnectionForm(Profile{Name: "test", Username: "user", Password: "secret"}, 0)
-	tf, ok := cf.fields[fieldIndex["Password"]].(*textField)
+	tf, ok := cf.Fields[fieldIndex["Password"]].(*ui.TextField)
 	if !ok {
 		t.Fatalf("password field not text")
 	}
@@ -57,10 +59,10 @@ func TestNewConnectionFormPasswordPlaceholder(t *testing.T) {
 
 func TestConnectionFormProfile(t *testing.T) {
 	cf := newConnectionForm(Profile{}, -1)
-	cf.fields[fieldIndex["Name"]].(*textField).SetValue("n1")
-	cf.fields[fieldIndex["Port"]].(*textField).SetValue("1883")
-	cf.fields[fieldIndex["AutoReconnect"]].(*checkField).value = true
-	cf.fields[fieldIndex["QoS"]].(*selectField).index = 2
+	cf.Fields[fieldIndex["Name"]].(*ui.TextField).SetValue("n1")
+	cf.Fields[fieldIndex["Port"]].(*ui.TextField).SetValue("1883")
+	cf.Fields[fieldIndex["AutoReconnect"]].(*ui.CheckField).SetBool(true)
+	cf.Fields[fieldIndex["QoS"]].(*ui.SelectField).Index = 2
 
 	p, err := cf.Profile()
 	if err != nil {
@@ -73,7 +75,7 @@ func TestConnectionFormProfile(t *testing.T) {
 
 func TestConnectionFormProfileInvalidInt(t *testing.T) {
 	cf := newConnectionForm(Profile{}, -1)
-	cf.fields[fieldIndex["Port"]].(*textField).SetValue("abc")
+	cf.Fields[fieldIndex["Port"]].(*ui.TextField).SetValue("abc")
 	p, err := cf.Profile()
 	if err == nil {
 		t.Fatalf("expected error for invalid port")

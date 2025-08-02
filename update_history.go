@@ -44,9 +44,9 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 			topics, start, end, pf := parseHistoryQuery(m.history.filterQuery)
 			var msgs []Message
 			if m.history.showArchived {
-				msgs = m.history.store.SearchArchived(topics, start, end, pf)
+				msgs = m.history.store.Search(true, topics, start, end, pf)
 			} else {
-				msgs = m.history.store.Search(topics, start, end, pf)
+				msgs = m.history.store.Search(false, topics, start, end, pf)
 			}
 			var items []list.Item
 			m.history.items, items = messagesToHistoryItems(msgs)

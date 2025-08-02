@@ -141,9 +141,10 @@ func (i *HistoryStore) Archive(key string) error {
 	return fmt.Errorf("message %s not found", key)
 }
 
-// Search returns all messages matching the provided filters. Zero timestamps
-// disable the corresponding time constraints.
-func (i *HistoryStore) Search(topics []string, start, end time.Time, payload string) []Message {
+// Search returns messages matching the provided filters. Zero timestamps
+// disable the corresponding time constraints. When archived is true, only
+// archived messages are returned.
+func (i *HistoryStore) Search(archived bool, topics []string, start, end time.Time, payload string) []Message {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -157,45 +158,7 @@ func (i *HistoryStore) Search(topics []string, start, end time.Time, payload str
 	}
 
 	for _, m := range i.msgs {
-		if m.Archived {
-			continue
-		}
-		if len(topicSet) > 0 {
-			if _, ok := topicSet[m.Topic]; !ok {
-				continue
-			}
-		}
-		if !start.IsZero() && m.Timestamp.Before(start) {
-			continue
-		}
-		if !end.IsZero() && m.Timestamp.After(end) {
-			continue
-		}
-		if payload != "" && !strings.Contains(m.Payload, payload) {
-			continue
-		}
-		out = append(out, m)
-	}
-	return out
-}
-
-// SearchArchived returns archived messages matching the provided filters.
-// Zero timestamps disable the corresponding time constraints.
-func (i *HistoryStore) SearchArchived(topics []string, start, end time.Time, payload string) []Message {
-	i.mu.RLock()
-	defer i.mu.RUnlock()
-
-	var out []Message
-	topicSet := map[string]struct{}{}
-	for _, t := range topics {
-		if t == "" {
-			continue
-		}
-		topicSet[t] = struct{}{}
-	}
-
-	for _, m := range i.msgs {
-		if !m.Archived {
+		if m.Archived != archived {
 			continue
 		}
 		if len(topicSet) > 0 {

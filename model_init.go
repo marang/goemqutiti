@@ -196,7 +196,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.traces.view.SetDelegate(traceDel)
 	if idx, err := openHistoryStore(""); err == nil {
 		m.history.store = idx
-		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
+		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		var items []list.Item
 		m.history.items, items = messagesToHistoryItems(msgs)
 		m.history.list.SetItems(items)

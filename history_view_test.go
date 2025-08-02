@@ -147,7 +147,7 @@ func TestHistoryLabelCounts(t *testing.T) {
 
 	// apply filter showing only "foo"
 	m.history.filterQuery = "topic=foo"
-	msgs := m.history.store.Search([]string{"foo"}, time.Time{}, time.Time{}, "")
+	msgs := m.history.store.Search(false, []string{"foo"}, time.Time{}, time.Time{}, "")
 	var items []list.Item
 	m.history.items, items = messagesToHistoryItems(msgs)
 	m.history.list.SetItems(items)
@@ -243,7 +243,7 @@ func TestDeleteErrorFeedback(t *testing.T) {
 	last := m.history.items[1]
 	if last.kind != "log" || !strings.Contains(last.payload, "Failed to delete") {
 		t.Fatalf("expected delete error log, got %#v", last)
- 	}
+	}
 }
 
 // Test that triggering the detail view shows the complete payload.

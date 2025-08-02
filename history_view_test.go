@@ -39,8 +39,25 @@ func TestHistoryPreviewShortMultiline(t *testing.T) {
 	if strings.Contains(out, "\u2026") {
 		t.Fatalf("expected no ellipsis, got %q", out)
 	}
-	if !strings.Contains(out, "one two") {
-		t.Fatalf("expected joined payload, got %q", out)
+	if !strings.Contains(out, "one\u23cetwo") {
+		t.Fatalf("expected payload with line break marker, got %q", out)
+	}
+}
+
+// Test that short payloads with CRLF line endings are shown without truncation.
+func TestHistoryPreviewShortMultilineCRLF(t *testing.T) {
+	m, _ := initialModel(nil)
+	d := historyDelegate{m: m}
+	m.history.list.SetSize(80, 4)
+	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "one\r\ntwo", kind: "pub"}
+	var buf bytes.Buffer
+	d.Render(&buf, m.history.list, 0, hi)
+	out := buf.String()
+	if strings.Contains(out, "\u2026") {
+		t.Fatalf("expected no ellipsis, got %q", out)
+	}
+	if !strings.Contains(out, "one\u23cetwo") {
+		t.Fatalf("expected payload with line break marker, got %q", out)
 	}
 }
 

@@ -10,7 +10,6 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
 
 // handleCopyKey copies selected or current history items to the clipboard.

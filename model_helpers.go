@@ -36,11 +36,7 @@ func (m *model) historyIndexAt(y int) int {
 
 // startConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) startConfirm(prompt, info string, action func()) {
-	m.confirmPrompt = prompt
-	m.confirmInfo = info
-	m.confirmAction = action
-	m.confirmCancel = nil
-	_ = m.setMode(modeConfirmDelete)
+	m.confirm.start(prompt, info, action)
 }
 
 // startHistoryFilter opens the history filter form.

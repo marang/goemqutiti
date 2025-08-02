@@ -29,7 +29,7 @@ func (m *model) updateTopics(msg tea.Msg) tea.Cmd {
 			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
-				m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 					m.removeTopic(i)
 					m.rebuildActiveTopicList()

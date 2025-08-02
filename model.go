@@ -97,11 +97,7 @@ type model struct {
 
 	ui uiState
 
-	confirmPrompt      string
-	confirmInfo        string
-	confirmAction      func()
-	confirmCancel      func()
-	confirmReturnFocus string
+	confirm *confirmComponent
 
 	layout layoutConfig
 

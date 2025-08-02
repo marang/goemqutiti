@@ -181,7 +181,7 @@ func (m *model) handleTopicsClick(msg tea.MouseMsg) {
 		}
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
-		m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+		m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 			m.removeTopic(idx)
 			if m.currentMode() == modeTopics {

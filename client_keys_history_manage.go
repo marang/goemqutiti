@@ -109,7 +109,7 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 			m.history.items[idx].isMarkedForDeletion = &v
 		}
 	}
-	m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+	m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 	m.startConfirm("Delete selected messages? [y/n]", "", func() {
 		for i := len(m.history.items) - 1; i >= 0; i-- {
 			it := m.history.items[i]
@@ -141,7 +141,7 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 		}
 		m.history.selectionAnchor = -1
 	})
-	m.confirmCancel = func() {
+	m.confirm.cancel = func() {
 		for i := range m.history.items {
 			m.history.items[i].isMarkedForDeletion = nil
 		}

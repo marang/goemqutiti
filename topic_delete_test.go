@@ -16,7 +16,7 @@ func TestDeleteTopic(t *testing.T) {
 	if cmd == nil || m.currentMode() != modeConfirmDelete {
 		t.Fatalf("expected confirm delete mode")
 	}
-	if m.confirmAction == nil {
+	if m.confirm.action == nil {
 		t.Fatalf("confirm action not set")
 	}
 	if len(m.topics.items) != 2 {

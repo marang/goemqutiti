@@ -70,7 +70,7 @@ func (m *model) handleEnterKey() tea.Cmd {
 func (m *model) handleDeleteTopicKey() tea.Cmd {
 	idx := m.topics.selected
 	name := m.topics.items[idx].title
-	m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+	m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
 		m.removeTopic(idx)
 		if m.currentMode() == modeTopics {

@@ -35,7 +35,7 @@ func (m *model) historyIndexAt(y int) int {
 }
 
 // startConfirm displays a confirmation dialog and runs the action on accept.
-func (m *model) startConfirm(prompt, info string, action func()) {
+func (m *model) startConfirm(prompt, info string, action func() tea.Cmd) {
 	m.confirm.start(prompt, info, action)
 }
 

@@ -1,10 +1,10 @@
 package emqutiti
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 type topicItem struct {
@@ -51,6 +51,11 @@ type topicsPanes struct {
 	subscribed   paneState
 	unsubscribed paneState
 	active       int
+}
+
+type topicToggleMsg struct {
+	topic      string
+	subscribed bool
 }
 
 // hasTopic reports whether the given topic already exists in the list.
@@ -173,36 +178,26 @@ func (m *model) setActivePane(idx int) {
 	m.rebuildActiveTopicList()
 }
 
-// toggleTopic toggles the subscription state of the topic at index.
-func (m *model) toggleTopic(index int) {
+// toggleTopic toggles the subscription state of the topic at index and emits an event.
+func (m *model) toggleTopic(index int) tea.Cmd {
 	if index < 0 || index >= len(m.topics.items) {
-		return
+		return nil
 	}
 	t := &m.topics.items[index]
 	t.subscribed = !t.subscribed
-	if m.mqttClient != nil {
-		if t.subscribed {
-			m.mqttClient.Subscribe(t.title, 0, nil)
-			m.appendHistory(t.title, "", "log", fmt.Sprintf("Subscribed to topic: %s", t.title))
-		} else {
-			m.mqttClient.Unsubscribe(t.title)
-			m.appendHistory(t.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", t.title))
-		}
-	}
 	m.sortTopics()
 	m.rebuildActiveTopicList()
+	topic := t.title
+	sub := t.subscribed
+	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: sub} }
 }
 
-// removeTopic unsubscribes and deletes the topic at index from the list.
-func (m *model) removeTopic(index int) {
+// removeTopic deletes the topic at index and emits an unsubscribe event.
+func (m *model) removeTopic(index int) tea.Cmd {
 	if index < 0 || index >= len(m.topics.items) {
-		return
+		return nil
 	}
-	topic := m.topics.items[index]
-	if m.mqttClient != nil {
-		m.mqttClient.Unsubscribe(topic.title)
-		m.appendHistory(topic.title, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", topic.title))
-	}
+	topic := m.topics.items[index].title
 	m.topics.items = append(m.topics.items[:index], m.topics.items[index+1:]...)
 	if len(m.topics.items) == 0 {
 		m.topics.selected = -1
@@ -211,4 +206,5 @@ func (m *model) removeTopic(index int) {
 	}
 	m.sortTopics()
 	m.rebuildActiveTopicList()
+	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: false} }
 }

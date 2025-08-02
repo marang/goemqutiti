@@ -35,7 +35,7 @@ func (c *topicsComponent) Init() tea.Cmd { return nil }
 // Update manages the topics list UI.
 func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 	m := c.m
-	var cmd, fcmd tea.Cmd
+	var cmd, fcmd, tcmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -57,17 +57,17 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
 				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
-					m.removeTopic(i)
+				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() tea.Cmd {
+					cmd := m.removeTopic(i)
 					m.rebuildActiveTopicList()
+					return cmd
 				})
 				return m.connections.ListenStatus()
 			}
 		case "enter", " ":
 			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
-				m.toggleTopic(i)
-				m.rebuildActiveTopicList()
+				tcmd = m.toggleTopic(i)
 			}
 		}
 	}
@@ -80,7 +80,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
 	}
 	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
-	return tea.Batch(fcmd, cmd, m.connections.ListenStatus())
+	return tea.Batch(fcmd, tcmd, cmd, m.connections.ListenStatus())
 }
 
 // View displays the topic manager list.

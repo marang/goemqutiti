@@ -30,6 +30,20 @@ func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 	return listenMessages(m.mqttClient.MessageChan)
 }
 
+// handleTopicToggle subscribes or unsubscribes from a topic and logs the action.
+func (m *model) handleTopicToggle(msg topicToggleMsg) tea.Cmd {
+	if m.mqttClient != nil {
+		if msg.subscribed {
+			m.mqttClient.Subscribe(msg.topic, 0, nil)
+			m.appendHistory(msg.topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.topic))
+		} else {
+			m.mqttClient.Unsubscribe(msg.topic)
+			m.appendHistory(msg.topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.topic))
+		}
+	}
+	return nil
+}
+
 // scrollTopics scrolls the topics viewport by the given number of rows.
 func (m *model) scrollTopics(delta int) {
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
@@ -156,7 +170,9 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 		}
 	}
 	if msg.Type == tea.MouseLeft || msg.Type == tea.MouseRight {
-		m.handleTopicsClick(msg)
+		if cmd := m.handleTopicsClick(msg); cmd != nil {
+			cmds = append(cmds, cmd)
+		}
 	}
 	if len(cmds) == 0 {
 		return nil
@@ -167,28 +183,31 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 // handleTopicsClick processes mouse events within the topics area.
 // The mouse coordinates are adjusted for the viewport offset and compared
 // against precomputed chip bounds.
-func (m *model) handleTopicsClick(msg tea.MouseMsg) {
+func (m *model) handleTopicsClick(msg tea.MouseMsg) tea.Cmd {
 	y := msg.Y + m.ui.viewport.YOffset
 	idx := m.topicAtPosition(msg.X, y)
 	if idx < 0 {
-		return
+		return nil
 	}
 	m.topics.selected = idx
 	if msg.Type == tea.MouseLeft {
-		m.toggleTopic(idx)
+		cmd := m.toggleTopic(idx)
 		if m.currentMode() == modeTopics {
 			m.rebuildActiveTopicList()
 		}
+		return cmd
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
 		m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
-			m.removeTopic(idx)
+		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() tea.Cmd {
+			cmd := m.removeTopic(idx)
 			if m.currentMode() == modeTopics {
 				m.rebuildActiveTopicList()
 			}
+			return cmd
 		})
 	}
+	return nil
 }
 
 // updateClient updates the UI when in client mode.

@@ -50,6 +50,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
+	case topicToggleMsg:
+		cmd := m.handleTopicToggle(msg)
+		return m, cmd
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+up", "ctrl+k":

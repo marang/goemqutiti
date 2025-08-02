@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // forceStartTrace launches the tracer at index without checking existing data.
@@ -49,9 +50,10 @@ func (m *model) startTrace(index int) {
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
 	if err == nil && exists {
 		m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", func() {
+		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", func() tea.Cmd {
 			tracerClearData(item.cfg.Profile, item.key)
 			m.forceStartTrace(index)
+			return nil
 		})
 		return
 	}

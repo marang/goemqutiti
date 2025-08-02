@@ -94,7 +94,7 @@ func (m *model) handlePublishKey() tea.Cmd {
 		payload := m.message.input.Value()
 		for _, t := range m.topics.items {
 			if t.subscribed {
-				m.message.payloads = append(m.message.payloads, payloadItem{topic: t.title, payload: payload})
+				m.payloads.Add(t.title, payload)
 				m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 				if m.mqttClient != nil {
 					m.mqttClient.Publish(t.title, 0, false, payload)

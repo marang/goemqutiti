@@ -11,7 +11,7 @@ func (m *model) saveCurrent() {
 	if m.connections.active == "" {
 		return
 	}
-	m.connections.saved[m.connections.active] = connectionData{Topics: m.topics.items, Payloads: m.message.payloads}
+	m.connections.saved[m.connections.active] = connectionData{Topics: m.topics.items, Payloads: m.payloads.Items()}
 	saveState(m.connections.saved)
 }
 
@@ -19,12 +19,12 @@ func (m *model) saveCurrent() {
 func (m *model) restoreState(name string) {
 	if data, ok := m.connections.saved[name]; ok {
 		m.topics.items = data.Topics
-		m.message.payloads = data.Payloads
+		m.payloads.SetItems(data.Payloads)
 		m.sortTopics()
 		m.rebuildActiveTopicList()
 	} else {
 		m.topics.items = []topicItem{}
-		m.message.payloads = []payloadItem{}
+		m.payloads.Clear()
 	}
 }
 

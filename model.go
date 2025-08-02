@@ -92,6 +92,7 @@ type model struct {
 	topics      topicsState
 	message     messageState
 	traces      tracesState
+	payloads    *payloadsComponent
 	help        *helpComponent
 	importer    *importer.Model
 

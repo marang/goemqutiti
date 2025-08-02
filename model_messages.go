@@ -1,7 +1,6 @@
 package emqutiti
 
 import (
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
 )
 
@@ -12,7 +11,7 @@ func (p payloadItem) Title() string       { return p.topic }
 func (p payloadItem) Description() string { return p.payload }
 
 type messageState struct {
-	input    textarea.Model
-	payloads []payloadItem
-	list     list.Model // payloadList reused when viewing payloads
+	input textarea.Model
 }
+
+func (m *messageState) setPayload(payload string) { m.input.SetValue(payload) }

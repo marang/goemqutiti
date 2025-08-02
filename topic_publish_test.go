@@ -30,8 +30,9 @@ func TestCtrlSPublishesMessage(t *testing.T) {
 	if cmd == nil {
 		t.Fatalf("expected command on ctrl+s")
 	}
-	if len(m.message.payloads) != 1 || m.message.payloads[0].payload != "hello" {
-		t.Fatalf("payload not stored: %#v", m.message.payloads)
+	items := m.payloads.Items()
+	if len(items) != 1 || items[0].payload != "hello" {
+		t.Fatalf("payload not stored: %#v", items)
 	}
 	if len(m.history.list.Items()) != 1 {
 		t.Fatalf("history entry not added")

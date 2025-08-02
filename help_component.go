@@ -57,3 +57,8 @@ func (h *helpComponent) Focus() tea.Cmd {
 func (h *helpComponent) Blur() { h.focused = false }
 
 func (h *helpComponent) Focused() bool { return h.focused }
+
+// Focusables exposes focusable elements for the help component.
+func (h *helpComponent) Focusables() map[string]Focusable {
+	return map[string]Focusable{idHelp: adapt(h)}
+}

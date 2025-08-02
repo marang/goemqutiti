@@ -206,20 +206,17 @@ func initialModel(conns *Connections) (*model, error) {
 	connComp := newConnectionsComponent(m)
 	topicsComp := newTopicsComponent(m)
 	m.payloads = newPayloadsComponent(m)
-	m.focusables = map[string]Focusable{
-		idTopics:         &nullFocusable{},
-		idTopic:          adapt(&m.topics.input),
-		idMessage:        adapt(&m.message.input),
-		idHistory:        &nullFocusable{},
-		idConnList:       &nullFocusable{},
-		idTopicsEnabled:  &m.topics.panes.subscribed,
-		idTopicsDisabled: &m.topics.panes.unsubscribed,
-		idPayloadList:    &nullFocusable{},
-		idTraceList:      &nullFocusable{},
-		idHelp:           adapt(m.help),
-	}
 	m.topics.panes.subscribed.m = m
 	m.topics.panes.unsubscribed.m = m
+
+	// Collect focusable elements from model and components.
+	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, m.help}
+	m.focusables = map[string]Focusable{}
+	for _, p := range providers {
+		for id, f := range p.Focusables() {
+			m.focusables[id] = f
+		}
+	}
 	fitems := make([]Focusable, len(order))
 	for i, id := range order {
 		fitems[i] = m.focusables[id]

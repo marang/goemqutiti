@@ -110,3 +110,14 @@ type model struct {
 	focusables map[string]Focusable
 	focus      *FocusMap
 }
+
+// Focusables returns the base focusable elements managed by the model.
+func (m *model) Focusables() map[string]Focusable {
+	return map[string]Focusable{
+		idTopics:    &nullFocusable{},
+		idTopic:     adapt(&m.topics.input),
+		idMessage:   adapt(&m.message.input),
+		idHistory:   &nullFocusable{},
+		idTraceList: &nullFocusable{},
+	}
+}

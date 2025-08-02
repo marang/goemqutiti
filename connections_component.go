@@ -211,10 +211,11 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 				name := m.connections.manager.Profiles[i].Name
 				info := "This also deletes history and traces"
 				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() {
+				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() tea.Cmd {
 					m.connections.manager.DeleteConnection(i)
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
+					return nil
 				})
 				return m.connections.ListenStatus()
 			}

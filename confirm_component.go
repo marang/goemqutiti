@@ -12,7 +12,7 @@ type confirmComponent struct {
 
 	prompt string
 	info   string
-	action func()
+	action func() tea.Cmd
 	cancel func()
 
 	returnFocus string
@@ -25,7 +25,7 @@ func newConfirmComponent(m *model) *confirmComponent {
 
 func (c *confirmComponent) Init() tea.Cmd { return nil }
 
-func (c *confirmComponent) start(prompt, info string, action func()) {
+func (c *confirmComponent) start(prompt, info string, action func() tea.Cmd) {
 	c.prompt = prompt
 	c.info = info
 	c.action = action
@@ -40,8 +40,9 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "y":
+			var acmd tea.Cmd
 			if c.action != nil {
-				c.action()
+				acmd = c.action()
 				c.action = nil
 			}
 			if c.cancel != nil {
@@ -49,6 +50,9 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			}
 			cmd := c.m.setMode(c.m.previousMode())
 			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
+			if acmd != nil {
+				cmds = append(cmds, acmd)
+			}
 			if c.returnFocus != "" {
 				cmds = append(cmds, c.m.setFocus(c.returnFocus))
 				c.returnFocus = ""

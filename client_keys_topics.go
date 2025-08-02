@@ -46,19 +46,14 @@ func (m *model) handleEnterKey() tea.Cmd {
 			if m.currentMode() == modeTopics {
 				m.rebuildActiveTopicList()
 			}
-			if m.mqttClient != nil {
-				m.mqttClient.Subscribe(topic, 0, nil)
-			}
-			m.appendHistory(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
 			m.topics.input.SetValue("")
+			return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: true} }
 		}
 	case idTopics:
 		if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
-			m.toggleTopic(m.topics.selected)
+			cmd := m.toggleTopic(m.topics.selected)
 			m.ensureTopicVisible()
-			if m.currentMode() == modeTopics {
-				m.rebuildActiveTopicList()
-			}
+			return cmd
 		}
 	case idHistory:
 		return m.handleHistoryViewKey()
@@ -71,11 +66,12 @@ func (m *model) handleDeleteTopicKey() tea.Cmd {
 	idx := m.topics.selected
 	name := m.topics.items[idx].title
 	m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() {
-		m.removeTopic(idx)
+	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() tea.Cmd {
+		cmd := m.removeTopic(idx)
 		if m.currentMode() == modeTopics {
 			m.rebuildActiveTopicList()
 		}
+		return cmd
 	})
 	return nil
 }

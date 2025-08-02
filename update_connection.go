@@ -18,7 +18,7 @@ type connectResult struct {
 func connectBroker(p Profile, ch chan string) tea.Cmd {
 	return func() tea.Msg {
 		if ch != nil {
-			brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+			brokerURL := p.BrokerURL()
 			ch <- fmt.Sprintf("Connecting to %s", brokerURL)
 		}
 		client, err := NewMQTTClient(p, ch)

@@ -42,6 +42,7 @@ var focusByMode = map[appMode][]string{
 	modeViewTrace:      {idHelp},
 	modeImporter:       {idHelp},
 	modeHistoryFilter:  {idHelp},
+	modeHistoryDetail:  {idHelp},
 	modeHelp:           {idHelp},
 }
 
@@ -128,6 +129,7 @@ const (
 	modeViewTrace
 	modeImporter
 	modeHistoryFilter
+	modeHistoryDetail
 	modeHelp
 )
 
@@ -165,6 +167,8 @@ type historyState struct {
 	showArchived    bool
 	filterForm      *historyFilterForm
 	filterQuery     string
+	detail          viewport.Model
+	detailItem      historyItem
 }
 
 type paneState struct {

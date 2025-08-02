@@ -197,12 +197,8 @@ func initialModel(conns *Connections) (*model, error) {
 	if idx, err := openHistoryStore(""); err == nil {
 		m.history.store = idx
 		msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
-		items := make([]list.Item, len(msgs))
-		for i, mmsg := range msgs {
-			hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
-			items[i] = hi
-			m.history.items = append(m.history.items, hi)
-		}
+		var items []list.Item
+		m.history.items, items = messagesToHistoryItems(msgs)
 		m.history.list.SetItems(items)
 	}
 

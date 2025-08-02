@@ -209,10 +209,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		} else {
 			msgs = m.history.store.Search(topics, start, end, text)
 		}
-		items := make([]list.Item, len(msgs))
-		for i, mmsg := range msgs {
-			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
-		}
+		_, items := messagesToHistoryItems(msgs)
 		m.history.list.SetItems(items)
 	} else if m.history.filterQuery != "" {
 		topics, start, end, text := parseHistoryQuery(m.history.filterQuery)
@@ -222,10 +219,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		} else {
 			msgs = m.history.store.Search(topics, start, end, text)
 		}
-		items := make([]list.Item, len(msgs))
-		for i, mmsg := range msgs {
-			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
-		}
+		_, items := messagesToHistoryItems(msgs)
 		m.history.list.SetItems(items)
 	} else {
 		items := make([]list.Item, len(m.history.items))

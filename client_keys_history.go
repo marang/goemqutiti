@@ -76,13 +76,8 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	} else {
 		msgs = m.history.store.Search(nil, time.Time{}, time.Time{}, "")
 	}
-	m.history.items = make([]historyItem, len(msgs))
-	items := make([]list.Item, len(msgs))
-	for i, mm := range msgs {
-		hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
-		m.history.items[i] = hi
-		items[i] = hi
-	}
+	var items []list.Item
+	m.history.items, items = messagesToHistoryItems(msgs)
 	m.history.list.SetItems(items)
 	return nil
 }

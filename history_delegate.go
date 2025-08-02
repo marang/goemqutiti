@@ -13,6 +13,8 @@ import (
 	"github.com/marang/goemqutiti/ui"
 )
 
+const historyPreviewLimit = 256
+
 // historyDelegate renders history items with two lines and supports highlighting
 // selected entries.
 type historyDelegate struct{ m *model }
@@ -66,7 +68,10 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, header))
 	}
 	first := strings.Split(hi.payload, "\n")[0]
-	more := strings.Contains(hi.payload, "\n")
+	more := strings.Contains(hi.payload, "\n") || lipgloss.Width(hi.payload) > historyPreviewLimit
+	if lipgloss.Width(first) > historyPreviewLimit {
+		first = ansi.Truncate(first, historyPreviewLimit, "")
+	}
 	trunc := ansi.Truncate(first, innerWidth, "")
 	if more || lipgloss.Width(first) > innerWidth {
 		if lipgloss.Width(trunc) >= innerWidth {

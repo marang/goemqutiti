@@ -9,6 +9,7 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // handleCopyKey copies selected or current history items to the clipboard.
@@ -83,4 +84,23 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	}
 	m.history.list.SetItems(items)
 	return nil
+}
+
+// handleHistoryViewKey opens a detail view for long history payloads.
+func (m *model) handleHistoryViewKey() tea.Cmd {
+	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
+		return nil
+	}
+	idx := m.history.list.Index()
+	if idx < 0 || idx >= len(m.history.list.Items()) {
+		return nil
+	}
+	hi := m.history.list.Items()[idx].(historyItem)
+	if lipgloss.Width(hi.payload) <= historyPreviewLimit {
+		return nil
+	}
+	m.history.detailItem = hi
+	m.history.detail.SetContent(hi.payload)
+	m.history.detail.SetYOffset(0)
+	return m.setMode(modeHistoryDetail)
 }

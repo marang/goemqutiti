@@ -13,6 +13,13 @@ import (
 	"github.com/marang/goemqutiti/internal/files"
 )
 
+func TestProfileBrokerURL(t *testing.T) {
+	p := Profile{Schema: "mqtt", Host: "example.com", Port: 1883}
+	if got := p.BrokerURL(); got != "mqtt://example.com:1883" {
+		t.Fatalf("BrokerURL() = %q", got)
+	}
+}
+
 // TestApplyEnvVars sets env vars for all Profile fields and ensures they are applied.
 func TestApplyEnvVars(t *testing.T) {
 	p := Profile{Name: "test", FromEnv: true}

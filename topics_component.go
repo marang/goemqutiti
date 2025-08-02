@@ -56,12 +56,12 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 			i := m.topics.selected
 			if i >= 0 && i < len(m.topics.items) {
 				name := m.topics.items[i].title
-				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() tea.Cmd {
+				rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+				m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 					cmd := m.removeTopic(i)
 					m.rebuildActiveTopicList()
 					return cmd
-				})
+				}, nil)
 				return m.connections.ListenStatus()
 			}
 		case "enter", " ":

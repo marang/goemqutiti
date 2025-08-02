@@ -212,13 +212,13 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 			if i >= 0 {
 				name := m.connections.manager.Profiles[i].Name
 				info := "This also deletes history and traces"
-				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() tea.Cmd {
+				rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, rf, func() tea.Cmd {
 					m.connections.manager.DeleteConnection(i)
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
 					return nil
-				})
+				}, nil)
 				return m.connections.ListenStatus()
 			}
 		case "x":

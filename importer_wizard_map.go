@@ -55,10 +55,10 @@ func (w *ImportWizard) viewMap(bw, _ int) string {
 	var b strings.Builder
 	for i, h := range w.headers {
 		label := h
-		if i == w.form.focus {
+		if i == w.form.Focus {
 			label = ui.FocusedStyle.Render(h)
 		}
-		fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.fields[i].View())
+		fmt.Fprintf(&b, "%*s : %s\n", colw, label, w.form.Fields[i].View())
 	}
 	b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 	return ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)

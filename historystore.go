@@ -10,7 +10,7 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
-	"github.com/marang/goemqutiti/internal/files"
+	"github.com/marang/emqutiti/internal/files"
 )
 
 // Message holds a timestamped MQTT message with optional payload text.

@@ -1,6 +1,6 @@
-# GoEmqutiti
+# Emqutiti
 
-GoEmqutiti is a polished MQTT client for the terminal built on
+Emqutiti is a polished MQTT client for the terminal built on
 [Bubble Tea](https://github.com/charmbracelet/bubbletea). Profiles live in
 `~/.emqutiti/config.toml` so you can switch brokers with a few key presses. The
 short demo below shows the app in action.
@@ -16,7 +16,7 @@ short demo below shows the app in action.
 ## Installation
 ### From Source
 ```bash
-go install github.com/marang/goemqutiti@latest
+go install github.com/marang/emqutiti@latest
 ```
 
 ### Arch Linux

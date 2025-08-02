@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 func TestNewConnectionFormEnvReadOnly(t *testing.T) {

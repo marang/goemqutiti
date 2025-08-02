@@ -7,7 +7,7 @@ import (
 
 	"github.com/dgraph-io/badger/v4"
 
-	"github.com/marang/goemqutiti/internal/files"
+	"github.com/marang/emqutiti/internal/files"
 )
 
 // openTracerStore opens the trace database for the profile.

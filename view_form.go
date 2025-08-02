@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // viewForm renders the add/edit broker form alongside the list.

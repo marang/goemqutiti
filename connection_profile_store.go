@@ -8,7 +8,7 @@ import (
 
 	"github.com/zalando/go-keyring"
 
-	"github.com/marang/goemqutiti/internal/files"
+	"github.com/marang/emqutiti/internal/files"
 )
 
 // saveConfig persists profiles and default selection to config.toml.

@@ -10,7 +10,7 @@ import (
 	"github.com/BurntSushi/toml"
 	"github.com/zalando/go-keyring"
 
-	"github.com/marang/goemqutiti/internal/files"
+	"github.com/marang/emqutiti/internal/files"
 )
 
 func TestProfileBrokerURL(t *testing.T) {

@@ -17,38 +17,7 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-// initialModel creates the main program model with optional connection data.
-func initialModel(conns *Connections) (*model, error) {
-	ti := textinput.New()
-	ti.Placeholder = "Enter Topic"
-	ti.Focus()
-	ti.CharLimit = 32
-	ti.Prompt = "> "
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
-	ti.Cursor.Style = ui.CursorStyle
-	ti.TextStyle = ui.FocusedStyle
-	// Defer width assignment until we know the terminal size
-	ti.Width = 0
-
-	ta := textarea.New()
-	ta.Placeholder = "Enter Message"
-	ta.CharLimit = 10000
-	ta.ShowLineNumbers = false
-	ta.SetPromptFunc(0, func(i int) string {
-		return fmt.Sprintf("%d> ", i+1)
-	})
-	promptColor := ui.ColGray
-	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
-	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
-	ta.Blur()
-	ta.Cursor.Style = ui.NoCursor
-	// Set width once the WindowSizeMsg arrives
-	ta.SetWidth(0)
-	ta.SetHeight(6)
-	ta.FocusedStyle.CursorLine = ui.FocusedStyle
-	ta.BlurredStyle.CursorLine = ui.BlurredStyle
-
+func initConnections(conns *Connections) (connectionsState, error) {
 	var connModel Connections
 	var loadErr error
 	if conns != nil {
@@ -71,21 +40,103 @@ func initialModel(conns *Connections) (*model, error) {
 		items = append(items, connectionItem{title: p.Name, status: connModel.Statuses[p.Name], detail: detail})
 	}
 	connModel.ConnectionsList.SetItems(items)
+	statusChan := make(chan string, 10)
+	saved := loadState()
+	cs := connectionsState{
+		connection:  "",
+		active:      "",
+		manager:     connModel,
+		form:        nil,
+		deleteIndex: 0,
+		statusChan:  statusChan,
+		saved:       saved,
+	}
+	return cs, loadErr
+}
 
+func initHistory() (historyState, historyDelegate) {
 	hDel := historyDelegate{}
 	hist := list.New([]list.Item{}, hDel, 0, 0)
 	hist.SetShowTitle(false)
 	hist.SetShowStatusBar(false)
 	hist.SetShowPagination(false)
 	hist.DisableQuitKeybindings()
-	statusChan := make(chan string, 10)
+	hs := historyState{
+		list:            hist,
+		items:           []historyItem{},
+		store:           nil,
+		selectionAnchor: -1,
+		detail:          viewport.New(0, 0),
+	}
+	if idx, err := openHistoryStore(""); err == nil {
+		hs.store = idx
+		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
+		var items []list.Item
+		hs.items, items = messagesToHistoryItems(msgs)
+		hs.list.SetItems(items)
+	}
+	return hs, hDel
+}
 
+func initTopics() topicsState {
+	ti := textinput.New()
+	ti.Placeholder = "Enter Topic"
+	ti.Focus()
+	ti.CharLimit = 32
+	ti.Prompt = "> "
+	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
+	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
+	ti.Cursor.Style = ui.CursorStyle
+	ti.TextStyle = ui.FocusedStyle
+	ti.Width = 0
 	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	topicsList.DisableQuitKeybindings()
 	topicsList.SetShowTitle(false)
+	ts := topicsState{
+		input: ti,
+		items: []topicItem{},
+		list:  topicsList,
+		panes: topicsPanes{
+			subscribed:   paneState{sel: 0, page: 0, index: 0},
+			unsubscribed: paneState{sel: 0, page: 0, index: 1},
+			active:       0,
+		},
+		selected:   -1,
+		chipBounds: []chipBound{},
+		vp:         viewport.New(0, 0),
+	}
+	return ts
+}
+
+func initMessage() messageState {
+	ta := textarea.New()
+	ta.Placeholder = "Enter Message"
+	ta.CharLimit = 10000
+	ta.ShowLineNumbers = false
+	ta.SetPromptFunc(0, func(i int) string {
+		return fmt.Sprintf("%d> ", i+1)
+	})
+	promptColor := ui.ColGray
+	ta.FocusedStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
+	ta.BlurredStyle.Prompt = lipgloss.NewStyle().Foreground(promptColor)
+	ta.Blur()
+	ta.Cursor.Style = ui.NoCursor
+	ta.SetWidth(0)
+	ta.SetHeight(6)
+	ta.FocusedStyle.CursorLine = ui.FocusedStyle
+	ta.BlurredStyle.CursorLine = ui.BlurredStyle
 	payloadList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	payloadList.DisableQuitKeybindings()
 	payloadList.SetShowTitle(false)
+	ms := messageState{
+		input:    ta,
+		payloads: []payloadItem{},
+		list:     payloadList,
+	}
+	return ms
+}
+
+func initTraces() (tracesState, traceMsgDelegate) {
 	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	traceList.DisableQuitKeybindings()
 	traceList.SetShowTitle(false)
@@ -93,10 +144,6 @@ func initialModel(conns *Connections) (*model, error) {
 	traceView := list.New([]list.Item{}, traceDel, 0, 0)
 	traceView.DisableQuitKeybindings()
 	traceView.SetShowTitle(false)
-	vp := viewport.New(0, 0)
-
-	order := append([]string(nil), focusByMode[modeClient]...)
-	saved := loadState()
 	tracesCfg := loadTraces()
 	var traceItems []list.Item
 	var traceData []*traceItem
@@ -111,66 +158,58 @@ func initialModel(conns *Connections) (*model, error) {
 		traceData = append(traceData, it)
 	}
 	traceList.SetItems(traceItems)
+	ts := tracesState{
+		list:  traceList,
+		items: traceData,
+		form:  nil,
+		view:  traceView,
+	}
+	return ts, traceDel
+}
 
+func initHelp() helpState {
+	return helpState{vp: viewport.New(0, 0)}
+}
+
+func initUI(order []string) uiState {
+	vp := viewport.New(0, 0)
+	return uiState{
+		focusIndex: 0,
+		modeStack:  []appMode{modeClient},
+		width:      0,
+		height:     0,
+		viewport:   vp,
+		elemPos:    map[string]int{},
+		focusOrder: order,
+	}
+}
+
+func initLayout() layoutConfig {
+	return layoutConfig{
+		message: boxConfig{height: 6},
+		history: boxConfig{height: 10},
+		topics:  boxConfig{height: 1},
+		trace:   boxConfig{height: 10},
+	}
+}
+
+// initialModel creates the main program model with optional connection data.
+func initialModel(conns *Connections) (*model, error) {
+	order := append([]string(nil), focusByMode[modeClient]...)
+	cs, loadErr := initConnections(conns)
+	hs, hDel := initHistory()
+	ts := initTopics()
+	ms := initMessage()
+	tr, traceDel := initTraces()
 	m := &model{
-		connections: connectionsState{
-			connection:  "",
-			active:      "",
-			manager:     connModel,
-			form:        nil,
-			deleteIndex: 0,
-			statusChan:  statusChan,
-			saved:       saved,
-		},
-		history: historyState{
-			list:            hist,
-			items:           []historyItem{},
-			store:           nil,
-			selectionAnchor: -1,
-			detail:          viewport.New(0, 0),
-		},
-		topics: topicsState{
-			input: ti,
-			items: []topicItem{},
-			list:  topicsList,
-			panes: topicsPanes{
-				subscribed:   paneState{sel: 0, page: 0, index: 0},
-				unsubscribed: paneState{sel: 0, page: 0, index: 1},
-				active:       0,
-			},
-			selected:   -1,
-			chipBounds: []chipBound{},
-			vp:         viewport.New(0, 0),
-		},
-		message: messageState{
-			input:    ta,
-			payloads: []payloadItem{},
-			list:     payloadList,
-		},
-		traces: tracesState{
-			list:  traceList,
-			items: traceData,
-			form:  nil,
-			view:  traceView,
-		},
-		help: helpState{
-			vp: viewport.New(0, 0),
-		},
-		ui: uiState{
-			focusIndex: 0,
-			modeStack:  []appMode{modeClient},
-			width:      0,
-			height:     0,
-			viewport:   vp,
-			elemPos:    map[string]int{},
-			focusOrder: order,
-		},
-		layout: layoutConfig{
-			message: boxConfig{height: 6},
-			history: boxConfig{height: 10},
-			topics:  boxConfig{height: 1},
-			trace:   boxConfig{height: 10},
-		},
+		connections: cs,
+		history:     hs,
+		topics:      ts,
+		message:     ms,
+		traces:      tr,
+		help:        initHelp(),
+		ui:          initUI(order),
+		layout:      initLayout(),
 	}
 	m.focusables = map[string]Focusable{
 		idTopics:         &nullFocusable{},
@@ -195,7 +234,6 @@ func initialModel(conns *Connections) (*model, error) {
 	m.history.list.SetDelegate(hDel)
 	traceDel.m = m
 	m.traces.view.SetDelegate(traceDel)
-
 	// Register mode components so that view and update logic can be
 	// delegated based on the current application mode.
 	m.components = map[appMode]Component{
@@ -218,13 +256,6 @@ func initialModel(conns *Connections) (*model, error) {
 			},
 			view: m.viewHelp,
 		},
-	}
-	if idx, err := openHistoryStore(""); err == nil {
-		m.history.store = idx
-		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
-		var items []list.Item
-		m.history.items, items = messagesToHistoryItems(msgs)
-		m.history.list.SetItems(items)
 	}
 
 	if importFile != "" {

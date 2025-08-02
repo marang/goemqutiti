@@ -28,9 +28,9 @@ func (m *model) updateHistoryFilter(msg tea.Msg) tea.Cmd {
 			topics, start, end, payload := parseHistoryQuery(q)
 			var msgs []Message
 			if m.history.showArchived {
-				msgs = m.history.store.SearchArchived(topics, start, end, payload)
+				msgs = m.history.store.Search(true, topics, start, end, payload)
 			} else {
-				msgs = m.history.store.Search(topics, start, end, payload)
+				msgs = m.history.store.Search(false, topics, start, end, payload)
 			}
 			var items []list.Item
 			m.history.items, items = messagesToHistoryItems(msgs)

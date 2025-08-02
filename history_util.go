@@ -29,9 +29,9 @@ func applyHistoryFilter(q string, store *HistoryStore, archived bool) ([]history
 	topics, start, end, payload := parseHistoryQuery(q)
 	var msgs []Message
 	if archived {
-		msgs = store.SearchArchived(topics, start, end, payload)
+		msgs = store.Search(true, topics, start, end, payload)
 	} else {
-		msgs = store.Search(topics, start, end, payload)
+		msgs = store.Search(false, topics, start, end, payload)
 	}
 	return messagesToHistoryItems(msgs)
 }

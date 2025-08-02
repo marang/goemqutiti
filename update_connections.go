@@ -28,7 +28,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 			}
 			if idx, err := openHistoryStore(msg.profile.Name); err == nil {
 				m.history.store = idx
-				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
+				msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 				m.history.items = nil
 				items := make([]list.Item, len(msgs))
 				for i, mmsg := range msgs {

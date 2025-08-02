@@ -71,7 +71,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case connectResult:
-		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
+		brokerURL := msg.profile.BrokerURL()
 		if msg.err != nil {
 			m.connections.manager.Statuses[msg.profile.Name] = "disconnected"
 			m.connections.manager.Errors[msg.profile.Name] = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
@@ -112,7 +112,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				if i >= 0 && i < len(m.connections.manager.Profiles) {
 					p := m.connections.manager.Profiles[i]
 					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
-						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+						brokerURL := p.BrokerURL()
 						m.connections.connection = "Connected to " + brokerURL
 						m.connections.manager.Errors[p.Name] = ""
 						m.refreshConnectionItems()
@@ -127,7 +127,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					}
 					m.connections.manager.Errors[p.Name] = ""
 					m.connections.manager.Statuses[p.Name] = "connecting"
-					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					brokerURL := p.BrokerURL()
 					m.connections.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
 					return m, connectBroker(p, m.connections.statusChan)
@@ -160,7 +160,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				p := m.connections.manager.Profiles[i]
 				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
-					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					brokerURL := p.BrokerURL()
 					m.connections.connection = "Connected to " + brokerURL
 					m.connections.manager.Errors[p.Name] = ""
 					m.refreshConnectionItems()
@@ -175,7 +175,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				}
 				m.connections.manager.Errors[p.Name] = ""
 				m.connections.manager.Statuses[p.Name] = "connecting"
-				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+				brokerURL := p.BrokerURL()
 				m.connections.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
 				return m, connectBroker(p, m.connections.statusChan)

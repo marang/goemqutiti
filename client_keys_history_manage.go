@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -47,7 +48,12 @@ func (m *model) handleArchiveKey() tea.Cmd {
 			if it.isSelected != nil && *it.isSelected {
 				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
 				if m.history.store != nil {
-					_ = m.history.store.Archive(key)
+					if err := m.history.store.Archive(key); err != nil {
+						msg := fmt.Sprintf("Failed to archive message: %v", err)
+						log.Println(msg)
+						m.appendHistory("", msg, "log", msg)
+						continue
+					}
 				}
 				m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
 				archived = true
@@ -59,9 +65,16 @@ func (m *model) handleArchiveKey() tea.Cmd {
 				it := m.history.items[idx]
 				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
 				if m.history.store != nil {
-					_ = m.history.store.Archive(key)
+					if err := m.history.store.Archive(key); err != nil {
+						msg := fmt.Sprintf("Failed to archive message: %v", err)
+						log.Println(msg)
+						m.appendHistory("", msg, "log", msg)
+					} else {
+						m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
+					}
+				} else {
+					m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
 				}
-				m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
 			}
 		}
 		items := make([]list.Item, len(m.history.items))
@@ -108,7 +121,12 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 			if it.isMarkedForDeletion != nil && *it.isMarkedForDeletion {
 				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
 				if m.history.store != nil {
-					_ = m.history.store.Delete(key)
+					if err := m.history.store.Delete(key); err != nil {
+						msg := fmt.Sprintf("Failed to delete message: %v", err)
+						log.Println(msg)
+						m.appendHistory("", msg, "log", msg)
+						continue
+					}
 				}
 				m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
 			}

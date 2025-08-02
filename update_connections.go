@@ -128,7 +128,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 			if i >= 0 {
 				name := m.connections.manager.Profiles[i].Name
 				info := "This also deletes history and traces"
-				m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+				m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, func() {
 					m.connections.manager.DeleteConnection(i)
 					m.connections.manager.refreshList()

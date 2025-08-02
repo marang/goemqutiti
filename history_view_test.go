@@ -233,10 +233,10 @@ func TestDeleteErrorFeedback(t *testing.T) {
 	_ = db.Close()
 	m.history.store = &HistoryStore{db: db}
 	m.handleDeleteHistoryKey()
-	if m.confirmAction == nil {
+	if m.confirm.action == nil {
 		t.Fatalf("confirmAction not set")
 	}
-	m.confirmAction()
+	m.confirm.action()
 	if len(m.history.items) != 2 {
 		t.Fatalf("expected original item plus error log, got %d items", len(m.history.items))
 	}

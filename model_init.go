@@ -207,6 +207,7 @@ func initialModel(conns *Connections) (*model, error) {
 		layout:      initLayout(),
 	}
 	m.help = newHelpComponent(m)
+	m.confirm = newConfirmComponent(m)
 	m.focusables = map[string]Focusable{
 		idTopics:         &nullFocusable{},
 		idTopic:          adapt(&m.topics.input),
@@ -236,7 +237,7 @@ func initialModel(conns *Connections) (*model, error) {
 		modeClient:         component{update: m.updateClient, view: m.viewClient},
 		modeConnections:    component{update: m.updateConnections, view: m.viewConnections},
 		modeEditConnection: component{update: m.updateForm, view: m.viewForm},
-		modeConfirmDelete:  component{update: m.updateConfirmDelete, view: m.viewConfirmDelete},
+		modeConfirmDelete:  m.confirm,
 		modeTopics:         component{update: m.updateTopics, view: m.viewTopics},
 		modePayloads:       component{update: m.updatePayloads, view: m.viewPayloads},
 		modeTracer:         component{update: m.updateTraces, view: m.viewTraces},

@@ -108,7 +108,7 @@ func (m *model) startTrace(index int) {
 	}
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
 	if err == nil && exists {
-		m.confirmReturnFocus = m.ui.focusOrder[m.ui.focusIndex]
+		m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
 		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", func() {
 			tracerClearData(item.cfg.Profile, item.key)
 			m.forceStartTrace(index)

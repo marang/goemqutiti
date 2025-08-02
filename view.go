@@ -28,34 +28,8 @@ func (m *model) overlayHelp(view string) string {
 
 // View renders the application UI based on the current mode.
 func (m *model) View() string {
-	switch m.currentMode() {
-	case modeClient:
-		return m.viewClient()
-	case modeConnections:
-		return m.viewConnections()
-	case modeEditConnection:
-		return m.viewForm()
-	case modeConfirmDelete:
-		return m.viewConfirmDelete()
-	case modeTopics:
-		return m.viewTopics()
-	case modePayloads:
-		return m.viewPayloads()
-	case modeTracer:
-		return m.viewTraces()
-	case modeEditTrace:
-		return m.viewTraceForm()
-	case modeViewTrace:
-		return m.viewTraceMessages()
-	case modeImporter:
-		return m.viewImporter()
-	case modeHistoryFilter:
-		return m.viewHistoryFilter()
-	case modeHistoryDetail:
-		return m.viewHistoryDetail()
-	case modeHelp:
-		return m.viewHelp()
-	default:
-		return ""
+	if c, ok := m.components[m.currentMode()]; ok {
+		return c.View()
 	}
+	return ""
 }

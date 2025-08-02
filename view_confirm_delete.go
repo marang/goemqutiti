@@ -7,7 +7,7 @@ import (
 )
 
 // viewConfirmDelete displays a confirmation dialog.
-func (m model) viewConfirmDelete() string {
+func (m *model) viewConfirmDelete() string {
 	m.ui.elemPos = map[string]int{}
 	content := m.confirmPrompt
 	if m.confirmInfo != "" {

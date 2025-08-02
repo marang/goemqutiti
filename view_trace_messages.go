@@ -8,7 +8,7 @@ import (
 )
 
 // viewTraceMessages shows captured messages for a trace.
-func (m model) viewTraceMessages() string {
+func (m *model) viewTraceMessages() string {
 	m.ui.elemPos = map[string]int{}
 	title := fmt.Sprintf("Trace %s", m.traces.viewKey)
 	listLines := strings.Split(m.traces.view.View(), "\n")

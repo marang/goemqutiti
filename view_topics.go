@@ -8,7 +8,7 @@ import (
 )
 
 // viewTopics displays the topic manager list.
-func (m model) viewTopics() string {
+func (m *model) viewTopics() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idTopicsEnabled] = 1
 	m.ui.elemPos[idTopicsDisabled] = 1

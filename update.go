@@ -107,48 +107,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	switch m.currentMode() {
-	case modeClient:
-		cmd := m.updateClient(msg)
+	if c, ok := m.components[m.currentMode()]; ok {
+		cmd := c.Update(msg)
 		return m, cmd
-	case modeConnections:
-		cmd := m.updateConnections(msg)
-		return m, cmd
-	case modeEditConnection:
-		cmd := m.updateForm(msg)
-		return m, cmd
-	case modeConfirmDelete:
-		cmd := m.updateConfirmDelete(msg)
-		return m, cmd
-	case modeTopics:
-		cmd := m.updateTopics(msg)
-		return m, cmd
-	case modePayloads:
-		cmd := m.updatePayloads(msg)
-		return m, cmd
-	case modeTracer:
-		cmd := m.updateTraces(msg)
-		return m, cmd
-	case modeEditTrace:
-		cmd := m.updateTraceForm(msg)
-		return m, cmd
-	case modeViewTrace:
-		cmd := m.updateTraceView(msg)
-		return m, cmd
-	case modeImporter:
-		cmd := m.updateImporter(msg)
-		return m, cmd
-	case modeHistoryFilter:
-		cmd := m.updateHistoryFilter(msg)
-		return m, cmd
-	case modeHistoryDetail:
-		cmd := m.updateHistoryDetail(msg)
-		return m, cmd
-	case modeHelp:
-		nm, cmd := m.updateHelp(msg)
-		*m = nm
-		return m, cmd
-	default:
-		return m, nil
 	}
+	return m, nil
 }

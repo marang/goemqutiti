@@ -9,7 +9,7 @@ import (
 )
 
 // viewHistoryDetail renders the full payload of a history message.
-func (m model) viewHistoryDetail() string {
+func (m *model) viewHistoryDetail() string {
 	m.ui.elemPos = map[string]int{}
 	lines := strings.Split(m.history.detail.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")

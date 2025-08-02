@@ -11,7 +11,7 @@ import (
 )
 
 type traceForm struct {
-	Form
+	ui.Form
 	errMsg string
 }
 
@@ -25,13 +25,13 @@ const (
 
 // newTraceForm builds a form for creating or editing a trace.
 func newTraceForm(profiles []string, current string, topics []string) traceForm {
-	keyField := newTextField("", "Key")
-	profileField := newSelectField(current, profiles)
-	topicsField := newTextField(strings.Join(topics, ","), "Topics")
-	startField := newTextField("", "2006-01-02T15:04:05Z")
-	endField := newTextField("", "2006-01-02T15:04:05Z")
-	fields := []formField{keyField, profileField, topicsField, startField, endField}
-	tf := traceForm{Form: Form{fields: fields, focus: 0}}
+	keyField := ui.NewTextField("", "Key")
+	profileField := ui.NewSelectField(current, profiles)
+	topicsField := ui.NewTextField(strings.Join(topics, ","), "Topics")
+	startField := ui.NewTextField("", "2006-01-02T15:04:05Z")
+	endField := ui.NewTextField("", "2006-01-02T15:04:05Z")
+	fields := []ui.Field{keyField, profileField, topicsField, startField, endField}
+	tf := traceForm{Form: ui.Form{Fields: fields, Focus: 0}}
 	tf.ApplyFocus()
 	return tf
 }
@@ -47,14 +47,14 @@ func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 		f.CycleFocus(m)
 	case tea.MouseMsg:
 		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-			if m.Y >= 1 && m.Y-1 < len(f.fields) {
-				f.focus = m.Y - 1
+			if m.Y >= 1 && m.Y-1 < len(f.Fields) {
+				f.Focus = m.Y - 1
 			}
 		}
 	}
 	f.ApplyFocus()
-	if len(f.fields) > 0 {
-		cmd = f.fields[f.focus].Update(msg)
+	if len(f.Fields) > 0 {
+		cmd = f.Fields[f.Focus].Update(msg)
 	}
 	return f, cmd
 }
@@ -63,9 +63,9 @@ func (f traceForm) Update(msg tea.Msg) (traceForm, tea.Cmd) {
 func (f traceForm) View() string {
 	labels := []string{"Key", "Profile", "Topics", "Start", "End"}
 	var b strings.Builder
-	for i, fld := range f.fields {
+	for i, fld := range f.Fields {
 		label := labels[i]
-		if i == f.focus {
+		if i == f.Focus {
 			label = ui.FocusedStyle.Render(label)
 		}
 		b.WriteString(label + ": " + fld.View() + "\n")
@@ -79,8 +79,8 @@ func (f traceForm) View() string {
 
 // Config returns the tracer configuration from the form values.
 func (f traceForm) Config() TracerConfig {
-	vals := make([]string, len(f.fields))
-	for i, fld := range f.fields {
+	vals := make([]string, len(f.Fields))
+	for i, fld := range f.Fields {
 		vals[i] = fld.Value()
 	}
 	cfg := TracerConfig{}

@@ -7,6 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 type traceTickMsg struct{}
@@ -111,13 +113,13 @@ func (m model) updateTraceForm(msg tea.Msg) (model, tea.Cmd) {
 			}
 			if cfg.Start.IsZero() {
 				cfg.Start = time.Now().Round(time.Second)
-				if tf, ok := m.traces.form.fields[idxTraceStart].(*textField); ok {
+				if tf, ok := m.traces.form.Fields[idxTraceStart].(*ui.TextField); ok {
 					tf.SetValue(cfg.Start.Format(time.RFC3339))
 				}
 			}
 			if cfg.End.IsZero() {
 				cfg.End = cfg.Start.Add(time.Hour)
-				if tf, ok := m.traces.form.fields[idxTraceEnd].(*textField); ok {
+				if tf, ok := m.traces.form.Fields[idxTraceEnd].(*ui.TextField); ok {
 					tf.SetValue(cfg.End.Format(time.RFC3339))
 				}
 			}

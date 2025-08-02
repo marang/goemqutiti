@@ -35,8 +35,10 @@ func (m *model) historyIndexAt(y int) int {
 }
 
 // startConfirm displays a confirmation dialog and runs the action on accept.
-func (m *model) startConfirm(prompt, info string, action func() tea.Cmd) {
-	m.confirm.start(prompt, info, action)
+func (m *model) startConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
+	m.confirm = newConfirmComponent(m, returnFocus, action, cancel)
+	m.confirm.start(prompt, info)
+	m.components[modeConfirmDelete] = m.confirm
 }
 
 // startHistoryFilter opens the history filter form.

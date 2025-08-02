@@ -10,26 +10,23 @@ import (
 type confirmComponent struct {
 	m *model
 
-	prompt string
-	info   string
-	action func() tea.Cmd
-	cancel func()
-
-	returnFocus string
+	prompt      string
+	info        string
+	action      func() tea.Cmd
+	cancel      func()
+	returnFocus func() tea.Cmd
 	focused     bool
 }
 
-func newConfirmComponent(nav navigator) *confirmComponent {
-	return &confirmComponent{m: nav.(*model)}
+func newConfirmComponent(nav navigator, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *confirmComponent {
+	return &confirmComponent{m: nav.(*model), returnFocus: returnFocus, action: action, cancel: cancel}
 }
 
 func (c *confirmComponent) Init() tea.Cmd { return nil }
 
-func (c *confirmComponent) start(prompt, info string, action func() tea.Cmd) {
+func (c *confirmComponent) start(prompt, info string) {
 	c.prompt = prompt
 	c.info = info
-	c.action = action
-	c.cancel = nil
 	_ = c.m.setMode(modeConfirmDelete)
 }
 
@@ -53,9 +50,9 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			if acmd != nil {
 				cmds = append(cmds, acmd)
 			}
-			if c.returnFocus != "" {
-				cmds = append(cmds, c.m.setFocus(c.returnFocus))
-				c.returnFocus = ""
+			if c.returnFocus != nil {
+				cmds = append(cmds, c.returnFocus())
+				c.returnFocus = nil
 			} else {
 				c.m.scrollToFocused()
 			}
@@ -67,9 +64,9 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			}
 			cmd := c.m.setMode(c.m.previousMode())
 			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
-			if c.returnFocus != "" {
-				cmds = append(cmds, c.m.setFocus(c.returnFocus))
-				c.returnFocus = ""
+			if c.returnFocus != nil {
+				cmds = append(cmds, c.returnFocus())
+				c.returnFocus = nil
 			} else {
 				c.m.scrollToFocused()
 			}

@@ -65,13 +65,13 @@ func (m *model) handleEnterKey() tea.Cmd {
 func (m *model) handleDeleteTopicKey() tea.Cmd {
 	idx := m.topics.selected
 	name := m.topics.items[idx].title
-	m.confirm.returnFocus = m.ui.focusOrder[m.ui.focusIndex]
-	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", func() tea.Cmd {
+	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 		cmd := m.removeTopic(idx)
 		if m.currentMode() == modeTopics {
 			m.rebuildActiveTopicList()
 		}
 		return cmd
-	})
+	}, nil)
 	return nil
 }

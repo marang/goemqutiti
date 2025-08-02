@@ -202,7 +202,7 @@ func initialModel(conns *Connections) (*model, error) {
 		layout:      initLayout(),
 	}
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
-	m.confirm = newConfirmComponent(m)
+	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m)
 	topicsComp := newTopicsComponent(m)
 	m.payloads = newPayloadsComponent(m)
@@ -210,7 +210,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.topics.panes.unsubscribed.m = m
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, m.help}
+	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {

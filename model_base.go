@@ -1,4 +1,4 @@
-package main
+package emqutiti
 
 const (
 	idTopics         = "topics"          // topics chip list

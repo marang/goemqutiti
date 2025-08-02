@@ -2,8 +2,9 @@ package emqutiti
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// Navigator defines minimal navigation features for components.
-type Navigator interface {
-	setMode(appMode) tea.Cmd
-	previousMode() appMode
+type navigator interface {
+	SetMode(appMode) tea.Cmd
+	PreviousMode() appMode
+	Width() int
+	Height() int
 }

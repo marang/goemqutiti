@@ -34,7 +34,7 @@ func (h *helpComponent) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch t.String() {
 		case "esc":
-			return h.nav.setMode(h.nav.previousMode())
+			return h.nav.SetMode(h.nav.PreviousMode())
 		case "ctrl+d":
 			return tea.Quit
 		}

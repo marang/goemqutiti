@@ -10,10 +10,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /root/.cargo/registry /root/.cargo/git && \
     apt-get clean
 
-# Build goemqutiti
+# Build emqutiti
 WORKDIR /app
 COPY . .
-RUN go build -o goemqutiti .
+RUN go build -o emqutiti .
 
 # Prepare default config
 # RUN mkdir -p /root/.emqutiti && \
@@ -25,7 +25,7 @@ RUN go build -o goemqutiti .
 #     '  schema = "tcp"' \
 #     '  host = "broker.hivemq.com"' \
 #     '  port = 1883' \
-#     '  client_id = "goemqutiti-client"' \
+#     '  client_id = "emqutiti-client"' \
 #     '  ssl_tls = true' \
 #     '  mqtt_version = "3"' \
 #     '  clean_start = false' \

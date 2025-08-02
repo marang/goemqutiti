@@ -40,7 +40,6 @@ app.log
 
 # Ignore built binary
 emqutiti
-goemqutiti
 
 # generated files
 docs/*.cast

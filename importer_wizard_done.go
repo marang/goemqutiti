@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // updateDone handles the final step once publishing is complete.

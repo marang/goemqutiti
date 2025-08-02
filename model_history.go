@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 type historyItem struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // viewTraceMessages shows captured messages for a trace.

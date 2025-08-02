@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // viewTopics displays the topic manager list.

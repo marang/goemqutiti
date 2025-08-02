@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // viewTraceForm renders the form for new traces.

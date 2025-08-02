@@ -1,6 +1,6 @@
 # Project Roadmap
 
-This file tracks planned improvements for GoEmqutiti.
+This file tracks planned improvements for Emqutiti.
 
 ## UI
 - [x] Split view logic into multiple files for easier maintenance

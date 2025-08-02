@@ -8,7 +8,7 @@ set timeout 60
 set env(HOME) "/root"
 set ::env(TERM) "xterm"    ;# or "dumb" to completely suppress fancy term features
 
-spawn ./goemqutiti -p HiveMQ
+spawn ./emqutiti -p HiveMQ
 
 # Wait for broker list and select HiveMQ
 expect {

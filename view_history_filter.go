@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/goemqutiti/ui"
+	"github.com/marang/emqutiti/ui"
 )
 
 // viewHistoryFilter displays the history filter form.

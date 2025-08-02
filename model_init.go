@@ -202,11 +202,9 @@ func initialModel(conns *Connections) (*model, error) {
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
-	topicsComp := newTopicsComponent(m)
+	topicsComp := newTopicsComponent(m.topicsAPI())
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
-	m.topics.panes.subscribed.m = m
-	m.topics.panes.unsubscribed.m = m
 
 	// Collect focusable elements from model and components.
 	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, m.help, m.confirm}

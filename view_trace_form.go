@@ -1,4 +1,4 @@
-package main
+package emqutiti
 
 import (
 	"github.com/marang/emqutiti/ui"

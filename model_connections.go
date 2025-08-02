@@ -1,4 +1,4 @@
-package main
+package emqutiti
 
 type connectionItem struct {
 	title  string

@@ -1,4 +1,4 @@
-package main
+package emqutiti
 
 import (
 	"flag"
@@ -32,9 +32,9 @@ func init() {
 	flag.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
 }
 
-// main parses flags, sets up logging, and launches the UI or other modes.
+// Main parses flags, sets up logging, and launches the UI or other modes.
 
-func main() {
+func Main() {
 	flag.Parse()
 
 	if traceKey != "" {

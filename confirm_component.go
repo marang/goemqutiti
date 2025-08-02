@@ -19,8 +19,8 @@ type confirmComponent struct {
 	focused     bool
 }
 
-func newConfirmComponent(m *model) *confirmComponent {
-	return &confirmComponent{m: m}
+func newConfirmComponent(nav navigator) *confirmComponent {
+	return &confirmComponent{m: nav.(*model)}
 }
 
 func (c *confirmComponent) Init() tea.Cmd { return nil }

@@ -90,7 +90,9 @@ func (c *connectionsState) FlushStatus() { flushStatus(c.statusChan) }
 // connectionsComponent implements the Component interface for managing brokers.
 type connectionsComponent struct{ m *model }
 
-func newConnectionsComponent(m *model) *connectionsComponent { return &connectionsComponent{m: m} }
+func newConnectionsComponent(nav navigator) *connectionsComponent {
+	return &connectionsComponent{m: nav.(*model)}
+}
 
 func (c *connectionsComponent) Init() tea.Cmd { return nil }
 

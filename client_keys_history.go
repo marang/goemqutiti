@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
@@ -83,4 +84,23 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	}
 	m.history.list.SetItems(items)
 	return nil
+}
+
+// handleHistoryViewKey opens a detail view for long history payloads.
+func (m *model) handleHistoryViewKey() tea.Cmd {
+	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
+		return nil
+	}
+	idx := m.history.list.Index()
+	if idx < 0 || idx >= len(m.history.list.Items()) {
+		return nil
+	}
+	hi := m.history.list.Items()[idx].(historyItem)
+	if utf8.RuneCountInString(hi.payload) <= historyPreviewLimit {
+		return nil
+	}
+	m.history.detailItem = hi
+	m.history.detail.SetContent(hi.payload)
+	m.history.detail.SetYOffset(0)
+	return m.setMode(modeHistoryDetail)
 }

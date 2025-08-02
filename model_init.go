@@ -126,6 +126,7 @@ func initialModel(conns *Connections) (*model, error) {
 			items:           []historyItem{},
 			store:           nil,
 			selectionAnchor: -1,
+			detail:          viewport.New(0, 0),
 		},
 		topics: topicsState{
 			input: ti,

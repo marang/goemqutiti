@@ -117,3 +117,11 @@ func (c *topicsComponent) View() string {
 func (c *topicsComponent) Focus() tea.Cmd { return nil }
 
 func (c *topicsComponent) Blur() {}
+
+// Focusables exposes focusable elements for the topics component.
+func (c *topicsComponent) Focusables() map[string]Focusable {
+	return map[string]Focusable{
+		idTopicsEnabled:  &c.m.topics.panes.subscribed,
+		idTopicsDisabled: &c.m.topics.panes.unsubscribed,
+	}
+}

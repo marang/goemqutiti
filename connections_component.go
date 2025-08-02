@@ -253,3 +253,8 @@ func (c *connectionsComponent) Focus() tea.Cmd {
 
 // Blur marks the component as blurred.
 func (c *connectionsComponent) Blur() { c.m.connections.manager.Focused = false }
+
+// Focusables exposes focusable elements for the connections component.
+func (c *connectionsComponent) Focusables() map[string]Focusable {
+	return map[string]Focusable{idConnList: &nullFocusable{}}
+}

@@ -94,3 +94,6 @@ func (c *confirmComponent) Focus() tea.Cmd {
 func (c *confirmComponent) Blur() { c.focused = false }
 
 func (c *confirmComponent) Focused() bool { return c.focused }
+
+// Focusables exposes focusable elements for the confirm component.
+func (c *confirmComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }

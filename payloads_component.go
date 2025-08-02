@@ -76,6 +76,11 @@ func (p *payloadsComponent) Focus() tea.Cmd { return nil }
 
 func (p *payloadsComponent) Blur() {}
 
+// Focusables exposes focusable elements for the payloads component.
+func (p *payloadsComponent) Focusables() map[string]Focusable {
+	return map[string]Focusable{idPayloadList: &nullFocusable{}}
+}
+
 func (p *payloadsComponent) Add(topic, payload string) {
 	pi := payloadItem{topic: topic, payload: payload}
 	p.items = append(p.items, pi)

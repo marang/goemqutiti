@@ -10,6 +10,11 @@ type Focusable interface {
 	View() string
 }
 
+// FocusableSet exposes a collection of focusable elements.
+type FocusableSet interface {
+	Focusables() map[string]Focusable
+}
+
 type teaFocusable interface {
 	Focus() tea.Cmd
 	Blur()

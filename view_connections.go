@@ -7,7 +7,7 @@ import (
 )
 
 // viewConnections shows the list of saved broker profiles.
-func (m model) viewConnections() string {
+func (m *model) viewConnections() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idConnList] = 1
 	listView := m.connections.manager.ConnectionsList.View()

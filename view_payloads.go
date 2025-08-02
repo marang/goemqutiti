@@ -7,7 +7,7 @@ import (
 )
 
 // viewPayloads shows stored payloads for reuse.
-func (m model) viewPayloads() string {
+func (m *model) viewPayloads() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idPayloadList] = 1
 	listView := m.message.list.View()

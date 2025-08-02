@@ -7,7 +7,7 @@ import (
 )
 
 // viewForm renders the add/edit broker form alongside the list.
-func (m model) viewForm() string {
+func (m *model) viewForm() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idConnList] = 1
 	if m.connections.form == nil {

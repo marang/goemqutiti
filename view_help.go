@@ -6,7 +6,7 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-func (m model) viewHelp() string {
+func (m *model) viewHelp() string {
 	m.ui.elemPos = map[string]int{}
 	m.help.vp.SetContent(helpText)
 	content := m.help.vp.View()

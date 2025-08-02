@@ -7,7 +7,7 @@ import (
 )
 
 // viewTraces lists configured traces and their state.
-func (m model) viewTraces() string {
+func (m *model) viewTraces() string {
 	m.ui.elemPos = map[string]int{}
 	m.ui.elemPos[idTraceList] = 1
 	listView := m.traces.list.View()

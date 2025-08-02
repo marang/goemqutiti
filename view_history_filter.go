@@ -7,7 +7,7 @@ import (
 )
 
 // viewHistoryFilter displays the history filter form.
-func (m model) viewHistoryFilter() string {
+func (m *model) viewHistoryFilter() string {
 	m.ui.elemPos = map[string]int{}
 	if m.history.filterForm == nil {
 		return ""

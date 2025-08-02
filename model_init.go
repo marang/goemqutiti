@@ -201,7 +201,7 @@ func initialModel(conns *Connections) (*model, error) {
 		ui:          initUI(order),
 		layout:      initLayout(),
 	}
-	m.help = newHelpComponent(m)
+	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m)
 	connComp := newConnectionsComponent(m)
 	topicsComp := newTopicsComponent(m)

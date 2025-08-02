@@ -9,15 +9,21 @@ import (
 )
 
 type helpComponent struct {
-	nav     navigator
+	nav     Navigator
+	width   *int
+	height  *int
+	elemPos *map[string]int
 	vp      viewport.Model
 	focused bool
 }
 
-func newHelpComponent(nav navigator) *helpComponent {
+func newHelpComponent(nav Navigator, width, height *int, elemPos *map[string]int) *helpComponent {
 	return &helpComponent{
-		nav: nav,
-		vp:  viewport.New(0, 0),
+		nav:     nav,
+		width:   width,
+		height:  height,
+		elemPos: elemPos,
+		vp:      viewport.New(0, 0),
 	}
 }
 
@@ -39,13 +45,14 @@ func (h *helpComponent) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (h *helpComponent) View() string {
+	*h.elemPos = map[string]int{}
 	h.vp.SetContent(helpText)
 	content := h.vp.View()
 	sp := -1.0
 	if h.vp.Height < lipgloss.Height(content) {
 		sp = h.vp.ScrollPercent()
 	}
-	return ui.LegendBox(content, "Help", h.nav.Width()-2, h.nav.Height()-2, ui.ColGreen, true, sp)
+	return ui.LegendBox(content, "Help", *h.width-2, *h.height-2, ui.ColGreen, true, sp)
 }
 
 func (h *helpComponent) Focus() tea.Cmd {

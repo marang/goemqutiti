@@ -37,7 +37,7 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 	m.mqttClient = &MQTTClient{}
 	m.connections.connection = "test"
 	m.connections.active = "test"
-	m.connections.manager.Statuses["test"] = "connected"
+	m.connections.SetConnected("test")
 	m.connections.manager.Errors["test"] = "boom"
 
 	m.handleClientKey(tea.KeyMsg{Type: tea.KeyCtrlX})

@@ -7,17 +7,87 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/marang/emqutiti/ui"
 )
 
-// updateConnections processes input when the connections view is active.
-func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
+// connectionItem represents a single broker profile in the list.
+type connectionItem struct {
+	title  string
+	status string
+	detail string
+}
+
+func (c connectionItem) FilterValue() string { return c.title }
+func (c connectionItem) Title() string       { return c.title }
+func (c connectionItem) Description() string {
+	if c.detail != "" {
+		return c.status + "\n" + c.detail
+	}
+	return c.status
+}
+
+// connectionData stores topics and payloads for a connection.
+type connectionData struct {
+	Topics   []topicItem
+	Payloads []payloadItem
+}
+
+// connectionsState holds connection related state shared across components.
+type connectionsState struct {
+	connection  string
+	active      string
+	manager     Connections
+	form        *connectionForm
+	deleteIndex int
+	statusChan  chan string
+	saved       map[string]connectionData
+}
+
+// ConnectionStatusManager exposes methods to update connection status information.
+type ConnectionStatusManager interface {
+	SetConnecting(name string)
+	SetConnected(name string)
+	SetDisconnected(name, detail string)
+}
+
+var _ ConnectionStatusManager = (*connectionsState)(nil)
+
+// SetConnecting marks the named connection as in progress.
+func (c *connectionsState) SetConnecting(name string) {
+	c.manager.Statuses[name] = "connecting"
+	c.manager.Errors[name] = ""
+}
+
+// SetConnected marks the named connection as connected.
+func (c *connectionsState) SetConnected(name string) {
+	c.manager.Statuses[name] = "connected"
+	c.manager.Errors[name] = ""
+}
+
+// SetDisconnected marks the named connection as disconnected with an optional detail.
+func (c *connectionsState) SetDisconnected(name, detail string) {
+	c.manager.Statuses[name] = "disconnected"
+	c.manager.Errors[name] = detail
+}
+
+// connectionsComponent implements the Component interface for managing brokers.
+type connectionsComponent struct{ m *model }
+
+func newConnectionsComponent(m *model) *connectionsComponent { return &connectionsComponent{m: m} }
+
+func (c *connectionsComponent) Init() tea.Cmd { return nil }
+
+// Update processes input when the connections view is active.
+func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
+	m := c.m
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case connectResult:
 		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
 		if msg.err != nil {
-			m.connections.manager.Statuses[msg.profile.Name] = "disconnected"
-			m.connections.manager.Errors[msg.profile.Name] = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
+			m.connections.SetDisconnected(msg.profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
 			m.connections.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
 			m.refreshConnectionItems()
 		} else {
@@ -40,8 +110,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 			m.restoreState(msg.profile.Name)
 			m.subscribeActiveTopics()
 			m.connections.connection = "Connected to " + brokerURL
-			m.connections.manager.Statuses[msg.profile.Name] = "connected"
-			m.connections.manager.Errors[msg.profile.Name] = ""
+			m.connections.SetConnected(msg.profile.Name)
 			m.refreshConnectionItems()
 			cmd := m.setMode(modeClient)
 			return tea.Batch(cmd, listenStatus(m.connections.statusChan))
@@ -57,7 +126,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 						m.connections.connection = "Connected to " + brokerURL
-						m.connections.manager.Errors[p.Name] = ""
+						m.connections.SetConnected(p.Name)
 						m.refreshConnectionItems()
 						cmd := m.setMode(modeClient)
 						return cmd
@@ -68,8 +137,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 					} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 						p.Password = env
 					}
-					m.connections.manager.Errors[p.Name] = ""
-					m.connections.manager.Statuses[p.Name] = "connecting"
+					m.connections.SetConnecting(p.Name)
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connections.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
@@ -105,7 +173,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connections.connection = "Connected to " + brokerURL
-					m.connections.manager.Errors[p.Name] = ""
+					m.connections.SetConnected(p.Name)
 					m.refreshConnectionItems()
 					cmd := m.setMode(modeClient)
 					return cmd
@@ -116,8 +184,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 				} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 					p.Password = env
 				}
-				m.connections.manager.Errors[p.Name] = ""
-				m.connections.manager.Statuses[p.Name] = "connecting"
+				m.connections.SetConnecting(p.Name)
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 				m.connections.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
@@ -139,8 +206,7 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 		case "x":
 			if m.mqttClient != nil {
 				m.mqttClient.Disconnect()
-				m.connections.manager.Statuses[m.connections.active] = "disconnected"
-				m.connections.manager.Errors[m.connections.active] = ""
+				m.connections.SetDisconnected(m.connections.active, "")
 				m.refreshConnectionItems()
 				m.connections.connection = ""
 				m.connections.active = ""
@@ -151,3 +217,24 @@ func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 	m.connections.manager.ConnectionsList, cmd = m.connections.manager.ConnectionsList.Update(msg)
 	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }
+
+// View renders the connections UI component.
+func (c *connectionsComponent) View() string {
+	m := c.m
+	m.ui.elemPos = map[string]int{}
+	m.ui.elemPos[idConnList] = 1
+	listView := m.connections.manager.ConnectionsList.View()
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+R traces")
+	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
+	view := ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
+	return m.overlayHelp(view)
+}
+
+// Focus marks the component as focused.
+func (c *connectionsComponent) Focus() tea.Cmd {
+	c.m.connections.manager.Focused = true
+	return nil
+}
+
+// Blur marks the component as blurred.
+func (c *connectionsComponent) Blur() { c.m.connections.manager.Focused = false }

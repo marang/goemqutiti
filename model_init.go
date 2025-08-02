@@ -208,6 +208,7 @@ func initialModel(conns *Connections) (*model, error) {
 	}
 	m.help = newHelpComponent(m)
 	m.confirm = newConfirmComponent(m)
+	connComp := newConnectionsComponent(m)
 	m.focusables = map[string]Focusable{
 		idTopics:         &nullFocusable{},
 		idTopic:          adapt(&m.topics.input),
@@ -235,7 +236,7 @@ func initialModel(conns *Connections) (*model, error) {
 	// delegated based on the current application mode.
 	m.components = map[appMode]Component{
 		modeClient:         component{update: m.updateClient, view: m.viewClient},
-		modeConnections:    component{update: m.updateConnections, view: m.viewConnections},
+		modeConnections:    connComp,
 		modeEditConnection: component{update: m.updateForm, view: m.viewForm},
 		modeConfirmDelete:  m.confirm,
 		modeTopics:         component{update: m.updateTopics, view: m.viewTopics},

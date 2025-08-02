@@ -14,11 +14,11 @@ import (
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 	m.appendHistory("", string(msg), "log", string(msg))
 	if strings.HasPrefix(string(msg), "Connected") && m.connections.active != "" {
-		m.connections.manager.Statuses[m.connections.active] = "connected"
+		m.connections.SetConnected(m.connections.active)
 		m.refreshConnectionItems()
 		m.subscribeActiveTopics()
 	} else if strings.HasPrefix(string(msg), "Connection lost") && m.connections.active != "" {
-		m.connections.manager.Statuses[m.connections.active] = "disconnected"
+		m.connections.SetDisconnected(m.connections.active, "")
 		m.refreshConnectionItems()
 	}
 	return listenStatus(m.connections.statusChan)

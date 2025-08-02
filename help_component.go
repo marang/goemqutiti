@@ -9,15 +9,15 @@ import (
 )
 
 type helpComponent struct {
-	m       *model
+	nav     navigator
 	vp      viewport.Model
 	focused bool
 }
 
-func newHelpComponent(m *model) *helpComponent {
+func newHelpComponent(nav navigator) *helpComponent {
 	return &helpComponent{
-		m:  m,
-		vp: viewport.New(0, 0),
+		nav: nav,
+		vp:  viewport.New(0, 0),
 	}
 }
 
@@ -28,7 +28,7 @@ func (h *helpComponent) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch t.String() {
 		case "esc":
-			return h.m.setMode(h.m.previousMode())
+			return h.nav.SetMode(h.nav.PreviousMode())
 		case "ctrl+d":
 			return tea.Quit
 		}
@@ -39,14 +39,13 @@ func (h *helpComponent) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (h *helpComponent) View() string {
-	h.m.ui.elemPos = map[string]int{}
 	h.vp.SetContent(helpText)
 	content := h.vp.View()
 	sp := -1.0
 	if h.vp.Height < lipgloss.Height(content) {
 		sp = h.vp.ScrollPercent()
 	}
-	return ui.LegendBox(content, "Help", h.m.ui.width-2, h.m.ui.height-2, ui.ColGreen, true, sp)
+	return ui.LegendBox(content, "Help", h.nav.Width()-2, h.nav.Height()-2, ui.ColGreen, true, sp)
 }
 
 func (h *helpComponent) Focus() tea.Cmd {

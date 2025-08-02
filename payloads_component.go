@@ -14,11 +14,11 @@ type payloadsComponent struct {
 	list  list.Model
 }
 
-func newPayloadsComponent(m *model) *payloadsComponent {
+func newPayloadsComponent(nav navigator) *payloadsComponent {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.DisableQuitKeybindings()
 	l.SetShowTitle(false)
-	return &payloadsComponent{m: m, list: l}
+	return &payloadsComponent{m: nav.(*model), list: l}
 }
 
 func (p *payloadsComponent) Init() tea.Cmd { return nil }

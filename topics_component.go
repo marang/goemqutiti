@@ -28,7 +28,7 @@ func (t *topicsState) setTopic(topic string) { t.input.SetValue(topic) }
 // topicsComponent implements the Component interface for topic management.
 type topicsComponent struct{ m *model }
 
-func newTopicsComponent(m *model) *topicsComponent { return &topicsComponent{m: m} }
+func newTopicsComponent(nav navigator) *topicsComponent { return &topicsComponent{m: nav.(*model)} }
 
 func (c *topicsComponent) Init() tea.Cmd { return nil }
 

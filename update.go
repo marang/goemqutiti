@@ -60,8 +60,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "tab":
 			if m.currentMode() == modeHistoryFilter {
-				nm, cmd := m.updateHistoryFilter(msg)
-				*m = nm
+				cmd := m.updateHistoryFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {
@@ -81,8 +80,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "shift+tab":
 			if m.currentMode() == modeHistoryFilter {
-				nm, cmd := m.updateHistoryFilter(msg)
-				*m = nm
+				cmd := m.updateHistoryFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {
@@ -114,48 +112,37 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd := m.updateClient(msg)
 		return m, cmd
 	case modeConnections:
-		nm, cmd := m.updateConnections(msg)
-		*m = nm
+		cmd := m.updateConnections(msg)
 		return m, cmd
 	case modeEditConnection:
-		nm, cmd := m.updateForm(msg)
-		*m = nm
+		cmd := m.updateForm(msg)
 		return m, cmd
 	case modeConfirmDelete:
-		nm, cmd := m.updateConfirmDelete(msg)
-		*m = nm
+		cmd := m.updateConfirmDelete(msg)
 		return m, cmd
 	case modeTopics:
-		nm, cmd := m.updateTopics(msg)
-		*m = nm
+		cmd := m.updateTopics(msg)
 		return m, cmd
 	case modePayloads:
-		nm, cmd := m.updatePayloads(msg)
-		*m = nm
+		cmd := m.updatePayloads(msg)
 		return m, cmd
 	case modeTracer:
-		nm, cmd := m.updateTraces(msg)
-		*m = nm
+		cmd := m.updateTraces(msg)
 		return m, cmd
 	case modeEditTrace:
-		nm, cmd := m.updateTraceForm(msg)
-		*m = nm
+		cmd := m.updateTraceForm(msg)
 		return m, cmd
 	case modeViewTrace:
-		nm, cmd := m.updateTraceView(msg)
-		*m = nm
+		cmd := m.updateTraceView(msg)
 		return m, cmd
 	case modeImporter:
-		nm, cmd := m.updateImporter(msg)
-		*m = nm
+		cmd := m.updateImporter(msg)
 		return m, cmd
 	case modeHistoryFilter:
-		nm, cmd := m.updateHistoryFilter(msg)
-		*m = nm
+		cmd := m.updateHistoryFilter(msg)
 		return m, cmd
 	case modeHistoryDetail:
-		nm, cmd := m.updateHistoryDetail(msg)
-		*m = nm
+		cmd := m.updateHistoryDetail(msg)
 		return m, cmd
 	case modeHelp:
 		nm, cmd := m.updateHelp(msg)

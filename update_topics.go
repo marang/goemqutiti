@@ -7,16 +7,16 @@ import (
 )
 
 // updateTopics manages the topics list UI.
-func (m *model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateTopics(msg tea.Msg) tea.Cmd {
 	var cmd, fcmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return *m, tea.Quit
+			return tea.Quit
 		case "esc":
 			cmd := m.setMode(modeClient)
-			return *m, cmd
+			return cmd
 		case "left":
 			if m.topics.panes.active == 1 {
 				fcmd = m.setFocus(idTopicsEnabled)
@@ -34,7 +34,7 @@ func (m *model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 					m.removeTopic(i)
 					m.rebuildActiveTopicList()
 				})
-				return *m, listenStatus(m.connections.statusChan)
+				return listenStatus(m.connections.statusChan)
 			}
 		case "enter", " ":
 			i := m.topics.selected
@@ -53,5 +53,5 @@ func (m *model) updateTopics(msg tea.Msg) (model, tea.Cmd) {
 		m.topics.panes.unsubscribed.page = m.topics.list.Paginator.Page
 	}
 	m.topics.selected = m.indexForPane(m.topics.panes.active, m.topics.list.Index())
-	return *m, tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(fcmd, cmd, listenStatus(m.connections.statusChan))
 }

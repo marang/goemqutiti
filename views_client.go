@@ -3,12 +3,47 @@ package main
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/marang/goemqutiti/ui"
 )
+
+// layoutChips lays out chips horizontally wrapping within width.
+func layoutChips(chips []string, width int) ([]string, []chipBound) {
+	var lines []string
+	var row []string
+	var bounds []chipBound
+	curX := 0
+	rowTop := 0
+	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	// Each chip is exactly chipH lines tall. Newlines inserted between rows
+	// simply stack the rows without extra blank lines, so the vertical offset
+	// for the next row increases by chipH.
+	rowSpacing := chipH
+	for _, c := range chips {
+		cw := lipgloss.Width(c)
+		if curX+cw > width && len(row) > 0 {
+			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+			line = strings.TrimRightFunc(line, unicode.IsSpace)
+			lines = append(lines, line)
+			row = []string{}
+			curX = 0
+			rowTop += rowSpacing
+		}
+		row = append(row, c)
+		bounds = append(bounds, chipBound{xPos: curX, yPos: rowTop, width: cw, height: chipH})
+		curX += cw
+	}
+	if len(row) > 0 {
+		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		lines = append(lines, line)
+	}
+	return lines, bounds
+}
 
 // clientInfoLine renders the connection status and keyboard shortcuts.
 func (m *model) clientInfoLine() string {

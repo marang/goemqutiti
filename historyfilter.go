@@ -7,6 +7,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 const (
@@ -18,40 +20,40 @@ const (
 
 // historyFilterForm captures filter inputs for history searches.
 type historyFilterForm struct {
-	Form
-	topic   *suggestField
-	payload *textField
-	start   *textField
-	end     *textField
+	ui.Form
+	topic   *ui.SuggestField
+	payload *ui.TextField
+	start   *ui.TextField
+	end     *ui.TextField
 }
 
 // newHistoryFilterForm builds a form with optional prefilled values.
 // Start and end remain blank when zero, allowing searches across all time.
 func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
 	sort.Strings(topics)
-	tf := newSuggestField(topics, "topic")
+	tf := ui.NewSuggestField(topics, "topic")
 	tf.SetValue(topic)
 
-	pf := newTextField("", "text contains")
+	pf := ui.NewTextField("", "text contains")
 	pf.SetValue(payload)
 
-	sf := newTextField("", "start (RFC3339)")
+	sf := ui.NewTextField("", "start (RFC3339)")
 	if !start.IsZero() {
 		sf.SetValue(start.Format(time.RFC3339))
 	}
 
-	ef := newTextField("", "end (RFC3339)")
+	ef := ui.NewTextField("", "end (RFC3339)")
 	if !end.IsZero() {
 		ef.SetValue(end.Format(time.RFC3339))
 	}
 
 	f := historyFilterForm{
+		Form:    ui.Form{Fields: []ui.Field{tf, pf, sf, ef}},
 		topic:   tf,
 		payload: pf,
 		start:   sf,
 		end:     ef,
 	}
-	f.fields = []formField{tf, pf, sf, ef}
 	f.ApplyFocus()
 	return f
 }
@@ -61,22 +63,22 @@ func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	var cmd tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
-		if c, ok := f.fields[f.focus].(keyConsumer); ok && c.WantsKey(m) {
-			cmd = f.fields[f.focus].Update(msg)
+		if c, ok := f.Fields[f.Focus].(ui.KeyConsumer); ok && c.WantsKey(m) {
+			cmd = f.Fields[f.Focus].Update(msg)
 		} else {
 			f.CycleFocus(m)
-			if len(f.fields) > 0 {
-				cmd = f.fields[f.focus].Update(msg)
+			if len(f.Fields) > 0 {
+				cmd = f.Fields[f.Focus].Update(msg)
 			}
 		}
 	case tea.MouseMsg:
 		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-			if m.Y >= 1 && m.Y-1 < len(f.fields) {
-				f.focus = m.Y - 1
+			if m.Y >= 1 && m.Y-1 < len(f.Fields) {
+				f.Focus = m.Y - 1
 			}
 		}
-		if len(f.fields) > 0 {
-			cmd = f.fields[f.focus].Update(msg)
+		if len(f.Fields) > 0 {
+			cmd = f.Fields[f.Focus].Update(msg)
 		}
 	}
 	f.ApplyFocus()

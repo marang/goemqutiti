@@ -71,9 +71,9 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	m.history.list.SetFilterState(list.Unfiltered)
 	var msgs []Message
 	if m.history.showArchived {
-		msgs = m.history.store.SearchArchived(nil, time.Time{}, time.Time{}, "")
+		msgs = m.history.store.Search(true, nil, time.Time{}, time.Time{}, "")
 	} else {
-		msgs = m.history.store.Search(nil, time.Time{}, time.Time{}, "")
+		msgs = m.history.store.Search(false, nil, time.Time{}, time.Time{}, "")
 	}
 	var items []list.Item
 	m.history.items, items = messagesToHistoryItems(msgs)

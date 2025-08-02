@@ -5,16 +5,16 @@ import (
 )
 
 // updatePayloads manages the stored payloads list.
-func (m *model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updatePayloads(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return *m, tea.Quit
+			return tea.Quit
 		case "esc":
 			cmd := m.setMode(modeClient)
-			return *m, cmd
+			return cmd
 		case "delete":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -25,7 +25,7 @@ func (m *model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					m.message.list.SetItems(items)
 				}
 			}
-			return *m, listenStatus(m.connections.statusChan)
+			return listenStatus(m.connections.statusChan)
 		case "enter":
 			i := m.message.list.Index()
 			if i >= 0 {
@@ -35,11 +35,11 @@ func (m *model) updatePayloads(msg tea.Msg) (model, tea.Cmd) {
 					m.topics.input.SetValue(pi.topic)
 					m.message.input.SetValue(pi.payload)
 					cmd := m.setMode(modeClient)
-					return *m, cmd
+					return cmd
 				}
 			}
 		}
 	}
 	m.message.list, cmd = m.message.list.Update(msg)
-	return *m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }

@@ -1,7 +1,12 @@
 package main
 
 import (
+	"fmt"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/x/ansi"
+
+	"github.com/marang/goemqutiti/ui"
 )
 
 // updateReview handles the review step interaction.
@@ -36,35 +41,21 @@ func (w *ImportWizard) updateReview(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return w, nil
 }
 
-// updatePublish processes publishing progress.
-func (w *ImportWizard) updatePublish(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch m := msg.(type) {
-	case publishMsg:
-		w.index++
-		p := float64(w.index) / float64(len(w.rows))
-		if p > 1 {
-			p = 1
-		}
-		cmd := w.progress.SetPercent(p)
-		if w.index >= len(w.rows) {
-			w.finished = true
-			return w, cmd
-		}
-		return w, tea.Batch(cmd, w.nextPublishCmd())
-	case tea.KeyMsg:
-		switch m.Type {
-		case tea.KeyCtrlN:
-			if w.finished {
-				w.step = stepDone
-			}
-		case tea.KeyCtrlP:
-			if w.finished {
-				w.step = stepReview
-				w.finished = false
-			}
-		}
-		cmd := w.history.Update(m)
-		return w, cmd
+// viewReview renders the review step.
+func (w *ImportWizard) viewReview(bw, wrap int) string {
+	topic := w.tmpl.Value()
+	mapping := w.mapping()
+	previews := ""
+	max := 3
+	if len(w.rows) < max {
+		max = len(w.rows)
 	}
-	return w, nil
+	for i := 0; i < max; i++ {
+		t := BuildTopic(topic, renameFields(w.rows[i], mapping))
+		p, _ := RowToJSON(w.rows[i], mapping)
+		line := fmt.Sprintf("%s -> %s", t, string(p))
+		previews += ansi.Wrap(line, wrap, " ") + "\n"
+	}
+	s := fmt.Sprintf("Rows: %d\n%s\n[p] publish  [d] dry run  [e] edit  [ctrl+p] back  [q] quit", len(w.rows), previews)
+	return ui.LegendBox(s, "Review", bw, 0, ui.ColBlue, true, -1)
 }

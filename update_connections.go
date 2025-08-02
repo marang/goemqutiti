@@ -10,7 +10,7 @@ import (
 )
 
 // updateConnections processes input when the connections view is active.
-func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateConnections(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case connectResult:
@@ -28,7 +28,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			}
 			if idx, err := openHistoryStore(msg.profile.Name); err == nil {
 				m.history.store = idx
-				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
+				msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 				m.history.items = nil
 				items := make([]list.Item, len(msgs))
 				for i, mmsg := range msgs {
@@ -44,9 +44,9 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			m.connections.manager.Errors[msg.profile.Name] = ""
 			m.refreshConnectionItems()
 			cmd := m.setMode(modeClient)
-			return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+			return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 		}
-		return m, listenStatus(m.connections.statusChan)
+		return listenStatus(m.connections.statusChan)
 	case tea.KeyMsg:
 		if m.connections.manager.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
@@ -60,7 +60,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 						m.connections.manager.Errors[p.Name] = ""
 						m.refreshConnectionItems()
 						cmd := m.setMode(modeClient)
-						return m, cmd
+						return cmd
 					}
 					flushStatus(m.connections.statusChan)
 					if p.FromEnv {
@@ -73,30 +73,30 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 					m.connections.connection = "Connecting to " + brokerURL
 					m.refreshConnectionItems()
-					return m, connectBroker(p, m.connections.statusChan)
+					return connectBroker(p, m.connections.statusChan)
 				}
 			}
 			break
 		}
 		switch msg.String() {
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "ctrl+r":
 			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
 			cmd := m.setMode(modeTracer)
-			return m, cmd
+			return cmd
 		case "a":
 			f := newConnectionForm(Profile{}, -1)
 			m.connections.form = &f
 			cmd := m.setMode(modeEditConnection)
-			return m, cmd
+			return cmd
 		case "e":
 			i := m.connections.manager.ConnectionsList.Index()
 			if i >= 0 && i < len(m.connections.manager.Profiles) {
 				f := newConnectionForm(m.connections.manager.Profiles[i], i)
 				m.connections.form = &f
 				cmd := m.setMode(modeEditConnection)
-				return m, cmd
+				return cmd
 			}
 		case "enter":
 			i := m.connections.manager.ConnectionsList.Index()
@@ -108,7 +108,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.connections.manager.Errors[p.Name] = ""
 					m.refreshConnectionItems()
 					cmd := m.setMode(modeClient)
-					return m, cmd
+					return cmd
 				}
 				flushStatus(m.connections.statusChan)
 				if p.FromEnv {
@@ -121,7 +121,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 				m.connections.connection = "Connecting to " + brokerURL
 				m.refreshConnectionItems()
-				return m, connectBroker(p, m.connections.statusChan)
+				return connectBroker(p, m.connections.statusChan)
 			}
 		case "delete":
 			i := m.connections.manager.ConnectionsList.Index()
@@ -134,7 +134,7 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 					m.connections.manager.refreshList()
 					m.refreshConnectionItems()
 				})
-				return m, listenStatus(m.connections.statusChan)
+				return listenStatus(m.connections.statusChan)
 			}
 		case "x":
 			if m.mqttClient != nil {
@@ -149,5 +149,5 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 		}
 	}
 	m.connections.manager.ConnectionsList, cmd = m.connections.manager.ConnectionsList.Update(msg)
-	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }

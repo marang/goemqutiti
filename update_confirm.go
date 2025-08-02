@@ -5,12 +5,12 @@ import (
 )
 
 // updateConfirmDelete processes confirmation dialog key presses.
-func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateConfirmDelete(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return *m, tea.Quit
+			return tea.Quit
 		case "y":
 			if m.confirmAction != nil {
 				m.confirmAction()
@@ -27,7 +27,7 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 			} else {
 				m.scrollToFocused()
 			}
-			return *m, tea.Batch(cmds...)
+			return tea.Batch(cmds...)
 		case "n", "esc":
 			if m.confirmCancel != nil {
 				m.confirmCancel()
@@ -41,8 +41,8 @@ func (m *model) updateConfirmDelete(msg tea.Msg) (model, tea.Cmd) {
 			} else {
 				m.scrollToFocused()
 			}
-			return *m, tea.Batch(cmds...)
+			return tea.Batch(cmds...)
 		}
 	}
-	return *m, listenStatus(m.connections.statusChan)
+	return listenStatus(m.connections.statusChan)
 }

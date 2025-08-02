@@ -6,9 +6,9 @@ import (
 )
 
 // updateHistoryFilter handles the history filter form interaction.
-func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateHistoryFilter(msg tea.Msg) tea.Cmd {
 	if m.history.filterForm == nil {
-		return m, nil
+		return nil
 	}
 	switch t := msg.(type) {
 	case tea.KeyMsg:
@@ -22,15 +22,15 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 				m.ui.modeStack = m.ui.modeStack[1:]
 			}
 			cmd := tea.Batch(m.setMode(m.currentMode()), m.setFocus(idHistory))
-			return m, cmd
+			return cmd
 		case "enter":
 			q := m.history.filterForm.query()
 			topics, start, end, payload := parseHistoryQuery(q)
 			var msgs []Message
 			if m.history.showArchived {
-				msgs = m.history.store.SearchArchived(topics, start, end, payload)
+				msgs = m.history.store.Search(true, topics, start, end, payload)
 			} else {
-				msgs = m.history.store.Search(topics, start, end, payload)
+				msgs = m.history.store.Search(false, topics, start, end, payload)
 			}
 			var items []list.Item
 			m.history.items, items = messagesToHistoryItems(msgs)
@@ -40,10 +40,10 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			m.history.filterQuery = q
 			m.history.filterForm = nil
 			cmd := tea.Batch(m.setMode(m.previousMode()), m.setFocus(idHistory))
-			return m, cmd
+			return cmd
 		}
 	}
 	f, cmd := m.history.filterForm.Update(msg)
 	m.history.filterForm = &f
-	return m, cmd
+	return cmd
 }

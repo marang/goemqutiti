@@ -1,0 +1,146 @@
+package emqutiti
+
+import (
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/charmbracelet/bubbles/list"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+// ConnectionsAPI defines the methods used by components to manage connection profiles
+// and status updates without depending on the model implementation.
+type ConnectionsAPI interface {
+	ConnectionStatusManager
+	Manager() *Connections
+	ListenStatus() tea.Cmd
+	SendStatus(string)
+	FlushStatus()
+	RefreshConnectionItems()
+	ConnectionMessage() string
+	SetConnectionMessage(string)
+	Active() string
+	BeginAdd()
+	BeginEdit(index int)
+	BeginDelete(index int)
+	Connect(p Profile) tea.Cmd
+	HandleConnectResult(msg connectResult)
+	DisconnectActive()
+	ResizeTraces(width, height int)
+	ResetElemPos()
+	SetElemPos(id string, pos int)
+	OverlayHelp(view string) string
+}
+
+// connectionsModel wraps model to satisfy the ConnectionsAPI interface.
+type connectionsModel struct{ *model }
+
+func (m *model) connectionsAPI() ConnectionsAPI { return &connectionsModel{m} }
+
+// Manager returns the underlying Connections manager.
+func (c *connectionsModel) Manager() *Connections { return &c.connections.manager }
+
+func (c *connectionsModel) SetConnecting(name string) { c.connections.SetConnecting(name) }
+func (c *connectionsModel) SetConnected(name string)  { c.connections.SetConnected(name) }
+func (c *connectionsModel) SetDisconnected(name, detail string) {
+	c.connections.SetDisconnected(name, detail)
+}
+
+func (c *connectionsModel) ListenStatus() tea.Cmd { return c.connections.ListenStatus() }
+func (c *connectionsModel) SendStatus(msg string) { c.connections.SendStatus(msg) }
+func (c *connectionsModel) FlushStatus()          { c.connections.FlushStatus() }
+
+func (c *connectionsModel) RefreshConnectionItems()         { c.refreshConnectionItems() }
+func (c *connectionsModel) ConnectionMessage() string       { return c.connections.connection }
+func (c *connectionsModel) SetConnectionMessage(msg string) { c.connections.connection = msg }
+func (c *connectionsModel) Active() string                  { return c.connections.active }
+func (c *connectionsModel) BeginAdd() {
+	f := newConnectionForm(Profile{}, -1)
+	c.connections.form = &f
+}
+func (c *connectionsModel) BeginEdit(index int) {
+	if index >= 0 && index < len(c.connections.manager.Profiles) {
+		f := newConnectionForm(c.connections.manager.Profiles[index], index)
+		c.connections.form = &f
+	}
+}
+func (c *connectionsModel) BeginDelete(index int) {
+	if index < 0 || index >= len(c.connections.manager.Profiles) {
+		return
+	}
+	name := c.connections.manager.Profiles[index].Name
+	info := "This also deletes history and traces"
+	rf := func() tea.Cmd { return c.setFocus(c.ui.focusOrder[c.ui.focusIndex]) }
+	c.startConfirm(
+		fmt.Sprintf("Delete broker '%s'? [y/n]", name),
+		info,
+		rf,
+		func() tea.Cmd {
+			c.connections.manager.DeleteConnection(index)
+			c.connections.manager.refreshList()
+			c.refreshConnectionItems()
+			return nil
+		},
+		nil,
+	)
+}
+func (c *connectionsModel) Connect(p Profile) tea.Cmd {
+	c.connections.FlushStatus()
+	if p.FromEnv {
+		ApplyEnvVars(&p)
+	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
+		p.Password = env
+	}
+	c.connections.SetConnecting(p.Name)
+	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+	c.connections.connection = "Connecting to " + brokerURL
+	c.refreshConnectionItems()
+	return connectBroker(p, c.connections.SendStatus)
+}
+func (c *connectionsModel) HandleConnectResult(msg connectResult) {
+	brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
+	if msg.err != nil {
+		c.connections.SetDisconnected(msg.profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
+		c.connections.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
+		c.refreshConnectionItems()
+		return
+	}
+	c.mqttClient = msg.client
+	c.connections.active = msg.profile.Name
+	if c.history.store != nil {
+		c.history.store.Close()
+	}
+	if idx, err := openHistoryStore(msg.profile.Name); err == nil {
+		c.history.store = idx
+		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
+		c.history.items = nil
+		items := make([]list.Item, len(msgs))
+		for i, mmsg := range msgs {
+			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
+			c.history.items = append(c.history.items, items[i].(historyItem))
+		}
+		c.history.list.SetItems(items)
+	}
+	c.restoreState(msg.profile.Name)
+	c.subscribeActiveTopics()
+	c.connections.connection = "Connected to " + brokerURL
+	c.connections.SetConnected(msg.profile.Name)
+	c.refreshConnectionItems()
+}
+func (c *connectionsModel) DisconnectActive() {
+	if c.mqttClient != nil {
+		c.mqttClient.Disconnect()
+		c.connections.SetDisconnected(c.connections.active, "")
+		c.refreshConnectionItems()
+		c.connections.connection = ""
+		c.connections.active = ""
+		c.mqttClient = nil
+	}
+}
+func (c *connectionsModel) ResizeTraces(width, height int) { c.traces.list.SetSize(width, height) }
+func (c *connectionsModel) ResetElemPos()                  { c.ui.elemPos = map[string]int{} }
+func (c *connectionsModel) SetElemPos(id string, pos int)  { c.ui.elemPos[id] = pos }
+func (c *connectionsModel) OverlayHelp(view string) string { return c.overlayHelp(view) }
+
+type _ = connectionsModel // avoid unused type if not referenced

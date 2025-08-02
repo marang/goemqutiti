@@ -203,7 +203,7 @@ func initialModel(conns *Connections) (*model, error) {
 	}
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
-	connComp := newConnectionsComponent(m)
+	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
 	m.payloads = newPayloadsComponent(m)
 	m.topics.panes.subscribed.m = m

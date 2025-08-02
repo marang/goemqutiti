@@ -24,7 +24,7 @@ type ImportWizard struct {
 	step        int
 	file        textinput.Model
 	headers     []string
-	form        Form
+	form        ui.Form
 	tmpl        textinput.Model
 	rows        []map[string]string
 	index       int
@@ -188,7 +188,7 @@ func renameFields(row map[string]string, mapping map[string]string) map[string]s
 func (w *ImportWizard) mapping() map[string]string {
 	m := map[string]string{}
 	for i, h := range w.headers {
-		m[h] = strings.TrimSpace(w.form.fields[i].Value())
+		m[h] = strings.TrimSpace(w.form.Fields[i].Value())
 	}
 	return m
 }

@@ -31,10 +31,12 @@ Scroll with `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J`. In history,
 - Keep functions small and comment any exported ones for clarity.
 
 ### Form Utilities
-- `formutil.go` centralizes shared form behavior.
-- Embed the `Form` type to manage focus with `CycleFocus` and `ApplyFocus`.
-- `newTextField`, `newSelectField`, and `newCheckField` build common inputs.
-- These helpers optionally call `setReadOnly` when values come from the environment.
+- Shared form behavior lives in `ui/form*.go`.
+- Embed the `ui.Form` type to manage focus with `CycleFocus` and `ApplyFocus`.
+- `ui.NewTextField`, `ui.NewSelectField`, `ui.NewSuggestField`, and `ui.NewCheckField`
+  build common inputs.
+- These helpers optionally call `setReadOnly` when values come from the
+  environment.
 - New UI code should reuse this logic instead of writing custom forms.
 
 ## Test Info

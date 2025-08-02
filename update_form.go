@@ -3,9 +3,9 @@ package main
 import tea "github.com/charmbracelet/bubbletea"
 
 // updateForm handles the add/edit connection form.
-func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
+func (m *model) updateForm(msg tea.Msg) tea.Cmd {
 	if m.connections.form == nil {
-		return m, nil
+		return nil
 	}
 	var cmd tea.Cmd
 	switch msg.(type) {
@@ -16,18 +16,18 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			return m, tea.Quit
+			return tea.Quit
 		case "esc":
 			cmd := m.setMode(modeConnections)
 			m.connections.form = nil
-			return m, cmd
+			return cmd
 		case "enter":
 			p, err := m.connections.form.Profile()
 			if err != nil {
 				if m.connections.statusChan != nil {
 					m.connections.statusChan <- err.Error()
 				}
-				return m, listenStatus(m.connections.statusChan)
+				return listenStatus(m.connections.statusChan)
 			}
 			if m.connections.form.index >= 0 {
 				m.connections.manager.EditConnection(m.connections.form.index, p)
@@ -37,10 +37,10 @@ func (m model) updateForm(msg tea.Msg) (model, tea.Cmd) {
 			m.refreshConnectionItems()
 			cmd := m.setMode(modeConnections)
 			m.connections.form = nil
-			return m, cmd
+			return cmd
 		}
 	}
 	f, cmd := m.connections.form.Update(msg)
 	m.connections.form = &f
-	return m, tea.Batch(cmd, listenStatus(m.connections.statusChan))
+	return tea.Batch(cmd, listenStatus(m.connections.statusChan))
 }

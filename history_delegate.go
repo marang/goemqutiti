@@ -68,9 +68,11 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 			lipgloss.NewStyle().Foreground(ui.ColGray).Render(" "+ts+":"))
 		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, header))
 	}
-	more := utf8.RuneCountInString(hi.payload) > historyPreviewLimit
+	payload := strings.ReplaceAll(hi.payload, "\r\n", "\n")
+	payload = strings.ReplaceAll(payload, "\n", "\u23ce")
+	more := utf8.RuneCountInString(payload) > historyPreviewLimit
 	if more {
-		hi.payload = ansi.Truncate(hi.payload, historyPreviewLimit, "")
+		payload = ansi.Truncate(payload, historyPreviewLimit, "")
 	}
 	trunc := ansi.Truncate(hi.payload, innerWidth, "")
 	trunc = strings.NewReplacer("\r\n", "\u23ce", "\n", "\u23ce").Replace(trunc)

@@ -14,7 +14,7 @@ import (
 )
 
 type connectionForm struct {
-	Form
+	ui.Form
 	index   int  // -1 for new
 	fromEnv bool // current state of env loading
 }
@@ -84,7 +84,7 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		pwKey = fmt.Sprintf("keyring:emqutiti-%s/%s", p.Name, p.Username)
 	}
 	rv := reflect.ValueOf(p)
-	fields := make([]formField, len(formFields))
+	fields := make([]ui.Field, len(formFields))
 	for i, fd := range formFields {
 		placeholder := fd.placeholder
 		if fd.key == "Password" && pwKey != "" {
@@ -104,13 +104,13 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 		}
 		switch fd.fieldType {
 		case ftBool:
-			fields[i] = newCheckField(boolVal)
+			fields[i] = ui.NewCheckField(boolVal)
 		case ftSelect:
-			fields[i] = newSelectField(strVal, fd.options)
+			fields[i] = ui.NewSelectField(strVal, fd.options)
 		case ftPassword:
-			fields[i] = newTextField(strVal, placeholder, true)
+			fields[i] = ui.NewTextField(strVal, placeholder, true)
 		default:
-			fields[i] = newTextField(strVal, placeholder)
+			fields[i] = ui.NewTextField(strVal, placeholder)
 		}
 	}
 	if p.FromEnv {
@@ -120,12 +120,12 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 			if i == idxName || i == idxFromEnv {
 				continue
 			}
-			if ro, ok := fld.(interface{ setReadOnly(bool) }); ok {
-				ro.setReadOnly(true)
+			if ro, ok := fld.(interface{ SetReadOnly(bool) }); ok {
+				ro.SetReadOnly(true)
 			}
 		}
 	}
-	cf := connectionForm{Form: Form{fields: fields, focus: 0}, index: idx, fromEnv: p.FromEnv}
+	cf := connectionForm{Form: ui.Form{Fields: fields, Focus: 0}, index: idx, fromEnv: p.FromEnv}
 	cf.ApplyFocus()
 	return cf
 }
@@ -143,27 +143,27 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 		f.CycleFocus(m)
 	case tea.MouseMsg:
 		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
-			if m.Y >= 1 && m.Y-1 < len(f.fields) {
-				f.focus = m.Y - 1
+			if m.Y >= 1 && m.Y-1 < len(f.Fields) {
+				f.Focus = m.Y - 1
 			}
 		}
 	}
 	f.ApplyFocus()
-	if len(f.fields) > 0 {
-		if cmd := f.fields[f.focus].Update(msg); cmd != nil {
+	if len(f.Fields) > 0 {
+		if cmd := f.Fields[f.Focus].Update(msg); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 	}
 	idxFromEnv := fieldIndex["FromEnv"]
-	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value != f.fromEnv {
+	if chk, ok := f.Fields[idxFromEnv].(*ui.CheckField); ok && chk.Bool() != f.fromEnv {
 		p, err := f.Profile()
 		if err != nil {
-			chk.value = f.fromEnv
+			chk.SetBool(f.fromEnv)
 			cmds = append(cmds, func() tea.Msg { return statusMessage(err.Error()) })
 		} else {
 			f = newConnectionForm(p, f.index)
-			f.focus = idxFromEnv
-			f.fromEnv = chk.value
+			f.Focus = idxFromEnv
+			f.fromEnv = chk.Bool()
 		}
 	}
 	return f, tea.Batch(cmds...)
@@ -172,17 +172,17 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 // View renders the form with labels and field contents.
 func (f connectionForm) View() string {
 	var s string
-	for i, in := range f.fields {
+	for i, in := range f.Fields {
 		label := formFields[i].label
-		if i == f.focus {
+		if i == f.Focus {
 			label = ui.FocusedStyle.Render(label)
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
 	}
 	idxFromEnv := fieldIndex["FromEnv"]
 	idxName := fieldIndex["Name"]
-	if chk, ok := f.fields[idxFromEnv].(*checkField); ok && chk.value {
-		prefix := EnvPrefix(f.fields[idxName].Value())
+	if chk, ok := f.Fields[idxFromEnv].(*ui.CheckField); ok && chk.Bool() {
+		prefix := EnvPrefix(f.Fields[idxName].Value())
 		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
 	}
 	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")
@@ -198,7 +198,7 @@ func (f connectionForm) Profile() (Profile, error) {
 	rv := reflect.ValueOf(&p).Elem()
 	for i, fd := range formFields {
 		field := rv.FieldByName(fd.key)
-		val := f.fields[i].Value()
+		val := f.Fields[i].Value()
 		switch field.Kind() {
 		case reflect.String:
 			field.SetString(val)

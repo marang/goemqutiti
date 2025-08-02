@@ -14,14 +14,17 @@ type connectResult struct {
 	err     error
 }
 
-// connectBroker attempts to connect to the given profile and reports status on the channel.
-func connectBroker(p Profile, ch chan string) tea.Cmd {
+// statusFunc reports connection status messages.
+type statusFunc func(string)
+
+// connectBroker attempts to connect to the given profile and reports status via callback.
+func connectBroker(p Profile, fn statusFunc) tea.Cmd {
 	return func() tea.Msg {
-		if ch != nil {
+		if fn != nil {
 			brokerURL := p.BrokerURL()
-			ch <- fmt.Sprintf("Connecting to %s", brokerURL)
+			fn(fmt.Sprintf("Connecting to %s", brokerURL))
 		}
-		client, err := NewMQTTClient(p, ch)
+		client, err := NewMQTTClient(p, fn)
 		return connectResult{client: client, profile: p, err: err}
 	}
 }

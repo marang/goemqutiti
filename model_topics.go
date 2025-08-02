@@ -5,8 +5,6 @@ import (
 	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
-	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
 )
 
 type topicItem struct {
@@ -53,16 +51,6 @@ type topicsPanes struct {
 	subscribed   paneState
 	unsubscribed paneState
 	active       int
-}
-
-type topicsState struct {
-	input      textinput.Model
-	items      []topicItem
-	list       list.Model
-	panes      topicsPanes
-	selected   int
-	chipBounds []chipBound
-	vp         viewport.Model
 }
 
 // hasTopic reports whether the given topic already exists in the list.

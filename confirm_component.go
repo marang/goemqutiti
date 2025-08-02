@@ -48,7 +48,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 				c.cancel = nil
 			}
 			cmd := c.m.setMode(c.m.previousMode())
-			cmds := []tea.Cmd{cmd, listenStatus(c.m.connections.statusChan)}
+			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
 			if c.returnFocus != "" {
 				cmds = append(cmds, c.m.setFocus(c.returnFocus))
 				c.returnFocus = ""
@@ -62,7 +62,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 				c.cancel = nil
 			}
 			cmd := c.m.setMode(c.m.previousMode())
-			cmds := []tea.Cmd{cmd, listenStatus(c.m.connections.statusChan)}
+			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
 			if c.returnFocus != "" {
 				cmds = append(cmds, c.m.setFocus(c.returnFocus))
 				c.returnFocus = ""
@@ -72,7 +72,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			return tea.Batch(cmds...)
 		}
 	}
-	return listenStatus(c.m.connections.statusChan)
+	return c.m.connections.ListenStatus()
 }
 
 func (c *confirmComponent) View() string {

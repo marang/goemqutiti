@@ -21,7 +21,7 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 		m.connections.SetDisconnected(m.connections.active, "")
 		m.refreshConnectionItems()
 	}
-	return listenStatus(m.connections.statusChan)
+	return m.connections.ListenStatus()
 }
 
 // handleMQTTMessage appends received MQTT messages to history.
@@ -211,7 +211,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 
 // updateClientStatus returns commands to listen for connection and message updates.
 func (m *model) updateClientStatus() []tea.Cmd {
-	cmds := []tea.Cmd{listenStatus(m.connections.statusChan)}
+	cmds := []tea.Cmd{m.connections.ListenStatus()}
 	if m.mqttClient != nil {
 		cmds = append(cmds, listenMessages(m.mqttClient.MessageChan))
 	}

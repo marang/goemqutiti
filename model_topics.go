@@ -26,10 +26,12 @@ type chipBound struct {
 	width, height int
 }
 
+type paneManager interface{ SetActivePane(int) }
+
 type paneState struct {
 	sel     int
 	page    int
-	m       *model
+	m       paneManager
 	index   int
 	focused bool
 }
@@ -37,7 +39,7 @@ type paneState struct {
 func (p *paneState) Focus() {
 	p.focused = true
 	if p.m != nil {
-		p.m.setActivePane(p.index)
+		p.m.SetActivePane(p.index)
 	}
 }
 
@@ -177,6 +179,9 @@ func (m *model) setActivePane(idx int) {
 	m.topics.panes.active = idx
 	m.rebuildActiveTopicList()
 }
+
+// SetActivePane exposes setActivePane for components needing to switch panes.
+func (m *model) SetActivePane(idx int) { m.setActivePane(idx) }
 
 // toggleTopic toggles the subscription state of the topic at index and emits an event.
 func (m *model) toggleTopic(index int) tea.Cmd {

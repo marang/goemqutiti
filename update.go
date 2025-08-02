@@ -86,12 +86,8 @@ func (m model) updateConnections(msg tea.Msg) (model, tea.Cmd) {
 			if idx, err := openHistoryStore(msg.profile.Name); err == nil {
 				m.history.store = idx
 				msgs := idx.Search(nil, time.Time{}, time.Time{}, "")
-				m.history.items = nil
-				items := make([]list.Item, len(msgs))
-				for i, mmsg := range msgs {
-					items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-					m.history.items = append(m.history.items, items[i].(historyItem))
-				}
+				var items []list.Item
+				m.history.items, items = messagesToHistoryItems(msgs)
 				m.history.list.SetItems(items)
 			}
 			m.restoreState(msg.profile.Name)

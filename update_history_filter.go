@@ -32,13 +32,8 @@ func (m model) updateHistoryFilter(msg tea.Msg) (model, tea.Cmd) {
 			} else {
 				msgs = m.history.store.Search(topics, start, end, payload)
 			}
-			items := make([]list.Item, len(msgs))
-			m.history.items = make([]historyItem, len(msgs))
-			for i, mmsg := range msgs {
-				hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
-				items[i] = hi
-				m.history.items[i] = hi
-			}
+			var items []list.Item
+			m.history.items, items = messagesToHistoryItems(msgs)
 			m.history.list.SetItems(items)
 			m.history.list.FilterInput.SetValue("")
 			m.history.list.SetFilterState(list.Unfiltered)

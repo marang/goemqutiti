@@ -48,13 +48,8 @@ func (m *model) appendHistory(topic, payload, kind, logText string) {
 			} else {
 				msgs = m.history.store.Search(topics, start, end, pf)
 			}
-			items := make([]list.Item, len(msgs))
-			m.history.items = make([]historyItem, len(msgs))
-			for i, mmsg := range msgs {
-				hi := historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind, archived: mmsg.Archived}
-				items[i] = hi
-				m.history.items[i] = hi
-			}
+			var items []list.Item
+			m.history.items, items = messagesToHistoryItems(msgs)
 			m.history.list.SetItems(items)
 			m.history.list.Select(len(items) - 1)
 		} else {

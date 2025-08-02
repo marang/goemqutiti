@@ -113,13 +113,8 @@ func TestHistoryLabelCounts(t *testing.T) {
 	// apply filter showing only "foo"
 	m.history.filterQuery = "topic=foo"
 	msgs := m.history.store.Search([]string{"foo"}, time.Time{}, time.Time{}, "")
-	items := make([]list.Item, len(msgs))
-	m.history.items = make([]historyItem, len(msgs))
-	for i, mm := range msgs {
-		hi := historyItem{timestamp: mm.Timestamp, topic: mm.Topic, payload: mm.Payload, kind: mm.Kind, archived: mm.Archived}
-		items[i] = hi
-		m.history.items[i] = hi
-	}
+	var items []list.Item
+	m.history.items, items = messagesToHistoryItems(msgs)
 	m.history.list.SetItems(items)
 	view = m.viewClient()
 	if !strings.Contains(view, "History (1/2 messages") {

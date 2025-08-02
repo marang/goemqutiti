@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"os"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -11,6 +13,12 @@ type mockPublisher struct{}
 
 func (m *mockPublisher) Publish(topic string, qos byte, retained bool, payload interface{}) error {
 	return nil
+}
+
+type errPublisher struct{}
+
+func (m *errPublisher) Publish(topic string, qos byte, retained bool, payload interface{}) error {
+	return errors.New("fail")
 }
 
 // Test wizard progresses through file, map, template, and publish steps.
@@ -155,5 +163,46 @@ func TestImportWizardReviewPublish(t *testing.T) {
 	w.Update(tea.KeyMsg{Type: tea.KeyCtrlN})
 	if w.step != stepDone {
 		t.Fatalf("expected stepDone, got %d", w.step)
+	}
+}
+
+func TestImportWizardPublishError(t *testing.T) {
+	f, err := os.CreateTemp("", "wiz-*.csv")
+	if err != nil {
+		t.Fatalf("temp file: %v", err)
+	}
+	defer os.Remove(f.Name())
+	if _, err := f.WriteString("a,b\n1,2\n"); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	f.Close()
+
+	w := NewImportWizard(&errPublisher{}, f.Name())
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	w.tmpl.SetValue("topic/{a}")
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	_, cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	if cmd != nil {
+		if msg := cmd(); msg != nil {
+			switch m := msg.(type) {
+			case tea.BatchMsg:
+				for _, c := range m {
+					if c != nil {
+						if mm := c(); mm != nil {
+							w.Update(mm)
+						}
+					}
+				}
+			default:
+				w.Update(msg)
+			}
+		}
+	}
+	if len(w.published) == 0 || !strings.Contains(w.published[0], "error") {
+		t.Fatalf("expected error message, got %v", w.published)
+	}
+	if !w.finished {
+		t.Fatalf("expected finished after processing rows")
 	}
 }

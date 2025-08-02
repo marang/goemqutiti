@@ -173,3 +173,18 @@ func TestHistoryHelpVisibleWithFilter(t *testing.T) {
 		t.Fatalf("expected history shortcuts in view, got %q", view)
 	}
 }
+
+// Test that triggering the detail view shows the complete payload.
+func TestHistoryDetailViewShowsPayload(t *testing.T) {
+	m, _ := initialModel(nil)
+	long := strings.Repeat("x", historyPreviewLimit+10)
+	m.appendHistory("foo", long, "pub", "")
+	m.setFocus(idHistory)
+	m.handleEnterKey()
+	if m.currentMode() != modeHistoryDetail {
+		t.Fatalf("expected detail mode, got %v", m.currentMode())
+	}
+	if m.history.detailItem.payload != long {
+		t.Fatalf("payload not preserved in detail view")
+	}
+}

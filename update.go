@@ -425,6 +425,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
 		m.help.vp.Width = msg.Width - 4
 		m.help.vp.Height = msg.Height - 4
+		m.history.detail.Width = msg.Width - 4
+		m.history.detail.Height = msg.Height - 4
 		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
@@ -530,6 +532,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case modeHistoryFilter:
 		nm, cmd := m.updateHistoryFilter(msg)
+		*m = nm
+		return m, cmd
+	case modeHistoryDetail:
+		nm, cmd := m.updateHistoryDetail(msg)
 		*m = nm
 		return m, cmd
 	case modeHelp:

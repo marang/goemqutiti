@@ -3,6 +3,8 @@ package emqutiti
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/importer"
 )
 
 // Component defines a screen or feature that can participate in the Tea update
@@ -101,13 +103,13 @@ type uiState struct {
 type model struct {
 	mqttClient *MQTTClient
 
-	connections  connectionsState
-	history      historyState
-	topics       topicsState
-	message      messageState
-	traces       tracesState
-	help         helpState
-	importWizard *ImportWizard
+	connections connectionsState
+	history     historyState
+	topics      topicsState
+	message     messageState
+	traces      tracesState
+	help        helpState
+	importer    *importer.Model
 
 	ui uiState
 

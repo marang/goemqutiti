@@ -9,7 +9,20 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/importer"
 )
+
+type importerTeaModel struct{ *importer.Model }
+
+func (m importerTeaModel) Init() tea.Cmd { return m.Model.Init() }
+
+func (m importerTeaModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	cmd := m.Model.Update(msg)
+	return m, cmd
+}
+
+func (m importerTeaModel) View() string { return m.Model.View() }
 
 var (
 	importFile  string
@@ -108,8 +121,8 @@ func runImport(path, profile string) error {
 	}
 	defer client.Disconnect()
 
-	w := NewImportWizard(client, path)
-	prog := tea.NewProgram(w, tea.WithAltScreen())
+	w := importer.New(client, path)
+	prog := tea.NewProgram(importerTeaModel{w}, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		return fmt.Errorf("import error: %w", err)
 	}

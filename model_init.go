@@ -13,6 +13,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -207,7 +208,6 @@ func initialModel(conns *Connections) (*model, error) {
 		modeTracer:         component{update: m.updateTraces, view: m.viewTraces},
 		modeEditTrace:      component{update: m.updateTraceForm, view: m.viewTraceForm},
 		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},
-		modeImporter:       component{update: m.updateImporter, view: m.viewImporter},
 		modeHistoryFilter:  component{update: m.updateHistoryFilter, view: m.viewHistoryFilter},
 		modeHistoryDetail:  component{update: m.updateHistoryDetail, view: m.viewHistoryDetail},
 		modeHelp: component{
@@ -257,7 +257,8 @@ func initialModel(conns *Connections) (*model, error) {
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
 				m.connections.active = cfg.Name
-				m.importWizard = NewImportWizard(client, importFile)
+				m.importer = importer.New(client, importFile)
+				m.components[modeImporter] = m.importer
 				m.setMode(modeImporter)
 			} else {
 				return nil, fmt.Errorf("connect error: %w", err)

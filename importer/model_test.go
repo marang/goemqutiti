@@ -1,4 +1,4 @@
-package emqutiti
+package importer
 
 import (
 	"errors"
@@ -22,7 +22,7 @@ func (m *errPublisher) Publish(topic string, qos byte, retained bool, payload in
 }
 
 // Test wizard progresses through file, map, template, and publish steps.
-func TestImportWizardStepProgression(t *testing.T) {
+func TestModelStepProgression(t *testing.T) {
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -33,7 +33,7 @@ func TestImportWizardStepProgression(t *testing.T) {
 	}
 	f.Close()
 
-	w := NewImportWizard(&mockPublisher{}, f.Name())
+	w := New(&mockPublisher{}, f.Name())
 
 	if w.step != stepFile {
 		t.Fatalf("expected stepFile, got %d", w.step)
@@ -51,7 +51,7 @@ func TestImportWizardStepProgression(t *testing.T) {
 	if w.step != stepReview {
 		t.Fatalf("expected stepReview, got %d", w.step)
 	}
-	_, cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	if w.step != stepPublish {
 		t.Fatalf("expected stepPublish, got %d", w.step)
 	}
@@ -76,7 +76,7 @@ func TestImportWizardStepProgression(t *testing.T) {
 	}
 }
 
-func TestImportWizardFileStep(t *testing.T) {
+func TestModelFileStep(t *testing.T) {
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -87,7 +87,7 @@ func TestImportWizardFileStep(t *testing.T) {
 	}
 	f.Close()
 
-	w := NewImportWizard(&mockPublisher{}, f.Name())
+	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	if w.step != stepMap {
 		t.Fatalf("expected stepMap, got %d", w.step)
@@ -97,7 +97,7 @@ func TestImportWizardFileStep(t *testing.T) {
 	}
 }
 
-func TestImportWizardMapNavigation(t *testing.T) {
+func TestModelMapNavigation(t *testing.T) {
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -108,7 +108,7 @@ func TestImportWizardMapNavigation(t *testing.T) {
 	}
 	f.Close()
 
-	w := NewImportWizard(&mockPublisher{}, f.Name())
+	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
 	if w.step != stepFile {
@@ -121,7 +121,7 @@ func TestImportWizardMapNavigation(t *testing.T) {
 	}
 }
 
-func TestImportWizardReviewPublish(t *testing.T) {
+func TestModelReviewPublish(t *testing.T) {
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -132,12 +132,12 @@ func TestImportWizardReviewPublish(t *testing.T) {
 	}
 	f.Close()
 
-	w := NewImportWizard(&mockPublisher{}, f.Name())
+	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.tmpl.SetValue("topic/{a}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	_, cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
 	if w.step != stepPublish || !w.dryRun {
 		t.Fatalf("expected dry run publish, got step %d dry %v", w.step, w.dryRun)
 	}
@@ -166,7 +166,7 @@ func TestImportWizardReviewPublish(t *testing.T) {
 	}
 }
 
-func TestImportWizardPublishError(t *testing.T) {
+func TestModelPublishError(t *testing.T) {
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -177,12 +177,12 @@ func TestImportWizardPublishError(t *testing.T) {
 	}
 	f.Close()
 
-	w := NewImportWizard(&errPublisher{}, f.Name())
+	w := New(&errPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.tmpl.SetValue("topic/{a}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	_, cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
+	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	if cmd != nil {
 		if msg := cmd(); msg != nil {
 			switch m := msg.(type) {

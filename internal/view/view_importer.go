@@ -1,4 +1,4 @@
-package main
+package view
 
 // viewImporter renders the importer wizard view.
 func (m model) viewImporter() string {

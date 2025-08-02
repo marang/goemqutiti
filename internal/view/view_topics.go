@@ -1,4 +1,4 @@
-package main
+package view
 
 import (
 	"github.com/charmbracelet/bubbles/list"

@@ -2,8 +2,6 @@ package emqutiti
 
 import (
 	"fmt"
-	"os"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -88,77 +86,44 @@ func (c *connectionsState) SendStatus(msg string) {
 func (c *connectionsState) FlushStatus() { flushStatus(c.statusChan) }
 
 // connectionsComponent implements the Component interface for managing brokers.
-type connectionsComponent struct{ m *model }
+type connectionsComponent struct {
+	nav navigator
+	api ConnectionsAPI
+}
 
-func newConnectionsComponent(nav navigator) *connectionsComponent {
-	return &connectionsComponent{m: nav.(*model)}
+func newConnectionsComponent(nav navigator, api ConnectionsAPI) *connectionsComponent {
+	return &connectionsComponent{nav: nav, api: api}
 }
 
 func (c *connectionsComponent) Init() tea.Cmd { return nil }
 
 // Update processes input when the connections view is active.
 func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
-	m := c.m
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case connectResult:
-		brokerURL := fmt.Sprintf("%s://%s:%d", msg.profile.Schema, msg.profile.Host, msg.profile.Port)
-		if msg.err != nil {
-			m.connections.SetDisconnected(msg.profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
-			m.connections.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
-			m.refreshConnectionItems()
-		} else {
-			m.mqttClient = msg.client
-			m.connections.active = msg.profile.Name
-			if m.history.store != nil {
-				m.history.store.Close()
-			}
-			if idx, err := openHistoryStore(msg.profile.Name); err == nil {
-				m.history.store = idx
-				msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
-				m.history.items = nil
-				items := make([]list.Item, len(msgs))
-				for i, mmsg := range msgs {
-					items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-					m.history.items = append(m.history.items, items[i].(historyItem))
-				}
-				m.history.list.SetItems(items)
-			}
-			m.restoreState(msg.profile.Name)
-			m.subscribeActiveTopics()
-			m.connections.connection = "Connected to " + brokerURL
-			m.connections.SetConnected(msg.profile.Name)
-			m.refreshConnectionItems()
-			cmd := m.setMode(modeClient)
-			return tea.Batch(cmd, m.connections.ListenStatus())
+		c.api.HandleConnectResult(msg)
+		if msg.err == nil {
+			cmd = c.nav.SetMode(modeClient)
+			return tea.Batch(cmd, c.api.ListenStatus())
 		}
-		return m.connections.ListenStatus()
+		return c.api.ListenStatus()
 	case tea.KeyMsg:
-		if m.connections.manager.ConnectionsList.FilterState() == list.Filtering {
+		mgr := c.api.Manager()
+		if mgr.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
 			case "enter":
-				i := m.connections.manager.ConnectionsList.Index()
-				if i >= 0 && i < len(m.connections.manager.Profiles) {
-					p := m.connections.manager.Profiles[i]
-					if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+				i := mgr.ConnectionsList.Index()
+				if i >= 0 && i < len(mgr.Profiles) {
+					p := mgr.Profiles[i]
+					if p.Name == c.api.Active() && mgr.Statuses[p.Name] == "connected" {
 						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-						m.connections.connection = "Connected to " + brokerURL
-						m.connections.SetConnected(p.Name)
-						m.refreshConnectionItems()
-						cmd := m.setMode(modeClient)
-						return cmd
+						c.api.SetConnectionMessage("Connected to " + brokerURL)
+						c.api.SetConnected(p.Name)
+						c.api.RefreshConnectionItems()
+						return c.nav.SetMode(modeClient)
 					}
-					m.connections.FlushStatus()
-					if p.FromEnv {
-						ApplyEnvVars(&p)
-					} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-						p.Password = env
-					}
-					m.connections.SetConnecting(p.Name)
-					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-					m.connections.connection = "Connecting to " + brokerURL
-					m.refreshConnectionItems()
-					return connectBroker(p, m.connections.SendStatus)
+					return c.api.Connect(p)
 				}
 			}
 			break
@@ -167,95 +132,64 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "ctrl+r":
-			m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
-			cmd := m.setMode(modeTracer)
-			return cmd
+			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
+			return c.nav.SetMode(modeTracer)
 		case "a":
-			f := newConnectionForm(Profile{}, -1)
-			m.connections.form = &f
-			cmd := m.setMode(modeEditConnection)
-			return cmd
+			c.api.BeginAdd()
+			return c.nav.SetMode(modeEditConnection)
 		case "e":
-			i := m.connections.manager.ConnectionsList.Index()
-			if i >= 0 && i < len(m.connections.manager.Profiles) {
-				f := newConnectionForm(m.connections.manager.Profiles[i], i)
-				m.connections.form = &f
-				cmd := m.setMode(modeEditConnection)
-				return cmd
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 && i < len(mgr.Profiles) {
+				c.api.BeginEdit(i)
+				return c.nav.SetMode(modeEditConnection)
 			}
 		case "enter":
-			i := m.connections.manager.ConnectionsList.Index()
-			if i >= 0 && i < len(m.connections.manager.Profiles) {
-				p := m.connections.manager.Profiles[i]
-				if p.Name == m.connections.active && m.connections.manager.Statuses[p.Name] == "connected" {
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 && i < len(mgr.Profiles) {
+				p := mgr.Profiles[i]
+				if p.Name == c.api.Active() && mgr.Statuses[p.Name] == "connected" {
 					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-					m.connections.connection = "Connected to " + brokerURL
-					m.connections.SetConnected(p.Name)
-					m.refreshConnectionItems()
-					cmd := m.setMode(modeClient)
-					return cmd
+					c.api.SetConnectionMessage("Connected to " + brokerURL)
+					c.api.SetConnected(p.Name)
+					c.api.RefreshConnectionItems()
+					return c.nav.SetMode(modeClient)
 				}
-				m.connections.FlushStatus()
-				if p.FromEnv {
-					ApplyEnvVars(&p)
-				} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-					p.Password = env
-				}
-				m.connections.SetConnecting(p.Name)
-				brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-				m.connections.connection = "Connecting to " + brokerURL
-				m.refreshConnectionItems()
-				return connectBroker(p, m.connections.SendStatus)
+				return c.api.Connect(p)
 			}
 		case "delete":
-			i := m.connections.manager.ConnectionsList.Index()
+			i := mgr.ConnectionsList.Index()
 			if i >= 0 {
-				name := m.connections.manager.Profiles[i].Name
-				info := "This also deletes history and traces"
-				rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-				m.startConfirm(fmt.Sprintf("Delete broker '%s'? [y/n]", name), info, rf, func() tea.Cmd {
-					m.connections.manager.DeleteConnection(i)
-					m.connections.manager.refreshList()
-					m.refreshConnectionItems()
-					return nil
-				}, nil)
-				return m.connections.ListenStatus()
+				c.api.BeginDelete(i)
+				return c.api.ListenStatus()
 			}
 		case "x":
-			if m.mqttClient != nil {
-				m.mqttClient.Disconnect()
-				m.connections.SetDisconnected(m.connections.active, "")
-				m.refreshConnectionItems()
-				m.connections.connection = ""
-				m.connections.active = ""
-				m.mqttClient = nil
-			}
+			c.api.DisconnectActive()
 		}
 	}
-	m.connections.manager.ConnectionsList, cmd = m.connections.manager.ConnectionsList.Update(msg)
-	return tea.Batch(cmd, m.connections.ListenStatus())
+	mgr := c.api.Manager()
+	mgr.ConnectionsList, cmd = mgr.ConnectionsList.Update(msg)
+	return tea.Batch(cmd, c.api.ListenStatus())
 }
 
 // View renders the connections UI component.
 func (c *connectionsComponent) View() string {
-	m := c.m
-	m.ui.elemPos = map[string]int{}
-	m.ui.elemPos[idConnList] = 1
-	listView := m.connections.manager.ConnectionsList.View()
+	c.api.ResetElemPos()
+	c.api.SetElemPos(idConnList, 1)
+	listView := c.api.Manager().ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	view := ui.LegendBox(content, "Brokers", m.ui.width-2, 0, ui.ColBlue, true, -1)
-	return m.overlayHelp(view)
+	view := ui.LegendBox(content, "Brokers", c.nav.Width()-2, 0, ui.ColBlue, true, -1)
+	return c.api.OverlayHelp(view)
 }
 
 // Focus marks the component as focused.
 func (c *connectionsComponent) Focus() tea.Cmd {
-	c.m.connections.manager.Focused = true
+	c.api.Manager().Focused = true
 	return nil
 }
 
 // Blur marks the component as blurred.
-func (c *connectionsComponent) Blur() { c.m.connections.manager.Focused = false }
+func (c *connectionsComponent) Blur() { c.api.Manager().Focused = false }
 
 // Focusables exposes focusable elements for the connections component.
 func (c *connectionsComponent) Focusables() map[string]Focusable {

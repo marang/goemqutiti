@@ -8,17 +8,24 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+type topicSetter interface{ setTopic(string) }
+type payloadSetter interface{ setPayload(string) }
+type statusListener interface{ ListenStatus() tea.Cmd }
+
 type payloadsComponent struct {
-	m     *model
-	items []payloadItem
-	list  list.Model
+	m       *model
+	topics  topicSetter
+	message payloadSetter
+	status  statusListener
+	items   []payloadItem
+	list    list.Model
 }
 
-func newPayloadsComponent(nav navigator) *payloadsComponent {
+func newPayloadsComponent(nav navigator, t topicSetter, p payloadSetter, s statusListener) *payloadsComponent {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.DisableQuitKeybindings()
 	l.SetShowTitle(false)
-	return &payloadsComponent{m: nav.(*model), list: l}
+	return &payloadsComponent{m: nav.(*model), topics: t, message: p, status: s, list: l}
 }
 
 func (p *payloadsComponent) Init() tea.Cmd { return nil }
@@ -42,22 +49,22 @@ func (p *payloadsComponent) Update(msg tea.Msg) tea.Cmd {
 					p.list.SetItems(items)
 				}
 			}
-			return p.m.connections.ListenStatus()
+			return p.status.ListenStatus()
 		case "enter":
 			i := p.list.Index()
 			if i >= 0 {
 				items := p.list.Items()
 				if i < len(items) {
 					pi := items[i].(payloadItem)
-					p.m.topics.setTopic(pi.topic)
-					p.m.message.setPayload(pi.payload)
+					p.topics.setTopic(pi.topic)
+					p.message.setPayload(pi.payload)
 					return p.m.setMode(modeClient)
 				}
 			}
 		}
 	}
 	p.list, cmd = p.list.Update(msg)
-	return tea.Batch(cmd, p.m.connections.ListenStatus())
+	return tea.Batch(cmd, p.status.ListenStatus())
 }
 
 func (p *payloadsComponent) View() string {

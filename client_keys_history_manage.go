@@ -7,13 +7,15 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // handleToggleArchiveKey toggles between active and archived history.
 func (m *model) handleToggleArchiveKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.store != nil {
 		m.history.showArchived = !m.history.showArchived
-		var msgs []Message
+		var msgs []history.Message
 		if m.history.showArchived {
 			msgs = m.history.store.Search(true, nil, time.Time{}, time.Time{}, "")
 		} else {
@@ -40,8 +42,8 @@ func (m *model) handleArchiveKey() tea.Cmd {
 		archived := false
 		for i := len(m.history.items) - 1; i >= 0; i-- {
 			it := m.history.items[i]
-			if it.isSelected != nil && *it.isSelected {
-				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+			if it.IsSelected != nil && *it.IsSelected {
+				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
 				if m.history.store != nil {
 					if err := m.history.store.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
@@ -58,7 +60,7 @@ func (m *model) handleArchiveKey() tea.Cmd {
 			idx := m.history.list.Index()
 			if idx >= 0 && idx < len(m.history.items) {
 				it := m.history.items[idx]
-				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
 				if m.history.store != nil {
 					if err := m.history.store.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
@@ -74,7 +76,7 @@ func (m *model) handleArchiveKey() tea.Cmd {
 		}
 		items := make([]list.Item, len(m.history.items))
 		for i, it := range m.history.items {
-			it.isSelected = nil
+			it.IsSelected = nil
 			m.history.items[i] = it
 			items[i] = it
 		}
@@ -96,9 +98,9 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 	}
 	hasSelection := false
 	for i := range m.history.items {
-		if m.history.items[i].isSelected != nil && *m.history.items[i].isSelected {
+		if m.history.items[i].IsSelected != nil && *m.history.items[i].IsSelected {
 			v := true
-			m.history.items[i].isMarkedForDeletion = &v
+			m.history.items[i].IsMarkedForDeletion = &v
 			hasSelection = true
 		}
 	}
@@ -106,15 +108,15 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 		idx := m.history.list.Index()
 		if idx >= 0 && idx < len(m.history.items) {
 			v := true
-			m.history.items[idx].isMarkedForDeletion = &v
+			m.history.items[idx].IsMarkedForDeletion = &v
 		}
 	}
 	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 	m.startConfirm("Delete selected messages? [y/n]", "", rf, func() tea.Cmd {
 		for i := len(m.history.items) - 1; i >= 0; i-- {
 			it := m.history.items[i]
-			if it.isMarkedForDeletion != nil && *it.isMarkedForDeletion {
-				key := fmt.Sprintf("%s/%020d", it.topic, it.timestamp.UnixNano())
+			if it.IsMarkedForDeletion != nil && *it.IsMarkedForDeletion {
+				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
 				if m.history.store != nil {
 					if err := m.history.store.Delete(key); err != nil {
 						msg := fmt.Sprintf("Failed to delete message: %v", err)
@@ -128,8 +130,8 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 		}
 		items := make([]list.Item, len(m.history.items))
 		for i, it := range m.history.items {
-			it.isSelected = nil
-			it.isMarkedForDeletion = nil
+			it.IsSelected = nil
+			it.IsMarkedForDeletion = nil
 			m.history.items[i] = it
 			items[i] = it
 		}
@@ -143,7 +145,7 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 		return nil
 	}, func() {
 		for i := range m.history.items {
-			m.history.items[i].isMarkedForDeletion = nil
+			m.history.items[i].IsMarkedForDeletion = nil
 		}
 	})
 	return nil

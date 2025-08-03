@@ -17,13 +17,13 @@ func (h *Component) HandleSelection(idx int, shift bool) {
 			h.selectionAnchor = h.list.Index()
 			if h.selectionAnchor >= 0 && h.selectionAnchor < len(h.items) {
 				v := true
-				h.items[h.selectionAnchor].isSelected = &v
+				h.items[h.selectionAnchor].IsSelected = &v
 			}
 		}
 		h.updateSelectionRange(idx)
 	} else {
 		for i := range h.items {
-			h.items[i].isSelected = nil
+			h.items[i].IsSelected = nil
 		}
 		h.selectionAnchor = -1
 	}
@@ -62,10 +62,10 @@ func (h *Component) updateSelectionRange(idx int) {
 		start, end = end, start
 	}
 	for i := range h.items {
-		h.items[i].isSelected = nil
+		h.items[i].IsSelected = nil
 	}
 	for i := start; i <= end && i < len(h.items); i++ {
 		v := true
-		h.items[i].isSelected = &v
+		h.items[i].IsSelected = &v
 	}
 }

@@ -2,17 +2,20 @@ package emqutiti
 
 import (
 	"testing"
+	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // Test copy behavior when history items are selected.
 func TestHandleClientKeyCopySelected(t *testing.T) {
 	m, _ := initialModel(nil)
 	sel := true
-	hi := historyItem{topic: "t1", payload: "msg1", kind: "pub", isSelected: &sel}
-	m.history.items = []historyItem{hi}
+	hi := history.Item{Timestamp: time.Now(), Topic: "t1", Payload: "msg1", Kind: "pub", IsSelected: &sel}
+	m.history.items = []history.Item{hi}
 	m.history.list.SetItems([]list.Item{hi})
 	m.history.list.Select(0)
 

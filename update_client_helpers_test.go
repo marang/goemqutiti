@@ -9,6 +9,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/marang/emqutiti/ui"
+
+	"github.com/marang/emqutiti/history"
 )
 
 func TestHandleMouseScrollTopics(t *testing.T) {
@@ -30,10 +32,10 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 
 func TestHandleHistorySelectionShift(t *testing.T) {
 	m, _ := initialModel(nil)
-	m.history.items = []historyItem{
-		{timestamp: time.Now(), topic: "t1", payload: "p1", kind: "pub"},
-		{timestamp: time.Now(), topic: "t2", payload: "p2", kind: "pub"},
-		{timestamp: time.Now(), topic: "t3", payload: "p3", kind: "pub"},
+	m.history.items = []history.Item{
+		{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"},
+		{Timestamp: time.Now(), Topic: "t2", Payload: "p2", Kind: "pub"},
+		{Timestamp: time.Now(), Topic: "t3", Payload: "p3", Kind: "pub"},
 	}
 	items := make([]list.Item, len(m.history.items))
 	for i, it := range m.history.items {
@@ -48,7 +50,7 @@ func TestHandleHistorySelectionShift(t *testing.T) {
 	}
 	m.history.HandleSelection(2, true)
 	for i := 0; i <= 2; i++ {
-		if m.history.items[i].isSelected == nil || !*m.history.items[i].isSelected {
+		if m.history.items[i].IsSelected == nil || !*m.history.items[i].IsSelected {
 			t.Fatalf("item %d not selected", i)
 		}
 	}
@@ -62,8 +64,8 @@ func TestFilterHistoryList(t *testing.T) {
 	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.history.list.SetFilteringEnabled(true)
 	m.history.list.SetFilterText("topic=foo")
@@ -74,16 +76,16 @@ func TestFilterHistoryList(t *testing.T) {
 	if len(items) != 1 {
 		t.Fatalf("expected 1 item, got %d", len(items))
 	}
-	hi := items[0].(historyItem)
-	if hi.topic != "foo" {
-		t.Fatalf("unexpected topic %q", hi.topic)
+	hi := items[0].(history.Item)
+	if hi.Topic != "foo" {
+		t.Fatalf("unexpected topic %q", hi.Topic)
 	}
 }
 
 func TestHandleHistoryClick(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
-	m.history.items = []historyItem{{timestamp: time.Now(), topic: "t1", payload: "p1", kind: "pub"}}
+	m.history.items = []history.Item{{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"}}
 	items := []list.Item{m.history.items[0]}
 	m.history.list.SetItems(items)
 	m.viewClient()
@@ -98,7 +100,7 @@ func TestHandleHistoryClick(t *testing.T) {
 func TestHistoryScroll(t *testing.T) {
 	m, _ := initialModel(nil)
 	for i := 0; i < 30; i++ {
-		hi := historyItem{timestamp: time.Now(), topic: fmt.Sprintf("t%d", i), payload: "p", kind: "pub"}
+		hi := history.Item{Timestamp: time.Now(), Topic: fmt.Sprintf("t%d", i), Payload: "p", Kind: "pub"}
 		m.history.items = append(m.history.items, hi)
 	}
 	items := make([]list.Item, len(m.history.items))

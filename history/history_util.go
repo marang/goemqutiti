@@ -9,11 +9,11 @@ func messagesToHistoryItems(msgs []Message) ([]Item, []list.Item) {
 	litems := make([]list.Item, len(msgs))
 	for i, m := range msgs {
 		hi := Item{
-			timestamp: m.Timestamp,
-			topic:     m.Topic,
-			payload:   m.Payload,
-			kind:      m.Kind,
-			archived:  m.Archived,
+			Timestamp: m.Timestamp,
+			Topic:     m.Topic,
+			Payload:   m.Payload,
+			Kind:      m.Kind,
+			Archived:  m.Archived,
 		}
 		hitems[i] = hi
 		litems[i] = hi

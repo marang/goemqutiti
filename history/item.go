@@ -11,23 +11,23 @@ import (
 
 // Item represents a single entry in the history list.
 type Item struct {
-	timestamp           time.Time
-	topic               string
-	payload             string
-	kind                string // pub, sub, log
-	archived            bool
-	isSelected          *bool
-	isMarkedForDeletion *bool
+	Timestamp           time.Time
+	Topic               string
+	Payload             string
+	Kind                string // pub, sub, log
+	Archived            bool
+	IsSelected          *bool
+	IsMarkedForDeletion *bool
 }
 
 // FilterValue implements list.Item and returns the payload text.
-func (h Item) FilterValue() string { return h.payload }
+func (h Item) FilterValue() string { return h.Payload }
 
 // Title renders a colored label used by the list delegate.
 func (h Item) Title() string {
 	var label string
 	color := ui.ColBlue
-	switch h.kind {
+	switch h.Kind {
 	case "sub":
 		label = "SUB"
 		color = ui.ColPink
@@ -39,7 +39,7 @@ func (h Item) Title() string {
 		color = ui.ColGray
 	}
 	return lipgloss.NewStyle().Foreground(color).Render(
-		fmt.Sprintf("%s %s: %s", label, h.topic, h.payload),
+		fmt.Sprintf("%s %s: %s", label, h.Topic, h.Payload),
 	)
 }
 

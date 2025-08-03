@@ -25,7 +25,7 @@ func TestTabCyclesToTopic(t *testing.T) {
 		t.Fatalf("initial focus index should be 0")
 	}
 	m.focus.Next()
-	if !m.topics.input.Focused() {
+	if !m.topics.Input.Focused() {
 		t.Fatalf("topic input should be focused after tab")
 	}
 	if m.focus.Index() != 1 {

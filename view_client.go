@@ -1,6 +1,9 @@
 package emqutiti
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/lipgloss"
+	"github.com/marang/emqutiti/topics"
+)
 
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
@@ -23,9 +26,9 @@ func (m *model) viewClient() string {
 
 	startX := 2
 	startY := m.ui.elemPos[idTopics] + 1
-	m.topics.chipBounds = make([]chipBound, len(bounds))
+	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
 	for i, b := range bounds {
-		m.topics.chipBounds[i] = chipBound{xPos: startX + b.xPos, yPos: startY + b.yPos, width: b.width, height: b.height}
+		m.topics.ChipBounds[i] = topics.ChipBound{XPos: startX + b.XPos, YPos: startY + b.YPos, Width: b.Width, Height: b.Height}
 	}
 
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)

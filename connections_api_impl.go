@@ -35,9 +35,9 @@ func (c *connectionsModel) SubscribeActiveTopics() {
 	if c.mqttClient == nil {
 		return
 	}
-	for _, t := range c.topics.items {
-		if t.subscribed {
-			c.mqttClient.Subscribe(t.title, 0, nil)
+	for _, t := range c.topics.Items {
+		if t.Subscribed {
+			c.mqttClient.Subscribe(t.Name, 0, nil)
 		}
 	}
 }

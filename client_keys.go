@@ -92,12 +92,12 @@ func (m *model) handleScrollKeys(key string) tea.Cmd {
 func (m *model) handlePublishKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
 		payload := m.message.input.Value()
-		for _, t := range m.topics.items {
-			if t.subscribed {
-				m.payloads.Add(t.title, payload)
-				m.history.Append(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
+		for _, t := range m.topics.Items {
+			if t.Subscribed {
+				m.payloads.Add(t.Name, payload)
+				m.history.Append(t.Name, payload, "pub", fmt.Sprintf("Published to %s: %s", t.Name, payload))
 				if m.mqttClient != nil {
-					m.mqttClient.Publish(t.title, 0, false, payload)
+					m.mqttClient.Publish(t.Name, 0, false, payload)
 				}
 			}
 		}
@@ -114,7 +114,7 @@ func (m *model) handleDeleteKey() tea.Cmd {
 		}
 	case idTopics:
 		sel := m.topics.Selected()
-		if sel >= 0 && sel < len(m.topics.items) {
+		if sel >= 0 && sel < len(m.topics.Items) {
 			return m.handleDeleteTopicKey()
 		}
 	}

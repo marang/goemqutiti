@@ -2,14 +2,15 @@ package emqutiti
 
 import (
 	"fmt"
-	connections "github.com/marang/emqutiti/connections"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/clientkeys"
+	connections "github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
+	"github.com/marang/emqutiti/topics"
 )
 
 // handleStatusMessage processes broker status updates.
@@ -33,14 +34,14 @@ func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
 }
 
 // handleTopicToggle subscribes or unsubscribes from a topic and logs the action.
-func (m *model) handleTopicToggle(msg topicToggleMsg) tea.Cmd {
+func (m *model) handleTopicToggle(msg topics.ToggleMsg) tea.Cmd {
 	if m.mqttClient != nil {
-		if msg.subscribed {
-			m.mqttClient.Subscribe(msg.topic, 0, nil)
-			m.history.Append(msg.topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.topic))
+		if msg.Subscribed {
+			m.mqttClient.Subscribe(msg.Topic, 0, nil)
+			m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.Topic))
 		} else {
-			m.mqttClient.Unsubscribe(msg.topic)
-			m.history.Append(msg.topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.topic))
+			m.mqttClient.Unsubscribe(msg.Topic)
+			m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.Topic))
 		}
 	}
 	return nil

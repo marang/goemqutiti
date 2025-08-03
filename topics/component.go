@@ -1,8 +1,10 @@
-package emqutiti
+package topics
 
 import (
 	"fmt"
 	"sort"
+	"strings"
+	"unicode"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -13,42 +15,82 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-// topicsState holds topic list state shared across components.
-type topicsState struct {
-	input      textinput.Model
-	items      []topicItem
+// state holds topic list state shared across components.
+type state struct {
+	Input      textinput.Model
+	Items      []Item
 	list       list.Model
 	panes      topicsPanes
 	selected   int
-	chipBounds []chipBound
-	vp         viewport.Model
+	ChipBounds []ChipBound
+	VP         viewport.Model
 }
 
-func (t *topicsState) setTopic(topic string) { t.input.SetValue(topic) }
+func (t *state) setTopic(topic string) { t.Input.SetValue(topic) }
 
-type topicToggleMsg struct {
-	topic      string
-	subscribed bool
+// SetTopic sets the topic input value.
+func (c *Component) SetTopic(topic string) { c.state.setTopic(topic) }
+
+// ToggleMsg notifies the model of topic subscription changes.
+type ToggleMsg struct {
+	Topic      string
+	Subscribed bool
 }
 
-// topicsComponent implements the Component interface for topic management.
-type topicsComponent struct {
-	*topicsState
-	api topicsModel
+// Component implements topic management UI.
+type Component struct {
+	*state
+	api Model
 }
 
-func newTopicsComponent(api topicsModel) *topicsComponent {
+// New constructs a new Component.
+func New(api Model) *Component {
 	ts := initTopics()
-	tc := &topicsComponent{topicsState: &ts, api: api}
+	tc := &Component{state: &ts, api: api}
 	tc.panes.subscribed.m = tc
 	tc.panes.unsubscribed.m = tc
 	return tc
 }
 
-func (c *topicsComponent) Init() tea.Cmd { return nil }
+func (c *Component) Init() tea.Cmd { return nil }
+
+// layoutChips lays out chips horizontally wrapping within width.
+func layoutChips(chips []string, width int) ([]string, []ChipBound) {
+	var lines []string
+	var row []string
+	var bounds []ChipBound
+	curX := 0
+	rowTop := 0
+	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	rowSpacing := chipH
+	for _, c := range chips {
+		cw := lipgloss.Width(c)
+		if curX+cw > width && len(row) > 0 {
+			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+			line = strings.TrimRightFunc(line, unicode.IsSpace)
+			lines = append(lines, line)
+			row = []string{}
+			curX = 0
+			rowTop += rowSpacing
+		}
+		row = append(row, c)
+		bounds = append(bounds, ChipBound{XPos: curX, YPos: rowTop, Width: cw, Height: chipH})
+		curX += cw
+	}
+	if len(row) > 0 {
+		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		lines = append(lines, line)
+	}
+	if len(lines) == 0 {
+		lines = []string{""}
+	}
+	// ensure at least one bound for layout calculations
+	return lines, bounds
+}
 
 // Update manages the topics list UI.
-func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
+func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	var cmd, fcmd, tcmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -56,8 +98,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
-			cmd := c.api.SetMode(modeClient)
-			return cmd
+			return c.api.ShowClient()
 		case "left":
 			if c.panes.active == 1 {
 				fcmd = c.api.SetFocus(idTopicsEnabled)
@@ -68,8 +109,8 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 			}
 		case "delete":
 			i := c.selected
-			if i >= 0 && i < len(c.items) {
-				name := c.items[i].title
+			if i >= 0 && i < len(c.Items) {
+				name := c.Items[i].Name
 				rf := func() tea.Cmd { return c.api.SetFocus(c.api.FocusedID()) }
 				c.api.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 					cmd := c.RemoveTopic(i)
@@ -80,7 +121,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 			}
 		case "enter", " ":
 			i := c.selected
-			if i >= 0 && i < len(c.items) {
+			if i >= 0 && i < len(c.Items) {
 				tcmd = c.ToggleTopic(i)
 			}
 		}
@@ -98,7 +139,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 }
 
 // View displays the topic manager list.
-func (c *topicsComponent) View() string {
+func (c *Component) View() string {
 	c.api.ResetElemPos()
 	c.api.SetElemPos(idTopicsEnabled, 1)
 	c.api.SetElemPos(idTopicsDisabled, 1)
@@ -127,30 +168,30 @@ func (c *topicsComponent) View() string {
 	return c.api.OverlayHelp(content)
 }
 
-func (c *topicsComponent) Focus() tea.Cmd { return nil }
+func (c *Component) Focus() tea.Cmd { return nil }
 
-func (c *topicsComponent) Blur() {}
+func (c *Component) Blur() {}
 
 // UpdateInput routes messages to the topic text input.
-func (c *topicsComponent) UpdateInput(msg tea.Msg) tea.Cmd {
+func (c *Component) UpdateInput(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
-	c.input, cmd = c.input.Update(msg)
+	c.Input, cmd = c.Input.Update(msg)
 	return cmd
 }
 
 // Focusables exposes focusable elements for the topics component.
-func (c *topicsComponent) Focusables() map[string]Focusable {
+func (c *Component) Focusables() map[string]Focusable {
 	return map[string]Focusable{
 		idTopicsEnabled:  &c.panes.subscribed,
 		idTopicsDisabled: &c.panes.unsubscribed,
-		idTopic:          adapt(&c.input),
+		idTopic:          adapt(&c.Input),
 	}
 }
 
 // HasTopic reports whether the given topic already exists in the list.
-func (c *topicsComponent) HasTopic(topic string) bool {
-	for _, t := range c.items {
-		if t.title == topic {
+func (c *Component) HasTopic(topic string) bool {
+	for _, t := range c.Items {
+		if t.Name == topic {
 			return true
 		}
 	}
@@ -158,23 +199,23 @@ func (c *topicsComponent) HasTopic(topic string) bool {
 }
 
 // SortTopics orders the topic list with active topics first and keeps selection.
-func (c *topicsComponent) SortTopics() {
-	if len(c.items) == 0 {
+func (c *Component) SortTopics() {
+	if len(c.Items) == 0 {
 		return
 	}
 	sel := ""
-	if c.selected >= 0 && c.selected < len(c.items) {
-		sel = c.items[c.selected].title
+	if c.selected >= 0 && c.selected < len(c.Items) {
+		sel = c.Items[c.selected].Name
 	}
-	sort.SliceStable(c.items, func(i, j int) bool {
-		if c.items[i].subscribed != c.items[j].subscribed {
-			return c.items[i].subscribed && !c.items[j].subscribed
+	sort.SliceStable(c.Items, func(i, j int) bool {
+		if c.Items[i].Subscribed != c.Items[j].Subscribed {
+			return c.Items[i].Subscribed && !c.Items[j].Subscribed
 		}
-		return c.items[i].title < c.items[j].title
+		return c.Items[i].Name < c.Items[j].Name
 	})
 	if sel != "" {
-		for i, t := range c.items {
-			if t.title == sel {
+		for i, t := range c.Items {
+			if t.Name == sel {
 				c.selected = i
 				break
 			}
@@ -183,10 +224,10 @@ func (c *topicsComponent) SortTopics() {
 }
 
 // SubscribedItems returns topics currently subscribed.
-func (c *topicsComponent) SubscribedItems() []list.Item {
+func (c *Component) SubscribedItems() []list.Item {
 	var out []list.Item
-	for _, t := range c.items {
-		if t.subscribed {
+	for _, t := range c.Items {
+		if t.Subscribed {
 			out = append(out, t)
 		}
 	}
@@ -194,10 +235,10 @@ func (c *topicsComponent) SubscribedItems() []list.Item {
 }
 
 // UnsubscribedItems returns topics that are not subscribed.
-func (c *topicsComponent) UnsubscribedItems() []list.Item {
+func (c *Component) UnsubscribedItems() []list.Item {
 	var out []list.Item
-	for _, t := range c.items {
-		if !t.subscribed {
+	for _, t := range c.Items {
+		if !t.Subscribed {
 			out = append(out, t)
 		}
 	}
@@ -205,10 +246,10 @@ func (c *topicsComponent) UnsubscribedItems() []list.Item {
 }
 
 // IndexForPane converts a pane list index to a global topics index.
-func (c *topicsComponent) IndexForPane(pane, idx int) int {
+func (c *Component) IndexForPane(pane, idx int) int {
 	count := -1
-	for i, t := range c.items {
-		if (pane == 0 && t.subscribed) || (pane == 1 && !t.subscribed) {
+	for i, t := range c.Items {
+		if (pane == 0 && t.Subscribed) || (pane == 1 && !t.Subscribed) {
 			count++
 			if count == idx {
 				return i
@@ -219,7 +260,7 @@ func (c *topicsComponent) IndexForPane(pane, idx int) int {
 }
 
 // RebuildActiveTopicList updates the active list to show the current pane.
-func (c *topicsComponent) RebuildActiveTopicList() {
+func (c *Component) RebuildActiveTopicList() {
 	if c.panes.active == 0 {
 		items := c.SubscribedItems()
 		if c.panes.subscribed.sel >= len(items) {
@@ -252,7 +293,7 @@ func (c *topicsComponent) RebuildActiveTopicList() {
 }
 
 // SetActivePane switches focus to the given pane index and rebuilds the list.
-func (c *topicsComponent) SetActivePane(idx int) {
+func (c *Component) SetActivePane(idx int) {
 	if idx == c.panes.active {
 		return
 	}
@@ -268,40 +309,40 @@ func (c *topicsComponent) SetActivePane(idx int) {
 }
 
 // ToggleTopic toggles the subscription state of the topic at index and emits an event.
-func (c *topicsComponent) ToggleTopic(index int) tea.Cmd {
-	if index < 0 || index >= len(c.items) {
+func (c *Component) ToggleTopic(index int) tea.Cmd {
+	if index < 0 || index >= len(c.Items) {
 		return nil
 	}
-	t := &c.items[index]
-	t.subscribed = !t.subscribed
+	t := &c.Items[index]
+	t.Subscribed = !t.Subscribed
 	c.SortTopics()
 	c.RebuildActiveTopicList()
-	topic := t.title
-	sub := t.subscribed
-	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: sub} }
+	topic := t.Name
+	sub := t.Subscribed
+	return func() tea.Msg { return ToggleMsg{Topic: topic, Subscribed: sub} }
 }
 
 // RemoveTopic deletes the topic at index and emits an unsubscribe event.
-func (c *topicsComponent) RemoveTopic(index int) tea.Cmd {
-	if index < 0 || index >= len(c.items) {
+func (c *Component) RemoveTopic(index int) tea.Cmd {
+	if index < 0 || index >= len(c.Items) {
 		return nil
 	}
-	topic := c.items[index].title
-	c.items = append(c.items[:index], c.items[index+1:]...)
-	if len(c.items) == 0 {
+	topic := c.Items[index].Name
+	c.Items = append(c.Items[:index], c.Items[index+1:]...)
+	if len(c.Items) == 0 {
 		c.selected = -1
-	} else if c.selected >= len(c.items) {
-		c.selected = len(c.items) - 1
+	} else if c.selected >= len(c.Items) {
+		c.selected = len(c.Items) - 1
 	}
 	c.SortTopics()
 	c.RebuildActiveTopicList()
-	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: false} }
+	return func() tea.Msg { return ToggleMsg{Topic: topic, Subscribed: false} }
 }
 
 // TopicAtPosition returns the index of the topic chip at the provided coordinates or -1.
-func (c *topicsComponent) TopicAtPosition(x, y int) int {
-	for i, b := range c.chipBounds {
-		if x >= b.xPos && x < b.xPos+b.width && y >= b.yPos && y < b.yPos+b.height {
+func (c *Component) TopicAtPosition(x, y int) int {
+	for i, b := range c.ChipBounds {
+		if x >= b.XPos && x < b.XPos+b.Width && y >= b.YPos && y < b.YPos+b.Height {
 			return i
 		}
 	}
@@ -309,43 +350,43 @@ func (c *topicsComponent) TopicAtPosition(x, y int) int {
 }
 
 // Scroll moves the topics viewport by delta rows.
-func (c *topicsComponent) Scroll(delta int) {
+func (c *Component) Scroll(delta int) {
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	if delta > 0 {
-		c.vp.ScrollDown(delta * rowH)
+		c.VP.ScrollDown(delta * rowH)
 	} else if delta < 0 {
-		c.vp.ScrollUp(-delta * rowH)
+		c.VP.ScrollUp(-delta * rowH)
 	}
 }
 
 // EnsureVisible keeps the selected topic within view given the available width.
-func (c *topicsComponent) EnsureVisible(width int) {
+func (c *Component) EnsureVisible(width int) {
 	sel := c.Selected()
-	if sel < 0 || sel >= len(c.items) {
+	if sel < 0 || sel >= len(c.Items) {
 		return
 	}
 	var chips []string
-	for _, t := range c.items {
+	for _, t := range c.Items {
 		st := ui.ChipStyle
-		if !t.subscribed {
+		if !t.Subscribed {
 			st = ui.ChipInactive
 		}
-		chips = append(chips, st.Render(t.title))
+		chips = append(chips, st.Render(t.Name))
 	}
 	_, bounds := layoutChips(chips, width)
 	if sel >= len(bounds) {
 		return
 	}
 	b := bounds[sel]
-	if b.yPos < c.vp.YOffset {
-		c.vp.SetYOffset(b.yPos)
-	} else if b.yPos+b.height > c.vp.YOffset+c.vp.Height {
-		c.vp.SetYOffset(b.yPos + b.height - c.vp.Height)
+	if b.YPos < c.VP.YOffset {
+		c.VP.SetYOffset(b.YPos)
+	} else if b.YPos+b.Height > c.VP.YOffset+c.VP.Height {
+		c.VP.SetYOffset(b.YPos + b.Height - c.VP.Height)
 	}
 }
 
 // HandleClick processes mouse clicks on topics and triggers actions.
-func (c *topicsComponent) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
+func (c *Component) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
 	y := msg.Y + vpOffset
 	idx := c.TopicAtPosition(msg.X, y)
 	if idx < 0 {
@@ -355,7 +396,7 @@ func (c *topicsComponent) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
 	if msg.Type == tea.MouseLeft {
 		return c.ToggleTopic(idx)
 	} else if msg.Type == tea.MouseRight {
-		name := c.items[idx].title
+		name := c.Items[idx].Name
 		focused := c.api.FocusedID()
 		rf := func() tea.Cmd { return c.api.SetFocus(focused) }
 		c.api.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
@@ -365,7 +406,7 @@ func (c *topicsComponent) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
 	return nil
 }
 
-func (c *topicsComponent) SetSelected(i int) { c.selected = i }
-func (c *topicsComponent) Selected() int     { return c.selected }
+func (c *Component) SetSelected(i int) { c.selected = i }
+func (c *Component) Selected() int     { return c.selected }
 
-var _ TopicsAPI = (*topicsComponent)(nil)
+var _ API = (*Component)(nil)

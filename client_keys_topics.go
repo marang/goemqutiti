@@ -5,13 +5,15 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/topics"
 )
 
 // handleLeftKey moves topic selection left.
 func (m *model) handleLeftKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
+	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.Items) > 0 {
 		sel := m.topics.Selected()
-		m.topics.SetSelected((sel - 1 + len(m.topics.items)) % len(m.topics.items))
+		m.topics.SetSelected((sel - 1 + len(m.topics.Items)) % len(m.topics.Items))
 		m.topics.EnsureVisible(m.ui.width - 4)
 	}
 	return nil
@@ -19,9 +21,9 @@ func (m *model) handleLeftKey() tea.Cmd {
 
 // handleRightKey moves topic selection right.
 func (m *model) handleRightKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
+	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.Items) > 0 {
 		sel := m.topics.Selected()
-		m.topics.SetSelected((sel + 1) % len(m.topics.items))
+		m.topics.SetSelected((sel + 1) % len(m.topics.Items))
 		m.topics.EnsureVisible(m.ui.width - 4)
 	}
 	return nil
@@ -41,19 +43,19 @@ func (m *model) handleTopicScroll(key string) tea.Cmd {
 func (m *model) handleEnterKey() tea.Cmd {
 	switch m.ui.focusOrder[m.ui.focusIndex] {
 	case idTopic:
-		topic := strings.TrimSpace(m.topics.input.Value())
+		topic := strings.TrimSpace(m.topics.Input.Value())
 		if topic != "" && !m.topics.HasTopic(topic) {
-			m.topics.items = append(m.topics.items, topicItem{title: topic, subscribed: true})
+			m.topics.Items = append(m.topics.Items, topics.Item{Name: topic, Subscribed: true})
 			m.topics.SortTopics()
 			if m.currentMode() == modeTopics {
 				m.topics.RebuildActiveTopicList()
 			}
-			m.topics.input.SetValue("")
-			return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: true} }
+			m.topics.Input.SetValue("")
+			return func() tea.Msg { return topics.ToggleMsg{Topic: topic, Subscribed: true} }
 		}
 	case idTopics:
 		sel := m.topics.Selected()
-		if sel >= 0 && sel < len(m.topics.items) {
+		if sel >= 0 && sel < len(m.topics.Items) {
 			cmd := m.topics.ToggleTopic(sel)
 			m.topics.EnsureVisible(m.ui.width - 4)
 			return cmd
@@ -67,7 +69,7 @@ func (m *model) handleEnterKey() tea.Cmd {
 // handleDeleteTopicKey deletes the selected topic.
 func (m *model) handleDeleteTopicKey() tea.Cmd {
 	idx := m.topics.Selected()
-	name := m.topics.items[idx].title
+	name := m.topics.Items[idx].Name
 	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 		cmd := m.topics.RemoveTopic(idx)

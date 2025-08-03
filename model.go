@@ -8,6 +8,7 @@ import (
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/topics"
 )
 
 // reference history package to avoid unused import warning
@@ -96,7 +97,7 @@ type model struct {
 
 	connections connections.State
 	history     *history.Component
-	topics      *topicsComponent
+	topics      *topics.Component
 	message     *messageComponent
 	traces      *tracesComponent
 	payloads    *payloadsComponent

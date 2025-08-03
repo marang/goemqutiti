@@ -7,13 +7,13 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	_ "github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 
 	"github.com/marang/emqutiti/connections"
@@ -56,36 +56,6 @@ func initConnections(conns *connections.Connections) (connections.State, error) 
 	}
 	cs.RefreshConnectionItems()
 	return cs, loadErr
-}
-
-func initTopics() topicsState {
-	ti := textinput.New()
-	ti.Placeholder = "Enter Topic"
-	ti.Focus()
-	ti.CharLimit = 32
-	ti.Prompt = "> "
-	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
-	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
-	ti.Cursor.Style = ui.CursorStyle
-	ti.TextStyle = ui.FocusedStyle
-	ti.Width = 0
-	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	topicsList.DisableQuitKeybindings()
-	topicsList.SetShowTitle(false)
-	ts := topicsState{
-		input: ti,
-		items: []topicItem{},
-		list:  topicsList,
-		panes: topicsPanes{
-			subscribed:   paneState{sel: 0, page: 0, index: 0},
-			unsubscribed: paneState{sel: 0, page: 0, index: 1},
-			active:       0,
-		},
-		selected:   -1,
-		chipBounds: []chipBound{},
-		vp:         viewport.New(0, 0),
-	}
-	return ts
 }
 
 func initMessage() messageState {
@@ -182,7 +152,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
-	topicsComp := newTopicsComponent(m)
+	topicsComp := topics.New(m)
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, &m.connections)
 	tracesComp := newTracesComponent(m, tr, m.tracesStore())

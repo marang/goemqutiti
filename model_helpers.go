@@ -57,8 +57,8 @@ func (m *model) startConfirm(prompt, info string, returnFocus func() tea.Cmd, ac
 // startHistoryFilter opens the history filter form.
 func (m *model) startHistoryFilter() tea.Cmd {
 	var topics []string
-	for _, t := range m.topics.items {
-		topics = append(topics, t.title)
+	for _, t := range m.topics.Items {
+		topics = append(topics, t.Name)
 	}
 	var topic, payload string
 	var start, end time.Time

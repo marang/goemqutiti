@@ -8,14 +8,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
 
 // layoutChips lays out chips horizontally wrapping within width.
-func layoutChips(chips []string, width int) ([]string, []chipBound) {
+func layoutChips(chips []string, width int) ([]string, []topics.ChipBound) {
 	var lines []string
 	var row []string
-	var bounds []chipBound
+	var bounds []topics.ChipBound
 	curX := 0
 	rowTop := 0
 	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
@@ -34,7 +35,7 @@ func layoutChips(chips []string, width int) ([]string, []chipBound) {
 			rowTop += rowSpacing
 		}
 		row = append(row, c)
-		bounds = append(bounds, chipBound{xPos: curX, yPos: rowTop, width: cw, height: chipH})
+		bounds = append(bounds, topics.ChipBound{XPos: curX, YPos: rowTop, Width: cw, Height: chipH})
 		curX += cw
 	}
 	if len(row) > 0 {
@@ -65,17 +66,17 @@ func (m *model) clientInfoLine() string {
 }
 
 // clientTopicsSection renders topics and topic input boxes.
-func (m *model) clientTopicsSection() (string, string, []chipBound) {
+func (m *model) clientTopicsSection() (string, string, []topics.ChipBound) {
 	var chips []string
-	for i, t := range m.topics.items {
+	for i, t := range m.topics.Items {
 		st := ui.ChipStyle
-		if !t.subscribed {
+		if !t.Subscribed {
 			st = ui.ChipInactive
 		}
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.Selected() {
 			st = st.BorderForeground(ui.ColPurple)
 		}
-		chips = append(chips, st.Render(t.title))
+		chips = append(chips, st.Render(t.Name))
 	}
 
 	chipRows, bounds := layoutChips(chips, m.ui.width-4)
@@ -85,38 +86,38 @@ func (m *model) clientTopicsSection() (string, string, []chipBound) {
 		maxRows = 1
 	}
 	topicsBoxHeight := maxRows * rowH
-	m.topics.vp.Width = m.ui.width - 4
-	m.topics.vp.Height = topicsBoxHeight
-	m.topics.vp.SetContent(strings.Join(chipRows, "\n"))
+	m.topics.VP.Width = m.ui.width - 4
+	m.topics.VP.Height = topicsBoxHeight
+	m.topics.VP.SetContent(strings.Join(chipRows, "\n"))
 	m.topics.EnsureVisible(m.ui.width - 4)
-	startLine := m.topics.vp.YOffset
+	startLine := m.topics.VP.YOffset
 	endLine := startLine + topicsBoxHeight
 	topicsSP := -1.0
 	if len(chipRows)*rowH > topicsBoxHeight {
-		topicsSP = m.topics.vp.ScrollPercent()
+		topicsSP = m.topics.VP.ScrollPercent()
 	}
-	chipContent := m.topics.vp.View()
-	visible := []chipBound{}
+	chipContent := m.topics.VP.View()
+	visible := []topics.ChipBound{}
 	for _, b := range bounds {
-		if b.yPos >= startLine && b.yPos < endLine {
-			b.yPos -= startLine
+		if b.YPos >= startLine && b.YPos < endLine {
+			b.YPos -= startLine
 			visible = append(visible, b)
 		}
 	}
 	bounds = visible
 
 	active := 0
-	for _, t := range m.topics.items {
-		if t.subscribed {
+	for _, t := range m.topics.Items {
+		if t.Subscribed {
 			active++
 		}
 	}
-	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.items))
+	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.Items))
 	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
 	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused, topicsSP)
 
 	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopic
-	topicBox := ui.LegendBox(m.topics.input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)
+	topicBox := ui.LegendBox(m.topics.Input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)
 
 	return topicsBox, topicBox, bounds
 }

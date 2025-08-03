@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 
 	"github.com/marang/emqutiti/history"
@@ -25,9 +26,17 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 	if !handled {
 		t.Fatalf("expected scroll event handled")
 	}
-	if m.topics.vp.YOffset != rowH {
-		t.Fatalf("expected scroll %d got %d", rowH, m.topics.vp.YOffset)
+	if m.topics.VP.YOffset != rowH {
+		t.Fatalf("expected scroll %d got %d", rowH, m.topics.VP.YOffset)
 	}
+}
+
+func setupManyTopics(m *model, n int) {
+	for i := 0; i < n; i++ {
+		title := fmt.Sprintf("topic-%d", i)
+		m.topics.Items = append(m.topics.Items, topics.Item{Name: title, Subscribed: true})
+	}
+	m.layout.topics.height = n
 }
 
 func TestHandleHistorySelectionShift(t *testing.T) {

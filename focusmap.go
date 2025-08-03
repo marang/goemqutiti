@@ -1,14 +1,12 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/topics"
+)
 
 // Focusable represents a UI element that can gain or lose focus.
-type Focusable interface {
-	Focus()
-	Blur()
-	IsFocused() bool
-	View() string
-}
+type Focusable = topics.Focusable
 
 // FocusableSet exposes a collection of focusable elements.
 type FocusableSet interface {

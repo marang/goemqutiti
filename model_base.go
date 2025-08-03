@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/traces"
 )
@@ -8,7 +9,7 @@ import (
 const (
 	idTopics         = "topics"          // topics chip list
 	idTopic          = "topic"           // topic input box
-	idMessage        = "message"         // message input box
+	idMessage        = message.ID        // message input box
 	idHistory        = "history"         // history list
 	idConnList       = "conn-list"       // broker list
 	idTopicsEnabled  = "topics-enabled"  // enabled topics pane

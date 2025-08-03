@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/traces"
 	"github.com/marang/emqutiti/ui"
@@ -58,7 +59,7 @@ func initConnections(conns *connections.Connections) (connections.State, error) 
 	return cs, loadErr
 }
 
-func initMessage() messageState {
+func initMessage() message.State {
 	ta := textarea.New()
 	ta.Placeholder = "Enter Message"
 	ta.CharLimit = 10000
@@ -75,8 +76,8 @@ func initMessage() messageState {
 	ta.SetHeight(6)
 	ta.FocusedStyle.CursorLine = ui.FocusedStyle
 	ta.BlurredStyle.CursorLine = ui.BlurredStyle
-	ms := messageState{
-		input: ta,
+	ms := message.State{
+		TA: ta,
 	}
 	return ms
 }
@@ -116,7 +117,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		layout:      initLayout(),
 	}
 	m.history = history.NewComponent(historyModelAdapter{m}, st)
-	msgComp := newMessageComponent(m, ms)
+	msgComp := message.NewComponent(m, ms)
 	m.message = msgComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, m, nil, nil, nil)

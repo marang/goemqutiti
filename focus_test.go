@@ -5,11 +5,11 @@ import "testing"
 // Test that setFocus correctly focuses the message input
 func TestSetFocusMessage(t *testing.T) {
 	m, _ := initialModel(nil)
-	if m.message.input.Focused() {
+	if m.message.Input().Focused() {
 		t.Fatalf("message input should start blurred")
 	}
 	m.setFocus(idMessage)
-	if !m.message.input.Focused() {
+	if !m.message.Input().Focused() {
 		t.Fatalf("message input not focused after setFocus")
 	}
 	if m.focus.Index() != 2 {

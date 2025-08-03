@@ -18,8 +18,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// to the configured width. Reduce the width slightly so the
 		// surrounding box stays within the terminal boundaries.
 		m.topics.Input.Width = msg.Width - 7
-		m.message.input.SetWidth(msg.Width - 4)
-		m.message.input.SetHeight(m.layout.message.height)
+		m.message.Input().SetWidth(msg.Width - 4)
+		m.message.Input().SetHeight(m.layout.message.height)
 		if m.layout.history.height == 0 {
 			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
@@ -42,7 +42,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case payloads.LoadMsg:
 		m.topics.SetTopic(msg.Topic)
-		m.message.setPayload(msg.Payload)
+		m.message.SetPayload(msg.Payload)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {

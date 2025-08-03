@@ -12,7 +12,7 @@ import (
 
 // handleStatusMessage processes broker status updates.
 func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
-	m.appendHistory("", string(msg), "log", string(msg))
+	m.history.Append("", string(msg), "log", string(msg))
 	if strings.HasPrefix(string(msg), "Connected") && m.connections.active != "" {
 		m.connections.SetConnected(m.connections.active)
 		m.refreshConnectionItems()
@@ -26,7 +26,7 @@ func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
 
 // handleMQTTMessage appends received MQTT messages to history.
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
-	m.appendHistory(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
+	m.history.Append(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
 }
 
@@ -35,10 +35,10 @@ func (m *model) handleTopicToggle(msg topicToggleMsg) tea.Cmd {
 	if m.mqttClient != nil {
 		if msg.subscribed {
 			m.mqttClient.Subscribe(msg.topic, 0, nil)
-			m.appendHistory(msg.topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.topic))
+			m.history.Append(msg.topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.topic))
 		} else {
 			m.mqttClient.Unsubscribe(msg.topic)
-			m.appendHistory(msg.topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.topic))
+			m.history.Append(msg.topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.topic))
 		}
 	}
 	return nil

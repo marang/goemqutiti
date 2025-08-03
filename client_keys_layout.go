@@ -83,10 +83,10 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "ctrl+b":
 		if err := m.connections.manager.LoadProfiles(""); err != nil {
-			m.appendHistory("", err.Error(), "log", err.Error())
+			m.history.Append("", err.Error(), "log", err.Error())
 		}
 		m.refreshConnectionItems()
-		m.saveCurrent()
+		m.history.SaveCurrent()
 		m.traces.savePlannedTraces()
 		return m.setMode(modeConnections)
 	case "ctrl+t":

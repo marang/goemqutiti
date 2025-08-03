@@ -66,7 +66,7 @@ func TestHistoryPreviewShortMultilineCRLF(t *testing.T) {
 func TestHistoryBoxLayout(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
-	m.appendHistory("foo", "bar", "pub", "")
+	m.history.Append("foo", "bar", "pub", "")
 	view := m.viewClient()
 	lines := strings.Split(view, "\n")
 	var hist []string
@@ -98,7 +98,7 @@ func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.history.filterQuery = "topic=foo"
 	m.history.store = &historyStore{}
-	m.appendHistory("foo", "bar", "pub", "")
+	m.history.Append("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
 	lines := strings.Split(view, "\n")
@@ -137,8 +137,8 @@ func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 func TestHistoryLabelCounts(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.history.store = &historyStore{}
-	m.appendHistory("foo", "bar", "pub", "")
-	m.appendHistory("bar", "baz", "sub", "")
+	m.history.Append("foo", "bar", "pub", "")
+	m.history.Append("bar", "baz", "sub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
 	if !strings.Contains(view, "History (2 messages") {
@@ -163,7 +163,7 @@ func TestHistoryFilterLineWidth(t *testing.T) {
 	long := strings.Repeat("x", 100)
 	m.history.filterQuery = "topic=" + long
 	m.history.store = &historyStore{}
-	m.appendHistory("foo", "bar", "pub", "")
+	m.history.Append("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
 	lines := strings.Split(view, "\n")
@@ -196,7 +196,7 @@ func TestHistoryHelpVisibleWithFilter(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.history.store = &historyStore{}
 	m.history.filterQuery = "topic=foo"
-	m.appendHistory("foo", "bar", "pub", "")
+	m.history.Append("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
 	if !strings.Contains(view, "\u2191/k up") {
@@ -250,7 +250,7 @@ func TestDeleteErrorFeedback(t *testing.T) {
 func TestHistoryDetailViewShowsPayload(t *testing.T) {
 	m, _ := initialModel(nil)
 	long := strings.Repeat("x", historyPreviewLimit+10)
-	m.appendHistory("foo", long, "pub", "")
+	m.history.Append("foo", long, "pub", "")
 	m.setFocus(idHistory)
 	m.handleEnterKey()
 	if m.currentMode() != modeHistoryDetail {

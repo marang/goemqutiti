@@ -91,7 +91,7 @@ func (m *model) handleScrollKeys(key string) tea.Cmd {
 // handlePublishKey publishes the current message to subscribed topics.
 func (m *model) handlePublishKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
-		payload := m.message.input.Value()
+		payload := m.message.Input().Value()
 		for _, t := range m.topics.Items {
 			if t.Subscribed {
 				m.payloads.Add(t.Name, payload)

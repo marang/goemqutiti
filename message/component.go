@@ -1,0 +1,90 @@
+package message
+
+import (
+	"github.com/charmbracelet/bubbles/textarea"
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/ui"
+)
+
+// State holds the textarea model for composing messages.
+type State struct {
+	TA textarea.Model
+}
+
+// Component implements the message editor.
+type Component struct {
+	*State
+	m Model
+}
+
+// NewComponent creates a message editor component.
+func NewComponent(m Model, s State) *Component {
+	return &Component{State: &s, m: m}
+}
+
+func (c *Component) Init() tea.Cmd { return nil }
+
+// Update handles textarea updates when editing messages.
+func (c *Component) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	c.TA, cmd = c.TA.Update(msg)
+	return cmd
+}
+
+// View renders the message editor box.
+func (c *Component) View() string {
+	msgContent := c.TA.View()
+	msgLines := c.TA.LineCount()
+	msgHeight := c.m.MessageHeight()
+	msgSP := -1.0
+	if msgLines > msgHeight {
+		off := c.TA.Line() - msgHeight + 1
+		if off < 0 {
+			off = 0
+		}
+		maxOff := msgLines - msgHeight
+		if off > maxOff {
+			off = maxOff
+		}
+		if maxOff > 0 {
+			msgSP = float64(off) / float64(maxOff)
+		}
+	}
+	focused := c.m.FocusedID() == ID
+	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", c.m.Width()-2, msgHeight, ui.ColBlue, focused, msgSP)
+}
+
+func (c *Component) Focus() tea.Cmd { return c.TA.Focus() }
+
+func (c *Component) Blur() { c.TA.Blur() }
+
+// Input returns the textarea model.
+func (c *Component) Input() *textarea.Model { return &c.TA }
+
+// SetPayload updates the textarea with the provided payload.
+func (c *Component) SetPayload(payload string) { c.TA.SetValue(payload) }
+
+// Focusables exposes focusable elements for the message component.
+func (c *Component) Focusables() map[string]topics.Focusable {
+	return map[string]topics.Focusable{ID: adapt(&c.TA)}
+}
+
+// --- focus adapter helpers ---
+
+type teaFocusable interface {
+	Focus() tea.Cmd
+	Blur()
+	Focused() bool
+	View() string
+}
+
+func adapt(f teaFocusable) topics.Focusable { return focusAdapter{f} }
+
+type focusAdapter struct{ f teaFocusable }
+
+func (a focusAdapter) Focus()          { _ = a.f.Focus() }
+func (a focusAdapter) Blur()           { a.f.Blur() }
+func (a focusAdapter) IsFocused() bool { return a.f.Focused() }
+func (a focusAdapter) View() string    { return a.f.View() }

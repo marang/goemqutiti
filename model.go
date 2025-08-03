@@ -8,6 +8,7 @@ import (
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/traces"
@@ -16,6 +17,7 @@ import (
 // reference history package to avoid unused import warning
 var _ = history.ID
 var _ clientkeys.Handler = (*model)(nil)
+var _ message.Model = (*model)(nil)
 
 // Component defines a screen or feature that can participate in the Tea update
 // and view cycle. Implementations handle their own initialization, state
@@ -100,7 +102,7 @@ type model struct {
 	connections connections.State
 	history     *history.Component
 	topics      *topics.Component
-	message     *messageComponent
+	message     *message.Component
 	traces      *traces.Component
 	payloads    *payloads.Component
 	help        *helpComponent

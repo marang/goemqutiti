@@ -48,7 +48,7 @@ func (m *model) handleResizeUpKey() tea.Cmd {
 	if id == idMessage {
 		if m.layout.message.height > 1 {
 			m.layout.message.height--
-			m.message.input.SetHeight(m.layout.message.height)
+			m.message.Input().SetHeight(m.layout.message.height)
 		}
 	} else if id == idHistory {
 		if m.layout.history.height > 1 {
@@ -68,7 +68,7 @@ func (m *model) handleResizeDownKey() tea.Cmd {
 	id := m.ui.focusOrder[m.ui.focusIndex]
 	if id == idMessage {
 		m.layout.message.height++
-		m.message.input.SetHeight(m.layout.message.height)
+		m.message.Input().SetHeight(m.layout.message.height)
 	} else if id == idHistory {
 		m.layout.history.height++
 		m.history.List().SetSize(m.ui.width-4, m.layout.history.height)

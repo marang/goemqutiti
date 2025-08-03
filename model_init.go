@@ -201,7 +201,7 @@ func initialModel(conns *Connections) (*model, error) {
 	msgComp := newMessageComponent(m, ms)
 	m.message = msgComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
-	m.confirm = newConfirmComponent(m, nil, nil, nil)
+	m.confirm = newConfirmComponent(m, m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
 	m.topics = topicsComp

@@ -27,6 +27,9 @@ func (m *model) FocusedID() string { return m.ui.focusOrder[m.ui.focusIndex] }
 // ListenStatus proxies connection status updates for components.
 func (m *model) ListenStatus() tea.Cmd { return m.connections.ListenStatus() }
 
+// ScrollToFocused ensures the focused element is visible.
+func (m *model) ScrollToFocused() { m.scrollToFocused() }
+
 // ResetElemPos clears cached element positions.
 func (m *model) ResetElemPos() { m.ui.elemPos = map[string]int{} }
 
@@ -43,7 +46,7 @@ func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, ac
 
 // startConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) startConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
-	m.confirm = newConfirmComponent(m, returnFocus, action, cancel)
+	m.confirm = newConfirmComponent(m, m, returnFocus, action, cancel)
 	m.confirm.start(prompt, info)
 	m.components[modeConfirmDelete] = m.confirm
 }

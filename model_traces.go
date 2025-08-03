@@ -14,7 +14,7 @@ func (t *tracesComponent) forceStartTrace(index int) {
 	item := t.items[index]
 	p, err := LoadProfile(item.cfg.Profile, "")
 	if err != nil {
-		t.m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.history.Append("", err.Error(), "log", err.Error())
 		return
 	}
 	if p.FromEnv {
@@ -24,12 +24,12 @@ func (t *tracesComponent) forceStartTrace(index int) {
 	}
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
-		t.m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.history.Append("", err.Error(), "log", err.Error())
 		return
 	}
 	tr := newTracer(item.cfg, client)
 	if err := tr.Start(); err != nil {
-		t.m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.history.Append("", err.Error(), "log", err.Error())
 		client.Disconnect()
 		return
 	}
@@ -44,7 +44,7 @@ func (t *tracesComponent) startTrace(index int) {
 	}
 	item := t.items[index]
 	if !item.cfg.End.IsZero() && time.Now().After(item.cfg.End) {
-		t.m.appendHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
+		t.m.history.Append("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
 		return
 	}
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
@@ -111,7 +111,7 @@ func (t *tracesComponent) loadTraceMessages(index int) {
 	it := t.items[index]
 	msgs, err := tracerMessages(it.cfg.Profile, it.key)
 	if err != nil {
-		t.m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.history.Append("", err.Error(), "log", err.Error())
 		return
 	}
 	items := make([]list.Item, len(msgs))

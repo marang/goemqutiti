@@ -58,7 +58,7 @@ func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
 
 // handleQuitKey saves current state and quits the application.
 func (m *model) handleQuitKey() tea.Cmd {
-	m.saveCurrent()
+	m.history.SaveCurrent()
 	m.traces.savePlannedTraces()
 	return tea.Quit
 }
@@ -95,7 +95,7 @@ func (m *model) handlePublishKey() tea.Cmd {
 		for _, t := range m.topics.items {
 			if t.subscribed {
 				m.payloads.Add(t.title, payload)
-				m.appendHistory(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
+				m.history.Append(t.title, payload, "pub", fmt.Sprintf("Published to %s: %s", t.title, payload))
 				if m.mqttClient != nil {
 					m.mqttClient.Publish(t.title, 0, false, payload)
 				}

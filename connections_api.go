@@ -122,7 +122,7 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 		}
 		c.history.list.SetItems(items)
 	}
-	c.restoreState(msg.profile.Name)
+	c.history.RestoreState(msg.profile.Name)
 	c.subscribeActiveTopics()
 	c.connections.connection = "Connected to " + brokerURL
 	c.connections.SetConnected(msg.profile.Name)

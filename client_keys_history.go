@@ -35,7 +35,7 @@ func (m *model) handleCopyKey() tea.Cmd {
 			}
 		}
 		if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
-			m.appendHistory("", err.Error(), "log", err.Error())
+			m.history.Append("", err.Error(), "log", err.Error())
 		}
 	} else if len(m.history.list.Items()) > 0 {
 		idx := m.history.list.Index()
@@ -46,7 +46,7 @@ func (m *model) handleCopyKey() tea.Cmd {
 				text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
 			}
 			if err := clipboard.WriteAll(text); err != nil {
-				m.appendHistory("", err.Error(), "log", err.Error())
+				m.history.Append("", err.Error(), "log", err.Error())
 			}
 		}
 	}

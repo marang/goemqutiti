@@ -87,7 +87,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		m.refreshConnectionItems()
 		m.saveCurrent()
-		m.savePlannedTraces()
+		m.traces.savePlannedTraces()
 		return m.setMode(modeConnections)
 	case "ctrl+t":
 		m.topics.panes.subscribed = paneState{sel: 0, page: 0, index: 0, m: m}

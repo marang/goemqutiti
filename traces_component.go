@@ -77,6 +77,30 @@ type tracesState struct {
 	viewKey string
 }
 
+// tracesComponent implements the Component interface for managing traces. It
+// owns the tracing state but delegates broader navigation and history logging
+// to the root model.
+type tracesComponent struct {
+	*tracesState
+	m     *model
+	store TraceStore
+}
+
+func newTracesComponent(m *model, ts tracesState, store TraceStore) *tracesComponent {
+	return &tracesComponent{tracesState: &ts, m: m, store: store}
+}
+
+func (t *tracesComponent) Init() tea.Cmd { return nil }
+
+func (t *tracesComponent) View() string { return t.viewTraces() }
+
+func (t *tracesComponent) Focus() tea.Cmd { return nil }
+
+func (t *tracesComponent) Blur() {}
+
+// Focusables satisfies FocusableSet; the base model provides the trace list focusable.
+func (t *tracesComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }
+
 // traceMsgItem holds a trace message with its sequence number.
 type traceMsgItem struct {
 	idx int
@@ -93,7 +117,7 @@ func (t traceMsgItem) Title() string { return t.msg.Topic }
 func (t traceMsgItem) Description() string { return t.msg.Payload }
 
 // traceMsgDelegate renders trace messages with numbering and timestamp.
-type traceMsgDelegate struct{ m *model }
+type traceMsgDelegate struct{ t *tracesComponent }
 
 // Height returns the line height for an item.
 func (d traceMsgDelegate) Height() int { return 2 }
@@ -124,7 +148,7 @@ func (d traceMsgDelegate) Render(w io.Writer, m list.Model, index int, item list
 		}
 	}
 	barColor := ui.ColDarkGray
-	if index == d.m.traces.view.Index() {
+	if index == d.t.view.Index() {
 		barColor = ui.ColPurple
 	}
 	bar := lipgloss.NewStyle().Foreground(barColor)
@@ -139,81 +163,87 @@ func traceTicker() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return traceTickMsg{} })
 }
 
-// updateTraces manages the traces list and responds to key presses.
-func (m *model) updateTraces(msg tea.Msg) tea.Cmd {
+// Update manages the traces list and responds to key presses.
+func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case traceTickMsg:
-		// just refresh
+		// refresh
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			m.savePlannedTraces()
+			t.savePlannedTraces()
 			return tea.Quit
 		case "esc":
-			m.savePlannedTraces()
-			cmd := m.setMode(modeClient)
-			return cmd
+			t.savePlannedTraces()
+			return t.m.setMode(modeClient)
 		case "a":
-			opts := make([]string, len(m.connections.manager.Profiles))
-			for i, p := range m.connections.manager.Profiles {
+			opts := make([]string, len(t.m.connections.manager.Profiles))
+			for i, p := range t.m.connections.manager.Profiles {
 				opts[i] = p.Name
 			}
 			topics := []string{}
-			for _, t := range m.topics.items {
-				if t.subscribed {
-					topics = append(topics, t.title)
+			for _, tp := range t.m.topics.items {
+				if tp.subscribed {
+					topics = append(topics, tp.title)
 				}
 			}
-			f := newTraceForm(opts, m.connections.active, topics)
-			m.traces.form = &f
-			cmd := m.setMode(modeEditTrace)
-			return tea.Batch(cmd, textinput.Blink)
+			f := newTraceForm(opts, t.m.connections.active, topics)
+			t.form = &f
+			return tea.Batch(t.m.setMode(modeEditTrace), textinput.Blink)
 		case "enter":
-			i := m.traces.list.Index()
-			if i >= 0 && i < len(m.traces.items) {
-				it := m.traces.items[i]
+			i := t.list.Index()
+			if i >= 0 && i < len(t.items) {
+				it := t.items[i]
 				if it.tracer != nil && (it.tracer.Running() || it.tracer.Planned()) {
-					m.stopTrace(i)
+					t.stopTrace(i)
 				} else {
-					m.startTrace(i)
+					t.startTrace(i)
 				}
 			}
 		case "v":
-			i := m.traces.list.Index()
-			if i >= 0 && i < len(m.traces.items) {
-				m.loadTraceMessages(i)
+			i := t.list.Index()
+			if i >= 0 && i < len(t.items) {
+				t.loadTraceMessages(i)
 				return nil
 			}
 		case "delete":
-			i := m.traces.list.Index()
-			if i >= 0 && i < len(m.traces.items) {
-				key := m.traces.items[i].key
-				m.stopTrace(i)
-				m.traces.items = append(m.traces.items[:i], m.traces.items[i+1:]...)
+			i := t.list.Index()
+			if i >= 0 && i < len(t.items) {
+				key := t.items[i].key
+				t.stopTrace(i)
+				t.items = append(t.items[:i], t.items[i+1:]...)
 				items := []list.Item{}
-				for _, it := range m.traces.items {
+				for _, it := range t.items {
 					items = append(items, it)
 				}
-				m.traces.list.SetItems(items)
+				t.list.SetItems(items)
 				removeTrace(key)
 			}
-			if m.anyTraceRunning() {
+			if t.anyTraceRunning() {
 				return traceTicker()
 			}
 			return nil
+		case "ctrl+shift+up":
+			if t.m.layout.trace.height > 1 {
+				t.m.layout.trace.height--
+				t.list.SetSize(t.m.ui.width-4, t.m.ui.height-4)
+			}
+		case "ctrl+shift+down":
+			t.m.layout.trace.height++
+			t.list.SetSize(t.m.ui.width-4, t.m.ui.height-4)
 		}
 	}
-	m.traces.list, cmd = m.traces.list.Update(msg)
-	if m.anyTraceRunning() {
+	t.list, cmd = t.list.Update(msg)
+	if t.anyTraceRunning() {
 		return tea.Batch(cmd, traceTicker())
 	}
 	return cmd
 }
 
-// updateTraceForm handles input for the new trace form.
-func (m *model) updateTraceForm(msg tea.Msg) tea.Cmd {
-	if m.traces.form == nil {
+// UpdateForm handles input for the new trace form.
+func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
+	if t.form == nil {
 		return nil
 	}
 	var cmd tea.Cmd
@@ -223,34 +253,33 @@ func (m *model) updateTraceForm(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
-			m.traces.form = nil
-			cmd := m.setMode(modeTracer)
-			return cmd
+			t.form = nil
+			return t.m.setMode(modeTracer)
 		case "enter":
-			cfg := m.traces.form.Config()
+			cfg := t.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
-				m.traces.form.errMsg = "key, profile and topics required"
+				t.form.errMsg = "key, profile and topics required"
 				return nil
 			}
 			if cfg.Start.IsZero() {
 				cfg.Start = time.Now().Round(time.Second)
-				if tf, ok := m.traces.form.Fields[idxTraceStart].(*ui.TextField); ok {
+				if tf, ok := t.form.Fields[idxTraceStart].(*ui.TextField); ok {
 					tf.SetValue(cfg.Start.Format(time.RFC3339))
 				}
 			}
 			if cfg.End.IsZero() {
 				cfg.End = cfg.Start.Add(time.Hour)
-				if tf, ok := m.traces.form.Fields[idxTraceEnd].(*ui.TextField); ok {
+				if tf, ok := t.form.Fields[idxTraceEnd].(*ui.TextField); ok {
 					tf.SetValue(cfg.End.Format(time.RFC3339))
 				}
 			}
-			if m.traceIndex(cfg.Key) >= 0 {
-				m.traces.form.errMsg = "trace key exists"
+			if t.traceIndex(cfg.Key) >= 0 {
+				t.form.errMsg = "trace key exists"
 				return nil
 			}
 			p, err := LoadProfile(cfg.Profile, "")
 			if err != nil {
-				m.traces.form.errMsg = err.Error()
+				t.form.errMsg = err.Error()
 				return nil
 			}
 			if p.FromEnv {
@@ -260,47 +289,45 @@ func (m *model) updateTraceForm(msg tea.Msg) tea.Cmd {
 			}
 			client, err := NewMQTTClient(*p, nil)
 			if err != nil {
-				m.traces.form.errMsg = err.Error()
+				t.form.errMsg = err.Error()
 				return nil
 			}
 			client.Disconnect()
 			newItem := &traceItem{key: cfg.Key, cfg: cfg}
-			m.traces.items = append(m.traces.items, newItem)
-			items := m.traces.list.Items()
+			t.items = append(t.items, newItem)
+			items := t.list.Items()
 			items = append(items, newItem)
-			m.traces.list.SetItems(items)
+			t.list.SetItems(items)
 			addTrace(cfg)
-			m.traces.form = nil
-			cmd := m.setMode(modeTracer)
-			return cmd
+			t.form = nil
+			return t.m.setMode(modeTracer)
 		}
 	}
-	f, cmd := m.traces.form.Update(msg)
-	m.traces.form = &f
+	f, cmd := t.form.Update(msg)
+	t.form = &f
 	return cmd
 }
 
-// updateTraceView displays messages captured for a trace.
-func (m *model) updateTraceView(msg tea.Msg) tea.Cmd {
+// UpdateView displays messages captured for a trace.
+func (t *tracesComponent) UpdateView(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			cmd := m.setMode(modeTracer)
-			return cmd
+			return t.m.setMode(modeTracer)
 		case "ctrl+d":
 			return tea.Quit
 		case "ctrl+shift+up":
-			if m.layout.trace.height > 1 {
-				m.layout.trace.height--
-				m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
+			if t.m.layout.trace.height > 1 {
+				t.m.layout.trace.height--
+				t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
 			}
 		case "ctrl+shift+down":
-			m.layout.trace.height++
-			m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
+			t.m.layout.trace.height++
+			t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
 		}
 	}
-	m.traces.view, cmd = m.traces.view.Update(msg)
+	t.view, cmd = t.view.Update(msg)
 	return cmd
 }

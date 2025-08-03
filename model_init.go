@@ -193,22 +193,23 @@ func initialModel(conns *Connections) (*model, error) {
 	tr, traceDel := initTraces()
 	m := &model{
 		connections: cs,
-		history:     hs,
 		message:     ms,
-		traces:      tr,
 		ui:          initUI(order),
 		layout:      initLayout(),
 	}
+	historyComp := newHistoryComponent(m, hs)
+	m.history = historyComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m.topicsAPI())
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
-	tracesComp := newTracesComponent(m, m.tracesStore())
+	tracesComp := newTracesComponent(m, tr, m.tracesStore())
+	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, tracesComp, m.help, m.confirm}
+	providers := []FocusableSet{m, connComp, historyComp, topicsComp, m.payloads, tracesComp, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {
@@ -221,7 +222,7 @@ func initialModel(conns *Connections) (*model, error) {
 	}
 	m.focus = NewFocusMap(fitems)
 	m.history.list.SetDelegate(hDel)
-	traceDel.m = m
+	traceDel.t = m.traces
 	m.traces.view.SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be
 	// delegated based on the current application mode.
@@ -233,10 +234,10 @@ func initialModel(conns *Connections) (*model, error) {
 		modeTopics:         topicsComp,
 		modePayloads:       m.payloads,
 		modeTracer:         tracesComp,
-		modeEditTrace:      component{update: m.updateTraceForm, view: m.viewTraceForm},
-		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},
-		modeHistoryFilter:  component{update: m.updateHistoryFilter, view: m.viewHistoryFilter},
-		modeHistoryDetail:  component{update: m.updateHistoryDetail, view: m.viewHistoryDetail},
+		modeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
+		modeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
+		modeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
+		modeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
 		modeHelp:           m.help,
 	}
 

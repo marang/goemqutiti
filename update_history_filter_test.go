@@ -20,7 +20,7 @@ func TestUpdateHistoryFilter(t *testing.T) {
 	m.history.filterForm.topic.SetValue("foo")
 	m.history.filterForm.start.SetValue("")
 	m.history.filterForm.end.SetValue("")
-	m.updateHistoryFilter(tea.KeyMsg{Type: tea.KeyEnter})
+	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 
 	if len(m.history.list.Items()) != 1 {
 		t.Fatalf("expected 1 item, got %d", len(m.history.list.Items()))
@@ -43,7 +43,7 @@ func TestHistoryFilterPersists(t *testing.T) {
 	m.history.filterForm.topic.SetValue("foo")
 	m.history.filterForm.start.SetValue("")
 	m.history.filterForm.end.SetValue("")
-	m.updateHistoryFilter(tea.KeyMsg{Type: tea.KeyEnter})
+	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 
 	// simulate a subsequent update
 	m.updateClient(nil)
@@ -74,7 +74,7 @@ func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	m.history.filterForm.topic.SetValue("foo")
 	m.history.filterForm.start.SetValue("")
 	m.history.filterForm.end.SetValue("")
-	m.updateHistoryFilter(tea.KeyMsg{Type: tea.KeyEnter})
+	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 
 	view := m.viewClient()

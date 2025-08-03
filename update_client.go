@@ -264,7 +264,7 @@ func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
 	if vpCmd := m.updateViewport(msg); vpCmd != nil {
 		cmds = append(cmds, vpCmd)
 	}
-	if histCmd := m.updateHistoryList(msg); histCmd != nil {
+	if histCmd := m.history.Update(msg); histCmd != nil {
 		cmds = append(cmds, histCmd)
 	}
 	return cmds

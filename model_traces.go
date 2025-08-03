@@ -10,11 +10,11 @@ import (
 )
 
 // forceStartTrace launches the tracer at index without checking existing data.
-func (m *model) forceStartTrace(index int) {
-	item := m.traces.items[index]
+func (t *tracesComponent) forceStartTrace(index int) {
+	item := t.items[index]
 	p, err := LoadProfile(item.cfg.Profile, "")
 	if err != nil {
-		m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	if p.FromEnv {
@@ -24,12 +24,12 @@ func (m *model) forceStartTrace(index int) {
 	}
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
-		m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	tr := newTracer(item.cfg, client)
 	if err := tr.Start(); err != nil {
-		m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.appendHistory("", err.Error(), "log", err.Error())
 		client.Disconnect()
 		return
 	}
@@ -38,42 +38,42 @@ func (m *model) forceStartTrace(index int) {
 }
 
 // startTrace starts the tracer at index, prompting if data already exists.
-func (m *model) startTrace(index int) {
-	if index < 0 || index >= len(m.traces.items) {
+func (t *tracesComponent) startTrace(index int) {
+	if index < 0 || index >= len(t.items) {
 		return
 	}
-	item := m.traces.items[index]
+	item := t.items[index]
 	if !item.cfg.End.IsZero() && time.Now().After(item.cfg.End) {
-		m.appendHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
+		t.m.appendHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
 		return
 	}
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
 	if err == nil && exists {
-		rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-		m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", rf, func() tea.Cmd {
+		rf := func() tea.Cmd { return t.m.setFocus(t.m.ui.focusOrder[t.m.ui.focusIndex]) }
+		t.m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", rf, func() tea.Cmd {
 			tracerClearData(item.cfg.Profile, item.key)
-			m.forceStartTrace(index)
+			t.forceStartTrace(index)
 			return nil
 		}, nil)
 		return
 	}
-	m.forceStartTrace(index)
+	t.forceStartTrace(index)
 }
 
 // stopTrace stops a running tracer at the given index.
-func (m *model) stopTrace(index int) {
-	if index < 0 || index >= len(m.traces.items) {
+func (t *tracesComponent) stopTrace(index int) {
+	if index < 0 || index >= len(t.items) {
 		return
 	}
-	if tr := m.traces.items[index].tracer; tr != nil {
+	if tr := t.items[index].tracer; tr != nil {
 		tr.Stop()
 	}
 }
 
 // anyTraceRunning reports whether any tracer is currently active or planned.
-func (m *model) anyTraceRunning() bool {
-	for i := range m.traces.items {
-		if tr := m.traces.items[i].tracer; tr != nil && (tr.Running() || tr.Planned()) {
+func (t *tracesComponent) anyTraceRunning() bool {
+	for i := range t.items {
+		if tr := t.items[i].tracer; tr != nil && (tr.Running() || tr.Planned()) {
 			return true
 		}
 	}
@@ -81,8 +81,8 @@ func (m *model) anyTraceRunning() bool {
 }
 
 // traceIndex returns the index of the trace with the given key or -1.
-func (m *model) traceIndex(key string) int {
-	for i, it := range m.traces.items {
+func (t *tracesComponent) traceIndex(key string) int {
+	for i, it := range t.items {
 		if it.key == key {
 			return i
 		}
@@ -91,9 +91,9 @@ func (m *model) traceIndex(key string) int {
 }
 
 // savePlannedTraces persists trace configurations for later sessions.
-func (m *model) savePlannedTraces() {
+func (t *tracesComponent) savePlannedTraces() {
 	data := map[string]TracerConfig{}
-	for _, it := range m.traces.items {
+	for _, it := range t.items {
 		if it.tracer != nil {
 			data[it.key] = it.tracer.Config()
 		} else {
@@ -104,22 +104,22 @@ func (m *model) savePlannedTraces() {
 }
 
 // loadTraceMessages loads messages for the trace at index and shows them.
-func (m *model) loadTraceMessages(index int) {
-	if index < 0 || index >= len(m.traces.items) {
+func (t *tracesComponent) loadTraceMessages(index int) {
+	if index < 0 || index >= len(t.items) {
 		return
 	}
-	it := m.traces.items[index]
+	it := t.items[index]
 	msgs, err := tracerMessages(it.cfg.Profile, it.key)
 	if err != nil {
-		m.appendHistory("", err.Error(), "log", err.Error())
+		t.m.appendHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	items := make([]list.Item, len(msgs))
 	for i, mmsg := range msgs {
 		items[i] = traceMsgItem{idx: i + 1, msg: mmsg}
 	}
-	m.traces.view.SetItems(items)
-	m.traces.view.SetSize(m.ui.width-4, m.layout.trace.height)
-	m.traces.viewKey = it.key
-	_ = m.setMode(modeViewTrace)
+	t.view.SetItems(items)
+	t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
+	t.viewKey = it.key
+	_ = t.m.setMode(modeViewTrace)
 }

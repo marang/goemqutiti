@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"sort"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
@@ -54,30 +53,6 @@ func initConnections(conns *Connections) (connectionsState, error) {
 		saved:       saved,
 	}
 	return cs, loadErr
-}
-
-func initHistory() (historyState, historyDelegate) {
-	hDel := historyDelegate{}
-	hist := list.New([]list.Item{}, hDel, 0, 0)
-	hist.SetShowTitle(false)
-	hist.SetShowStatusBar(false)
-	hist.SetShowPagination(false)
-	hist.DisableQuitKeybindings()
-	hs := historyState{
-		list:            hist,
-		items:           []history.Item{},
-		store:           nil,
-		selectionAnchor: -1,
-		detail:          viewport.New(0, 0),
-	}
-	if idx, err := history.OpenStore(""); err == nil {
-		hs.store = idx
-		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
-		var items []list.Item
-		hs.items, items = history.MessagesToItems(msgs)
-		hs.list.SetItems(items)
-	}
-	return hs, hDel
 }
 
 func initTopics() topicsState {
@@ -190,7 +165,7 @@ func initLayout() layoutConfig {
 func initialModel(conns *Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[modeClient]...)
 	cs, loadErr := initConnections(conns)
-	hs, hDel := initHistory()
+	st, _ := history.OpenStore("")
 	ms := initMessage()
 	tr, traceDel := initTraces()
 	m := &model{
@@ -198,8 +173,7 @@ func initialModel(conns *Connections) (*model, error) {
 		ui:          initUI(order),
 		layout:      initLayout(),
 	}
-	historyComp := newHistoryComponent(m, hs)
-	m.history = historyComp
+	m.history = history.NewComponent(historyModelAdapter{m}, st)
 	msgComp := newMessageComponent(m, ms)
 	m.message = msgComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
@@ -224,7 +198,6 @@ func initialModel(conns *Connections) (*model, error) {
 		fitems[i] = m.focusables[id]
 	}
 	m.focus = NewFocusMap(fitems)
-	m.history.List().SetDelegate(hDel)
 	traceDel.t = m.traces
 	m.traces.view.SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be

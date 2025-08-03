@@ -205,7 +205,7 @@ func initialModel(conns *Connections) (*model, error) {
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
 	m.topics = topicsComp
-	m.payloads = newPayloadsComponent(m, m.topics, msgComp, &m.connections)
+	m.payloads = newPayloadsComponent(m, &m.connections)
 	tracesComp := newTracesComponent(m, tr, m.tracesStore())
 	m.traces = tracesComp
 

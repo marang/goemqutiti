@@ -53,6 +53,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case topicToggleMsg:
 		cmd := m.handleTopicToggle(msg)
 		return m, cmd
+	case loadPayloadMsg:
+		m.topics.setTopic(msg.topic)
+		m.message.setPayload(msg.payload)
+		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+up", "ctrl+k":

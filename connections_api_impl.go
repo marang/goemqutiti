@@ -133,7 +133,7 @@ func (c *connectionsModel) DisconnectActive() {
 		c.mqttClient = nil
 	}
 }
-func (c *connectionsModel) ResizeTraces(width, height int) { c.traces.list.SetSize(width, height) }
+func (c *connectionsModel) ResizeTraces(width, height int) { c.traces.List().SetSize(width, height) }
 func (c *connectionsModel) ResetElemPos()                  { c.ui.elemPos = map[string]int{} }
 func (c *connectionsModel) SetElemPos(id string, pos int)  { c.ui.elemPos[id] = pos }
 func (c *connectionsModel) OverlayHelp(view string) string { return c.overlayHelp(view) }

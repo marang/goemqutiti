@@ -59,7 +59,7 @@ func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 // handleQuitKey saves current state and quits the application.
 func (m *model) handleQuitKey() tea.Cmd {
 	m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
-	m.traces.savePlannedTraces()
+	m.traces.SavePlannedTraces()
 	return tea.Quit
 }
 

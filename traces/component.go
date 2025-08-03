@@ -1,4 +1,4 @@
-package emqutiti
+package traces
 
 import (
 	"fmt"
@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -69,8 +70,8 @@ func (t *traceItem) Description() string {
 	return status
 }
 
-// tracesState groups state related to tracing functionality.
-type tracesState struct {
+// state groups state related to tracing functionality.
+type State struct {
 	list    list.Model
 	items   []*traceItem
 	form    *traceForm
@@ -78,29 +79,35 @@ type tracesState struct {
 	viewKey string
 }
 
-// tracesComponent implements the Component interface for managing traces. It
-// owns the tracing state but delegates broader navigation and history logging
-// to the root model.
-type tracesComponent struct {
-	*tracesState
-	api   TracesAPI
-	store TraceStore
+// Component implements the traces interface for managing traces. It owns the
+// tracing state but delegates broader navigation and history logging to the
+// root model.
+type Component struct {
+	*State
+	api   API
+	store Store
 }
 
-func newTracesComponent(api TracesAPI, ts tracesState, store TraceStore) *tracesComponent {
-	return &tracesComponent{tracesState: &ts, api: api, store: store}
+func NewComponent(api API, ts State, store Store) *Component {
+	return &Component{State: &ts, api: api, store: store}
 }
 
-func (t *tracesComponent) Init() tea.Cmd { return nil }
+func (t *Component) Init() tea.Cmd { return nil }
 
-func (t *tracesComponent) View() string { return t.viewTraces() }
+func (t *Component) View() string { return t.viewTraces() }
 
-func (t *tracesComponent) Focus() tea.Cmd { return nil }
+func (t *Component) Focus() tea.Cmd { return nil }
 
-func (t *tracesComponent) Blur() {}
+func (t *Component) Blur() {}
 
 // Focusables satisfies FocusableSet; the base model provides the trace list focusable.
-func (t *tracesComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }
+func (t *Component) Focusables() map[string]topics.Focusable { return map[string]topics.Focusable{} }
+
+// List exposes the trace configuration list model.
+func (t *Component) List() *list.Model { return &t.list }
+
+// ViewList exposes the trace message list model.
+func (t *Component) ViewList() *list.Model { return &t.view }
 
 // traceMsgItem holds a trace message with its sequence number.
 type traceMsgItem struct {
@@ -117,20 +124,20 @@ func (t traceMsgItem) Title() string { return t.msg.Topic }
 // Description implements list.Item.
 func (t traceMsgItem) Description() string { return t.msg.Payload }
 
-// traceMsgDelegate renders trace messages with numbering and timestamp.
-type traceMsgDelegate struct{ t *tracesComponent }
+// MsgDelegate renders trace messages with numbering and timestamp.
+type MsgDelegate struct{ T *Component }
 
 // Height returns the line height for an item.
-func (d traceMsgDelegate) Height() int { return 2 }
+func (d MsgDelegate) Height() int { return 2 }
 
 // Spacing satisfies list.ItemDelegate.
-func (d traceMsgDelegate) Spacing() int { return 0 }
+func (d MsgDelegate) Spacing() int { return 0 }
 
 // Update is a no-op for this delegate.
-func (d traceMsgDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
+func (d MsgDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
 
 // Render draws a trace message item with numbering and timestamp.
-func (d traceMsgDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
+func (d MsgDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
 	it := item.(traceMsgItem)
 	width := m.Width()
 	innerWidth := width - 2
@@ -149,7 +156,7 @@ func (d traceMsgDelegate) Render(w io.Writer, m list.Model, index int, item list
 		}
 	}
 	barColor := ui.ColDarkGray
-	if index == d.t.view.Index() {
+	if index == d.T.view.Index() {
 		barColor = ui.ColPurple
 	}
 	bar := lipgloss.NewStyle().Foreground(barColor)
@@ -165,7 +172,7 @@ func traceTicker() tea.Cmd {
 }
 
 // Update manages the traces list and responds to key presses.
-func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
+func (t *Component) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case traceTickMsg:
@@ -173,11 +180,11 @@ func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+d":
-			t.savePlannedTraces()
+			t.SavePlannedTraces()
 			return tea.Quit
 		case "esc":
-			t.savePlannedTraces()
-			return t.api.SetMode(modeClient)
+			t.SavePlannedTraces()
+			return t.api.SetModeClient()
 		case "a":
 			profs := t.api.Profiles()
 			opts := make([]string, len(profs))
@@ -187,7 +194,7 @@ func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 			topics := t.api.SubscribedTopics()
 			f := newTraceForm(opts, t.api.ActiveConnection(), topics)
 			t.form = &f
-			return tea.Batch(t.api.SetMode(modeEditTrace), textinput.Blink)
+			return tea.Batch(t.api.SetModeEditTrace(), textinput.Blink)
 		case "enter":
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
@@ -239,7 +246,7 @@ func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 }
 
 // UpdateForm handles input for the new trace form.
-func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
+func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 	if t.form == nil {
 		return nil
 	}
@@ -251,7 +258,7 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 			return tea.Quit
 		case "esc":
 			t.form = nil
-			return t.api.SetMode(modeTracer)
+			return t.api.SetModeTracer()
 		case "enter":
 			cfg := t.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
@@ -284,7 +291,7 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 				p.Password = env
 			}
-			client, err := NewMQTTClient(*p, nil)
+			client, err := t.api.NewClient(*p)
 			if err != nil {
 				t.form.errMsg = err.Error()
 				return nil
@@ -297,7 +304,7 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 			t.list.SetItems(items)
 			addTrace(cfg)
 			t.form = nil
-			return t.api.SetMode(modeTracer)
+			return t.api.SetModeTracer()
 		}
 	}
 	f, cmd := t.form.Update(msg)
@@ -306,13 +313,13 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 }
 
 // UpdateView displays messages captured for a trace.
-func (t *tracesComponent) UpdateView(msg tea.Msg) tea.Cmd {
+func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return t.api.SetMode(modeTracer)
+			return t.api.SetModeTracer()
 		case "ctrl+d":
 			return tea.Quit
 		case "ctrl+shift+up":

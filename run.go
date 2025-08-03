@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/traces"
 )
 
 type importerTeaModel struct{ *importer.Model }
@@ -67,13 +68,13 @@ func Main() {
 				return
 			}
 		}
-		exists, _ := tracerHasData(profileName, traceKey)
+		exists, _ := traces.FileStore{}.HasData(profileName, traceKey)
 		if exists {
 			log.Println("trace key already exists")
 			return
 		}
-		addTrace(TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
-		if err := tracerRun(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
+		traces.FileStore{}.AddTrace(traces.TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
+		if err := traces.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			log.Println(err)
 		}
 		return

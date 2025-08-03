@@ -27,8 +27,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.layout.trace.height == 0 {
 			m.layout.trace.height = msg.Height - 6
 		}
-		m.traces.view.SetSize(msg.Width-4, m.layout.trace.height)
-		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
+		m.traces.ViewList().SetSize(msg.Width-4, m.layout.trace.height)
+		m.traces.List().SetSize(msg.Width-4, msg.Height-4)
 		m.help.vp.Width = msg.Width - 4
 		m.help.vp.Height = msg.Height - 4
 		m.history.Detail().Width = msg.Width - 4

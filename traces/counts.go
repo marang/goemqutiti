@@ -1,4 +1,4 @@
-package emqutiti
+package traces
 
 // LoadCounts returns per-topic counts for the given trace key aggregated by
 // the provided subscription topics.

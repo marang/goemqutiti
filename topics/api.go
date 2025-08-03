@@ -3,6 +3,8 @@ package topics
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/confirm"
 )
 
 // API exposes topic management behavior to the rest of the application.
@@ -25,10 +27,10 @@ type API interface {
 
 // Model defines the dependencies Component requires from the host application.
 type Model interface {
+	confirm.API
 	ShowClient() tea.Cmd
 	SetFocus(id string) tea.Cmd
 	FocusedID() string
-	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
 	ResetElemPos()
 	SetElemPos(id string, pos int)
 	OverlayHelp(view string) string

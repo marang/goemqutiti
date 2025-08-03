@@ -1,4 +1,4 @@
-package emqutiti
+package confirm
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
@@ -7,8 +7,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type confirmComponent struct {
-	nav    ConfirmNavigator
+type Component struct {
+	nav    Navigator
 	status StatusListener
 
 	prompt      string
@@ -19,19 +19,19 @@ type confirmComponent struct {
 	focused     bool
 }
 
-func newConfirmComponent(nav ConfirmNavigator, status StatusListener, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *confirmComponent {
-	return &confirmComponent{nav: nav, status: status, returnFocus: returnFocus, action: action, cancel: cancel}
+func NewComponent(nav Navigator, status StatusListener, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *Component {
+	return &Component{nav: nav, status: status, returnFocus: returnFocus, action: action, cancel: cancel}
 }
 
-func (c *confirmComponent) Init() tea.Cmd { return nil }
+func (c *Component) Init() tea.Cmd { return nil }
 
-func (c *confirmComponent) start(prompt, info string) {
+func (c *Component) Start(prompt, info string) {
 	c.prompt = prompt
 	c.info = info
-	_ = c.nav.SetMode(modeConfirmDelete)
+	_ = c.nav.SetConfirmMode()
 }
 
-func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
+func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	switch t := msg.(type) {
 	case tea.KeyMsg:
 		switch t.String() {
@@ -46,7 +46,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			if c.cancel != nil {
 				c.cancel = nil
 			}
-			cmd := c.nav.SetMode(c.nav.PreviousMode())
+			cmd := c.nav.SetPreviousMode()
 			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
 			if acmd != nil {
 				cmds = append(cmds, acmd)
@@ -63,7 +63,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 				c.cancel()
 				c.cancel = nil
 			}
-			cmd := c.nav.SetMode(c.nav.PreviousMode())
+			cmd := c.nav.SetPreviousMode()
 			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
 			if c.returnFocus != nil {
 				cmds = append(cmds, c.returnFocus())
@@ -77,7 +77,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 	return c.status.ListenStatus()
 }
 
-func (c *confirmComponent) View() string {
+func (c *Component) View() string {
 	content := c.prompt
 	if c.info != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, c.prompt, c.info)
@@ -87,14 +87,11 @@ func (c *confirmComponent) View() string {
 	return lipgloss.Place(c.nav.Width(), c.nav.Height(), lipgloss.Center, lipgloss.Center, box)
 }
 
-func (c *confirmComponent) Focus() tea.Cmd {
+func (c *Component) Focus() tea.Cmd {
 	c.focused = true
 	return nil
 }
 
-func (c *confirmComponent) Blur() { c.focused = false }
+func (c *Component) Blur() { c.focused = false }
 
-func (c *confirmComponent) Focused() bool { return c.focused }
-
-// Focusables exposes focusable elements for the confirm component.
-func (c *confirmComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }
+func (c *Component) Focused() bool { return c.focused }

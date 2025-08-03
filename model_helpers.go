@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
 
+	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/history"
 )
 
@@ -49,8 +50,8 @@ func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, ac
 
 // startConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) startConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
-	m.confirm = newConfirmComponent(m, m, returnFocus, action, cancel)
-	m.confirm.start(prompt, info)
+	m.confirm = confirm.NewComponent(m, m, returnFocus, action, cancel)
+	m.confirm.Start(prompt, info)
 	m.components[modeConfirmDelete] = m.confirm
 }
 
@@ -135,6 +136,12 @@ func (m *model) SetMode(mode appMode) tea.Cmd { return m.setMode(mode) }
 
 // PreviousMode exposes previousMode to satisfy the navigator interface.
 func (m *model) PreviousMode() appMode { return m.previousMode() }
+
+// SetConfirmMode switches to the confirmation screen.
+func (m *model) SetConfirmMode() tea.Cmd { return m.setMode(modeConfirmDelete) }
+
+// SetPreviousMode returns to the prior screen.
+func (m *model) SetPreviousMode() tea.Cmd { return m.setMode(m.previousMode()) }
 
 // CurrentMode exposes currentMode to satisfy component interfaces.
 func (m *model) CurrentMode() appMode { return m.currentMode() }

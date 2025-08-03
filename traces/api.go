@@ -2,6 +2,7 @@ package traces
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/connections"
 )
 
@@ -10,6 +11,7 @@ const IDList = "trace-list"
 
 // API defines interactions required by the traces component from the host model.
 type API interface {
+	confirm.API
 	SetModeClient() tea.Cmd
 	SetModeTracer() tea.Cmd
 	SetModeEditTrace() tea.Cmd
@@ -19,7 +21,6 @@ type API interface {
 	ResetElemPos()
 	SetElemPos(id string, pos int)
 	OverlayHelp(view string) string
-	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
 	Profiles() []connections.Profile
 	ActiveConnection() string
 	SubscribedTopics() []string

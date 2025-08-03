@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/clientkeys"
+	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
@@ -111,7 +112,7 @@ type model struct {
 
 	ui uiState
 
-	confirm *confirmComponent
+	confirm *confirm.Component
 
 	layout layoutConfig
 

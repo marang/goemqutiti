@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	_ "github.com/marang/emqutiti/clientkeys"
+	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/message"
@@ -122,7 +123,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	msgComp := message.NewComponent(m, ms)
 	m.message = msgComp
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
-	m.confirm = newConfirmComponent(m, m, nil, nil, nil)
+	m.confirm = confirm.NewComponent(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
 	topicsComp := topics.New(m)
 	m.topics = topicsComp
@@ -131,7 +132,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
+	providers := []FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {

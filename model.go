@@ -6,6 +6,7 @@ import (
 
 	"github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/message"
@@ -105,7 +106,7 @@ type model struct {
 	message     *message.Component
 	traces      *traces.Component
 	payloads    *payloads.Component
-	help        *helpComponent
+	help        *help.Component
 	importer    *importer.Model
 
 	ui uiState

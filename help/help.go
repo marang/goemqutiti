@@ -1,4 +1,4 @@
-package emqutiti
+package help
 
 import (
 	_ "embed"
@@ -8,7 +8,7 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-//go:embed docs/help.md
+//go:embed help.md
 var helpMarkdown string
 
 // helpText is the formatted help page displayed in the viewport.

@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	_ "github.com/marang/emqutiti/clientkeys"
+	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/topics"
@@ -26,6 +27,7 @@ type navAdapter struct{ navigator }
 func (n navAdapter) SetMode(mode int) tea.Cmd { return n.navigator.SetMode(appMode(mode)) }
 func (n navAdapter) Width() int               { return n.navigator.Width() }
 func (n navAdapter) Height() int              { return n.navigator.Height() }
+func (n navAdapter) PreviousMode() int        { return int(n.navigator.PreviousMode()) }
 
 func initConnections(conns *connections.Connections) (connections.State, error) {
 	var connModel connections.Connections
@@ -119,7 +121,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.history = history.NewComponent(historyModelAdapter{m}, st)
 	msgComp := message.NewComponent(m, ms)
 	m.message = msgComp
-	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
+	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
 	topicsComp := topics.New(m)

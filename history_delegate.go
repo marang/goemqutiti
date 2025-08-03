@@ -17,7 +17,7 @@ import (
 const historyPreviewLimit = 256
 
 // historyDelegate renders history items with two lines and supports highlighting
-// selected entries.
+// selected entries. It has no direct dependency on the application model.
 type historyDelegate struct{}
 
 // Height returns the fixed height for history entries.

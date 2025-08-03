@@ -11,10 +11,10 @@ import (
 // Test that applying history filters populates the list with results.
 func TestUpdateHistoryFilter(t *testing.T) {
 	m, _ := initialModel(nil)
-	hs := &HistoryStore{}
+	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Add(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")
@@ -33,11 +33,11 @@ func TestUpdateHistoryFilter(t *testing.T) {
 // Test that filtered results persist after the next update cycle.
 func TestHistoryFilterPersists(t *testing.T) {
 	m, _ := initialModel(nil)
-	hs := &HistoryStore{}
+	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Add(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Add(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")
@@ -64,11 +64,11 @@ func TestHistoryFilterPersists(t *testing.T) {
 // Test that filtering updates the history label counts.
 func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	m, _ := initialModel(nil)
-	hs := &HistoryStore{}
+	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Add(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Add(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")

@@ -97,7 +97,7 @@ func TestHistoryBoxLayout(t *testing.T) {
 func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.history.filterQuery = "topic=foo"
-	m.history.store = &HistoryStore{}
+	m.history.store = &historyStore{}
 	m.appendHistory("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
@@ -136,7 +136,7 @@ func TestHistoryFilterDisplayedInsideBox(t *testing.T) {
 // Test that the history label reports total and filtered message counts.
 func TestHistoryLabelCounts(t *testing.T) {
 	m, _ := initialModel(nil)
-	m.history.store = &HistoryStore{}
+	m.history.store = &historyStore{}
 	m.appendHistory("foo", "bar", "pub", "")
 	m.appendHistory("bar", "baz", "sub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
@@ -162,7 +162,7 @@ func TestHistoryFilterLineWidth(t *testing.T) {
 	m, _ := initialModel(nil)
 	long := strings.Repeat("x", 100)
 	m.history.filterQuery = "topic=" + long
-	m.history.store = &HistoryStore{}
+	m.history.store = &historyStore{}
 	m.appendHistory("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
 	view := m.viewClient()
@@ -194,7 +194,7 @@ func TestHistoryFilterLineWidth(t *testing.T) {
 // Test that the history help legend remains visible after applying a filter.
 func TestHistoryHelpVisibleWithFilter(t *testing.T) {
 	m, _ := initialModel(nil)
-	m.history.store = &HistoryStore{}
+	m.history.store = &historyStore{}
 	m.history.filterQuery = "topic=foo"
 	m.appendHistory("foo", "bar", "pub", "")
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 30})
@@ -211,7 +211,7 @@ func TestArchiveErrorFeedback(t *testing.T) {
 	hi := historyItem{timestamp: time.Now(), topic: "foo", payload: "bar", kind: "pub"}
 	m.history.items = []historyItem{hi}
 	m.history.list.SetItems([]list.Item{hi})
-	m.history.store = &HistoryStore{}
+	m.history.store = &historyStore{}
 	m.handleArchiveKey()
 	if len(m.history.items) != 2 {
 		t.Fatalf("expected original item plus error log, got %d items", len(m.history.items))
@@ -231,7 +231,7 @@ func TestDeleteErrorFeedback(t *testing.T) {
 	m.history.list.Select(0)
 	db, _ := badger.Open(badger.DefaultOptions("").WithInMemory(true))
 	_ = db.Close()
-	m.history.store = &HistoryStore{db: db}
+	m.history.store = &historyStore{db: db}
 	m.handleDeleteHistoryKey()
 	if m.currentMode() != modeConfirmDelete {
 		t.Fatalf("confirmAction not set")

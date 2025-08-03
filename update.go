@@ -4,22 +4,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// updateSelectionRange selects history entries from the anchor to idx.
-func (m *model) updateSelectionRange(idx int) {
-	start := m.history.selectionAnchor
-	end := idx
-	if start > end {
-		start, end = end, start
-	}
-	for i := range m.history.items {
-		m.history.items[i].isSelected = nil
-	}
-	for i := start; i <= end && i < len(m.history.items); i++ {
-		v := true
-		m.history.items[i].isSelected = &v
-	}
-}
-
 // Update routes messages based on the current mode.
 func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -78,7 +62,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if id == idTopics {
 					if len(m.topics.items) > 0 {
 						m.topics.SetSelected(0)
-						m.ensureTopicVisible()
+						m.topics.EnsureVisible(m.ui.width - 4)
 					} else {
 						m.topics.SetSelected(-1)
 					}
@@ -98,7 +82,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if id == idTopics {
 					if len(m.topics.items) > 0 {
 						m.topics.SetSelected(0)
-						m.ensureTopicVisible()
+						m.topics.EnsureVisible(m.ui.width - 4)
 					} else {
 						m.topics.SetSelected(-1)
 					}

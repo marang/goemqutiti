@@ -14,7 +14,7 @@ func (m *model) handleTabKey() tea.Cmd {
 		if id == idTopics {
 			if len(m.topics.items) > 0 {
 				m.topics.SetSelected(0)
-				m.ensureTopicVisible()
+				m.topics.EnsureVisible(m.ui.width - 4)
 			} else {
 				m.topics.SetSelected(-1)
 			}
@@ -33,7 +33,7 @@ func (m *model) handleShiftTabKey() tea.Cmd {
 		if id == idTopics {
 			if len(m.topics.items) > 0 {
 				m.topics.SetSelected(0)
-				m.ensureTopicVisible()
+				m.topics.EnsureVisible(m.ui.width - 4)
 			} else {
 				m.topics.SetSelected(-1)
 			}

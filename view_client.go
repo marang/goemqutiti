@@ -7,7 +7,7 @@ func (m *model) viewClient() string {
 	m.ui.elemPos = map[string]int{}
 	infoLine := m.clientInfoLine()
 	topicsBox, topicBox, bounds := m.clientTopicsSection()
-	messageBox := m.clientMessageSection()
+	messageBox := m.message.View()
 	messagesBox := m.clientHistorySection()
 
 	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)

@@ -193,23 +193,24 @@ func initialModel(conns *Connections) (*model, error) {
 	tr, traceDel := initTraces()
 	m := &model{
 		connections: cs,
-		message:     ms,
 		ui:          initUI(order),
 		layout:      initLayout(),
 	}
 	historyComp := newHistoryComponent(m, hs)
 	m.history = historyComp
+	msgComp := newMessageComponent(m, ms)
+	m.message = msgComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
 	m.topics = topicsComp
-	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
+	m.payloads = newPayloadsComponent(m, m.topics, msgComp, &m.connections)
 	tracesComp := newTracesComponent(m, tr, m.tracesStore())
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, historyComp, topicsComp, m.payloads, tracesComp, m.help, m.confirm}
+	providers := []FocusableSet{m, connComp, historyComp, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {

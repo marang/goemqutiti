@@ -121,29 +121,6 @@ func (m *model) clientTopicsSection() (string, string, []chipBound) {
 	return topicsBox, topicBox, bounds
 }
 
-// clientMessageSection renders the message input box.
-func (m *model) clientMessageSection() string {
-	msgContent := m.message.input.View()
-	msgLines := m.message.input.LineCount()
-	msgHeight := m.layout.message.height
-	msgSP := -1.0
-	if msgLines > msgHeight {
-		off := m.message.input.Line() - msgHeight + 1
-		if off < 0 {
-			off = 0
-		}
-		maxOff := msgLines - msgHeight
-		if off > maxOff {
-			off = maxOff
-		}
-		if maxOff > 0 {
-			msgSP = float64(off) / float64(maxOff)
-		}
-	}
-	messageFocused := m.ui.focusOrder[m.ui.focusIndex] == idMessage
-	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", m.ui.width-2, msgHeight, ui.ColBlue, messageFocused, msgSP)
-}
-
 // clientHistorySection renders the history list box.
 func (m *model) clientHistorySection() string {
 	per := m.history.list.Paginator.PerPage

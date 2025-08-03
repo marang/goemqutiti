@@ -144,31 +144,6 @@ func (h *historyComponent) ViewFilter() string {
 // itself is managed by the root model, so this returns an empty map.
 func (h *historyComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }
 
-// SaveCurrent persists topics and payloads for the active connection.
-func (h *historyComponent) SaveCurrent() {
-	if h.m.connections.active == "" {
-		return
-	}
-	h.m.connections.saved[h.m.connections.active] = connectionData{
-		Topics:   h.m.topics.items,
-		Payloads: h.m.payloads.Items(),
-	}
-	saveState(h.m.connections.saved)
-}
-
-// RestoreState loads saved state for the named connection.
-func (h *historyComponent) RestoreState(name string) {
-	if data, ok := h.m.connections.saved[name]; ok {
-		h.m.topics.items = data.Topics
-		h.m.payloads.SetItems(data.Payloads)
-		h.m.topics.SortTopics()
-		h.m.topics.RebuildActiveTopicList()
-	} else {
-		h.m.topics.items = []topicItem{}
-		h.m.payloads.Clear()
-	}
-}
-
 // Append stores a message in the history list and optional store.
 func (h *historyComponent) Append(topic, payload, kind, logText string) {
 	ts := time.Now()

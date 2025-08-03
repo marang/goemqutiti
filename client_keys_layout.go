@@ -13,10 +13,10 @@ func (m *model) handleTabKey() tea.Cmd {
 		m.setFocus(id)
 		if id == idTopics {
 			if len(m.topics.items) > 0 {
-				m.topics.selected = 0
+				m.topics.SetSelected(0)
 				m.ensureTopicVisible()
 			} else {
-				m.topics.selected = -1
+				m.topics.SetSelected(-1)
 			}
 		}
 	}
@@ -32,10 +32,10 @@ func (m *model) handleShiftTabKey() tea.Cmd {
 		m.setFocus(id)
 		if id == idTopics {
 			if len(m.topics.items) > 0 {
-				m.topics.selected = 0
+				m.topics.SetSelected(0)
 				m.ensureTopicVisible()
 			} else {
-				m.topics.selected = -1
+				m.topics.SetSelected(-1)
 			}
 		}
 	}
@@ -90,11 +90,11 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.traces.savePlannedTraces()
 		return m.setMode(modeConnections)
 	case "ctrl+t":
-		m.topics.panes.subscribed = paneState{sel: 0, page: 0, index: 0, m: m}
-		m.topics.panes.unsubscribed = paneState{sel: 0, page: 0, index: 1, m: m}
+		m.topics.panes.subscribed = paneState{sel: 0, page: 0, index: 0, m: m.topics}
+		m.topics.panes.unsubscribed = paneState{sel: 0, page: 0, index: 1, m: m.topics}
 		m.topics.panes.active = 0
 		m.topics.list.SetSize(m.ui.width/2-2, m.ui.height-4)
-		m.rebuildActiveTopicList()
+		m.topics.RebuildActiveTopicList()
 		return m.setMode(modeTopics)
 	case "ctrl+p":
 		m.payloads.list.SetSize(m.ui.width-4, m.ui.height-4)

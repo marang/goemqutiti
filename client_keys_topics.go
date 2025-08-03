@@ -10,7 +10,8 @@ import (
 // handleLeftKey moves topic selection left.
 func (m *model) handleLeftKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
-		m.topics.selected = (m.topics.selected - 1 + len(m.topics.items)) % len(m.topics.items)
+		sel := m.topics.Selected()
+		m.topics.SetSelected((sel - 1 + len(m.topics.items)) % len(m.topics.items))
 		m.ensureTopicVisible()
 	}
 	return nil
@@ -19,7 +20,8 @@ func (m *model) handleLeftKey() tea.Cmd {
 // handleRightKey moves topic selection right.
 func (m *model) handleRightKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
-		m.topics.selected = (m.topics.selected + 1) % len(m.topics.items)
+		sel := m.topics.Selected()
+		m.topics.SetSelected((sel + 1) % len(m.topics.items))
 		m.ensureTopicVisible()
 	}
 	return nil
@@ -40,18 +42,19 @@ func (m *model) handleEnterKey() tea.Cmd {
 	switch m.ui.focusOrder[m.ui.focusIndex] {
 	case idTopic:
 		topic := strings.TrimSpace(m.topics.input.Value())
-		if topic != "" && !m.hasTopic(topic) {
+		if topic != "" && !m.topics.HasTopic(topic) {
 			m.topics.items = append(m.topics.items, topicItem{title: topic, subscribed: true})
-			m.sortTopics()
+			m.topics.SortTopics()
 			if m.currentMode() == modeTopics {
-				m.rebuildActiveTopicList()
+				m.topics.RebuildActiveTopicList()
 			}
 			m.topics.input.SetValue("")
 			return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: true} }
 		}
 	case idTopics:
-		if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
-			cmd := m.toggleTopic(m.topics.selected)
+		sel := m.topics.Selected()
+		if sel >= 0 && sel < len(m.topics.items) {
+			cmd := m.topics.ToggleTopic(sel)
 			m.ensureTopicVisible()
 			return cmd
 		}
@@ -63,13 +66,13 @@ func (m *model) handleEnterKey() tea.Cmd {
 
 // handleDeleteTopicKey deletes the selected topic.
 func (m *model) handleDeleteTopicKey() tea.Cmd {
-	idx := m.topics.selected
+	idx := m.topics.Selected()
 	name := m.topics.items[idx].title
 	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
-		cmd := m.removeTopic(idx)
+		cmd := m.topics.RemoveTopic(idx)
 		if m.currentMode() == modeTopics {
-			m.rebuildActiveTopicList()
+			m.topics.RebuildActiveTopicList()
 		}
 		return cmd
 	}, nil)

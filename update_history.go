@@ -20,8 +20,8 @@ func (m *model) restoreState(name string) {
 	if data, ok := m.connections.saved[name]; ok {
 		m.topics.items = data.Topics
 		m.payloads.SetItems(data.Payloads)
-		m.sortTopics()
-		m.rebuildActiveTopicList()
+		m.topics.SortTopics()
+		m.topics.RebuildActiveTopicList()
 	} else {
 		m.topics.items = []topicItem{}
 		m.payloads.Clear()

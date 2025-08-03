@@ -113,7 +113,8 @@ func (m *model) handleDeleteKey() tea.Cmd {
 			return m.handleDeleteHistoryKey()
 		}
 	case idTopics:
-		if m.topics.selected >= 0 && m.topics.selected < len(m.topics.items) {
+		sel := m.topics.Selected()
+		if sel >= 0 && sel < len(m.topics.items) {
 			return m.handleDeleteTopicKey()
 		}
 	}

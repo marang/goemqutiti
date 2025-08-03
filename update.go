@@ -73,10 +73,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.setFocus(id)
 				if id == idTopics {
 					if len(m.topics.items) > 0 {
-						m.topics.selected = 0
+						m.topics.SetSelected(0)
 						m.ensureTopicVisible()
 					} else {
-						m.topics.selected = -1
+						m.topics.SetSelected(-1)
 					}
 				}
 				return m, nil
@@ -93,10 +93,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.setFocus(id)
 				if id == idTopics {
 					if len(m.topics.items) > 0 {
-						m.topics.selected = 0
+						m.topics.SetSelected(0)
 						m.ensureTopicVisible()
 					} else {
-						m.topics.selected = -1
+						m.topics.SetSelected(-1)
 					}
 				}
 				return m, nil

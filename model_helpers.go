@@ -6,18 +6,6 @@ import (
 	"time"
 )
 
-// topicAtPosition returns the index of the topic chip located at the
-// provided coordinates, or -1 if none exists.
-
-func (m *model) topicAtPosition(x, y int) int {
-	for i, b := range m.topics.chipBounds {
-		if x >= b.xPos && x < b.xPos+b.width && y >= b.yPos && y < b.yPos+b.height {
-			return i
-		}
-	}
-	return -1
-}
-
 // historyIndexAt converts a Y coordinate into an index within the history list.
 func (m *model) historyIndexAt(y int) int {
 	rel := y - (m.ui.elemPos[idHistory] + 1) + m.ui.viewport.YOffset
@@ -32,6 +20,26 @@ func (m *model) historyIndexAt(y int) int {
 		return -1
 	}
 	return i
+}
+
+// FocusedID returns the identifier of the currently focused element.
+func (m *model) FocusedID() string { return m.ui.focusOrder[m.ui.focusIndex] }
+
+// ListenStatus proxies connection status updates for components.
+func (m *model) ListenStatus() tea.Cmd { return m.connections.ListenStatus() }
+
+// ResetElemPos clears cached element positions.
+func (m *model) ResetElemPos() { m.ui.elemPos = map[string]int{} }
+
+// SetElemPos records the position of a UI element.
+func (m *model) SetElemPos(id string, pos int) { m.ui.elemPos[id] = pos }
+
+// SetFocus delegates focus changes to the model's focus manager.
+func (m *model) SetFocus(id string) tea.Cmd { return m.setFocus(id) }
+
+// StartConfirm displays a confirmation dialog and runs the action on accept.
+func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
+	m.startConfirm(prompt, info, returnFocus, action, cancel)
 }
 
 // startConfirm displays a confirmation dialog and runs the action on accept.

@@ -49,14 +49,14 @@ func TestTopicSelectionScroll(t *testing.T) {
 	m.layout.topics.height = 2
 	m.viewClient()
 	m.setFocus(idTopics)
-	m.topics.selected = 0
+	m.topics.SetSelected(0)
 	// Move selection to the 9th item which resides on the third row
 	for i := 0; i < 8; i++ {
 		_, _ = m.Update(tea.KeyMsg{Type: tea.KeyRight})
 	}
 	rowH := lipgloss.Height(ui.ChipStyle.Render("t"))
-	if m.topics.selected != 8 {
-		t.Fatalf("expected selected index 8 got %d", m.topics.selected)
+	if m.topics.Selected() != 8 {
+		t.Fatalf("expected selected index 8 got %d", m.topics.Selected())
 	}
 	if m.topics.vp.YOffset != rowH*1 {
 		t.Fatalf("expected scroll %d got %d", rowH*1, m.topics.vp.YOffset)

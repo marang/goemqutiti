@@ -72,7 +72,7 @@ func (m *model) clientTopicsSection() (string, string, []chipBound) {
 		if !t.subscribed {
 			st = ui.ChipInactive
 		}
-		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.selected {
+		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.Selected() {
 			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.title))

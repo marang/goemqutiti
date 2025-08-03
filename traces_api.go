@@ -68,9 +68,9 @@ func (m *model) ActiveConnection() string { return m.connections.Active }
 // SubscribedTopics lists currently subscribed topic names.
 func (m *model) SubscribedTopics() []string {
 	var topics []string
-	for _, tp := range m.topics.items {
-		if tp.subscribed {
-			topics = append(topics, tp.title)
+	for _, tp := range m.topics.Items {
+		if tp.Subscribed {
+			topics = append(topics, tp.Name)
 		}
 	}
 	return topics

@@ -2,6 +2,8 @@ package emqutiti
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/topics"
 )
 
 // Update routes messages based on the current mode.
@@ -14,7 +16,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// textinput.View() renders the prompt and cursor in addition
 		// to the configured width. Reduce the width slightly so the
 		// surrounding box stays within the terminal boundaries.
-		m.topics.input.Width = msg.Width - 7
+		m.topics.Input.Width = msg.Width - 7
 		m.message.input.SetWidth(msg.Width - 4)
 		m.message.input.SetHeight(m.layout.message.height)
 		if m.layout.history.height == 0 {
@@ -34,11 +36,11 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2
 		return m, nil
-	case topicToggleMsg:
+	case topics.ToggleMsg:
 		cmd := m.handleTopicToggle(msg)
 		return m, cmd
 	case loadPayloadMsg:
-		m.topics.setTopic(msg.topic)
+		m.topics.SetTopic(msg.topic)
 		m.message.setPayload(msg.payload)
 		return m, nil
 	case tea.KeyMsg:
@@ -60,7 +62,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id := m.ui.focusOrder[m.ui.focusIndex]
 				m.setFocus(id)
 				if id == idTopics {
-					if len(m.topics.items) > 0 {
+					if len(m.topics.Items) > 0 {
 						m.topics.SetSelected(0)
 						m.topics.EnsureVisible(m.ui.width - 4)
 					} else {
@@ -80,7 +82,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				id := m.ui.focusOrder[m.ui.focusIndex]
 				m.setFocus(id)
 				if id == idTopics {
-					if len(m.topics.items) > 0 {
+					if len(m.topics.Items) > 0 {
 						m.topics.SetSelected(0)
 						m.topics.EnsureVisible(m.ui.width - 4)
 					} else {

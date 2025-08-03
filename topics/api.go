@@ -1,12 +1,12 @@
-package emqutiti
+package topics
 
 import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TopicsAPI exposes topic management behavior to the rest of the application.
-type TopicsAPI interface {
+// API exposes topic management behavior to the rest of the application.
+type API interface {
 	HasTopic(string) bool
 	SortTopics()
 	RebuildActiveTopicList()
@@ -23,9 +23,9 @@ type TopicsAPI interface {
 	SetSnapshot([]TopicSnapshot)
 }
 
-// topicsModel defines the dependencies topicsComponent requires from the model.
-type topicsModel interface {
-	navigator
+// Model defines the dependencies Component requires from the host application.
+type Model interface {
+	ShowClient() tea.Cmd
 	SetFocus(id string) tea.Cmd
 	FocusedID() string
 	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
@@ -33,6 +33,5 @@ type topicsModel interface {
 	SetElemPos(id string, pos int)
 	OverlayHelp(view string) string
 	ListenStatus() tea.Cmd
+	Width() int
 }
-
-var _ topicsModel = (*model)(nil)

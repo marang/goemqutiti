@@ -14,51 +14,51 @@ import (
 
 type historyState struct {
 	list            list.Model
-	items           []historyItem
-	store           HistoryStore
+	items           []Item
+	store           Store
 	selectionAnchor int
 	showArchived    bool
 	filterForm      *historyFilterForm
 	filterQuery     string
 	detail          viewport.Model
-	detailItem      historyItem
+	detailItem      Item
 }
 
-// historyComponent provides a Component implementation for browsing and
-// filtering message history. It holds its own state while delegating cross
-// component interactions back to the root model.
-type historyComponent struct {
+// Component provides history browsing and filtering functionality. It holds its
+// own state while delegating cross component interactions back to the root
+// model.
+type Component struct {
 	*historyState
-	m historyModel
+	m Model
 }
 
-func newHistoryComponent(m historyModel, hs historyState) *historyComponent {
-	return &historyComponent{historyState: &hs, m: m}
-}
-
-func (h *historyComponent) Init() tea.Cmd { return nil }
+// Init performs no initialization and returns nil.
+func (h *Component) Init() tea.Cmd { return nil }
 
 // Update updates the history list. The caller must ensure the list has focus.
-func (h *historyComponent) Update(msg tea.Msg) tea.Cmd {
+func (h *Component) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	h.list, cmd = h.list.Update(msg)
 	return cmd
 }
 
-func (h *historyComponent) View() string { return "" }
+// View renders no standalone view for the history component.
+func (h *Component) View() string { return "" }
 
-func (h *historyComponent) Focus() tea.Cmd { return nil }
+// Focus gives focus to the history component. Currently a no-op.
+func (h *Component) Focus() tea.Cmd { return nil }
 
-func (h *historyComponent) Blur() {}
+// Blur removes focus from the history component. Currently a no-op.
+func (h *Component) Blur() {}
 
 // UpdateDetail handles input when viewing a long history payload.
-func (h *historyComponent) UpdateDetail(msg tea.Msg) tea.Cmd {
+func (h *Component) UpdateDetail(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return h.m.SetMode(modeClient)
+			return h.m.SetMode(h.m.PreviousMode())
 		case "ctrl+d":
 			return tea.Quit
 		}
@@ -68,7 +68,7 @@ func (h *historyComponent) UpdateDetail(msg tea.Msg) tea.Cmd {
 }
 
 // UpdateFilter handles the history filter form interaction.
-func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
+func (h *Component) UpdateFilter(msg tea.Msg) tea.Cmd {
 	if h.filterForm == nil {
 		return nil
 	}
@@ -77,7 +77,7 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 		switch t.String() {
 		case "esc":
 			h.filterForm = nil
-			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(idHistory))
+			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(ID))
 			return cmd
 		case "enter":
 			q := h.filterForm.query()
@@ -95,7 +95,7 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 			h.list.SetFilterState(list.Unfiltered)
 			h.filterQuery = q
 			h.filterForm = nil
-			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(idHistory))
+			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(ID))
 			return cmd
 		}
 	}
@@ -105,7 +105,7 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 }
 
 // ViewDetail renders the full payload of a history message.
-func (h *historyComponent) ViewDetail() string {
+func (h *Component) ViewDetail() string {
 	lines := strings.Split(h.detail.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
 	lines = append(lines, help)
@@ -119,7 +119,7 @@ func (h *historyComponent) ViewDetail() string {
 }
 
 // ViewFilter displays the history filter form.
-func (h *historyComponent) ViewFilter() string {
+func (h *Component) ViewFilter() string {
 	if h.filterForm == nil {
 		return ""
 	}
@@ -128,18 +128,18 @@ func (h *historyComponent) ViewFilter() string {
 	return lipgloss.Place(h.m.Width(), h.m.Height(), lipgloss.Center, lipgloss.Center, box)
 }
 
-// Focusables exposes focusable elements for history component. The history list
-// itself is managed by the root model, so this returns an empty map.
-func (h *historyComponent) Focusables() map[string]Focusable { return map[string]Focusable{} }
+// Focusables exposes focusable elements for the history component. The list is
+// managed externally, so this returns an empty map.
+func (h *Component) Focusables() map[string]Focusable { return map[string]Focusable{} }
 
 // Append stores a message in the history list and optional store.
-func (h *historyComponent) Append(topic, payload, kind, logText string) {
+func (h *Component) Append(topic, payload, kind, logText string) {
 	ts := time.Now()
 	text := payload
 	if kind == "log" {
 		text = logText
 	}
-	hi := historyItem{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
+	hi := Item{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
 	if h.store != nil {
 		h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}

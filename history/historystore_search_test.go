@@ -11,7 +11,7 @@ func TestHistoryStoreSearch(t *testing.T) {
 	now := time.Now()
 
 	t.Run("active", func(t *testing.T) {
-		hs := &historyStore{}
+		hs := &store{}
 		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub"})
 		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub"})
 
@@ -32,7 +32,7 @@ func TestHistoryStoreSearch(t *testing.T) {
 	})
 
 	t.Run("archived", func(t *testing.T) {
-		hs := &historyStore{}
+		hs := &store{}
 		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Archived: true})
 		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Archived: true})
 

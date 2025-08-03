@@ -22,27 +22,16 @@ type Message struct {
 	Archived  bool
 }
 
-// HistoryStore stores messages in memory and supports filtered searches.
-// HistoryStore defines operations for storing and querying history messages.
-type HistoryStore interface {
-	Append(Message)
-	Search(archived bool, topics []string, start, end time.Time, payload string) []Message
-	Delete(key string) error
-	Archive(key string) error
-	Count(archived bool) int
-	Close() error
-}
-
-// historyStore stores messages in memory and optionally persists them to disk.
-type historyStore struct {
+// store stores messages in memory and optionally persists them to disk.
+type store struct {
 	mu   sync.RWMutex
 	msgs []Message
 	db   *badger.DB
 }
 
-// Open opens (or creates) a persistent message index for the given profile.
+// openStore opens (or creates) a persistent message index for the given profile.
 // If profile is empty, "default" is used.
-func openHistoryStore(profile string) (HistoryStore, error) {
+func openStore(profile string) (Store, error) {
 	if profile == "" {
 		profile = "default"
 	}
@@ -55,7 +44,7 @@ func openHistoryStore(profile string) (HistoryStore, error) {
 	if err != nil {
 		return nil, err
 	}
-	idx := &historyStore{db: db}
+	idx := &store{db: db}
 	// Load existing messages
 	db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
@@ -75,7 +64,7 @@ func openHistoryStore(profile string) (HistoryStore, error) {
 }
 
 // Close closes the underlying database.
-func (i *historyStore) Close() error {
+func (i *store) Close() error {
 	if i.db != nil {
 		return i.db.Close()
 	}
@@ -83,7 +72,7 @@ func (i *historyStore) Close() error {
 }
 
 // Append adds a message to the store.
-func (i *historyStore) Append(msg Message) {
+func (i *store) Append(msg Message) {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.msgs = append(i.msgs, msg)
@@ -102,7 +91,7 @@ func (i *historyStore) Append(msg Message) {
 
 // Delete removes a message with the given key from the index.
 // The key should use the format "<topic>/<timestamp>" matching Add.
-func (i *historyStore) Delete(key string) error {
+func (i *store) Delete(key string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -126,7 +115,7 @@ func (i *historyStore) Delete(key string) error {
 
 // Archive marks a message as archived without deleting it.
 // The key should use the format "<topic>/<timestamp>" matching Add.
-func (i *historyStore) Archive(key string) error {
+func (i *store) Archive(key string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
@@ -155,7 +144,7 @@ func (i *historyStore) Archive(key string) error {
 // Search returns messages matching the provided filters. Zero timestamps
 // disable the corresponding time constraints. When archived is true, only
 // archived messages are returned.
-func (i *historyStore) Search(archived bool, topics []string, start, end time.Time, payload string) []Message {
+func (i *store) Search(archived bool, topics []string, start, end time.Time, payload string) []Message {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 
@@ -194,7 +183,7 @@ func (i *historyStore) Search(archived bool, topics []string, start, end time.Ti
 // Count reports the number of stored messages. When archived is true,
 // only archived messages are counted; otherwise only unarchived messages
 // are included.
-func (i *historyStore) Count(archived bool) int {
+func (i *store) Count(archived bool) int {
 	i.mu.RLock()
 	defer i.mu.RUnlock()
 	c := 0

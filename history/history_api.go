@@ -1,4 +1,4 @@
-package emqutiti
+package history
 
 import tea "github.com/charmbracelet/bubbletea"
 

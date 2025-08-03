@@ -82,12 +82,12 @@ func (m *model) ensureTopicVisible() {
 
 // isHistoryFocused reports if the history list has focus.
 func (m *model) isHistoryFocused() bool {
-	return m.ui.focusOrder[m.ui.focusIndex] == idHistory
+	return m.FocusedID() == idHistory
 }
 
 // isTopicsFocused reports if the topics view has focus.
 func (m *model) isTopicsFocused() bool {
-	return m.ui.focusOrder[m.ui.focusIndex] == idTopics
+	return m.FocusedID() == idTopics
 }
 
 // historyScroll forwards scroll events to the history list.
@@ -266,8 +266,10 @@ func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
 	if vpCmd := m.updateViewport(msg); vpCmd != nil {
 		cmds = append(cmds, vpCmd)
 	}
-	if histCmd := m.history.Update(msg); histCmd != nil {
-		cmds = append(cmds, histCmd)
+	if m.FocusedID() == idHistory {
+		if histCmd := m.history.Update(msg); histCmd != nil {
+			cmds = append(cmds, histCmd)
+		}
 	}
 	return cmds
 }
@@ -275,7 +277,7 @@ func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
 // updateViewport updates the main viewport unless history handles the scroll.
 func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 	skipVP := false
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory {
+	if m.FocusedID() == idHistory {
 		switch mt := msg.(type) {
 		case tea.KeyMsg:
 			s := mt.String()

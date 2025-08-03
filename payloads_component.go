@@ -8,24 +8,22 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type topicSetter interface{ setTopic(string) }
-type payloadSetter interface{ setPayload(string) }
 type statusListener interface{ ListenStatus() tea.Cmd }
 
+type loadPayloadMsg struct{ topic, payload string }
+
 type payloadsComponent struct {
-	m       *model
-	topics  topicSetter
-	message payloadSetter
-	status  statusListener
-	items   []payloadItem
-	list    list.Model
+	m      payloadsModel
+	status statusListener
+	items  []payloadItem
+	list   list.Model
 }
 
-func newPayloadsComponent(nav navigator, t topicSetter, p payloadSetter, s statusListener) *payloadsComponent {
+func newPayloadsComponent(m payloadsModel, s statusListener) *payloadsComponent {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.DisableQuitKeybindings()
 	l.SetShowTitle(false)
-	return &payloadsComponent{m: nav.(*model), topics: t, message: p, status: s, list: l}
+	return &payloadsComponent{m: m, status: s, list: l}
 }
 
 func (p *payloadsComponent) Init() tea.Cmd { return nil }
@@ -38,7 +36,7 @@ func (p *payloadsComponent) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
-			return p.m.setMode(modeClient)
+			return p.m.SetMode(modeClient)
 		case "delete":
 			i := p.list.Index()
 			if i >= 0 {
@@ -56,9 +54,11 @@ func (p *payloadsComponent) Update(msg tea.Msg) tea.Cmd {
 				items := p.list.Items()
 				if i < len(items) {
 					pi := items[i].(payloadItem)
-					p.topics.setTopic(pi.topic)
-					p.message.setPayload(pi.payload)
-					return p.m.setMode(modeClient)
+					return tea.Batch(
+						func() tea.Msg { return loadPayloadMsg{topic: pi.topic, payload: pi.payload} },
+						p.m.SetMode(modeClient),
+						p.status.ListenStatus(),
+					)
 				}
 			}
 		}
@@ -69,14 +69,14 @@ func (p *payloadsComponent) Update(msg tea.Msg) tea.Cmd {
 
 func (p *payloadsComponent) View() string {
 	m := p.m
-	m.ui.elemPos = map[string]int{}
-	m.ui.elemPos[idPayloadList] = 1
+	m.ResetElemPos()
+	m.SetElemPos(idPayloadList, 1)
 	listView := p.list.View()
 	help := ui.InfoStyle.Render("[enter] load  [del] delete  [esc] back")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
-	focused := m.ui.focusOrder[m.ui.focusIndex] == idPayloadList
-	view := ui.LegendBox(content, "Payloads", m.ui.width-2, 0, ui.ColBlue, focused, -1)
-	return m.overlayHelp(view)
+	focused := m.FocusedID() == idPayloadList
+	view := ui.LegendBox(content, "Payloads", m.Width()-2, 0, ui.ColBlue, focused, -1)
+	return m.OverlayHelp(view)
 }
 
 func (p *payloadsComponent) Focus() tea.Cmd { return nil }

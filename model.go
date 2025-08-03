@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
@@ -11,6 +12,7 @@ import (
 
 // reference history package to avoid unused import warning
 var _ = history.ID
+var _ clientkeys.Handler = (*model)(nil)
 
 // Component defines a screen or feature that can participate in the Tea update
 // and view cycle. Implementations handle their own initialization, state

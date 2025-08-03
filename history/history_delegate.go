@@ -31,7 +31,7 @@ func (d historyDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil
 
 // Render prints a history item with its label and payload.
 func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	hi := item.(historyItem)
+	hi := item.(Item)
 	width := m.Width()
 	var label string
 	ts := hi.timestamp.Format("2006-01-02 15:04:05.000")

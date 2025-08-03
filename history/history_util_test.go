@@ -23,7 +23,7 @@ func TestMessagesToHistoryItems(t *testing.T) {
 		if hi.timestamp != m.Timestamp || hi.topic != m.Topic || hi.payload != m.Payload || hi.kind != m.Kind || hi.archived != m.Archived {
 			t.Fatalf("item %d mismatch: %#v vs %#v", i, hi, m)
 		}
-		if li, ok := litems[i].(historyItem); ok {
+		if li, ok := litems[i].(Item); ok {
 			if li != hi {
 				t.Fatalf("list item %d mismatch: %#v vs %#v", i, li, hi)
 			}

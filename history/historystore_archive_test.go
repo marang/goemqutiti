@@ -7,7 +7,7 @@ import (
 )
 
 func TestArchiveAndSearch(t *testing.T) {
-	hs := &historyStore{}
+	hs := &store{}
 	ts := time.Now()
 	msg := Message{Timestamp: ts, Topic: "t1", Payload: "p1", Kind: "pub"}
 	hs.Append(msg)

@@ -88,10 +88,10 @@ type model struct {
 	mqttClient *MQTTClient
 
 	connections connectionsState
-	history     historyState
+	history     *historyComponent
 	topics      *topicsComponent
 	message     messageState
-	traces      tracesState
+	traces      *tracesComponent
 	payloads    *payloadsComponent
 	help        *helpComponent
 	importer    *importer.Model

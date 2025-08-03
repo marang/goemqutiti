@@ -63,7 +63,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		case "tab":
 			if m.currentMode() == modeHistoryFilter {
-				cmd := m.updateHistoryFilter(msg)
+				cmd := m.history.UpdateFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {
@@ -83,7 +83,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case "shift+tab":
 			if m.currentMode() == modeHistoryFilter {
-				cmd := m.updateHistoryFilter(msg)
+				cmd := m.history.UpdateFilter(msg)
 				return m, cmd
 			}
 			if len(m.ui.focusOrder) > 0 {

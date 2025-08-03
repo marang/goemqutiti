@@ -86,7 +86,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 			m.history.Append("", err.Error(), "log", err.Error())
 		}
 		m.connections.RefreshConnectionItems()
-		m.connections.SaveCurrent(m.topics.items, m.payloads.Items())
+		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
 		m.traces.savePlannedTraces()
 		return m.setMode(modeConnections)
 	case "ctrl+t":

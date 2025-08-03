@@ -76,10 +76,10 @@ func TestSaveLoadState(t *testing.T) {
 	os.Setenv("HOME", dir)
 	defer os.Setenv("HOME", oldHome)
 
-	data := map[string]connectionData{
+	data := map[string]connectionSnapshot{
 		"p1": {
-			Topics:   []topicItem{{title: "foo", subscribed: true}},
-			Payloads: []payloadItem{{topic: "foo", payload: "bar"}},
+			Topics:   []TopicSnapshot{{Title: "foo", Active: true}},
+			Payloads: []PayloadSnapshot{{Topic: "foo", Payload: "bar"}},
 		},
 	}
 	saveState(data)

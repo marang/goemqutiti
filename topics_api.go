@@ -19,6 +19,8 @@ type TopicsAPI interface {
 	SetActivePane(idx int)
 	SetSelected(int)
 	Selected() int
+	Snapshot() []TopicSnapshot
+	SetSnapshot([]TopicSnapshot)
 }
 
 // topicsModel defines the dependencies topicsComponent requires from the model.

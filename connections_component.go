@@ -26,12 +26,6 @@ func (c connectionItem) Description() string {
 	return c.status
 }
 
-// connectionData stores topics and payloads for a connection.
-type connectionData struct {
-	Topics   []topicItem
-	Payloads []payloadItem
-}
-
 // connectionsState holds connection related state shared across components.
 type connectionsState struct {
 	connection  string
@@ -40,7 +34,7 @@ type connectionsState struct {
 	form        *connectionForm
 	deleteIndex int
 	statusChan  chan string
-	saved       map[string]connectionData
+	saved       map[string]connectionSnapshot
 }
 
 // ConnectionStatusManager exposes methods to update connection status information.
@@ -98,20 +92,20 @@ func (c *connectionsState) RefreshConnectionItems() {
 }
 
 // SaveCurrent persists topics and payloads for the active connection.
-func (c *connectionsState) SaveCurrent(topics []topicItem, payloads []payloadItem) {
+func (c *connectionsState) SaveCurrent(topics []TopicSnapshot, payloads []PayloadSnapshot) {
 	if c.active == "" {
 		return
 	}
-	c.saved[c.active] = connectionData{Topics: topics, Payloads: payloads}
+	c.saved[c.active] = connectionSnapshot{Topics: topics, Payloads: payloads}
 	saveState(c.saved)
 }
 
 // RestoreState returns saved topics and payloads for the named connection.
-func (c *connectionsState) RestoreState(name string) ([]topicItem, []payloadItem) {
+func (c *connectionsState) RestoreState(name string) ([]TopicSnapshot, []PayloadSnapshot) {
 	if data, ok := c.saved[name]; ok {
 		return data.Topics, data.Payloads
 	}
-	return []topicItem{}, []payloadItem{}
+	return []TopicSnapshot{}, []PayloadSnapshot{}
 }
 
 // connectionsComponent implements the Component interface for managing brokers.

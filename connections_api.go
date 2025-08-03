@@ -133,9 +133,9 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 		}
 		c.history.list.SetItems(items)
 	}
-	topics, payloads := c.connections.RestoreState(msg.profile.Name)
-	c.topics.items = topics
-	c.payloads.SetItems(payloads)
+	ts, ps := c.connections.RestoreState(msg.profile.Name)
+	c.topics.SetSnapshot(ts)
+	c.payloads.SetSnapshot(ps)
 	c.topics.SortTopics()
 	c.topics.RebuildActiveTopicList()
 	c.SubscribeActiveTopics()

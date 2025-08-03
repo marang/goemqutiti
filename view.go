@@ -10,7 +10,7 @@ import (
 
 func (m *model) overlayHelp(view string) string {
 	help := ui.HelpStyle.Render("?")
-	if m.help.focused {
+	if m.help.Focused() {
 		help = ui.HelpFocused.Render("?")
 	}
 	m.ui.elemPos[idHelp] = 0

@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/traces"
@@ -15,7 +16,7 @@ const (
 	idTopicsEnabled  = "topics-enabled"  // enabled topics pane
 	idTopicsDisabled = "topics-disabled" // disabled topics pane
 	idPayloadList    = payloads.IDList   // payload manager list
-	idHelp           = "help"            // help icon
+	idHelp           = help.ID           // help icon
 )
 
 type appMode int

@@ -89,7 +89,7 @@ func (h *Component) UpdateFilter(msg tea.Msg) tea.Cmd {
 				msgs = h.store.Search(false, topics, start, end, payload)
 			}
 			var items []list.Item
-			h.items, items = messagesToHistoryItems(msgs)
+			h.items, items = MessagesToItems(msgs)
 			h.list.SetItems(items)
 			h.list.FilterInput.SetValue("")
 			h.list.SetFilterState(list.Unfiltered)
@@ -146,7 +146,7 @@ func (h *Component) Append(topic, payload, kind, logText string) {
 	if !h.showArchived {
 		if h.filterQuery != "" {
 			var items []list.Item
-			h.items, items = applyHistoryFilter(h.filterQuery, h.store, h.showArchived)
+			h.items, items = ApplyFilter(h.filterQuery, h.store, h.showArchived)
 			h.list.SetItems(items)
 			h.list.Select(len(items) - 1)
 		} else {

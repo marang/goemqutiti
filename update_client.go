@@ -6,6 +6,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // handleStatusMessage processes broker status updates.
@@ -194,12 +196,12 @@ func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 func (m *model) filterHistoryList() {
 	if st := m.history.List().FilterState(); st == list.Filtering || st == list.FilterApplied {
 		q := m.history.List().FilterInput.Value()
-		hitems, litems := applyHistoryFilter(q, m.history.Store(), m.history.ShowArchived())
+		hitems, litems := history.ApplyFilter(q, m.history.Store(), m.history.ShowArchived())
 		m.history.SetItems(hitems)
 		m.history.SetFilterQuery(q)
 		m.history.List().SetItems(litems)
 	} else if m.history.FilterQuery() != "" {
-		hitems, litems := applyHistoryFilter(m.history.FilterQuery(), m.history.Store(), m.history.ShowArchived())
+		hitems, litems := history.ApplyFilter(m.history.FilterQuery(), m.history.Store(), m.history.ShowArchived())
 		m.history.SetItems(hitems)
 		m.history.List().SetItems(litems)
 	} else {

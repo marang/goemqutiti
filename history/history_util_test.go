@@ -5,13 +5,13 @@ import (
 	"time"
 )
 
-// TestMessagesToHistoryItems verifies conversion from Message slices to history items.
-func TestMessagesToHistoryItems(t *testing.T) {
+// TestMessagesToItems verifies conversion from Message slices to history items.
+func TestMessagesToItems(t *testing.T) {
 	msgs := []Message{
 		{Timestamp: time.Unix(0, 1), Topic: "t1", Payload: "p1", Kind: "pub", Archived: false},
 		{Timestamp: time.Unix(0, 2), Topic: "t2", Payload: "p2", Kind: "sub", Archived: true},
 	}
-	hitems, litems := messagesToHistoryItems(msgs)
+	hitems, litems := MessagesToItems(msgs)
 	if len(hitems) != len(msgs) {
 		t.Fatalf("history items len %d want %d", len(hitems), len(msgs))
 	}

@@ -74,7 +74,7 @@ func initHistory() (historyState, historyDelegate) {
 		hs.store = idx
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		var items []list.Item
-		hs.items, items = messagesToHistoryItems(msgs)
+		hs.items, items = history.MessagesToItems(msgs)
 		hs.list.SetItems(items)
 	}
 	return hs, hDel

@@ -147,3 +147,6 @@ func (m *model) MessageHeight() int { return m.layout.message.height }
 
 // Height returns the current UI height.
 func (m *model) Height() int { return m.ui.height }
+
+// SetClientMode switches to the main client screen.
+func (m *model) SetClientMode() tea.Cmd { return m.setMode(modeClient) }

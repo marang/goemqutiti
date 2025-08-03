@@ -18,6 +18,7 @@ import (
 
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
+	"github.com/marang/emqutiti/payloads"
 )
 
 type navAdapter struct{ navigator }
@@ -154,7 +155,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
 	topicsComp := topics.New(m)
 	m.topics = topicsComp
-	m.payloads = newPayloadsComponent(m, &m.connections)
+	m.payloads = payloads.New(m, &m.connections)
 	tracesComp := newTracesComponent(m, tr, m.tracesStore())
 	m.traces = tracesComp
 

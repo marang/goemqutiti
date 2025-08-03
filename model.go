@@ -8,6 +8,7 @@ import (
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
 )
 
@@ -100,7 +101,7 @@ type model struct {
 	topics      *topics.Component
 	message     *messageComponent
 	traces      *tracesComponent
-	payloads    *payloadsComponent
+	payloads    *payloads.Component
 	help        *helpComponent
 	importer    *importer.Model
 

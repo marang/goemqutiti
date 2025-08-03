@@ -3,6 +3,7 @@ package emqutiti
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
 )
 
@@ -39,9 +40,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case topics.ToggleMsg:
 		cmd := m.handleTopicToggle(msg)
 		return m, cmd
-	case loadPayloadMsg:
-		m.topics.SetTopic(msg.topic)
-		m.message.setPayload(msg.payload)
+	case payloads.LoadMsg:
+		m.topics.SetTopic(msg.Topic)
+		m.message.setPayload(msg.Payload)
 		return m, nil
 	case tea.KeyMsg:
 		switch msg.String() {

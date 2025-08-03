@@ -95,7 +95,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.topics.SetSelected(0)
 		return m.setMode(modeTopics)
 	case "ctrl+p":
-		m.payloads.list.SetSize(m.ui.width-4, m.ui.height-4)
+		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.setMode(modePayloads)
 	case "ctrl+r":
 		m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)

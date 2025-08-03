@@ -17,18 +17,7 @@ func saveConfig(profiles []Profile, defaultName string) {
 	cfg := userConfig{
 		DefaultProfileName: defaultName,
 		Profiles:           profiles,
-		Saved:              make(map[string]persistedConn),
-	}
-	for k, v := range saved {
-		var topics []persistedTopic
-		for _, t := range v.Topics {
-			topics = append(topics, persistedTopic{Title: t.title, Active: t.subscribed})
-		}
-		var payloads []persistedPayload
-		for _, p := range v.Payloads {
-			payloads = append(payloads, persistedPayload{Topic: p.topic, Payload: p.payload})
-		}
-		cfg.Saved[k] = persistedConn{Topics: topics, Payloads: payloads}
+		Saved:              saved,
 	}
 	writeConfig(cfg)
 }

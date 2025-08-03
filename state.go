@@ -9,20 +9,10 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-// persistedTopic mirrors topicItem for persistence in the config file.
-type persistedTopic struct {
-	Title  string `toml:"title"`
-	Active bool   `toml:"active"`
-}
-
-type persistedPayload struct {
-	Topic   string `toml:"topic"`
-	Payload string `toml:"payload"`
-}
-
-type persistedConn struct {
-	Topics   []persistedTopic   `toml:"topics"`
-	Payloads []persistedPayload `toml:"payloads"`
+// connectionSnapshot holds topics and payloads for a connection in config.toml.
+type connectionSnapshot struct {
+	Topics   []TopicSnapshot   `toml:"topics"`
+	Payloads []PayloadSnapshot `toml:"payloads"`
 }
 
 type persistedTrace struct {
@@ -34,35 +24,26 @@ type persistedTrace struct {
 
 // userConfig represents the structure stored in config.toml.
 type userConfig struct {
-	DefaultProfileName string                    `toml:"default_profile"`
-	Profiles           []Profile                 `toml:"profiles"`
-	Saved              map[string]persistedConn  `toml:"saved"`
-	Traces             map[string]persistedTrace `toml:"traces"`
+	DefaultProfileName string                        `toml:"default_profile"`
+	Profiles           []Profile                     `toml:"profiles"`
+	Saved              map[string]connectionSnapshot `toml:"saved"`
+	Traces             map[string]persistedTrace     `toml:"traces"`
 }
 
 // loadState retrieves saved topics and payloads from config.toml.
-func loadState() map[string]connectionData {
+func loadState() map[string]connectionSnapshot {
 	fp, err := DefaultUserConfigFile()
 	if err != nil {
-		return map[string]connectionData{}
+		return map[string]connectionSnapshot{}
 	}
 	var cfg userConfig
 	if _, err := toml.DecodeFile(fp, &cfg); err != nil {
-		return map[string]connectionData{}
+		return map[string]connectionSnapshot{}
 	}
-	out := make(map[string]connectionData)
-	for k, v := range cfg.Saved {
-		var topics []topicItem
-		for _, t := range v.Topics {
-			topics = append(topics, topicItem{title: t.Title, subscribed: t.Active})
-		}
-		var payloads []payloadItem
-		for _, p := range v.Payloads {
-			payloads = append(payloads, payloadItem{topic: p.Topic, payload: p.Payload})
-		}
-		out[k] = connectionData{Topics: topics, Payloads: payloads}
+	if cfg.Saved == nil {
+		return map[string]connectionSnapshot{}
 	}
-	return out
+	return cfg.Saved
 }
 
 // writeConfig writes the entire configuration back to disk.
@@ -80,25 +61,14 @@ func writeConfig(cfg userConfig) {
 }
 
 // saveState updates only the Saved section in config.toml.
-func saveState(data map[string]connectionData) {
+func saveState(data map[string]connectionSnapshot) {
 	fp, err := DefaultUserConfigFile()
 	if err != nil {
 		return
 	}
 	var cfg userConfig
 	toml.DecodeFile(fp, &cfg) // ignore errors for new files
-	cfg.Saved = make(map[string]persistedConn)
-	for k, v := range data {
-		var topics []persistedTopic
-		for _, t := range v.Topics {
-			topics = append(topics, persistedTopic{Title: t.title, Active: t.subscribed})
-		}
-		var payloads []persistedPayload
-		for _, p := range v.Payloads {
-			payloads = append(payloads, persistedPayload{Topic: p.topic, Payload: p.payload})
-		}
-		cfg.Saved[k] = persistedConn{Topics: topics, Payloads: payloads}
-	}
+	cfg.Saved = data
 	writeConfig(cfg)
 }
 

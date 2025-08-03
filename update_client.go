@@ -6,8 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/marang/emqutiti/ui"
 )
 
 // handleStatusMessage processes broker status updates.
@@ -44,42 +42,6 @@ func (m *model) handleTopicToggle(msg topicToggleMsg) tea.Cmd {
 	return nil
 }
 
-// scrollTopics scrolls the topics viewport by the given number of rows.
-func (m *model) scrollTopics(delta int) {
-	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
-	if delta > 0 {
-		m.topics.vp.ScrollDown(delta * rowH)
-	} else if delta < 0 {
-		m.topics.vp.ScrollUp(-delta * rowH)
-	}
-}
-
-// ensureTopicVisible keeps the selected topic within the visible viewport.
-func (m *model) ensureTopicVisible() {
-	sel := m.topics.Selected()
-	if sel < 0 || sel >= len(m.topics.items) {
-		return
-	}
-	var chips []string
-	for _, t := range m.topics.items {
-		st := ui.ChipStyle
-		if !t.subscribed {
-			st = ui.ChipInactive
-		}
-		chips = append(chips, st.Render(t.title))
-	}
-	_, bounds := layoutChips(chips, m.ui.width-4)
-	if sel >= len(bounds) {
-		return
-	}
-	b := bounds[sel]
-	if b.yPos < m.topics.vp.YOffset {
-		m.topics.vp.SetYOffset(b.yPos)
-	} else if b.yPos+b.height > m.topics.vp.YOffset+m.topics.vp.Height {
-		m.topics.vp.SetYOffset(b.yPos + b.height - m.topics.vp.Height)
-	}
-}
-
 // isHistoryFocused reports if the history list has focus.
 func (m *model) isHistoryFocused() bool {
 	return m.FocusedID() == idHistory
@@ -90,31 +52,19 @@ func (m *model) isTopicsFocused() bool {
 	return m.FocusedID() == idTopics
 }
 
-// historyScroll forwards scroll events to the history list.
-func (m *model) historyScroll(msg tea.MouseMsg) tea.Cmd {
-	var hCmd tea.Cmd
-	m.history.list, hCmd = m.history.list.Update(msg)
-	return hCmd
-}
-
-// topicsScroll adjusts the topics viewport based on the mouse wheel.
-func (m *model) topicsScroll(msg tea.MouseMsg) {
-	delta := -1
-	if msg.Button == tea.MouseButtonWheelDown {
-		delta = 1
-	}
-	m.scrollTopics(delta)
-}
-
 // handleMouseScroll processes scroll wheel events.
 // It returns a command and a boolean indicating if the event was handled.
 func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
 		if m.isHistoryFocused() && !m.history.showArchived {
-			return m.historyScroll(msg), true
+			return m.history.Scroll(msg), true
 		}
 		if m.isTopicsFocused() {
-			m.topicsScroll(msg)
+			delta := -1
+			if msg.Button == tea.MouseButtonWheelDown {
+				delta = 1
+			}
+			m.topics.Scroll(delta)
 			return nil, true
 		}
 		return nil, true
@@ -122,41 +72,13 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	return nil, false
 }
 
-// handleHistorySelection updates history selection based on index and shift key.
-func (m *model) handleHistorySelection(idx int, shift bool) {
-	m.history.list.Select(idx)
-	if shift {
-		if m.history.selectionAnchor == -1 {
-			m.history.selectionAnchor = m.history.list.Index()
-			if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
-				v := true
-				m.history.items[m.history.selectionAnchor].isSelected = &v
-			}
-		}
-		m.updateSelectionRange(idx)
-	} else {
-		for i := range m.history.items {
-			m.history.items[i].isSelected = nil
-		}
-		m.history.selectionAnchor = -1
-	}
-}
-
 // handleMouseLeft manages left-click focus and selection.
 func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 	cmd := m.focusFromMouse(msg.Y)
 	if m.isHistoryFocused() && !m.history.showArchived {
-		m.handleHistoryClick(msg)
+		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	}
 	return cmd
-}
-
-// handleHistoryClick selects a history item based on the mouse position.
-func (m *model) handleHistoryClick(msg tea.MouseMsg) {
-	idx := m.historyIndexAt(msg.Y)
-	if idx >= 0 {
-		m.handleHistorySelection(idx, msg.Shift)
-	}
 }
 
 // handleClientMouse processes mouse events in client mode.
@@ -171,7 +93,7 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 		}
 	}
 	if msg.Type == tea.MouseLeft || msg.Type == tea.MouseRight {
-		if cmd := m.handleTopicsClick(msg); cmd != nil {
+		if cmd := m.topics.HandleClick(msg, m.ui.viewport.YOffset); cmd != nil {
 			cmds = append(cmds, cmd)
 		}
 	}
@@ -179,36 +101,6 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 		return nil
 	}
 	return tea.Batch(cmds...)
-}
-
-// handleTopicsClick processes mouse events within the topics area.
-// The mouse coordinates are adjusted for the viewport offset and compared
-// against precomputed chip bounds.
-func (m *model) handleTopicsClick(msg tea.MouseMsg) tea.Cmd {
-	y := msg.Y + m.ui.viewport.YOffset
-	idx := m.topics.TopicAtPosition(msg.X, y)
-	if idx < 0 {
-		return nil
-	}
-	m.topics.SetSelected(idx)
-	if msg.Type == tea.MouseLeft {
-		cmd := m.topics.ToggleTopic(idx)
-		if m.currentMode() == modeTopics {
-			m.topics.RebuildActiveTopicList()
-		}
-		return cmd
-	} else if msg.Type == tea.MouseRight {
-		name := m.topics.items[idx].title
-		rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
-			cmd := m.topics.RemoveTopic(idx)
-			if m.currentMode() == modeTopics {
-				m.topics.RebuildActiveTopicList()
-			}
-			return cmd
-		}, nil)
-	}
-	return nil
 }
 
 // updateClient updates the UI when in client mode.

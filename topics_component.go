@@ -308,6 +308,63 @@ func (c *topicsComponent) TopicAtPosition(x, y int) int {
 	return -1
 }
 
+// Scroll moves the topics viewport by delta rows.
+func (c *topicsComponent) Scroll(delta int) {
+	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	if delta > 0 {
+		c.vp.ScrollDown(delta * rowH)
+	} else if delta < 0 {
+		c.vp.ScrollUp(-delta * rowH)
+	}
+}
+
+// EnsureVisible keeps the selected topic within view given the available width.
+func (c *topicsComponent) EnsureVisible(width int) {
+	sel := c.Selected()
+	if sel < 0 || sel >= len(c.items) {
+		return
+	}
+	var chips []string
+	for _, t := range c.items {
+		st := ui.ChipStyle
+		if !t.subscribed {
+			st = ui.ChipInactive
+		}
+		chips = append(chips, st.Render(t.title))
+	}
+	_, bounds := layoutChips(chips, width)
+	if sel >= len(bounds) {
+		return
+	}
+	b := bounds[sel]
+	if b.yPos < c.vp.YOffset {
+		c.vp.SetYOffset(b.yPos)
+	} else if b.yPos+b.height > c.vp.YOffset+c.vp.Height {
+		c.vp.SetYOffset(b.yPos + b.height - c.vp.Height)
+	}
+}
+
+// HandleClick processes mouse clicks on topics and triggers actions.
+func (c *topicsComponent) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
+	y := msg.Y + vpOffset
+	idx := c.TopicAtPosition(msg.X, y)
+	if idx < 0 {
+		return nil
+	}
+	c.SetSelected(idx)
+	if msg.Type == tea.MouseLeft {
+		return c.ToggleTopic(idx)
+	} else if msg.Type == tea.MouseRight {
+		name := c.items[idx].title
+		focused := c.api.FocusedID()
+		rf := func() tea.Cmd { return c.api.SetFocus(focused) }
+		c.api.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
+			return c.RemoveTopic(idx)
+		}, nil)
+	}
+	return nil
+}
+
 func (c *topicsComponent) SetSelected(i int) { c.selected = i }
 func (c *topicsComponent) Selected() int     { return c.selected }
 

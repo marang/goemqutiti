@@ -32,7 +32,7 @@ func (m *model) handleShiftUpKey() tea.Cmd {
 		if m.history.list.Index() > 0 {
 			m.history.list.CursorUp()
 			idx := m.history.list.Index()
-			m.updateSelectionRange(idx)
+			m.history.UpdateSelectionRange(idx)
 		}
 	}
 	return nil
@@ -51,7 +51,7 @@ func (m *model) handleShiftDownKey() tea.Cmd {
 		if m.history.list.Index() < len(m.history.list.Items())-1 {
 			m.history.list.CursorDown()
 			idx := m.history.list.Index()
-			m.updateSelectionRange(idx)
+			m.history.UpdateSelectionRange(idx)
 		}
 	}
 	return nil

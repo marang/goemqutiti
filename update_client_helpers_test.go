@@ -42,11 +42,11 @@ func TestHandleHistorySelectionShift(t *testing.T) {
 	m.history.list.SetItems(items)
 	m.setFocus(idHistory)
 
-	m.handleHistorySelection(0, true)
+	m.history.HandleSelection(0, true)
 	if m.history.selectionAnchor != 0 {
 		t.Fatalf("anchor = %d, want 0", m.history.selectionAnchor)
 	}
-	m.handleHistorySelection(2, true)
+	m.history.HandleSelection(2, true)
 	for i := 0; i <= 2; i++ {
 		if m.history.items[i].isSelected == nil || !*m.history.items[i].isSelected {
 			t.Fatalf("item %d not selected", i)
@@ -89,7 +89,7 @@ func TestHandleHistoryClick(t *testing.T) {
 	m.viewClient()
 	m.setFocus(idHistory)
 	y := m.ui.elemPos[idHistory] + 1
-	m.handleHistoryClick(tea.MouseMsg{Y: y})
+	m.history.HandleClick(tea.MouseMsg{Y: y}, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	if m.history.list.Index() != 0 {
 		t.Fatalf("expected index 0 got %d", m.history.list.Index())
 	}

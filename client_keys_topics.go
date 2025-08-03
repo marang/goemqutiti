@@ -12,7 +12,7 @@ func (m *model) handleLeftKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
 		sel := m.topics.Selected()
 		m.topics.SetSelected((sel - 1 + len(m.topics.items)) % len(m.topics.items))
-		m.ensureTopicVisible()
+		m.topics.EnsureVisible(m.ui.width - 4)
 	}
 	return nil
 }
@@ -22,7 +22,7 @@ func (m *model) handleRightKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idTopics && len(m.topics.items) > 0 {
 		sel := m.topics.Selected()
 		m.topics.SetSelected((sel + 1) % len(m.topics.items))
-		m.ensureTopicVisible()
+		m.topics.EnsureVisible(m.ui.width - 4)
 	}
 	return nil
 }
@@ -33,7 +33,7 @@ func (m *model) handleTopicScroll(key string) tea.Cmd {
 	if key == "down" || key == "j" {
 		delta = 1
 	}
-	m.scrollTopics(delta)
+	m.topics.Scroll(delta)
 	return nil
 }
 
@@ -55,7 +55,7 @@ func (m *model) handleEnterKey() tea.Cmd {
 		sel := m.topics.Selected()
 		if sel >= 0 && sel < len(m.topics.items) {
 			cmd := m.topics.ToggleTopic(sel)
-			m.ensureTopicVisible()
+			m.topics.EnsureVisible(m.ui.width - 4)
 			return cmd
 		}
 	case idHistory:

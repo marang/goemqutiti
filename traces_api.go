@@ -1,5 +1,24 @@
 package emqutiti
 
+import tea "github.com/charmbracelet/bubbletea"
+
+// TracesAPI exposes model interactions required by tracesComponent.
+type TracesAPI interface {
+	navigator
+	SetFocus(id string) tea.Cmd
+	FocusedID() string
+	ResetElemPos()
+	SetElemPos(id string, pos int)
+	OverlayHelp(view string) string
+	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
+	Profiles() []Profile
+	ActiveConnection() string
+	SubscribedTopics() []string
+	LogHistory(topic, payload, kind, text string)
+	TraceHeight() int
+	SetTraceHeight(int)
+}
+
 // TraceStore defines persistence and messaging operations for traces.
 type TraceStore interface {
 	LoadTraces() map[string]TracerConfig
@@ -36,3 +55,33 @@ func (fileTraceStore) LoadCounts(profile, key string, topics []string) (map[stri
 
 // tracesStore exposes the default TraceStore implementation.
 func (m *model) tracesStore() TraceStore { return fileTraceStore{} }
+
+// Profiles returns available connection profiles.
+func (m *model) Profiles() []Profile { return m.connections.manager.Profiles }
+
+// ActiveConnection returns the key of the active connection.
+func (m *model) ActiveConnection() string { return m.connections.active }
+
+// SubscribedTopics lists currently subscribed topic names.
+func (m *model) SubscribedTopics() []string {
+	var topics []string
+	for _, tp := range m.topics.items {
+		if tp.subscribed {
+			topics = append(topics, tp.title)
+		}
+	}
+	return topics
+}
+
+// LogHistory forwards messages to the history component.
+func (m *model) LogHistory(topic, payload, kind, text string) {
+	m.history.Append(topic, payload, kind, text)
+}
+
+// TraceHeight returns the current trace panel height.
+func (m *model) TraceHeight() int { return m.layout.trace.height }
+
+// SetTraceHeight updates the trace panel height.
+func (m *model) SetTraceHeight(h int) { m.layout.trace.height = h }
+
+var _ TracesAPI = (*model)(nil)

@@ -14,7 +14,7 @@ func (t *tracesComponent) forceStartTrace(index int) {
 	item := t.items[index]
 	p, err := LoadProfile(item.cfg.Profile, "")
 	if err != nil {
-		t.m.history.Append("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	if p.FromEnv {
@@ -24,12 +24,12 @@ func (t *tracesComponent) forceStartTrace(index int) {
 	}
 	client, err := NewMQTTClient(*p, nil)
 	if err != nil {
-		t.m.history.Append("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	tr := newTracer(item.cfg, client)
 	if err := tr.Start(); err != nil {
-		t.m.history.Append("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", err.Error())
 		client.Disconnect()
 		return
 	}
@@ -44,13 +44,13 @@ func (t *tracesComponent) startTrace(index int) {
 	}
 	item := t.items[index]
 	if !item.cfg.End.IsZero() && time.Now().After(item.cfg.End) {
-		t.m.history.Append("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
+		t.api.LogHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
 		return
 	}
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
 	if err == nil && exists {
-		rf := func() tea.Cmd { return t.m.setFocus(t.m.ui.focusOrder[t.m.ui.focusIndex]) }
-		t.m.startConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", rf, func() tea.Cmd {
+		rf := func() tea.Cmd { return t.api.SetFocus(t.api.FocusedID()) }
+		t.api.StartConfirm(fmt.Sprintf("Overwrite trace '%s'? [y/n]", item.key), "existing trace data will be removed", rf, func() tea.Cmd {
 			tracerClearData(item.cfg.Profile, item.key)
 			t.forceStartTrace(index)
 			return nil
@@ -111,7 +111,7 @@ func (t *tracesComponent) loadTraceMessages(index int) {
 	it := t.items[index]
 	msgs, err := tracerMessages(it.cfg.Profile, it.key)
 	if err != nil {
-		t.m.history.Append("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	items := make([]list.Item, len(msgs))
@@ -119,7 +119,7 @@ func (t *tracesComponent) loadTraceMessages(index int) {
 		items[i] = traceMsgItem{idx: i + 1, msg: mmsg}
 	}
 	t.view.SetItems(items)
-	t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
+	t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
 	t.viewKey = it.key
-	_ = t.m.setMode(modeViewTrace)
+	_ = t.api.SetMode(modeViewTrace)
 }

@@ -260,8 +260,9 @@ func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
 	var cmd tea.Cmd
 	m.topics.input, cmd = m.topics.input.Update(msg)
 	cmds = append(cmds, cmd)
-	m.message.input, cmd = m.message.input.Update(msg)
-	cmds = append(cmds, cmd)
+	if mCmd := m.message.Update(msg); mCmd != nil {
+		cmds = append(cmds, mCmd)
+	}
 	if vpCmd := m.updateViewport(msg); vpCmd != nil {
 		cmds = append(cmds, vpCmd)
 	}

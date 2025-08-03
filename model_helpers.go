@@ -1,7 +1,6 @@
 package emqutiti
 
 import (
-	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
 )
@@ -70,29 +69,6 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	hf := newHistoryFilterForm(topics, topic, payload, start, end)
 	m.history.filterForm = &hf
 	return m.setMode(modeHistoryFilter)
-}
-
-// subscribeActiveTopics subscribes the MQTT client to all currently active topics.
-func (m *model) subscribeActiveTopics() {
-	if m.mqttClient == nil {
-		return
-	}
-	for _, t := range m.topics.items {
-		if t.subscribed {
-			m.mqttClient.Subscribe(t.title, 0, nil)
-		}
-	}
-}
-
-// refreshConnectionItems rebuilds the connections list to show status information.
-func (m *model) refreshConnectionItems() {
-	items := []list.Item{}
-	for _, p := range m.connections.manager.Profiles {
-		status := m.connections.manager.Statuses[p.Name]
-		detail := m.connections.manager.Errors[p.Name]
-		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
-	}
-	m.connections.manager.ConnectionsList.SetItems(items)
 }
 
 // setMode updates the current mode and focus order.

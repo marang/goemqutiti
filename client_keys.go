@@ -68,7 +68,7 @@ func (m *model) handleDisconnectKey() tea.Cmd {
 	if m.mqttClient != nil {
 		m.mqttClient.Disconnect()
 		m.connections.SetDisconnected(m.connections.active, "")
-		m.refreshConnectionItems()
+		m.connections.RefreshConnectionItems()
 		m.connections.connection = ""
 		m.connections.active = ""
 		m.mqttClient = nil

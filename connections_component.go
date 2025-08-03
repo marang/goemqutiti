@@ -85,6 +85,18 @@ func (c *connectionsState) SendStatus(msg string) {
 // FlushStatus discards any pending status messages.
 func (c *connectionsState) FlushStatus() { flushStatus(c.statusChan) }
 
+// RefreshConnectionItems rebuilds the connections list to show status
+// information.
+func (c *connectionsState) RefreshConnectionItems() {
+	items := []list.Item{}
+	for _, p := range c.manager.Profiles {
+		status := c.manager.Statuses[p.Name]
+		detail := c.manager.Errors[p.Name]
+		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
+	}
+	c.manager.ConnectionsList.SetItems(items)
+}
+
 // connectionsComponent implements the Component interface for managing brokers.
 type connectionsComponent struct {
 	nav navigator

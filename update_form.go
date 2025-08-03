@@ -32,7 +32,7 @@ func (m *model) updateForm(msg tea.Msg) tea.Cmd {
 			} else {
 				m.connections.manager.AddConnection(p)
 			}
-			m.refreshConnectionItems()
+			m.connections.RefreshConnectionItems()
 			cmd := m.setMode(modeConnections)
 			m.connections.form = nil
 			return cmd

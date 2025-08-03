@@ -6,8 +6,8 @@ import (
 
 // ViewForm renders the form for new traces.
 func (t *tracesComponent) ViewForm() string {
-	t.m.ui.elemPos = map[string]int{}
+	t.api.ResetElemPos()
 	content := t.form.View()
-	view := ui.LegendBox(content, "New Trace", t.m.ui.width-2, 0, ui.ColBlue, true, -1)
-	return t.m.overlayHelp(view)
+	view := ui.LegendBox(content, "New Trace", t.api.Width()-2, 0, ui.ColBlue, true, -1)
+	return t.api.OverlayHelp(view)
 }

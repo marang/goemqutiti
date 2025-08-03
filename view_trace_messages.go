@@ -9,13 +9,13 @@ import (
 
 // ViewMessages shows captured messages for a trace.
 func (t *tracesComponent) ViewMessages() string {
-	t.m.ui.elemPos = map[string]int{}
+	t.api.ResetElemPos()
 	title := fmt.Sprintf("Trace %s", t.viewKey)
 	listLines := strings.Split(t.view.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
 	listLines = append(listLines, help)
 	target := len(listLines)
-	minHeight := t.m.layout.trace.height + 1
+	minHeight := t.api.TraceHeight() + 1
 	if target < minHeight {
 		for len(listLines) < minHeight {
 			listLines = append(listLines, "")
@@ -23,6 +23,6 @@ func (t *tracesComponent) ViewMessages() string {
 		target = minHeight
 	}
 	content := strings.Join(listLines, "\n")
-	view := ui.LegendBox(content, title, t.m.ui.width-2, target, ui.ColBlue, true, -1)
-	return t.m.overlayHelp(view)
+	view := ui.LegendBox(content, title, t.api.Width()-2, target, ui.ColBlue, true, -1)
+	return t.api.OverlayHelp(view)
 }

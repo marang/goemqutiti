@@ -82,12 +82,12 @@ type tracesState struct {
 // to the root model.
 type tracesComponent struct {
 	*tracesState
-	m     *model
+	api   TracesAPI
 	store TraceStore
 }
 
-func newTracesComponent(m *model, ts tracesState, store TraceStore) *tracesComponent {
-	return &tracesComponent{tracesState: &ts, m: m, store: store}
+func newTracesComponent(api TracesAPI, ts tracesState, store TraceStore) *tracesComponent {
+	return &tracesComponent{tracesState: &ts, api: api, store: store}
 }
 
 func (t *tracesComponent) Init() tea.Cmd { return nil }
@@ -176,21 +176,17 @@ func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 			return tea.Quit
 		case "esc":
 			t.savePlannedTraces()
-			return t.m.setMode(modeClient)
+			return t.api.SetMode(modeClient)
 		case "a":
-			opts := make([]string, len(t.m.connections.manager.Profiles))
-			for i, p := range t.m.connections.manager.Profiles {
+			profs := t.api.Profiles()
+			opts := make([]string, len(profs))
+			for i, p := range profs {
 				opts[i] = p.Name
 			}
-			topics := []string{}
-			for _, tp := range t.m.topics.items {
-				if tp.subscribed {
-					topics = append(topics, tp.title)
-				}
-			}
-			f := newTraceForm(opts, t.m.connections.active, topics)
+			topics := t.api.SubscribedTopics()
+			f := newTraceForm(opts, t.api.ActiveConnection(), topics)
 			t.form = &f
-			return tea.Batch(t.m.setMode(modeEditTrace), textinput.Blink)
+			return tea.Batch(t.api.SetMode(modeEditTrace), textinput.Blink)
 		case "enter":
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
@@ -225,13 +221,13 @@ func (t *tracesComponent) Update(msg tea.Msg) tea.Cmd {
 			}
 			return nil
 		case "ctrl+shift+up":
-			if t.m.layout.trace.height > 1 {
-				t.m.layout.trace.height--
-				t.list.SetSize(t.m.ui.width-4, t.m.ui.height-4)
+			if t.api.TraceHeight() > 1 {
+				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
+				t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
 			}
 		case "ctrl+shift+down":
-			t.m.layout.trace.height++
-			t.list.SetSize(t.m.ui.width-4, t.m.ui.height-4)
+			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
+			t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
 		}
 	}
 	t.list, cmd = t.list.Update(msg)
@@ -254,7 +250,7 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 			return tea.Quit
 		case "esc":
 			t.form = nil
-			return t.m.setMode(modeTracer)
+			return t.api.SetMode(modeTracer)
 		case "enter":
 			cfg := t.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
@@ -300,7 +296,7 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 			t.list.SetItems(items)
 			addTrace(cfg)
 			t.form = nil
-			return t.m.setMode(modeTracer)
+			return t.api.SetMode(modeTracer)
 		}
 	}
 	f, cmd := t.form.Update(msg)
@@ -315,17 +311,17 @@ func (t *tracesComponent) UpdateView(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			return t.m.setMode(modeTracer)
+			return t.api.SetMode(modeTracer)
 		case "ctrl+d":
 			return tea.Quit
 		case "ctrl+shift+up":
-			if t.m.layout.trace.height > 1 {
-				t.m.layout.trace.height--
-				t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
+			if t.api.TraceHeight() > 1 {
+				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
+				t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
 			}
 		case "ctrl+shift+down":
-			t.m.layout.trace.height++
-			t.view.SetSize(t.m.ui.width-4, t.m.layout.trace.height)
+			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
+			t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
 		}
 	}
 	t.view, cmd = t.view.Update(msg)

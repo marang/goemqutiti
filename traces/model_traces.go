@@ -1,4 +1,4 @@
-package emqutiti
+package traces
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 )
 
 // forceStartTrace launches the tracer at index without checking existing data.
-func (t *tracesComponent) forceStartTrace(index int) {
+func (t *Component) forceStartTrace(index int) {
 	item := t.items[index]
 	p, err := connections.LoadProfile(item.cfg.Profile, "")
 	if err != nil {
@@ -23,7 +23,7 @@ func (t *tracesComponent) forceStartTrace(index int) {
 	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 		p.Password = env
 	}
-	client, err := NewMQTTClient(*p, nil)
+	client, err := t.api.NewClient(*p)
 	if err != nil {
 		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
@@ -39,7 +39,7 @@ func (t *tracesComponent) forceStartTrace(index int) {
 }
 
 // startTrace starts the tracer at index, prompting if data already exists.
-func (t *tracesComponent) startTrace(index int) {
+func (t *Component) startTrace(index int) {
 	if index < 0 || index >= len(t.items) {
 		return
 	}
@@ -62,7 +62,7 @@ func (t *tracesComponent) startTrace(index int) {
 }
 
 // stopTrace stops a running tracer at the given index.
-func (t *tracesComponent) stopTrace(index int) {
+func (t *Component) stopTrace(index int) {
 	if index < 0 || index >= len(t.items) {
 		return
 	}
@@ -72,7 +72,7 @@ func (t *tracesComponent) stopTrace(index int) {
 }
 
 // anyTraceRunning reports whether any tracer is currently active or planned.
-func (t *tracesComponent) anyTraceRunning() bool {
+func (t *Component) anyTraceRunning() bool {
 	for i := range t.items {
 		if tr := t.items[i].tracer; tr != nil && (tr.Running() || tr.Planned()) {
 			return true
@@ -82,7 +82,7 @@ func (t *tracesComponent) anyTraceRunning() bool {
 }
 
 // traceIndex returns the index of the trace with the given key or -1.
-func (t *tracesComponent) traceIndex(key string) int {
+func (t *Component) traceIndex(key string) int {
 	for i, it := range t.items {
 		if it.key == key {
 			return i
@@ -92,7 +92,7 @@ func (t *tracesComponent) traceIndex(key string) int {
 }
 
 // savePlannedTraces persists trace configurations for later sessions.
-func (t *tracesComponent) savePlannedTraces() {
+func (t *Component) SavePlannedTraces() {
 	data := map[string]TracerConfig{}
 	for _, it := range t.items {
 		if it.tracer != nil {
@@ -105,7 +105,7 @@ func (t *tracesComponent) savePlannedTraces() {
 }
 
 // loadTraceMessages loads messages for the trace at index and shows them.
-func (t *tracesComponent) loadTraceMessages(index int) {
+func (t *Component) loadTraceMessages(index int) {
 	if index < 0 || index >= len(t.items) {
 		return
 	}
@@ -122,5 +122,5 @@ func (t *tracesComponent) loadTraceMessages(index int) {
 	t.view.SetItems(items)
 	t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
 	t.viewKey = it.key
-	_ = t.api.SetMode(modeViewTrace)
+	_ = t.api.SetModeViewTrace()
 }

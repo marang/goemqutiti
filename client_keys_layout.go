@@ -87,7 +87,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		}
 		m.connections.RefreshConnectionItems()
 		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
-		m.traces.savePlannedTraces()
+		m.traces.SavePlannedTraces()
 		return m.setMode(modeConnections)
 	case "ctrl+t":
 		m.topics.SetActivePane(0)
@@ -98,7 +98,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.setMode(modePayloads)
 	case "ctrl+r":
-		m.traces.list.SetSize(m.ui.width-4, m.ui.height-4)
+		m.traces.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.setMode(modeTracer)
 	default:
 		return nil

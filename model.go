@@ -10,6 +10,7 @@ import (
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/traces"
 )
 
 // reference history package to avoid unused import warning
@@ -100,7 +101,7 @@ type model struct {
 	history     *history.Component
 	topics      *topics.Component
 	message     *messageComponent
-	traces      *tracesComponent
+	traces      *traces.Component
 	payloads    *payloads.Component
 	help        *helpComponent
 	importer    *importer.Model
@@ -123,8 +124,8 @@ type model struct {
 // Focusables returns the base focusable elements managed by the model.
 func (m *model) Focusables() map[string]Focusable {
 	return map[string]Focusable{
-		idTopics:    &nullFocusable{},
-		idHistory:   &nullFocusable{},
-		idTraceList: &nullFocusable{},
+		idTopics:      &nullFocusable{},
+		idHistory:     &nullFocusable{},
+		traces.IDList: &nullFocusable{},
 	}
 }

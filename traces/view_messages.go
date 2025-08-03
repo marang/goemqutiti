@@ -1,4 +1,4 @@
-package emqutiti
+package traces
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 )
 
 // ViewMessages shows captured messages for a trace.
-func (t *tracesComponent) ViewMessages() string {
+func (t *Component) ViewMessages() string {
 	t.api.ResetElemPos()
 	title := fmt.Sprintf("Trace %s", t.viewKey)
 	listLines := strings.Split(t.view.View(), "\n")

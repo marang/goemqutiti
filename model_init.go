@@ -3,9 +3,7 @@ package emqutiti
 import (
 	"fmt"
 	"os"
-	"sort"
 
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -14,6 +12,7 @@ import (
 	_ "github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/traces"
 	"github.com/marang/emqutiti/ui"
 
 	"github.com/marang/emqutiti/connections"
@@ -82,37 +81,6 @@ func initMessage() messageState {
 	return ms
 }
 
-func initTraces() (tracesState, traceMsgDelegate) {
-	traceList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
-	traceList.DisableQuitKeybindings()
-	traceList.SetShowTitle(false)
-	traceDel := traceMsgDelegate{}
-	traceView := list.New([]list.Item{}, traceDel, 0, 0)
-	traceView.DisableQuitKeybindings()
-	traceView.SetShowTitle(false)
-	tracesCfg := loadTraces()
-	var traceItems []list.Item
-	var traceData []*traceItem
-	keys := make([]string, 0, len(tracesCfg))
-	for k := range tracesCfg {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	for _, k := range keys {
-		it := &traceItem{key: k, cfg: tracesCfg[k]}
-		traceItems = append(traceItems, it)
-		traceData = append(traceData, it)
-	}
-	traceList.SetItems(traceItems)
-	ts := tracesState{
-		list:  traceList,
-		items: traceData,
-		form:  nil,
-		view:  traceView,
-	}
-	return ts, traceDel
-}
-
 func initUI(order []string) uiState {
 	vp := viewport.New(0, 0)
 	return uiState{
@@ -141,7 +109,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	cs, loadErr := initConnections(conns)
 	st, _ := history.OpenStore("")
 	ms := initMessage()
-	tr, traceDel := initTraces()
+	tr, traceDel := traces.Init()
 	m := &model{
 		connections: cs,
 		ui:          initUI(order),
@@ -156,7 +124,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	topicsComp := topics.New(m)
 	m.topics = topicsComp
 	m.payloads = payloads.New(m, &m.connections)
-	tracesComp := newTracesComponent(m, tr, m.tracesStore())
+	tracesComp := traces.NewComponent(m, tr, m.tracesStore())
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
@@ -172,8 +140,8 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		fitems[i] = m.focusables[id]
 	}
 	m.focus = NewFocusMap(fitems)
-	traceDel.t = m.traces
-	m.traces.view.SetDelegate(traceDel)
+	traceDel.T = m.traces
+	m.traces.ViewList().SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be
 	// delegated based on the current application mode.
 	m.components = map[appMode]Component{

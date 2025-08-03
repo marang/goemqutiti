@@ -1,6 +1,9 @@
 package emqutiti
 
-import "github.com/marang/emqutiti/payloads"
+import (
+	"github.com/marang/emqutiti/payloads"
+	"github.com/marang/emqutiti/traces"
+)
 
 const (
 	idTopics         = "topics"          // topics chip list
@@ -11,7 +14,6 @@ const (
 	idTopicsEnabled  = "topics-enabled"  // enabled topics pane
 	idTopicsDisabled = "topics-disabled" // disabled topics pane
 	idPayloadList    = payloads.IDList   // payload manager list
-	idTraceList      = "trace-list"      // traces manager list
 	idHelp           = "help"            // help icon
 )
 
@@ -40,7 +42,7 @@ var focusByMode = map[appMode][]string{
 	modeConfirmDelete:  {},
 	modeTopics:         {idTopicsEnabled, idTopicsDisabled, idHelp},
 	modePayloads:       {idPayloadList, idHelp},
-	modeTracer:         {idTraceList, idHelp},
+	modeTracer:         {traces.IDList, idHelp},
 	modeEditTrace:      {idHelp},
 	modeViewTrace:      {idHelp},
 	modeImporter:       {idHelp},

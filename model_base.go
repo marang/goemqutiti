@@ -1,5 +1,7 @@
 package emqutiti
 
+import "github.com/marang/emqutiti/payloads"
+
 const (
 	idTopics         = "topics"          // topics chip list
 	idTopic          = "topic"           // topic input box
@@ -8,7 +10,7 @@ const (
 	idConnList       = "conn-list"       // broker list
 	idTopicsEnabled  = "topics-enabled"  // enabled topics pane
 	idTopicsDisabled = "topics-disabled" // disabled topics pane
-	idPayloadList    = "payload-list"    // payload manager list
+	idPayloadList    = payloads.IDList   // payload manager list
 	idTraceList      = "trace-list"      // traces manager list
 	idHelp           = "help"            // help icon
 )

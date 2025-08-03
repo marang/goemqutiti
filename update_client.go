@@ -257,9 +257,9 @@ func (m *model) handleClientMsg(msg tea.Msg) (tea.Cmd, bool) {
 // updateClientInputs updates form inputs, viewport and history list.
 func (m *model) updateClientInputs(msg tea.Msg) []tea.Cmd {
 	var cmds []tea.Cmd
-	var cmd tea.Cmd
-	m.topics.input, cmd = m.topics.input.Update(msg)
-	cmds = append(cmds, cmd)
+	if cmd := m.topics.UpdateInput(msg); cmd != nil {
+		cmds = append(cmds, cmd)
+	}
 	if mCmd := m.message.Update(msg); mCmd != nil {
 		cmds = append(cmds, mCmd)
 	}

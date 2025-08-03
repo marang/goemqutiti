@@ -115,7 +115,6 @@ type model struct {
 func (m *model) Focusables() map[string]Focusable {
 	return map[string]Focusable{
 		idTopics:    &nullFocusable{},
-		idTopic:     adapt(&m.topics.input),
 		idHistory:   &nullFocusable{},
 		idTraceList: &nullFocusable{},
 	}

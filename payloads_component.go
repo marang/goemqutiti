@@ -8,18 +8,16 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type statusListener interface{ ListenStatus() tea.Cmd }
-
 type loadPayloadMsg struct{ topic, payload string }
 
 type payloadsComponent struct {
 	m      payloadsModel
-	status statusListener
+	status StatusListener
 	items  []payloadItem
 	list   list.Model
 }
 
-func newPayloadsComponent(m payloadsModel, s statusListener) *payloadsComponent {
+func newPayloadsComponent(m payloadsModel, s StatusListener) *payloadsComponent {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.DisableQuitKeybindings()
 	l.SetShowTitle(false)

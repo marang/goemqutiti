@@ -8,7 +8,8 @@ import (
 )
 
 type confirmComponent struct {
-	m *model
+	nav    ConfirmNavigator
+	status StatusListener
 
 	prompt      string
 	info        string
@@ -18,8 +19,8 @@ type confirmComponent struct {
 	focused     bool
 }
 
-func newConfirmComponent(nav navigator, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *confirmComponent {
-	return &confirmComponent{m: nav.(*model), returnFocus: returnFocus, action: action, cancel: cancel}
+func newConfirmComponent(nav ConfirmNavigator, status StatusListener, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *confirmComponent {
+	return &confirmComponent{nav: nav, status: status, returnFocus: returnFocus, action: action, cancel: cancel}
 }
 
 func (c *confirmComponent) Init() tea.Cmd { return nil }
@@ -27,7 +28,7 @@ func (c *confirmComponent) Init() tea.Cmd { return nil }
 func (c *confirmComponent) start(prompt, info string) {
 	c.prompt = prompt
 	c.info = info
-	_ = c.m.setMode(modeConfirmDelete)
+	_ = c.nav.SetMode(modeConfirmDelete)
 }
 
 func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
@@ -45,8 +46,8 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 			if c.cancel != nil {
 				c.cancel = nil
 			}
-			cmd := c.m.setMode(c.m.previousMode())
-			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
+			cmd := c.nav.SetMode(c.nav.PreviousMode())
+			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
 			if acmd != nil {
 				cmds = append(cmds, acmd)
 			}
@@ -54,7 +55,7 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 				cmds = append(cmds, c.returnFocus())
 				c.returnFocus = nil
 			} else {
-				c.m.scrollToFocused()
+				c.nav.ScrollToFocused()
 			}
 			return tea.Batch(cmds...)
 		case "n", "esc":
@@ -62,29 +63,28 @@ func (c *confirmComponent) Update(msg tea.Msg) tea.Cmd {
 				c.cancel()
 				c.cancel = nil
 			}
-			cmd := c.m.setMode(c.m.previousMode())
-			cmds := []tea.Cmd{cmd, c.m.connections.ListenStatus()}
+			cmd := c.nav.SetMode(c.nav.PreviousMode())
+			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
 			if c.returnFocus != nil {
 				cmds = append(cmds, c.returnFocus())
 				c.returnFocus = nil
 			} else {
-				c.m.scrollToFocused()
+				c.nav.ScrollToFocused()
 			}
 			return tea.Batch(cmds...)
 		}
 	}
-	return c.m.connections.ListenStatus()
+	return c.status.ListenStatus()
 }
 
 func (c *confirmComponent) View() string {
-	c.m.ui.elemPos = map[string]int{}
 	content := c.prompt
 	if c.info != "" {
 		content = lipgloss.JoinVertical(lipgloss.Left, c.prompt, c.info)
 	}
 	content = lipgloss.NewStyle().Padding(1, 2).Render(content)
-	box := ui.LegendBox(content, "Confirm", c.m.ui.width/2, 0, ui.ColBlue, true, -1)
-	return lipgloss.Place(c.m.ui.width, c.m.ui.height, lipgloss.Center, lipgloss.Center, box)
+	box := ui.LegendBox(content, "Confirm", c.nav.Width()/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(c.nav.Width(), c.nav.Height(), lipgloss.Center, lipgloss.Center, box)
 }
 
 func (c *confirmComponent) Focus() tea.Cmd {

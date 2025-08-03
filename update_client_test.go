@@ -1,7 +1,6 @@
 package emqutiti
 
 import (
-	connections "github.com/marang/emqutiti/connections"
 	"testing"
 	"time"
 
@@ -9,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/clientkeys"
+	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 )
 

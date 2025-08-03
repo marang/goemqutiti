@@ -24,8 +24,8 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 	if len(m.history.items) != 2 {
 		t.Fatalf("expected error appended to history, got %d items", len(m.history.items))
 	}
-	if m.history.items[1].kind != "log" {
-		t.Fatalf("expected last item kind 'log', got %q", m.history.items[1].kind)
+	if m.history.items[1].Kind != "log" {
+		t.Fatalf("expected last item kind 'log', got %q", m.history.items[1].Kind)
 	}
 }
 

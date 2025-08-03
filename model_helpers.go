@@ -130,6 +130,9 @@ func (m *model) SetMode(mode appMode) tea.Cmd { return m.setMode(mode) }
 // PreviousMode exposes previousMode to satisfy the navigator interface.
 func (m *model) PreviousMode() appMode { return m.previousMode() }
 
+// CurrentMode exposes currentMode to satisfy component interfaces.
+func (m *model) CurrentMode() appMode { return m.currentMode() }
+
 // Width returns the current UI width.
 func (m *model) Width() int { return m.ui.width }
 

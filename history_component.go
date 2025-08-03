@@ -29,20 +29,17 @@ type historyState struct {
 // component interactions back to the root model.
 type historyComponent struct {
 	*historyState
-	m *model
+	m historyModel
 }
 
-func newHistoryComponent(m *model, hs historyState) *historyComponent {
+func newHistoryComponent(m historyModel, hs historyState) *historyComponent {
 	return &historyComponent{historyState: &hs, m: m}
 }
 
 func (h *historyComponent) Init() tea.Cmd { return nil }
 
-// Update updates the history list when it has focus in client mode.
+// Update updates the history list. The caller must ensure the list has focus.
 func (h *historyComponent) Update(msg tea.Msg) tea.Cmd {
-	if h.m.ui.focusOrder[h.m.ui.focusIndex] != idHistory {
-		return nil
-	}
 	var cmd tea.Cmd
 	h.list, cmd = h.list.Update(msg)
 	return cmd
@@ -61,8 +58,7 @@ func (h *historyComponent) UpdateDetail(msg tea.Msg) tea.Cmd {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "esc":
-			cmd := h.m.setMode(modeClient)
-			return cmd
+			return h.m.SetMode(modeClient)
 		case "ctrl+d":
 			return tea.Quit
 		}
@@ -81,13 +77,7 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 		switch t.String() {
 		case "esc":
 			h.filterForm = nil
-			if len(h.m.ui.modeStack) > 0 {
-				h.m.ui.modeStack = h.m.ui.modeStack[1:]
-			}
-			if len(h.m.ui.modeStack) > 0 && h.m.ui.modeStack[0] == modeHelp {
-				h.m.ui.modeStack = h.m.ui.modeStack[1:]
-			}
-			cmd := tea.Batch(h.m.setMode(h.m.currentMode()), h.m.setFocus(idHistory))
+			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(idHistory))
 			return cmd
 		case "enter":
 			q := h.filterForm.query()
@@ -105,7 +95,7 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 			h.list.SetFilterState(list.Unfiltered)
 			h.filterQuery = q
 			h.filterForm = nil
-			cmd := tea.Batch(h.m.setMode(h.m.previousMode()), h.m.setFocus(idHistory))
+			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(idHistory))
 			return cmd
 		}
 	}
@@ -116,7 +106,6 @@ func (h *historyComponent) UpdateFilter(msg tea.Msg) tea.Cmd {
 
 // ViewDetail renders the full payload of a history message.
 func (h *historyComponent) ViewDetail() string {
-	h.m.ui.elemPos = map[string]int{}
 	lines := strings.Split(h.detail.View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
 	lines = append(lines, help)
@@ -125,19 +114,18 @@ func (h *historyComponent) ViewDetail() string {
 	if h.detail.Height < lipgloss.Height(content) {
 		sp = h.detail.ScrollPercent()
 	}
-	view := ui.LegendBox(content, "Message", h.m.ui.width-2, h.m.ui.height-2, ui.ColGreen, true, sp)
-	return h.m.overlayHelp(view)
+	view := ui.LegendBox(content, "Message", h.m.Width()-2, h.m.Height()-2, ui.ColGreen, true, sp)
+	return h.m.OverlayHelp(view)
 }
 
 // ViewFilter displays the history filter form.
 func (h *historyComponent) ViewFilter() string {
-	h.m.ui.elemPos = map[string]int{}
 	if h.filterForm == nil {
 		return ""
 	}
 	content := lipgloss.NewStyle().Padding(1, 2).Render(h.filterForm.View())
-	box := ui.LegendBox(content, "Filter", h.m.ui.width/2, 0, ui.ColBlue, true, -1)
-	return lipgloss.Place(h.m.ui.width, h.m.ui.height, lipgloss.Center, lipgloss.Center, box)
+	box := ui.LegendBox(content, "Filter", h.m.Width()/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(h.m.Width(), h.m.Height(), lipgloss.Center, lipgloss.Center, box)
 }
 
 // Focusables exposes focusable elements for history component. The history list

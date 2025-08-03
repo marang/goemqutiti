@@ -205,9 +205,10 @@ func initialModel(conns *Connections) (*model, error) {
 	topicsComp := newTopicsComponent(m.topicsAPI())
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
+	tracesComp := newTracesComponent(m, m.tracesStore())
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, m.help, m.confirm}
+	providers := []FocusableSet{m, connComp, topicsComp, m.payloads, tracesComp, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {
@@ -231,7 +232,7 @@ func initialModel(conns *Connections) (*model, error) {
 		modeConfirmDelete:  m.confirm,
 		modeTopics:         topicsComp,
 		modePayloads:       m.payloads,
-		modeTracer:         component{update: m.updateTraces, view: m.viewTraces},
+		modeTracer:         tracesComp,
 		modeEditTrace:      component{update: m.updateTraceForm, view: m.viewTraceForm},
 		modeViewTrace:      component{update: m.updateTraceView, view: m.viewTraceMessages},
 		modeHistoryFilter:  component{update: m.updateHistoryFilter, view: m.viewHistoryFilter},

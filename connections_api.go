@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // ConnectionsAPI defines the methods used by components to manage connection profiles
@@ -122,14 +124,14 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 	if c.history.store != nil {
 		c.history.store.Close()
 	}
-	if idx, err := openHistoryStore(msg.profile.Name); err == nil {
+	if idx, err := history.OpenStore(msg.profile.Name); err == nil {
 		c.history.store = idx
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		c.history.items = nil
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = historyItem{timestamp: mmsg.Timestamp, topic: mmsg.Topic, payload: mmsg.Payload, kind: mmsg.Kind}
-			c.history.items = append(c.history.items, items[i].(historyItem))
+			items[i] = history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: mmsg.Archived}
+			c.history.items = append(c.history.items, items[i].(history.Item))
 		}
 		c.history.list.SetItems(items)
 	}

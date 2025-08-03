@@ -10,13 +10,15 @@ import (
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // handleCopyKey copies selected or current history items to the clipboard.
 func (m *model) handleCopyKey() tea.Cmd {
 	var idxs []int
 	for i, it := range m.history.items {
-		if it.isSelected != nil && *it.isSelected {
+		if it.IsSelected != nil && *it.IsSelected {
 			idxs = append(idxs, i)
 		}
 	}
@@ -26,10 +28,10 @@ func (m *model) handleCopyKey() tea.Cmd {
 		items := m.history.list.Items()
 		for _, i := range idxs {
 			if i >= 0 && i < len(items) {
-				hi := items[i].(historyItem)
-				txt := hi.payload
-				if hi.kind != "log" {
-					txt = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
+				hi := items[i].(history.Item)
+				txt := hi.Payload
+				if hi.Kind != "log" {
+					txt = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
 				}
 				parts = append(parts, txt)
 			}
@@ -40,10 +42,10 @@ func (m *model) handleCopyKey() tea.Cmd {
 	} else if len(m.history.list.Items()) > 0 {
 		idx := m.history.list.Index()
 		if idx >= 0 {
-			hi := m.history.list.Items()[idx].(historyItem)
-			text := hi.payload
-			if hi.kind != "log" {
-				text = fmt.Sprintf("%s: %s", hi.topic, hi.payload)
+			hi := m.history.list.Items()[idx].(history.Item)
+			text := hi.Payload
+			if hi.Kind != "log" {
+				text = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
 			}
 			if err := clipboard.WriteAll(text); err != nil {
 				m.history.Append("", err.Error(), "log", err.Error())
@@ -69,7 +71,7 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	m.history.filterQuery = ""
 	m.history.list.FilterInput.SetValue("")
 	m.history.list.SetFilterState(list.Unfiltered)
-	var msgs []Message
+	var msgs []history.Message
 	if m.history.showArchived {
 		msgs = m.history.store.Search(true, nil, time.Time{}, time.Time{}, "")
 	} else {
@@ -90,12 +92,12 @@ func (m *model) handleHistoryViewKey() tea.Cmd {
 	if idx < 0 || idx >= len(m.history.list.Items()) {
 		return nil
 	}
-	hi := m.history.list.Items()[idx].(historyItem)
-	if utf8.RuneCountInString(hi.payload) <= historyPreviewLimit {
+	hi := m.history.list.Items()[idx].(history.Item)
+	if utf8.RuneCountInString(hi.Payload) <= historyPreviewLimit {
 		return nil
 	}
 	m.history.detailItem = hi
-	m.history.detail.SetContent(hi.payload)
+	m.history.detail.SetContent(hi.Payload)
 	m.history.detail.SetYOffset(0)
 	return m.setMode(modeHistoryDetail)
 }

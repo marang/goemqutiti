@@ -15,6 +15,8 @@ import (
 
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/ui"
+
+	"github.com/marang/emqutiti/history"
 )
 
 func initConnections(conns *Connections) (connectionsState, error) {
@@ -63,12 +65,12 @@ func initHistory() (historyState, historyDelegate) {
 	hist.DisableQuitKeybindings()
 	hs := historyState{
 		list:            hist,
-		items:           []historyItem{},
+		items:           []history.Item{},
 		store:           nil,
 		selectionAnchor: -1,
 		detail:          viewport.New(0, 0),
 	}
-	if idx, err := openHistoryStore(""); err == nil {
+	if idx, err := history.OpenStore(""); err == nil {
 		hs.store = idx
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		var items []list.Item

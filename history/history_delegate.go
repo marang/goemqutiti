@@ -34,16 +34,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	hi := item.(Item)
 	width := m.Width()
 	var label string
-	ts := hi.timestamp.Format("2006-01-02 15:04:05.000")
+	ts := hi.Timestamp.Format("2006-01-02 15:04:05.000")
 	var lblColor lipgloss.Color
 	var msgColor lipgloss.Color
-	switch hi.kind {
+	switch hi.Kind {
 	case "sub":
-		label = fmt.Sprintf("SUB %s", hi.topic)
+		label = fmt.Sprintf("SUB %s", hi.Topic)
 		lblColor = ui.ColPink
 		msgColor = ui.ColPub
 	case "pub":
-		label = fmt.Sprintf("PUB %s", hi.topic)
+		label = fmt.Sprintf("PUB %s", hi.Topic)
 		lblColor = ui.ColBlue
 		msgColor = ui.ColSub
 	default:
@@ -52,7 +52,7 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		msgColor = ui.ColGray
 	}
 	align := lipgloss.Left
-	if hi.kind == "pub" {
+	if hi.Kind == "pub" {
 		align = lipgloss.Right
 	}
 	innerWidth := width - 2
@@ -62,28 +62,28 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 
 	// Render at most two lines so the list height stays consistent
 	var lines []string
-	if hi.kind != "log" {
+	if hi.Kind != "log" {
 		header := lipgloss.JoinHorizontal(lipgloss.Top,
 			lipgloss.NewStyle().Foreground(lblColor).Render(label),
 			lipgloss.NewStyle().Foreground(ui.ColGray).Render(" "+ts+":"))
 		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, header))
 	}
-	payload := strings.ReplaceAll(hi.payload, "\r\n", "\n")
+	payload := strings.ReplaceAll(hi.Payload, "\r\n", "\n")
 	payload = strings.ReplaceAll(payload, "\n", "\u23ce")
 	more := utf8.RuneCountInString(payload) > historyPreviewLimit
 	if more {
 		payload = ansi.Truncate(payload, historyPreviewLimit, "")
 	}
-	trunc := ansi.Truncate(hi.payload, innerWidth, "")
+	trunc := ansi.Truncate(hi.Payload, innerWidth, "")
 	trunc = strings.NewReplacer("\r\n", "\u23ce", "\n", "\u23ce").Replace(trunc)
-	if more || lipgloss.Width(hi.payload) > innerWidth {
+	if more || lipgloss.Width(hi.Payload) > innerWidth {
 		if lipgloss.Width(trunc) >= innerWidth {
 			trunc = ansi.Truncate(trunc, innerWidth-1, "")
 		}
 		trunc += "\u2026"
 	}
 	fg := msgColor
-	if hi.kind == "log" && len(lines) == 0 {
+	if hi.Kind == "log" && len(lines) == 0 {
 		trunc = ts + ": " + trunc
 		fg = ui.ColGray
 	}
@@ -92,16 +92,16 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 	if len(lines) < 2 {
 		lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, align, ""))
 	}
-	if hi.isSelected != nil && *hi.isSelected {
+	if hi.IsSelected != nil && *hi.IsSelected {
 		for i, l := range lines {
 			lines[i] = lipgloss.NewStyle().Background(ui.ColDarkGray).Render(l)
 		}
 	}
 	barColor := ui.ColGray
-	if hi.kind == "log" {
+	if hi.Kind == "log" {
 		barColor = ui.ColDarkGray
 	}
-	if hi.isSelected != nil && *hi.isSelected {
+	if hi.IsSelected != nil && *hi.IsSelected {
 		barColor = ui.ColBlue
 	}
 	if index == m.Index() {

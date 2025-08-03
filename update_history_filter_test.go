@@ -6,6 +6,8 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // Test that applying history filters populates the list with results.
@@ -14,7 +16,7 @@ func TestUpdateHistoryFilter(t *testing.T) {
 	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")
@@ -36,8 +38,8 @@ func TestHistoryFilterPersists(t *testing.T) {
 	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")
@@ -55,9 +57,9 @@ func TestHistoryFilterPersists(t *testing.T) {
 	if len(m.history.items) != 1 {
 		t.Fatalf("history.items length = %d, want 1", len(m.history.items))
 	}
-	hi := items[0].(historyItem)
-	if hi.topic != "foo" {
-		t.Fatalf("unexpected topic %q", hi.topic)
+	hi := items[0].(history.Item)
+	if hi.Topic != "foo" {
+		t.Fatalf("unexpected topic %q", hi.Topic)
 	}
 }
 
@@ -67,8 +69,8 @@ func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
 	m.history.filterForm.topic.SetValue("foo")

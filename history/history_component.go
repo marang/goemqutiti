@@ -139,7 +139,7 @@ func (h *Component) Append(topic, payload, kind, logText string) {
 	if kind == "log" {
 		text = logText
 	}
-	hi := Item{timestamp: ts, topic: topic, payload: text, kind: kind, archived: false}
+	hi := Item{Timestamp: ts, Topic: topic, Payload: text, Kind: kind, Archived: false}
 	if h.store != nil {
 		h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
 	}

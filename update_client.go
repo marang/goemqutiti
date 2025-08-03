@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/history"
 )
 
@@ -142,7 +143,7 @@ func (m *model) handleClientMsg(msg tea.Msg) (tea.Cmd, bool) {
 	case MQTTMessage:
 		return m.handleMQTTMessage(t), true
 	case tea.KeyMsg:
-		return m.handleClientKey(t), false
+		return clientkeys.HandleClientKey(m, t), false
 	case tea.MouseMsg:
 		return m.handleClientMouse(t), false
 	}

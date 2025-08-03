@@ -131,11 +131,19 @@ func (c *topicsComponent) Focus() tea.Cmd { return nil }
 
 func (c *topicsComponent) Blur() {}
 
+// UpdateInput routes messages to the topic text input.
+func (c *topicsComponent) UpdateInput(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	c.input, cmd = c.input.Update(msg)
+	return cmd
+}
+
 // Focusables exposes focusable elements for the topics component.
 func (c *topicsComponent) Focusables() map[string]Focusable {
 	return map[string]Focusable{
 		idTopicsEnabled:  &c.panes.subscribed,
 		idTopicsDisabled: &c.panes.unsubscribed,
+		idTopic:          adapt(&c.input),
 	}
 }
 

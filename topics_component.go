@@ -2,6 +2,7 @@ package emqutiti
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -25,17 +26,23 @@ type topicsState struct {
 
 func (t *topicsState) setTopic(topic string) { t.input.SetValue(topic) }
 
+type topicToggleMsg struct {
+	topic      string
+	subscribed bool
+}
+
 // topicsComponent implements the Component interface for topic management.
 type topicsComponent struct {
 	*topicsState
-	api TopicsAPI
+	api topicsModel
 }
 
-func newTopicsComponent(api TopicsAPI) *topicsComponent {
+func newTopicsComponent(api topicsModel) *topicsComponent {
 	ts := initTopics()
-	ts.panes.subscribed.m = api
-	ts.panes.unsubscribed.m = api
-	return &topicsComponent{topicsState: &ts, api: api}
+	tc := &topicsComponent{topicsState: &ts, api: api}
+	tc.panes.subscribed.m = tc
+	tc.panes.unsubscribed.m = tc
+	return tc
 }
 
 func (c *topicsComponent) Init() tea.Cmd { return nil }
@@ -65,8 +72,8 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 				name := c.items[i].title
 				rf := func() tea.Cmd { return c.api.SetFocus(c.api.FocusedID()) }
 				c.api.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
-					cmd := c.api.RemoveTopic(i)
-					c.api.RebuildActiveTopicList()
+					cmd := c.RemoveTopic(i)
+					c.RebuildActiveTopicList()
 					return cmd
 				}, nil)
 				return c.api.ListenStatus()
@@ -74,7 +81,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 		case "enter", " ":
 			i := c.selected
 			if i >= 0 && i < len(c.items) {
-				tcmd = c.api.ToggleTopic(i)
+				tcmd = c.ToggleTopic(i)
 			}
 		}
 	}
@@ -86,7 +93,7 @@ func (c *topicsComponent) Update(msg tea.Msg) tea.Cmd {
 		c.panes.unsubscribed.sel = c.list.Index()
 		c.panes.unsubscribed.page = c.list.Paginator.Page
 	}
-	c.selected = c.api.IndexForPane(c.panes.active, c.list.Index())
+	c.selected = c.IndexForPane(c.panes.active, c.list.Index())
 	return tea.Batch(fcmd, tcmd, cmd, c.api.ListenStatus())
 }
 
@@ -99,7 +106,7 @@ func (c *topicsComponent) View() string {
 	activeView := c.list.View()
 	var left, right string
 	if c.panes.active == 0 {
-		other := list.New(c.api.UnsubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
+		other := list.New(c.UnsubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
 		other.DisableQuitKeybindings()
 		other.SetShowTitle(false)
 		other.Paginator.Page = c.panes.unsubscribed.page
@@ -107,7 +114,7 @@ func (c *topicsComponent) View() string {
 		left = ui.LegendBox(activeView, "Enabled", c.api.Width()/2-2, 0, ui.ColBlue, c.api.FocusedID() == idTopicsEnabled, -1)
 		right = ui.LegendBox(other.View(), "Disabled", c.api.Width()/2-2, 0, ui.ColBlue, false, -1)
 	} else {
-		other := list.New(c.api.SubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
+		other := list.New(c.SubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
 		other.DisableQuitKeybindings()
 		other.SetShowTitle(false)
 		other.Paginator.Page = c.panes.subscribed.page
@@ -132,5 +139,168 @@ func (c *topicsComponent) Focusables() map[string]Focusable {
 	}
 }
 
+// HasTopic reports whether the given topic already exists in the list.
+func (c *topicsComponent) HasTopic(topic string) bool {
+	for _, t := range c.items {
+		if t.title == topic {
+			return true
+		}
+	}
+	return false
+}
+
+// SortTopics orders the topic list with active topics first and keeps selection.
+func (c *topicsComponent) SortTopics() {
+	if len(c.items) == 0 {
+		return
+	}
+	sel := ""
+	if c.selected >= 0 && c.selected < len(c.items) {
+		sel = c.items[c.selected].title
+	}
+	sort.SliceStable(c.items, func(i, j int) bool {
+		if c.items[i].subscribed != c.items[j].subscribed {
+			return c.items[i].subscribed && !c.items[j].subscribed
+		}
+		return c.items[i].title < c.items[j].title
+	})
+	if sel != "" {
+		for i, t := range c.items {
+			if t.title == sel {
+				c.selected = i
+				break
+			}
+		}
+	}
+}
+
+// SubscribedItems returns topics currently subscribed.
+func (c *topicsComponent) SubscribedItems() []list.Item {
+	var out []list.Item
+	for _, t := range c.items {
+		if t.subscribed {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// UnsubscribedItems returns topics that are not subscribed.
+func (c *topicsComponent) UnsubscribedItems() []list.Item {
+	var out []list.Item
+	for _, t := range c.items {
+		if !t.subscribed {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// IndexForPane converts a pane list index to a global topics index.
+func (c *topicsComponent) IndexForPane(pane, idx int) int {
+	count := -1
+	for i, t := range c.items {
+		if (pane == 0 && t.subscribed) || (pane == 1 && !t.subscribed) {
+			count++
+			if count == idx {
+				return i
+			}
+		}
+	}
+	return -1
+}
+
+// RebuildActiveTopicList updates the active list to show the current pane.
+func (c *topicsComponent) RebuildActiveTopicList() {
+	if c.panes.active == 0 {
+		items := c.SubscribedItems()
+		if c.panes.subscribed.sel >= len(items) {
+			c.panes.subscribed.sel = len(items) - 1
+		}
+		if c.panes.subscribed.sel < 0 && len(items) > 0 {
+			c.panes.subscribed.sel = 0
+		}
+		c.list.SetItems(items)
+		if len(items) > 0 {
+			c.list.Select(c.panes.subscribed.sel)
+		}
+		c.list.Paginator.Page = c.panes.subscribed.page
+		c.selected = c.IndexForPane(0, c.panes.subscribed.sel)
+	} else {
+		items := c.UnsubscribedItems()
+		if c.panes.unsubscribed.sel >= len(items) {
+			c.panes.unsubscribed.sel = len(items) - 1
+		}
+		if c.panes.unsubscribed.sel < 0 && len(items) > 0 {
+			c.panes.unsubscribed.sel = 0
+		}
+		c.list.SetItems(items)
+		if len(items) > 0 {
+			c.list.Select(c.panes.unsubscribed.sel)
+		}
+		c.list.Paginator.Page = c.panes.unsubscribed.page
+		c.selected = c.IndexForPane(1, c.panes.unsubscribed.sel)
+	}
+}
+
+// SetActivePane switches focus to the given pane index and rebuilds the list.
+func (c *topicsComponent) SetActivePane(idx int) {
+	if idx == c.panes.active {
+		return
+	}
+	if c.panes.active == 0 {
+		c.panes.subscribed.sel = c.list.Index()
+		c.panes.subscribed.page = c.list.Paginator.Page
+	} else {
+		c.panes.unsubscribed.sel = c.list.Index()
+		c.panes.unsubscribed.page = c.list.Paginator.Page
+	}
+	c.panes.active = idx
+	c.RebuildActiveTopicList()
+}
+
+// ToggleTopic toggles the subscription state of the topic at index and emits an event.
+func (c *topicsComponent) ToggleTopic(index int) tea.Cmd {
+	if index < 0 || index >= len(c.items) {
+		return nil
+	}
+	t := &c.items[index]
+	t.subscribed = !t.subscribed
+	c.SortTopics()
+	c.RebuildActiveTopicList()
+	topic := t.title
+	sub := t.subscribed
+	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: sub} }
+}
+
+// RemoveTopic deletes the topic at index and emits an unsubscribe event.
+func (c *topicsComponent) RemoveTopic(index int) tea.Cmd {
+	if index < 0 || index >= len(c.items) {
+		return nil
+	}
+	topic := c.items[index].title
+	c.items = append(c.items[:index], c.items[index+1:]...)
+	if len(c.items) == 0 {
+		c.selected = -1
+	} else if c.selected >= len(c.items) {
+		c.selected = len(c.items) - 1
+	}
+	c.SortTopics()
+	c.RebuildActiveTopicList()
+	return func() tea.Msg { return topicToggleMsg{topic: topic, subscribed: false} }
+}
+
+// TopicAtPosition returns the index of the topic chip at the provided coordinates or -1.
+func (c *topicsComponent) TopicAtPosition(x, y int) int {
+	for i, b := range c.chipBounds {
+		if x >= b.xPos && x < b.xPos+b.width && y >= b.yPos && y < b.yPos+b.height {
+			return i
+		}
+	}
+	return -1
+}
+
 func (c *topicsComponent) SetSelected(i int) { c.selected = i }
 func (c *topicsComponent) Selected() int     { return c.selected }
+
+var _ TopicsAPI = (*topicsComponent)(nil)

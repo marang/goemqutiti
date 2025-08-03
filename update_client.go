@@ -56,7 +56,8 @@ func (m *model) scrollTopics(delta int) {
 
 // ensureTopicVisible keeps the selected topic within the visible viewport.
 func (m *model) ensureTopicVisible() {
-	if m.topics.selected < 0 || m.topics.selected >= len(m.topics.items) {
+	sel := m.topics.Selected()
+	if sel < 0 || sel >= len(m.topics.items) {
 		return
 	}
 	var chips []string
@@ -68,10 +69,10 @@ func (m *model) ensureTopicVisible() {
 		chips = append(chips, st.Render(t.title))
 	}
 	_, bounds := layoutChips(chips, m.ui.width-4)
-	if m.topics.selected >= len(bounds) {
+	if sel >= len(bounds) {
 		return
 	}
-	b := bounds[m.topics.selected]
+	b := bounds[sel]
 	if b.yPos < m.topics.vp.YOffset {
 		m.topics.vp.SetYOffset(b.yPos)
 	} else if b.yPos+b.height > m.topics.vp.YOffset+m.topics.vp.Height {
@@ -185,24 +186,24 @@ func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
 // against precomputed chip bounds.
 func (m *model) handleTopicsClick(msg tea.MouseMsg) tea.Cmd {
 	y := msg.Y + m.ui.viewport.YOffset
-	idx := m.topicAtPosition(msg.X, y)
+	idx := m.topics.TopicAtPosition(msg.X, y)
 	if idx < 0 {
 		return nil
 	}
-	m.topics.selected = idx
+	m.topics.SetSelected(idx)
 	if msg.Type == tea.MouseLeft {
-		cmd := m.toggleTopic(idx)
+		cmd := m.topics.ToggleTopic(idx)
 		if m.currentMode() == modeTopics {
-			m.rebuildActiveTopicList()
+			m.topics.RebuildActiveTopicList()
 		}
 		return cmd
 	} else if msg.Type == tea.MouseRight {
 		name := m.topics.items[idx].title
 		rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 		m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
-			cmd := m.removeTopic(idx)
+			cmd := m.topics.RemoveTopic(idx)
 			if m.currentMode() == modeTopics {
-				m.rebuildActiveTopicList()
+				m.topics.RebuildActiveTopicList()
 			}
 			return cmd
 		}, nil)

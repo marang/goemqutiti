@@ -202,7 +202,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, nil, nil, nil)
 	connComp := newConnectionsComponent(m, m.connectionsAPI())
-	topicsComp := newTopicsComponent(m.topicsAPI())
+	topicsComp := newTopicsComponent(m)
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, m.topics, &m.message, &m.connections)
 	tracesComp := newTracesComponent(m, tr, m.tracesStore())
@@ -279,7 +279,7 @@ func initialModel(conns *Connections) (*model, error) {
 			}
 		}
 	}
-	m.rebuildActiveTopicList()
+	m.topics.RebuildActiveTopicList()
 	return m, loadErr
 }
 

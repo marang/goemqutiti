@@ -92,7 +92,7 @@ type model struct {
 	mqttClient *MQTTClient
 
 	connections connectionsState
-	history     *historyComponent
+	history     *history.Component
 	topics      *topicsComponent
 	message     *messageComponent
 	traces      *tracesComponent

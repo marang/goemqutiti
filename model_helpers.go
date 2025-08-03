@@ -3,6 +3,8 @@ package emqutiti
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	"time"
+
+	"github.com/marang/emqutiti/history"
 )
 
 // historyIndexAt converts a Y coordinate into an index within the history list.
@@ -13,9 +15,10 @@ func (m *model) historyIndexAt(y int) int {
 	}
 	h := 2 // historyDelegate height
 	idx := rel / h
-	start := m.history.list.Paginator.Page * m.history.list.Paginator.PerPage
+	lst := m.history.List()
+	start := lst.Paginator.Page * lst.Paginator.PerPage
 	i := start + idx
-	if i >= len(m.history.list.Items()) || i < 0 {
+	if i >= len(lst.Items()) || i < 0 {
 		return -1
 	}
 	return i
@@ -59,8 +62,8 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	}
 	var topic, payload string
 	var start, end time.Time
-	if m.history.filterQuery != "" {
-		ts, s, e, p := parseHistoryQuery(m.history.filterQuery)
+	if m.history.FilterQuery() != "" {
+		ts, s, e, p := parseHistoryQuery(m.history.FilterQuery())
 		if len(ts) > 0 {
 			topic = ts[0]
 		}
@@ -69,8 +72,8 @@ func (m *model) startHistoryFilter() tea.Cmd {
 		end = time.Now()
 		start = end.Add(-time.Hour)
 	}
-	hf := newHistoryFilterForm(topics, topic, payload, start, end)
-	m.history.filterForm = &hf
+	hf := history.NewFilterForm(topics, topic, payload, start, end)
+	m.history.SetFilterForm(&hf)
 	return m.setMode(modeHistoryFilter)
 }
 

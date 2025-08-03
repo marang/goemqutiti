@@ -121,19 +121,21 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 	}
 	c.mqttClient = msg.client
 	c.connections.active = msg.profile.Name
-	if c.history.store != nil {
-		c.history.store.Close()
+	if st := c.history.Store(); st != nil {
+		st.Close()
 	}
 	if idx, err := history.OpenStore(msg.profile.Name); err == nil {
-		c.history.store = idx
+		c.history.SetStore(idx)
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
-		c.history.items = nil
+		hitems := make([]history.Item, len(msgs))
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			items[i] = history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: mmsg.Archived}
-			c.history.items = append(c.history.items, items[i].(history.Item))
+			hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: mmsg.Archived}
+			hitems[i] = hi
+			items[i] = hi
 		}
-		c.history.list.SetItems(items)
+		c.history.SetItems(hitems)
+		c.history.List().SetItems(items)
 	}
 	ts, ps := c.connections.RestoreState(msg.profile.Name)
 	c.topics.SetSnapshot(ts)

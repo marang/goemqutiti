@@ -56,7 +56,7 @@ func (m *model) isTopicsFocused() bool {
 // It returns a command and a boolean indicating if the event was handled.
 func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.isHistoryFocused() && !m.history.showArchived {
+		if m.isHistoryFocused() && !m.history.ShowArchived() {
 			return m.history.Scroll(msg), true
 		}
 		if m.isTopicsFocused() {
@@ -75,7 +75,7 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 // handleMouseLeft manages left-click focus and selection.
 func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 	cmd := m.focusFromMouse(msg.Y)
-	if m.isHistoryFocused() && !m.history.showArchived {
+	if m.isHistoryFocused() && !m.history.ShowArchived() {
 		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	}
 	return cmd
@@ -192,21 +192,21 @@ func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 
 // filterHistoryList refreshes history items based on the current filter state.
 func (m *model) filterHistoryList() {
-	if st := m.history.list.FilterState(); st == list.Filtering || st == list.FilterApplied {
-		q := m.history.list.FilterInput.Value()
-		var items []list.Item
-		m.history.items, items = applyHistoryFilter(q, m.history.store, m.history.showArchived)
-		m.history.filterQuery = q
-		m.history.list.SetItems(items)
-	} else if m.history.filterQuery != "" {
-		var items []list.Item
-		m.history.items, items = applyHistoryFilter(m.history.filterQuery, m.history.store, m.history.showArchived)
-		m.history.list.SetItems(items)
+	if st := m.history.List().FilterState(); st == list.Filtering || st == list.FilterApplied {
+		q := m.history.List().FilterInput.Value()
+		hitems, litems := applyHistoryFilter(q, m.history.Store(), m.history.ShowArchived())
+		m.history.SetItems(hitems)
+		m.history.SetFilterQuery(q)
+		m.history.List().SetItems(litems)
+	} else if m.history.FilterQuery() != "" {
+		hitems, litems := applyHistoryFilter(m.history.FilterQuery(), m.history.Store(), m.history.ShowArchived())
+		m.history.SetItems(hitems)
+		m.history.List().SetItems(litems)
 	} else {
-		items := make([]list.Item, len(m.history.items))
-		for i, it := range m.history.items {
+		items := make([]list.Item, len(m.history.Items()))
+		for i, it := range m.history.Items() {
 			items[i] = it
 		}
-		m.history.list.SetItems(items)
+		m.history.List().SetItems(items)
 	}
 }

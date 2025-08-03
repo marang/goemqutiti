@@ -98,8 +98,8 @@ func Main() {
 		log.Fatalf("Error running program: %v", err)
 	}
 	if m, ok := finalModel.(*model); ok {
-		if m.history.store != nil {
-			m.history.store.Close()
+		if st := m.history.Store(); st != nil {
+			st.Close()
 		}
 	}
 }

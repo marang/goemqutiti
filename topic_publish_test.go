@@ -34,7 +34,7 @@ func TestCtrlSPublishesMessage(t *testing.T) {
 	if len(items) != 1 || items[0].payload != "hello" {
 		t.Fatalf("payload not stored: %#v", items)
 	}
-	if len(m.history.list.Items()) != 1 {
+	if len(m.history.List().Items()) != 1 {
 		t.Fatalf("history entry not added")
 	}
 }

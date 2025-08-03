@@ -4,16 +4,18 @@ import tea "github.com/charmbracelet/bubbletea"
 
 // handleSpaceKey toggles selection in history.
 func (m *model) handleSpaceKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-		idx := m.history.list.Index()
-		if idx >= 0 && idx < len(m.history.items) {
-			if m.history.items[idx].IsSelected != nil && *m.history.items[idx].IsSelected {
-				m.history.items[idx].IsSelected = nil
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.ShowArchived() {
+		idx := m.history.List().Index()
+		hitems := m.history.Items()
+		if idx >= 0 && idx < len(hitems) {
+			if hitems[idx].IsSelected != nil && *hitems[idx].IsSelected {
+				hitems[idx].IsSelected = nil
 			} else {
 				v := true
-				m.history.items[idx].IsSelected = &v
+				hitems[idx].IsSelected = &v
 			}
-			m.history.selectionAnchor = idx
+			m.history.SetItems(hitems)
+			m.history.SetSelectionAnchor(idx)
 		}
 	}
 	return nil
@@ -21,17 +23,19 @@ func (m *model) handleSpaceKey() tea.Cmd {
 
 // handleShiftUpKey extends selection upward in history.
 func (m *model) handleShiftUpKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-		if m.history.selectionAnchor == -1 {
-			m.history.selectionAnchor = m.history.list.Index()
-			if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.ShowArchived() {
+		if m.history.SelectionAnchor() == -1 {
+			m.history.SetSelectionAnchor(m.history.List().Index())
+			if a := m.history.SelectionAnchor(); a >= 0 && a < len(m.history.Items()) {
+				hitems := m.history.Items()
 				v := true
-				m.history.items[m.history.selectionAnchor].IsSelected = &v
+				hitems[a].IsSelected = &v
+				m.history.SetItems(hitems)
 			}
 		}
-		if m.history.list.Index() > 0 {
-			m.history.list.CursorUp()
-			idx := m.history.list.Index()
+		if m.history.List().Index() > 0 {
+			m.history.List().CursorUp()
+			idx := m.history.List().Index()
 			m.history.UpdateSelectionRange(idx)
 		}
 	}
@@ -40,17 +44,19 @@ func (m *model) handleShiftUpKey() tea.Cmd {
 
 // handleShiftDownKey extends selection downward in history.
 func (m *model) handleShiftDownKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-		if m.history.selectionAnchor == -1 {
-			m.history.selectionAnchor = m.history.list.Index()
-			if m.history.selectionAnchor >= 0 && m.history.selectionAnchor < len(m.history.items) {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.ShowArchived() {
+		if m.history.SelectionAnchor() == -1 {
+			m.history.SetSelectionAnchor(m.history.List().Index())
+			if a := m.history.SelectionAnchor(); a >= 0 && a < len(m.history.Items()) {
+				hitems := m.history.Items()
 				v := true
-				m.history.items[m.history.selectionAnchor].IsSelected = &v
+				hitems[a].IsSelected = &v
+				m.history.SetItems(hitems)
 			}
 		}
-		if m.history.list.Index() < len(m.history.list.Items())-1 {
-			m.history.list.CursorDown()
-			idx := m.history.list.Index()
+		if m.history.List().Index() < len(m.history.List().Items())-1 {
+			m.history.List().CursorDown()
+			idx := m.history.List().Index()
 			m.history.UpdateSelectionRange(idx)
 		}
 	}
@@ -59,28 +65,30 @@ func (m *model) handleShiftDownKey() tea.Cmd {
 
 // handleSelectAllKey selects or clears all history items.
 func (m *model) handleSelectAllKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.ShowArchived() {
+		hitems := m.history.Items()
 		allSelected := true
-		for i := range m.history.items {
-			if m.history.items[i].IsSelected == nil || !*m.history.items[i].IsSelected {
+		for i := range hitems {
+			if hitems[i].IsSelected == nil || !*hitems[i].IsSelected {
 				allSelected = false
 				break
 			}
 		}
 		if allSelected {
-			for i := range m.history.items {
-				m.history.items[i].IsSelected = nil
+			for i := range hitems {
+				hitems[i].IsSelected = nil
 			}
-			m.history.selectionAnchor = -1
+			m.history.SetSelectionAnchor(-1)
 		} else {
-			for i := range m.history.items {
+			for i := range hitems {
 				v := true
-				m.history.items[i].IsSelected = &v
+				hitems[i].IsSelected = &v
 			}
-			if len(m.history.items) > 0 {
-				m.history.selectionAnchor = 0
+			if len(hitems) > 0 {
+				m.history.SetSelectionAnchor(0)
 			}
 		}
+		m.history.SetItems(hitems)
 	}
 	return nil
 }

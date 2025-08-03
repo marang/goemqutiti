@@ -32,47 +32,47 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 
 func TestHandleHistorySelectionShift(t *testing.T) {
 	m, _ := initialModel(nil)
-	m.history.items = []history.Item{
+	m.history.SetItems([]history.Item{
 		{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"},
 		{Timestamp: time.Now(), Topic: "t2", Payload: "p2", Kind: "pub"},
 		{Timestamp: time.Now(), Topic: "t3", Payload: "p3", Kind: "pub"},
-	}
-	items := make([]list.Item, len(m.history.items))
-	for i, it := range m.history.items {
+	})
+	items := make([]list.Item, len(m.history.Items()))
+	for i, it := range m.history.Items() {
 		items[i] = it
 	}
-	m.history.list.SetItems(items)
+	m.history.List().SetItems(items)
 	m.setFocus(idHistory)
 
 	m.history.HandleSelection(0, true)
-	if m.history.selectionAnchor != 0 {
-		t.Fatalf("anchor = %d, want 0", m.history.selectionAnchor)
+	if m.history.SelectionAnchor() != 0 {
+		t.Fatalf("anchor = %d, want 0", m.history.SelectionAnchor())
 	}
 	m.history.HandleSelection(2, true)
 	for i := 0; i <= 2; i++ {
-		if m.history.items[i].IsSelected == nil || !*m.history.items[i].IsSelected {
+		if m.history.Items()[i].IsSelected == nil || !*m.history.Items()[i].IsSelected {
 			t.Fatalf("item %d not selected", i)
 		}
 	}
-	if m.history.selectionAnchor != 0 {
-		t.Fatalf("anchor = %d, want 0", m.history.selectionAnchor)
+	if m.history.SelectionAnchor() != 0 {
+		t.Fatalf("anchor = %d, want 0", m.history.SelectionAnchor())
 	}
 }
 
 func TestFilterHistoryList(t *testing.T) {
 	m, _ := initialModel(nil)
 	hs := &historyStore{}
-	m.history.store = hs
+	m.history.SetStore(hs)
 	ts := time.Now()
 	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
-	m.history.list.SetFilteringEnabled(true)
-	m.history.list.SetFilterText("topic=foo")
-	m.history.list.SetFilterState(list.Filtering)
+	m.history.List().SetFilteringEnabled(true)
+	m.history.List().SetFilterText("topic=foo")
+	m.history.List().SetFilterState(list.Filtering)
 	m.filterHistoryList()
 
-	items := m.history.list.Items()
+	items := m.history.List().Items()
 	if len(items) != 1 {
 		t.Fatalf("expected 1 item, got %d", len(items))
 	}
@@ -85,15 +85,15 @@ func TestFilterHistoryList(t *testing.T) {
 func TestHandleHistoryClick(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
-	m.history.items = []history.Item{{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"}}
-	items := []list.Item{m.history.items[0]}
-	m.history.list.SetItems(items)
+	m.history.SetItems([]history.Item{{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"}})
+	items := []list.Item{m.history.Items()[0]}
+	m.history.List().SetItems(items)
 	m.viewClient()
 	m.setFocus(idHistory)
 	y := m.ui.elemPos[idHistory] + 1
 	m.history.HandleClick(tea.MouseMsg{Y: y}, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
-	if m.history.list.Index() != 0 {
-		t.Fatalf("expected index 0 got %d", m.history.list.Index())
+	if m.history.List().Index() != 0 {
+		t.Fatalf("expected index 0 got %d", m.history.List().Index())
 	}
 }
 
@@ -101,13 +101,13 @@ func TestHistoryScroll(t *testing.T) {
 	m, _ := initialModel(nil)
 	for i := 0; i < 30; i++ {
 		hi := history.Item{Timestamp: time.Now(), Topic: fmt.Sprintf("t%d", i), Payload: "p", Kind: "pub"}
-		m.history.items = append(m.history.items, hi)
+		m.history.SetItems(append(m.history.Items(), hi))
 	}
-	items := make([]list.Item, len(m.history.items))
-	for i, it := range m.history.items {
+	items := make([]list.Item, len(m.history.Items()))
+	for i, it := range m.history.Items() {
 		items[i] = it
 	}
-	m.history.list.SetItems(items)
+	m.history.List().SetItems(items)
 	m.setFocus(idHistory)
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
 	if !handled {

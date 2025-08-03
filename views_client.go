@@ -123,35 +123,35 @@ func (m *model) clientTopicsSection() (string, string, []chipBound) {
 
 // clientHistorySection renders the history list box.
 func (m *model) clientHistorySection() string {
-	per := m.history.list.Paginator.PerPage
-	totalItems := len(m.history.list.Items())
+	per := m.history.List().Paginator.PerPage
+	totalItems := len(m.history.List().Items())
 	histSP := -1.0
 	if totalItems > per {
-		start := m.history.list.Paginator.Page * per
+		start := m.history.List().Paginator.Page * per
 		denom := totalItems - per
 		if denom > 0 {
 			histSP = float64(start) / float64(denom)
 		}
 	}
 
-	total := len(m.history.items)
-	if m.history.store != nil {
-		total = m.history.store.Count(m.history.showArchived)
+	total := len(m.history.Items())
+	if st := m.history.Store(); st != nil {
+		total = st.Count(m.history.ShowArchived())
 	}
-	shown := len(m.history.items)
+	shown := len(m.history.Items())
 	histLabel := fmt.Sprintf("History (%d messages \u2013 Ctrl+C copy)", total)
-	if m.history.filterQuery != "" && shown != total {
+	if m.history.FilterQuery() != "" && shown != total {
 		histLabel = fmt.Sprintf("History (%d/%d messages \u2013 Ctrl+C copy)", shown, total)
 	}
 	listHeight := m.layout.history.height
-	if m.history.filterQuery != "" && listHeight > 0 {
+	if m.history.FilterQuery() != "" && listHeight > 0 {
 		listHeight--
 	}
-	m.history.list.SetSize(m.ui.width-4, listHeight)
-	histContent := m.history.list.View()
-	if m.history.filterQuery != "" {
+	m.history.List().SetSize(m.ui.width-4, listHeight)
+	histContent := m.history.List().View()
+	if m.history.FilterQuery() != "" {
 		inner := m.ui.width - 4
-		filterLine := fmt.Sprintf("Filters: %s", m.history.filterQuery)
+		filterLine := fmt.Sprintf("Filters: %s", m.history.FilterQuery())
 		filterLine = ansi.Truncate(filterLine, inner, "")
 		histContent = fmt.Sprintf("%s\n%s", filterLine, histContent)
 	}

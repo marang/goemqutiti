@@ -14,21 +14,21 @@ import (
 func TestUpdateHistoryFilter(t *testing.T) {
 	m, _ := initialModel(nil)
 	hs := &historyStore{}
-	m.history.store = hs
+	m.history.SetStore(hs)
 	ts := time.Now()
 	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 
 	m.startHistoryFilter()
-	m.history.filterForm.topic.SetValue("foo")
-	m.history.filterForm.start.SetValue("")
-	m.history.filterForm.end.SetValue("")
+	m.history.FilterForm().Topic().SetValue("foo")
+	m.history.FilterForm().Start().SetValue("")
+	m.history.FilterForm().End().SetValue("")
 	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 
-	if len(m.history.list.Items()) != 1 {
-		t.Fatalf("expected 1 item, got %d", len(m.history.list.Items()))
+	if len(m.history.List().Items()) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(m.history.List().Items()))
 	}
-	if len(m.history.items) != 1 {
-		t.Fatalf("expected history.items to contain 1 item, got %d", len(m.history.items))
+	if len(m.history.Items()) != 1 {
+		t.Fatalf("expected history.items to contain 1 item, got %d", len(m.history.Items()))
 	}
 }
 
@@ -36,26 +36,26 @@ func TestUpdateHistoryFilter(t *testing.T) {
 func TestHistoryFilterPersists(t *testing.T) {
 	m, _ := initialModel(nil)
 	hs := &historyStore{}
-	m.history.store = hs
+	m.history.SetStore(hs)
 	ts := time.Now()
 	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
-	m.history.filterForm.topic.SetValue("foo")
-	m.history.filterForm.start.SetValue("")
-	m.history.filterForm.end.SetValue("")
+	m.history.FilterForm().Topic().SetValue("foo")
+	m.history.FilterForm().Start().SetValue("")
+	m.history.FilterForm().End().SetValue("")
 	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 
 	// simulate a subsequent update
 	m.updateClient(nil)
 
-	items := m.history.list.Items()
+	items := m.history.List().Items()
 	if len(items) != 1 {
 		t.Fatalf("expected 1 item after update, got %d", len(items))
 	}
-	if len(m.history.items) != 1 {
-		t.Fatalf("history.items length = %d, want 1", len(m.history.items))
+	if len(m.history.Items()) != 1 {
+		t.Fatalf("history.items length = %d, want 1", len(m.history.Items()))
 	}
 	hi := items[0].(history.Item)
 	if hi.Topic != "foo" {
@@ -67,15 +67,15 @@ func TestHistoryFilterPersists(t *testing.T) {
 func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	m, _ := initialModel(nil)
 	hs := &historyStore{}
-	m.history.store = hs
+	m.history.SetStore(hs)
 	ts := time.Now()
 	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
 	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.startHistoryFilter()
-	m.history.filterForm.topic.SetValue("foo")
-	m.history.filterForm.start.SetValue("")
-	m.history.filterForm.end.SetValue("")
+	m.history.FilterForm().Topic().SetValue("foo")
+	m.history.FilterForm().Start().SetValue("")
+	m.history.FilterForm().End().SetValue("")
 	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 

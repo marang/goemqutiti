@@ -20,7 +20,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.layout.history.height == 0 {
 			m.layout.history.height = (msg.Height-1)/3 + 10
 		}
-		m.history.list.SetSize(msg.Width-4, m.layout.history.height)
+		m.history.List().SetSize(msg.Width-4, m.layout.history.height)
 		if m.layout.trace.height == 0 {
 			m.layout.trace.height = msg.Height - 6
 		}
@@ -28,8 +28,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.traces.list.SetSize(msg.Width-4, msg.Height-4)
 		m.help.vp.Width = msg.Width - 4
 		m.help.vp.Height = msg.Height - 4
-		m.history.detail.Width = msg.Width - 4
-		m.history.detail.Height = msg.Height - 4
+		m.history.Detail().Width = msg.Width - 4
+		m.history.Detail().Height = msg.Height - 4
 		m.ui.viewport.Width = msg.Width
 		// Reserve two lines for the info header at the top of the view.
 		m.ui.viewport.Height = msg.Height - 2

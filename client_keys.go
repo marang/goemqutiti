@@ -109,7 +109,7 @@ func (m *model) handlePublishKey() tea.Cmd {
 func (m *model) handleDeleteKey() tea.Cmd {
 	switch m.ui.focusOrder[m.ui.focusIndex] {
 	case idHistory:
-		if !m.history.showArchived {
+		if !m.history.ShowArchived() {
 			return m.handleDeleteHistoryKey()
 		}
 	case idTopics:

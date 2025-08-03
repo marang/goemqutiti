@@ -13,21 +13,21 @@ import (
 
 // handleToggleArchiveKey toggles between active and archived history.
 func (m *model) handleToggleArchiveKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.store != nil {
-		m.history.showArchived = !m.history.showArchived
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.Store() != nil {
+		m.history.SetShowArchived(!m.history.ShowArchived())
 		var msgs []history.Message
-		if m.history.showArchived {
-			msgs = m.history.store.Search(true, nil, time.Time{}, time.Time{}, "")
+		if m.history.ShowArchived() {
+			msgs = m.history.Store().Search(true, nil, time.Time{}, time.Time{}, "")
 		} else {
-			msgs = m.history.store.Search(false, nil, time.Time{}, time.Time{}, "")
+			msgs = m.history.Store().Search(false, nil, time.Time{}, time.Time{}, "")
 		}
-		var items []list.Item
-		m.history.items, items = messagesToHistoryItems(msgs)
-		m.history.list.SetItems(items)
+		hitems, items := messagesToHistoryItems(msgs)
+		m.history.SetItems(hitems)
+		m.history.List().SetItems(items)
 		if len(items) > 0 {
-			m.history.list.Select(len(items) - 1)
+			m.history.List().Select(len(items) - 1)
 		} else {
-			m.history.list.Select(-1)
+			m.history.List().Select(-1)
 		}
 	}
 	return nil
@@ -35,118 +35,126 @@ func (m *model) handleToggleArchiveKey() tea.Cmd {
 
 // handleArchiveKey archives selected history messages.
 func (m *model) handleArchiveKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.showArchived {
-		if len(m.history.items) == 0 {
+	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && !m.history.ShowArchived() {
+		hitems := m.history.Items()
+		if len(hitems) == 0 {
 			return nil
 		}
 		archived := false
-		for i := len(m.history.items) - 1; i >= 0; i-- {
-			it := m.history.items[i]
+		for i := len(hitems) - 1; i >= 0; i-- {
+			it := hitems[i]
 			if it.IsSelected != nil && *it.IsSelected {
 				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
-				if m.history.store != nil {
-					if err := m.history.store.Archive(key); err != nil {
+				if st := m.history.Store(); st != nil {
+					if err := st.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
 						log.Println(msg)
 						m.history.Append("", msg, "log", msg)
 						continue
 					}
 				}
-				m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
+				hitems = append(hitems[:i], hitems[i+1:]...)
 				archived = true
 			}
 		}
 		if !archived {
-			idx := m.history.list.Index()
-			if idx >= 0 && idx < len(m.history.items) {
-				it := m.history.items[idx]
+			idx := m.history.List().Index()
+			if idx >= 0 && idx < len(hitems) {
+				it := hitems[idx]
 				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
-				if m.history.store != nil {
-					if err := m.history.store.Archive(key); err != nil {
+				if st := m.history.Store(); st != nil {
+					if err := st.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
 						log.Println(msg)
 						m.history.Append("", msg, "log", msg)
 					} else {
-						m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
+						hitems = append(hitems[:idx], hitems[idx+1:]...)
 					}
 				} else {
-					m.history.items = append(m.history.items[:idx], m.history.items[idx+1:]...)
+					hitems = append(hitems[:idx], hitems[idx+1:]...)
 				}
 			}
 		}
-		items := make([]list.Item, len(m.history.items))
-		for i, it := range m.history.items {
+		items := make([]list.Item, len(hitems))
+		for i, it := range hitems {
 			it.IsSelected = nil
-			m.history.items[i] = it
+			hitems[i] = it
 			items[i] = it
 		}
-		m.history.list.SetItems(items)
-		if len(m.history.items) == 0 {
-			m.history.list.Select(-1)
-		} else if m.history.list.Index() >= len(m.history.items) {
-			m.history.list.Select(len(m.history.items) - 1)
+		m.history.SetItems(hitems)
+		m.history.List().SetItems(items)
+		if len(hitems) == 0 {
+			m.history.List().Select(-1)
+		} else if m.history.List().Index() >= len(hitems) {
+			m.history.List().Select(len(hitems) - 1)
 		}
-		m.history.selectionAnchor = -1
+		m.history.SetSelectionAnchor(-1)
 	}
 	return nil
 }
 
 // handleDeleteHistoryKey deletes selected history messages.
 func (m *model) handleDeleteHistoryKey() tea.Cmd {
-	if len(m.history.items) == 0 {
+	hitems := m.history.Items()
+	if len(hitems) == 0 {
 		return nil
 	}
 	hasSelection := false
-	for i := range m.history.items {
-		if m.history.items[i].IsSelected != nil && *m.history.items[i].IsSelected {
+	for i := range hitems {
+		if hitems[i].IsSelected != nil && *hitems[i].IsSelected {
 			v := true
-			m.history.items[i].IsMarkedForDeletion = &v
+			hitems[i].IsMarkedForDeletion = &v
 			hasSelection = true
 		}
 	}
 	if !hasSelection {
-		idx := m.history.list.Index()
-		if idx >= 0 && idx < len(m.history.items) {
+		idx := m.history.List().Index()
+		if idx >= 0 && idx < len(hitems) {
 			v := true
-			m.history.items[idx].IsMarkedForDeletion = &v
+			hitems[idx].IsMarkedForDeletion = &v
 		}
 	}
+	m.history.SetItems(hitems)
 	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 	m.startConfirm("Delete selected messages? [y/n]", "", rf, func() tea.Cmd {
-		for i := len(m.history.items) - 1; i >= 0; i-- {
-			it := m.history.items[i]
+		hitems := m.history.Items()
+		for i := len(hitems) - 1; i >= 0; i-- {
+			it := hitems[i]
 			if it.IsMarkedForDeletion != nil && *it.IsMarkedForDeletion {
 				key := fmt.Sprintf("%s/%020d", it.Topic, it.Timestamp.UnixNano())
-				if m.history.store != nil {
-					if err := m.history.store.Delete(key); err != nil {
+				if st := m.history.Store(); st != nil {
+					if err := st.Delete(key); err != nil {
 						msg := fmt.Sprintf("Failed to delete message: %v", err)
 						log.Println(msg)
 						m.history.Append("", msg, "log", msg)
 						continue
 					}
 				}
-				m.history.items = append(m.history.items[:i], m.history.items[i+1:]...)
+				hitems = append(hitems[:i], hitems[i+1:]...)
 			}
 		}
-		items := make([]list.Item, len(m.history.items))
-		for i, it := range m.history.items {
+		items := make([]list.Item, len(hitems))
+		for i, it := range hitems {
 			it.IsSelected = nil
 			it.IsMarkedForDeletion = nil
-			m.history.items[i] = it
+			hitems[i] = it
 			items[i] = it
 		}
-		m.history.list.SetItems(items)
-		if len(m.history.items) == 0 {
-			m.history.list.Select(-1)
-		} else if m.history.list.Index() >= len(m.history.items) {
-			m.history.list.Select(len(m.history.items) - 1)
+		m.history.SetItems(hitems)
+		m.history.List().SetItems(items)
+		if len(hitems) == 0 {
+			m.history.List().Select(-1)
+		} else if m.history.List().Index() >= len(hitems) {
+			m.history.List().Select(len(hitems) - 1)
 		}
-		m.history.selectionAnchor = -1
+		m.history.SetSelectionAnchor(-1)
 		return nil
 	}, func() {
-		for i := range m.history.items {
-			m.history.items[i].IsMarkedForDeletion = nil
+		hitems := m.history.Items()
+		for i := range hitems {
+			hitems[i].IsMarkedForDeletion = nil
 		}
+		m.history.SetItems(hitems)
 	})
 	return nil
 }

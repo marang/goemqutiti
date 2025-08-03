@@ -18,6 +18,7 @@ type ConnectionsAPI interface {
 	SendStatus(string)
 	FlushStatus()
 	RefreshConnectionItems()
+	SubscribeActiveTopics()
 	ConnectionMessage() string
 	SetConnectionMessage(string)
 	Active() string
@@ -51,7 +52,17 @@ func (c *connectionsModel) ListenStatus() tea.Cmd { return c.connections.ListenS
 func (c *connectionsModel) SendStatus(msg string) { c.connections.SendStatus(msg) }
 func (c *connectionsModel) FlushStatus()          { c.connections.FlushStatus() }
 
-func (c *connectionsModel) RefreshConnectionItems()         { c.refreshConnectionItems() }
+func (c *connectionsModel) RefreshConnectionItems() { c.connections.RefreshConnectionItems() }
+func (c *connectionsModel) SubscribeActiveTopics() {
+	if c.mqttClient == nil {
+		return
+	}
+	for _, t := range c.topics.items {
+		if t.subscribed {
+			c.mqttClient.Subscribe(t.title, 0, nil)
+		}
+	}
+}
 func (c *connectionsModel) ConnectionMessage() string       { return c.connections.connection }
 func (c *connectionsModel) SetConnectionMessage(msg string) { c.connections.connection = msg }
 func (c *connectionsModel) Active() string                  { return c.connections.active }
@@ -79,7 +90,7 @@ func (c *connectionsModel) BeginDelete(index int) {
 		func() tea.Cmd {
 			c.connections.manager.DeleteConnection(index)
 			c.connections.manager.refreshList()
-			c.refreshConnectionItems()
+			c.RefreshConnectionItems()
 			return nil
 		},
 		nil,
@@ -95,7 +106,7 @@ func (c *connectionsModel) Connect(p Profile) tea.Cmd {
 	c.connections.SetConnecting(p.Name)
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	c.connections.connection = "Connecting to " + brokerURL
-	c.refreshConnectionItems()
+	c.RefreshConnectionItems()
 	return connectBroker(p, c.connections.SendStatus)
 }
 func (c *connectionsModel) HandleConnectResult(msg connectResult) {
@@ -103,7 +114,7 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 	if msg.err != nil {
 		c.connections.SetDisconnected(msg.profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err))
 		c.connections.connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, msg.err)
-		c.refreshConnectionItems()
+		c.RefreshConnectionItems()
 		return
 	}
 	c.mqttClient = msg.client
@@ -123,16 +134,16 @@ func (c *connectionsModel) HandleConnectResult(msg connectResult) {
 		c.history.list.SetItems(items)
 	}
 	c.history.RestoreState(msg.profile.Name)
-	c.subscribeActiveTopics()
+	c.SubscribeActiveTopics()
 	c.connections.connection = "Connected to " + brokerURL
 	c.connections.SetConnected(msg.profile.Name)
-	c.refreshConnectionItems()
+	c.RefreshConnectionItems()
 }
 func (c *connectionsModel) DisconnectActive() {
 	if c.mqttClient != nil {
 		c.mqttClient.Disconnect()
 		c.connections.SetDisconnected(c.connections.active, "")
-		c.refreshConnectionItems()
+		c.RefreshConnectionItems()
 		c.connections.connection = ""
 		c.connections.active = ""
 		c.mqttClient = nil

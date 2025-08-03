@@ -85,7 +85,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		if err := m.connections.manager.LoadProfiles(""); err != nil {
 			m.history.Append("", err.Error(), "log", err.Error())
 		}
-		m.refreshConnectionItems()
+		m.connections.RefreshConnectionItems()
 		m.history.SaveCurrent()
 		m.traces.savePlannedTraces()
 		return m.setMode(modeConnections)

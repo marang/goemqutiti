@@ -133,5 +133,8 @@ func (m *model) PreviousMode() appMode { return m.previousMode() }
 // Width returns the current UI width.
 func (m *model) Width() int { return m.ui.width }
 
+// MessageHeight returns the configured message box height.
+func (m *model) MessageHeight() int { return m.layout.message.height }
+
 // Height returns the current UI height.
 func (m *model) Height() int { return m.ui.height }

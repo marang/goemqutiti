@@ -53,11 +53,11 @@ func (m *model) clientInfoLine() string {
 		r := m.mqttClient.Client.OptionsReader()
 		clientID = r.ClientID()
 	}
-	status := strings.TrimSpace(m.connections.connection + " " + clientID)
+	status := strings.TrimSpace(m.connections.Connection + " " + clientID)
 	st := ui.ConnStyle
-	if strings.HasPrefix(m.connections.connection, "Connected") {
+	if strings.HasPrefix(m.connections.Connection, "Connected") {
 		st = st.Foreground(ui.ColGreen)
-	} else if strings.HasPrefix(m.connections.connection, "Connection lost") || strings.HasPrefix(m.connections.connection, "Failed") {
+	} else if strings.HasPrefix(m.connections.Connection, "Connection lost") || strings.HasPrefix(m.connections.Connection, "Failed") {
 		st = st.Foreground(ui.ColWarn)
 	}
 	connLine := st.Render(status)

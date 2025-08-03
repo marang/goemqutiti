@@ -10,7 +10,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.ui.width = msg.Width
 		m.ui.height = msg.Height
-		m.connections.manager.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
+		m.connections.Manager.ConnectionsList.SetSize(msg.Width-4, msg.Height-6)
 		// textinput.View() renders the prompt and cursor in addition
 		// to the configured width. Reduce the width slightly so the
 		// surrounding box stays within the terminal boundaries.

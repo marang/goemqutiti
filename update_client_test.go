@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	connections "github.com/marang/emqutiti/connections"
 	"testing"
 	"time"
 
@@ -31,30 +32,30 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 
 // Test disconnect behavior clears connection state.
 func TestHandleClientKeyDisconnect(t *testing.T) {
-	conn := NewConnectionsModel()
-	conn.Profiles = []Profile{{Name: "test"}}
+	conn := connections.NewConnectionsModel()
+	conn.Profiles = []connections.Profile{{Name: "test"}}
 	conn.Statuses["test"] = "connected"
 	conn.Errors["test"] = "oops"
 
 	m, _ := initialModel(&conn)
 	m.mqttClient = &MQTTClient{}
-	m.connections.connection = "test"
-	m.connections.active = "test"
+	m.connections.Connection = "test"
+	m.connections.Active = "test"
 	m.connections.SetConnected("test")
-	m.connections.manager.Errors["test"] = "boom"
+	m.connections.Manager.Errors["test"] = "boom"
 
 	m.handleClientKey(tea.KeyMsg{Type: tea.KeyCtrlX})
 
 	if m.mqttClient != nil {
 		t.Fatalf("expected mqttClient nil after disconnect")
 	}
-	if m.connections.connection != "" || m.connections.active != "" {
-		t.Fatalf("expected connection cleared, got %q %q", m.connections.connection, m.connections.active)
+	if m.connections.Connection != "" || m.connections.Active != "" {
+		t.Fatalf("expected connection cleared, got %q %q", m.connections.Connection, m.connections.Active)
 	}
-	if st := m.connections.manager.Statuses["test"]; st != "disconnected" {
+	if st := m.connections.Manager.Statuses["test"]; st != "disconnected" {
 		t.Fatalf("expected status 'disconnected', got %q", st)
 	}
-	if err := m.connections.manager.Errors["test"]; err != "" {
+	if err := m.connections.Manager.Errors["test"]; err != "" {
 		t.Fatalf("expected error cleared, got %q", err)
 	}
 }

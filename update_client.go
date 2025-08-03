@@ -2,6 +2,7 @@ package emqutiti
 
 import (
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -11,14 +12,14 @@ import (
 )
 
 // handleStatusMessage processes broker status updates.
-func (m *model) handleStatusMessage(msg statusMessage) tea.Cmd {
+func (m *model) handleStatusMessage(msg connections.StatusMessage) tea.Cmd {
 	m.history.Append("", string(msg), "log", string(msg))
-	if strings.HasPrefix(string(msg), "Connected") && m.connections.active != "" {
-		m.connections.SetConnected(m.connections.active)
+	if strings.HasPrefix(string(msg), "Connected") && m.connections.Active != "" {
+		m.connections.SetConnected(m.connections.Active)
 		m.connections.RefreshConnectionItems()
 		m.connectionsAPI().SubscribeActiveTopics()
-	} else if strings.HasPrefix(string(msg), "Connection lost") && m.connections.active != "" {
-		m.connections.SetDisconnected(m.connections.active, "")
+	} else if strings.HasPrefix(string(msg), "Connection lost") && m.connections.Active != "" {
+		m.connections.SetDisconnected(m.connections.Active, "")
 		m.connections.RefreshConnectionItems()
 	}
 	return m.connections.ListenStatus()
@@ -136,7 +137,7 @@ func (m *model) updateClientStatus() []tea.Cmd {
 // The boolean indicates if processing should stop after the command.
 func (m *model) handleClientMsg(msg tea.Msg) (tea.Cmd, bool) {
 	switch t := msg.(type) {
-	case statusMessage:
+	case connections.StatusMessage:
 		return m.handleStatusMessage(t), true
 	case MQTTMessage:
 		return m.handleMQTTMessage(t), true

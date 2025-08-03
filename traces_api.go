@@ -1,6 +1,9 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/connections"
+)
 
 // TracesAPI exposes model interactions required by tracesComponent.
 type TracesAPI interface {
@@ -11,7 +14,7 @@ type TracesAPI interface {
 	SetElemPos(id string, pos int)
 	OverlayHelp(view string) string
 	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
-	Profiles() []Profile
+	Profiles() []connections.Profile
 	ActiveConnection() string
 	SubscribedTopics() []string
 	LogHistory(topic, payload, kind, text string)
@@ -57,10 +60,10 @@ func (fileTraceStore) LoadCounts(profile, key string, topics []string) (map[stri
 func (m *model) tracesStore() TraceStore { return fileTraceStore{} }
 
 // Profiles returns available connection profiles.
-func (m *model) Profiles() []Profile { return m.connections.manager.Profiles }
+func (m *model) Profiles() []connections.Profile { return m.connections.Manager.Profiles }
 
 // ActiveConnection returns the key of the active connection.
-func (m *model) ActiveConnection() string { return m.connections.active }
+func (m *model) ActiveConnection() string { return m.connections.Active }
 
 // SubscribedTopics lists currently subscribed topic names.
 func (m *model) SubscribedTopics() []string {

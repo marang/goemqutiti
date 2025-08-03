@@ -4,6 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
 )
@@ -91,7 +92,7 @@ type uiState struct {
 type model struct {
 	mqttClient *MQTTClient
 
-	connections connectionsState
+	connections connections.State
 	history     *history.Component
 	topics      *topicsComponent
 	message     *messageComponent

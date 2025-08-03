@@ -2,6 +2,7 @@ package emqutiti
 
 import (
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"io"
 	"os"
 	"strings"
@@ -273,13 +274,13 @@ func (t *tracesComponent) UpdateForm(msg tea.Msg) tea.Cmd {
 				t.form.errMsg = "trace key exists"
 				return nil
 			}
-			p, err := LoadProfile(cfg.Profile, "")
+			p, err := connections.LoadProfile(cfg.Profile, "")
 			if err != nil {
 				t.form.errMsg = err.Error()
 				return nil
 			}
 			if p.FromEnv {
-				ApplyEnvVars(p)
+				connections.ApplyEnvVars(p)
 			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 				p.Password = env
 			}

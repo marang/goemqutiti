@@ -15,16 +15,23 @@ import (
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/ui"
 
+	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 )
 
-func initConnections(conns *Connections) (connectionsState, error) {
-	var connModel Connections
+type navAdapter struct{ navigator }
+
+func (n navAdapter) SetMode(mode int) tea.Cmd { return n.navigator.SetMode(appMode(mode)) }
+func (n navAdapter) Width() int               { return n.navigator.Width() }
+func (n navAdapter) Height() int              { return n.navigator.Height() }
+
+func initConnections(conns *connections.Connections) (connections.State, error) {
+	var connModel connections.Connections
 	var loadErr error
 	if conns != nil {
 		connModel = *conns
 	} else {
-		connModel = NewConnectionsModel()
+		connModel = connections.NewConnectionsModel()
 		if err := connModel.LoadProfiles(""); err != nil {
 			loadErr = err
 		}
@@ -35,23 +42,18 @@ func initConnections(conns *Connections) (connectionsState, error) {
 			connModel.Statuses[p.Name] = "disconnected"
 		}
 	}
-	items := []list.Item{}
-	for _, p := range connModel.Profiles {
-		detail := connModel.Errors[p.Name]
-		items = append(items, connectionItem{title: p.Name, status: connModel.Statuses[p.Name], detail: detail})
-	}
-	connModel.ConnectionsList.SetItems(items)
 	statusChan := make(chan string, 10)
-	saved := loadState()
-	cs := connectionsState{
-		connection:  "",
-		active:      "",
-		manager:     connModel,
-		form:        nil,
-		deleteIndex: 0,
-		statusChan:  statusChan,
-		saved:       saved,
+	saved := connections.LoadState()
+	cs := connections.State{
+		Connection:  "",
+		Active:      "",
+		Manager:     connModel,
+		Form:        nil,
+		DeleteIndex: 0,
+		StatusChan:  statusChan,
+		Saved:       saved,
 	}
+	cs.RefreshConnectionItems()
 	return cs, loadErr
 }
 
@@ -162,7 +164,7 @@ func initLayout() layoutConfig {
 }
 
 // initialModel creates the main program model with optional connection data.
-func initialModel(conns *Connections) (*model, error) {
+func initialModel(conns *connections.Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[modeClient]...)
 	cs, loadErr := initConnections(conns)
 	st, _ := history.OpenStore("")
@@ -178,7 +180,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.message = msgComp
 	m.help = newHelpComponent(m, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = newConfirmComponent(m, m, nil, nil, nil)
-	connComp := newConnectionsComponent(m, m.connectionsAPI())
+	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
 	topicsComp := newTopicsComponent(m)
 	m.topics = topicsComp
 	m.payloads = newPayloadsComponent(m, &m.connections)
@@ -186,7 +188,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
+	providers := []FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {
@@ -218,35 +220,35 @@ func initialModel(conns *Connections) (*model, error) {
 	}
 
 	if importFile != "" {
-		var p *Profile
+		var p *connections.Profile
 		if profileName != "" {
-			for i := range m.connections.manager.Profiles {
-				if m.connections.manager.Profiles[i].Name == profileName {
-					p = &m.connections.manager.Profiles[i]
+			for i := range m.connections.Manager.Profiles {
+				if m.connections.Manager.Profiles[i].Name == profileName {
+					p = &m.connections.Manager.Profiles[i]
 					break
 				}
 			}
-		} else if m.connections.manager.DefaultProfileName != "" {
-			for i := range m.connections.manager.Profiles {
-				if m.connections.manager.Profiles[i].Name == m.connections.manager.DefaultProfileName {
-					p = &m.connections.manager.Profiles[i]
+		} else if m.connections.Manager.DefaultProfileName != "" {
+			for i := range m.connections.Manager.Profiles {
+				if m.connections.Manager.Profiles[i].Name == m.connections.Manager.DefaultProfileName {
+					p = &m.connections.Manager.Profiles[i]
 					break
 				}
 			}
 		}
-		if p == nil && len(m.connections.manager.Profiles) > 0 {
-			p = &m.connections.manager.Profiles[0]
+		if p == nil && len(m.connections.Manager.Profiles) > 0 {
+			p = &m.connections.Manager.Profiles[0]
 		}
 		if p != nil {
 			cfg := *p
 			if cfg.FromEnv {
-				ApplyEnvVars(&cfg)
+				connections.ApplyEnvVars(&cfg)
 			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 				cfg.Password = env
 			}
 			if client, err := NewMQTTClient(cfg, nil); err == nil {
 				m.mqttClient = client
-				m.connections.active = cfg.Name
+				m.connections.Active = cfg.Name
 				m.importer = importer.New(client, importFile)
 				m.components[modeImporter] = m.importer
 				m.setMode(modeImporter)

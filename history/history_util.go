@@ -2,9 +2,9 @@ package history
 
 import "github.com/charmbracelet/bubbles/list"
 
-// messagesToHistoryItems converts a slice of messages into history items
-// and a matching slice of list items for use with the history list.
-func messagesToHistoryItems(msgs []Message) ([]Item, []list.Item) {
+// MessagesToItems converts a slice of messages into history items and a
+// matching slice of list items for use with the history list.
+func MessagesToItems(msgs []Message) ([]Item, []list.Item) {
 	hitems := make([]Item, len(msgs))
 	litems := make([]list.Item, len(msgs))
 	for i, m := range msgs {
@@ -21,8 +21,9 @@ func messagesToHistoryItems(msgs []Message) ([]Item, []list.Item) {
 	return hitems, litems
 }
 
-// applyHistoryFilter parses the query and retrieves matching messages from the store.
-func applyHistoryFilter(q string, store Store, archived bool) ([]Item, []list.Item) {
+// ApplyFilter parses the query and retrieves matching messages from the
+// store.
+func ApplyFilter(q string, store Store, archived bool) ([]Item, []list.Item) {
 	if store == nil {
 		return nil, nil
 	}
@@ -33,5 +34,5 @@ func applyHistoryFilter(q string, store Store, archived bool) ([]Item, []list.It
 	} else {
 		msgs = store.Search(false, topics, start, end, payload)
 	}
-	return messagesToHistoryItems(msgs)
+	return MessagesToItems(msgs)
 }

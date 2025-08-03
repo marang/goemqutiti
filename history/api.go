@@ -60,7 +60,7 @@ func NewComponent(m Model, st Store) *Component {
 	if st != nil {
 		msgs := st.Search(false, nil, time.Time{}, time.Time{}, "")
 		var items []list.Item
-		hs.items, items = messagesToHistoryItems(msgs)
+		hs.items, items = MessagesToItems(msgs)
 		hs.list.SetItems(items)
 	}
 	return &Component{historyState: &hs, m: m}

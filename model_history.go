@@ -260,39 +260,6 @@ func (f historyFilterForm) query() string {
 	return strings.Join(parts, " ")
 }
 
-// messagesToHistoryItems converts messages into history items and list items.
-func messagesToHistoryItems(msgs []history.Message) ([]history.Item, []list.Item) {
-	hitems := make([]history.Item, len(msgs))
-	litems := make([]list.Item, len(msgs))
-	for i, m := range msgs {
-		hi := history.Item{
-			Timestamp: m.Timestamp,
-			Topic:     m.Topic,
-			Payload:   m.Payload,
-			Kind:      m.Kind,
-			Archived:  m.Archived,
-		}
-		hitems[i] = hi
-		litems[i] = hi
-	}
-	return hitems, litems
-}
-
-// applyHistoryFilter parses the query and retrieves matching messages from the store.
-func applyHistoryFilter(q string, store history.Store, archived bool) ([]history.Item, []list.Item) {
-	if store == nil {
-		return nil, nil
-	}
-	topics, start, end, payload := parseHistoryQuery(q)
-	var msgs []history.Message
-	if archived {
-		msgs = store.Search(true, topics, start, end, payload)
-	} else {
-		msgs = store.Search(false, topics, start, end, payload)
-	}
-	return messagesToHistoryItems(msgs)
-}
-
 // parseHistoryQuery interprets a filter string.
 func parseHistoryQuery(q string) (topics []string, start, end time.Time, payload string) {
 	var payloadParts []string

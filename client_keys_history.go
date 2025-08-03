@@ -78,7 +78,7 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	} else {
 		msgs = m.history.Store().Search(false, nil, time.Time{}, time.Time{}, "")
 	}
-	hitems, items := messagesToHistoryItems(msgs)
+	hitems, items := history.MessagesToItems(msgs)
 	m.history.SetItems(hitems)
 	m.history.List().SetItems(items)
 	return nil

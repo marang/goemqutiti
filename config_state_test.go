@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	connections "github.com/marang/emqutiti/connections"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -25,7 +26,7 @@ password = "secret"
 		t.Fatalf("write config: %v", err)
 	}
 
-	c, err := LoadFromConfig(cfg)
+	c, err := connections.LoadFromConfig(cfg)
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -57,7 +58,7 @@ from_env = true
 		os.Unsetenv("EMQUTITI_TEST_SCHEMA")
 	}()
 
-	c, err := LoadFromConfig(cfg)
+	c, err := connections.LoadFromConfig(cfg)
 	if err != nil {
 		t.Fatalf("load error: %v", err)
 	}
@@ -76,14 +77,14 @@ func TestSaveLoadState(t *testing.T) {
 	os.Setenv("HOME", dir)
 	defer os.Setenv("HOME", oldHome)
 
-	data := map[string]connectionSnapshot{
+	data := map[string]connections.ConnectionSnapshot{
 		"p1": {
-			Topics:   []TopicSnapshot{{Title: "foo", Active: true}},
-			Payloads: []PayloadSnapshot{{Topic: "foo", Payload: "bar"}},
+			Topics:   []connections.TopicSnapshot{{Title: "foo", Active: true}},
+			Payloads: []connections.PayloadSnapshot{{Topic: "foo", Payload: "bar"}},
 		},
 	}
-	saveState(data)
-	got := loadState()
+	connections.SaveState(data)
+	got := connections.LoadState()
 	if !reflect.DeepEqual(got, data) {
 		t.Fatalf("state mismatch: %#v != %#v", got, data)
 	}

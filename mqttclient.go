@@ -3,6 +3,7 @@ package emqutiti
 import (
 	"crypto/tls"
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"log"
 	"strconv"
 	"time"
@@ -22,7 +23,7 @@ type MQTTClient struct {
 
 // NewMQTTClient creates and configures a new MQTT client based on the profile
 // details. Status updates are delivered via the provided callback.
-func NewMQTTClient(p Profile, fn statusFunc) (*MQTTClient, error) {
+func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(p.BrokerURL())
 	cid := p.ClientID

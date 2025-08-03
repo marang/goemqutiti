@@ -1,4 +1,4 @@
-package emqutiti
+package connections
 
 import (
 	"fmt"
@@ -8,6 +8,14 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/ui"
+)
+
+const (
+	modeClient         = 0
+	modeConnections    = 1
+	modeEditConnection = 2
+	modeTracer         = 6
+	idConnList         = "conn-list"
 )
 
 // connectionItem represents a single broker profile in the list.
@@ -26,107 +34,100 @@ func (c connectionItem) Description() string {
 	return c.status
 }
 
-// connectionsState holds connection related state shared across components.
-type connectionsState struct {
-	connection  string
-	active      string
-	manager     Connections
-	form        *connectionForm
-	deleteIndex int
-	statusChan  chan string
-	saved       map[string]connectionSnapshot
+// State holds connection related state shared across components.
+type State struct {
+	Connection  string
+	Active      string
+	Manager     Connections
+	Form        *Form
+	DeleteIndex int
+	StatusChan  chan string
+	Saved       map[string]ConnectionSnapshot
 }
 
-// ConnectionStatusManager exposes methods to update connection status information.
-type ConnectionStatusManager interface {
-	SetConnecting(name string)
-	SetConnected(name string)
-	SetDisconnected(name, detail string)
-}
-
-var _ ConnectionStatusManager = (*connectionsState)(nil)
+var _ ConnectionStatusManager = (*State)(nil)
 
 // SetConnecting marks the named connection as in progress.
-func (c *connectionsState) SetConnecting(name string) {
-	c.manager.Statuses[name] = "connecting"
-	c.manager.Errors[name] = ""
+func (c *State) SetConnecting(name string) {
+	c.Manager.Statuses[name] = "connecting"
+	c.Manager.Errors[name] = ""
 }
 
 // SetConnected marks the named connection as connected.
-func (c *connectionsState) SetConnected(name string) {
-	c.manager.Statuses[name] = "connected"
-	c.manager.Errors[name] = ""
+func (c *State) SetConnected(name string) {
+	c.Manager.Statuses[name] = "connected"
+	c.Manager.Errors[name] = ""
 }
 
 // SetDisconnected marks the named connection as disconnected with an optional detail.
-func (c *connectionsState) SetDisconnected(name, detail string) {
-	c.manager.Statuses[name] = "disconnected"
-	c.manager.Errors[name] = detail
+func (c *State) SetDisconnected(name, detail string) {
+	c.Manager.Statuses[name] = "disconnected"
+	c.Manager.Errors[name] = detail
 }
 
 // ListenStatus returns a command to receive connection status updates.
-func (c *connectionsState) ListenStatus() tea.Cmd {
-	return listenStatus(c.statusChan)
+func (c *State) ListenStatus() tea.Cmd {
+	return ListenStatus(c.StatusChan)
 }
 
 // SendStatus reports a status message if the channel is available.
-func (c *connectionsState) SendStatus(msg string) {
-	if c.statusChan != nil {
-		c.statusChan <- msg
+func (c *State) SendStatus(msg string) {
+	if c.StatusChan != nil {
+		c.StatusChan <- msg
 	}
 }
 
 // FlushStatus discards any pending status messages.
-func (c *connectionsState) FlushStatus() { flushStatus(c.statusChan) }
+func (c *State) FlushStatus() { FlushStatus(c.StatusChan) }
 
 // RefreshConnectionItems rebuilds the connections list to show status
 // information.
-func (c *connectionsState) RefreshConnectionItems() {
+func (c *State) RefreshConnectionItems() {
 	items := []list.Item{}
-	for _, p := range c.manager.Profiles {
-		status := c.manager.Statuses[p.Name]
-		detail := c.manager.Errors[p.Name]
+	for _, p := range c.Manager.Profiles {
+		status := c.Manager.Statuses[p.Name]
+		detail := c.Manager.Errors[p.Name]
 		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
 	}
-	c.manager.ConnectionsList.SetItems(items)
+	c.Manager.ConnectionsList.SetItems(items)
 }
 
 // SaveCurrent persists topics and payloads for the active connection.
-func (c *connectionsState) SaveCurrent(topics []TopicSnapshot, payloads []PayloadSnapshot) {
-	if c.active == "" {
+func (c *State) SaveCurrent(topics []TopicSnapshot, payloads []PayloadSnapshot) {
+	if c.Active == "" {
 		return
 	}
-	c.saved[c.active] = connectionSnapshot{Topics: topics, Payloads: payloads}
-	saveState(c.saved)
+	c.Saved[c.Active] = ConnectionSnapshot{Topics: topics, Payloads: payloads}
+	SaveState(c.Saved)
 }
 
 // RestoreState returns saved topics and payloads for the named connection.
-func (c *connectionsState) RestoreState(name string) ([]TopicSnapshot, []PayloadSnapshot) {
-	if data, ok := c.saved[name]; ok {
+func (c *State) RestoreState(name string) ([]TopicSnapshot, []PayloadSnapshot) {
+	if data, ok := c.Saved[name]; ok {
 		return data.Topics, data.Payloads
 	}
 	return []TopicSnapshot{}, []PayloadSnapshot{}
 }
 
-// connectionsComponent implements the Component interface for managing brokers.
-type connectionsComponent struct {
-	nav navigator
-	api ConnectionsAPI
+// Component implements the Component interface for managing brokers.
+type Component struct {
+	nav Navigator
+	api API
 }
 
-func newConnectionsComponent(nav navigator, api ConnectionsAPI) *connectionsComponent {
-	return &connectionsComponent{nav: nav, api: api}
+func NewComponent(nav Navigator, api API) *Component {
+	return &Component{nav: nav, api: api}
 }
 
-func (c *connectionsComponent) Init() tea.Cmd { return nil }
+func (c *Component) Init() tea.Cmd { return nil }
 
 // Update processes input when the connections view is active.
-func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
+func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
-	case connectResult:
+	case ConnectResult:
 		c.api.HandleConnectResult(msg)
-		if msg.err == nil {
+		if msg.Err() == nil {
 			cmd = c.nav.SetMode(modeClient)
 			return tea.Batch(cmd, c.api.ListenStatus())
 		}
@@ -195,7 +196,7 @@ func (c *connectionsComponent) Update(msg tea.Msg) tea.Cmd {
 }
 
 // View renders the connections UI component.
-func (c *connectionsComponent) View() string {
+func (c *Component) View() string {
 	c.api.ResetElemPos()
 	c.api.SetElemPos(idConnList, 1)
 	listView := c.api.Manager().ConnectionsList.View()
@@ -206,15 +207,23 @@ func (c *connectionsComponent) View() string {
 }
 
 // Focus marks the component as focused.
-func (c *connectionsComponent) Focus() tea.Cmd {
+func (c *Component) Focus() tea.Cmd {
 	c.api.Manager().Focused = true
 	return nil
 }
 
 // Blur marks the component as blurred.
-func (c *connectionsComponent) Blur() { c.api.Manager().Focused = false }
+func (c *Component) Blur() { c.api.Manager().Focused = false }
 
 // Focusables exposes focusable elements for the connections component.
-func (c *connectionsComponent) Focusables() map[string]Focusable {
+func (c *Component) Focusables() map[string]Focusable {
 	return map[string]Focusable{idConnList: &nullFocusable{}}
 }
+
+// nullFocusable is a no-op focusable used for non-interactive areas.
+type nullFocusable struct{ focused bool }
+
+func (n *nullFocusable) Focus()          { n.focused = true }
+func (n *nullFocusable) Blur()           { n.focused = false }
+func (n *nullFocusable) IsFocused() bool { return n.focused }
+func (n *nullFocusable) View() string    { return "" }

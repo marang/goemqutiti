@@ -3,6 +3,7 @@ package emqutiti
 import (
 	"flag"
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"log"
 	"os"
 	"strings"
@@ -107,7 +108,7 @@ func Main() {
 // runImport launches the interactive import wizard using the provided file
 // path and profile name.
 func runImport(path, profile string) error {
-	p, err := LoadProfile(profile, "")
+	p, err := connections.LoadProfile(profile, "")
 	if err != nil {
 		return fmt.Errorf("error loading profile: %w", err)
 	}

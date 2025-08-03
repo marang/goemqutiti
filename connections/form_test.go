@@ -1,4 +1,4 @@
-package emqutiti
+package connections
 
 import (
 	"os"
@@ -14,7 +14,7 @@ func TestNewConnectionFormEnvReadOnly(t *testing.T) {
 		os.Unsetenv("EMQUTITI_ENV_HOST")
 		os.Unsetenv("EMQUTITI_ENV_PORT")
 	})
-	cf := newConnectionForm(Profile{Name: "env", FromEnv: true}, 0)
+	cf := NewForm(Profile{Name: "env", FromEnv: true}, 0)
 	hostField, ok := cf.Fields[fieldIndex["Host"]].(*ui.TextField)
 	if !ok || hostField.Value() != "envhost" {
 		t.Fatalf("host not loaded from env: %v", hostField)
@@ -47,7 +47,7 @@ func TestNewConnectionFormEnvReadOnly(t *testing.T) {
 }
 
 func TestNewConnectionFormPasswordPlaceholder(t *testing.T) {
-	cf := newConnectionForm(Profile{Name: "test", Username: "user", Password: "secret"}, 0)
+	cf := NewForm(Profile{Name: "test", Username: "user", Password: "secret"}, 0)
 	tf, ok := cf.Fields[fieldIndex["Password"]].(*ui.TextField)
 	if !ok {
 		t.Fatalf("password field not text")
@@ -58,7 +58,7 @@ func TestNewConnectionFormPasswordPlaceholder(t *testing.T) {
 }
 
 func TestConnectionFormProfile(t *testing.T) {
-	cf := newConnectionForm(Profile{}, -1)
+	cf := NewForm(Profile{}, -1)
 	cf.Fields[fieldIndex["Name"]].(*ui.TextField).SetValue("n1")
 	cf.Fields[fieldIndex["Port"]].(*ui.TextField).SetValue("1883")
 	cf.Fields[fieldIndex["AutoReconnect"]].(*ui.CheckField).SetBool(true)
@@ -74,7 +74,7 @@ func TestConnectionFormProfile(t *testing.T) {
 }
 
 func TestConnectionFormProfileInvalidInt(t *testing.T) {
-	cf := newConnectionForm(Profile{}, -1)
+	cf := NewForm(Profile{}, -1)
 	cf.Fields[fieldIndex["Port"]].(*ui.TextField).SetValue("abc")
 	p, err := cf.Profile()
 	if err == nil {

@@ -1,4 +1,4 @@
-package emqutiti
+package connections
 
 import (
 	"errors"
@@ -13,9 +13,9 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type connectionForm struct {
+type Form struct {
 	ui.Form
-	index   int  // -1 for new
+	Index   int  // -1 for new
 	fromEnv bool // current state of env loading
 }
 
@@ -73,9 +73,9 @@ var fieldIndex = func() map[string]int {
 	return m
 }()
 
-// newConnectionForm builds a form populated from the given profile.
+// NewForm builds a form populated from the given profile.
 // idx is -1 when creating a new profile.
-func newConnectionForm(p Profile, idx int) connectionForm {
+func NewForm(p Profile, idx int) Form {
 	if p.FromEnv {
 		ApplyEnvVars(&p)
 	}
@@ -125,18 +125,18 @@ func newConnectionForm(p Profile, idx int) connectionForm {
 			}
 		}
 	}
-	cf := connectionForm{Form: ui.Form{Fields: fields, Focus: 0}, index: idx, fromEnv: p.FromEnv}
+	cf := Form{Form: ui.Form{Fields: fields, Focus: 0}, Index: idx, fromEnv: p.FromEnv}
 	cf.ApplyFocus()
 	return cf
 }
 
 // Init sets up the text input blink command.
-func (f connectionForm) Init() tea.Cmd {
+func (f Form) Init() tea.Cmd {
 	return textinput.Blink
 }
 
 // Update handles keyboard and mouse events for the form.
-func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
+func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch m := msg.(type) {
 	case tea.KeyMsg:
@@ -159,9 +159,9 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 		p, err := f.Profile()
 		if err != nil {
 			chk.SetBool(f.fromEnv)
-			cmds = append(cmds, func() tea.Msg { return statusMessage(err.Error()) })
+			cmds = append(cmds, func() tea.Msg { return StatusMessage(err.Error()) })
 		} else {
-			f = newConnectionForm(p, f.index)
+			f = NewForm(p, f.Index)
 			f.Focus = idxFromEnv
 			f.fromEnv = chk.Bool()
 		}
@@ -170,7 +170,7 @@ func (f connectionForm) Update(msg tea.Msg) (connectionForm, tea.Cmd) {
 }
 
 // View renders the form with labels and field contents.
-func (f connectionForm) View() string {
+func (f Form) View() string {
 	var s string
 	for i, in := range f.Fields {
 		label := formFields[i].label
@@ -192,7 +192,7 @@ func (f connectionForm) View() string {
 // Profile builds a Profile struct from the form values.
 // It returns a populated Profile and any validation errors encountered
 // while parsing numeric or boolean fields.
-func (f connectionForm) Profile() (Profile, error) {
+func (f Form) Profile() (Profile, error) {
 	p := Profile{}
 	var errs []string
 	rv := reflect.ValueOf(&p).Elem()

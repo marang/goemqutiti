@@ -82,7 +82,7 @@ func (m *model) handleResizeDownKey() tea.Cmd {
 func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "ctrl+b":
-		if err := m.connections.manager.LoadProfiles(""); err != nil {
+		if err := m.connections.Manager.LoadProfiles(""); err != nil {
 			m.history.Append("", err.Error(), "log", err.Error())
 		}
 		m.connections.RefreshConnectionItems()

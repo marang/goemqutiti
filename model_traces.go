@@ -2,6 +2,7 @@ package emqutiti
 
 import (
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"os"
 	"time"
 
@@ -12,13 +13,13 @@ import (
 // forceStartTrace launches the tracer at index without checking existing data.
 func (t *tracesComponent) forceStartTrace(index int) {
 	item := t.items[index]
-	p, err := LoadProfile(item.cfg.Profile, "")
+	p, err := connections.LoadProfile(item.cfg.Profile, "")
 	if err != nil {
 		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
 	}
 	if p.FromEnv {
-		ApplyEnvVars(p)
+		connections.ApplyEnvVars(p)
 	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 		p.Password = env
 	}

@@ -3,6 +3,7 @@ package emqutiti
 import (
 	"crypto/tls"
 	"fmt"
+	connections "github.com/marang/emqutiti/connections"
 	"os"
 	"os/signal"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 type mqttClient struct{ client mqtt.Client }
 
 // newMQTTClient establishes an MQTT connection using the provided profile.
-func newMQTTClient(p Profile) (*mqttClient, error) {
+func newMQTTClient(p connections.Profile) (*mqttClient, error) {
 	opts := mqtt.NewClientOptions()
 	opts.AddBroker(p.BrokerURL())
 	cid := p.ClientID
@@ -102,7 +103,7 @@ func tracerRun(key, topics, profileName, startStr, endStr string) error {
 			return fmt.Errorf("invalid end time: %w", err)
 		}
 	}
-	p, err := LoadProfile(profileName, "")
+	p, err := connections.LoadProfile(profileName, "")
 	if err != nil {
 		return err
 	}

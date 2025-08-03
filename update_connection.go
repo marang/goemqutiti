@@ -4,21 +4,24 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	connections "github.com/marang/emqutiti/connections"
 )
-
-type statusMessage string
 
 type connectResult struct {
 	client  *MQTTClient
-	profile Profile
+	profile connections.Profile
 	err     error
 }
+
+func (r connectResult) Client() connections.Client   { return r.client }
+func (r connectResult) Profile() connections.Profile { return r.profile }
+func (r connectResult) Err() error                   { return r.err }
 
 // statusFunc reports connection status messages.
 type statusFunc func(string)
 
 // connectBroker attempts to connect to the given profile and reports status via callback.
-func connectBroker(p Profile, fn statusFunc) tea.Cmd {
+func connectBroker(p connections.Profile, fn statusFunc) tea.Cmd {
 	return func() tea.Msg {
 		if fn != nil {
 			brokerURL := p.BrokerURL()
@@ -40,33 +43,5 @@ func listenMessages(ch chan MQTTMessage) tea.Cmd {
 			return nil
 		}
 		return msg
-	}
-}
-
-// listenStatus retrieves status updates from the status channel.
-func listenStatus(ch chan string) tea.Cmd {
-	return func() tea.Msg {
-		if ch == nil {
-			return nil
-		}
-		msg, ok := <-ch
-		if !ok {
-			return nil
-		}
-		return statusMessage(msg)
-	}
-}
-
-// flushStatus drains all pending messages from the status channel.
-func flushStatus(ch chan string) {
-	if ch == nil {
-		return
-	}
-	for {
-		select {
-		case <-ch:
-		default:
-			return
-		}
 	}
 }

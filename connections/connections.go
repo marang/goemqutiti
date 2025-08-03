@@ -1,4 +1,4 @@
-package emqutiti
+package connections
 
 import (
 	"log"

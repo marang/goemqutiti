@@ -1,4 +1,4 @@
-package emqutiti
+package connections
 
 import (
 	"errors"
@@ -13,7 +13,7 @@ import (
 
 // saveConfig persists profiles and default selection to config.toml.
 func saveConfig(profiles []Profile, defaultName string) {
-	saved := loadState()
+	saved := LoadState()
 	cfg := userConfig{
 		DefaultProfileName: defaultName,
 		Profiles:           profiles,

@@ -97,6 +97,23 @@ func (c *connectionsState) RefreshConnectionItems() {
 	c.manager.ConnectionsList.SetItems(items)
 }
 
+// SaveCurrent persists topics and payloads for the active connection.
+func (c *connectionsState) SaveCurrent(topics []topicItem, payloads []payloadItem) {
+	if c.active == "" {
+		return
+	}
+	c.saved[c.active] = connectionData{Topics: topics, Payloads: payloads}
+	saveState(c.saved)
+}
+
+// RestoreState returns saved topics and payloads for the named connection.
+func (c *connectionsState) RestoreState(name string) ([]topicItem, []payloadItem) {
+	if data, ok := c.saved[name]; ok {
+		return data.Topics, data.Payloads
+	}
+	return []topicItem{}, []payloadItem{}
+}
+
 // connectionsComponent implements the Component interface for managing brokers.
 type connectionsComponent struct {
 	nav navigator

@@ -17,10 +17,10 @@ func (m *messageState) setPayload(payload string) { m.input.SetValue(payload) }
 // messageComponent implements Component for the message editor.
 type messageComponent struct {
 	*messageState
-	m *model
+	m MessageModel
 }
 
-func newMessageComponent(m *model, ms messageState) *messageComponent {
+func newMessageComponent(m MessageModel, ms messageState) *messageComponent {
 	return &messageComponent{messageState: &ms, m: m}
 }
 
@@ -37,7 +37,7 @@ func (c *messageComponent) Update(msg tea.Msg) tea.Cmd {
 func (c *messageComponent) View() string {
 	msgContent := c.input.View()
 	msgLines := c.input.LineCount()
-	msgHeight := c.m.layout.message.height
+	msgHeight := c.m.MessageHeight()
 	msgSP := -1.0
 	if msgLines > msgHeight {
 		off := c.input.Line() - msgHeight + 1
@@ -52,8 +52,8 @@ func (c *messageComponent) View() string {
 			msgSP = float64(off) / float64(maxOff)
 		}
 	}
-	focused := c.m.ui.focusOrder[c.m.ui.focusIndex] == idMessage
-	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", c.m.ui.width-2, msgHeight, ui.ColBlue, focused, msgSP)
+	focused := c.m.FocusedID() == idMessage
+	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", c.m.Width()-2, msgHeight, ui.ColBlue, focused, msgSP)
 }
 
 func (c *messageComponent) Focus() tea.Cmd { return c.input.Focus() }

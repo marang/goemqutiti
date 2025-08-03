@@ -1,4 +1,4 @@
-package emqutiti
+package clientkeys
 
 import tea "github.com/charmbracelet/bubbletea"
 

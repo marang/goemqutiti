@@ -1,4 +1,4 @@
-package emqutiti
+package clientkeys
 
 import (
 	"fmt"
@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// handleClientKey processes keyboard events in client mode.
-func (m *model) handleClientKey(msg tea.KeyMsg) tea.Cmd {
+// HandleClientKey processes keyboard events in client mode.
+func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case "ctrl+d":
 		return m.handleQuitKey()

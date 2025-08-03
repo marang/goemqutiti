@@ -59,11 +59,11 @@ func TestHandleHistorySelectionShift(t *testing.T) {
 
 func TestFilterHistoryList(t *testing.T) {
 	m, _ := initialModel(nil)
-	hs := &HistoryStore{}
+	hs := &historyStore{}
 	m.history.store = hs
 	ts := time.Now()
-	hs.Add(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Add(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
 
 	m.history.list.SetFilteringEnabled(true)
 	m.history.list.SetFilterText("topic=foo")

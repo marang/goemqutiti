@@ -11,9 +11,9 @@ func TestHistoryStoreSearch(t *testing.T) {
 	now := time.Now()
 
 	t.Run("active", func(t *testing.T) {
-		hs := &HistoryStore{}
-		hs.Add(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub"})
-		hs.Add(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub"})
+		hs := &historyStore{}
+		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub"})
+		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub"})
 
 		res := hs.Search(false, []string{"a"}, now.Add(-1*time.Hour), now, "")
 		if len(res) != 1 || res[0].Topic != "a" {
@@ -32,9 +32,9 @@ func TestHistoryStoreSearch(t *testing.T) {
 	})
 
 	t.Run("archived", func(t *testing.T) {
-		hs := &HistoryStore{}
-		hs.Add(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Archived: true})
-		hs.Add(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Archived: true})
+		hs := &historyStore{}
+		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Archived: true})
+		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Archived: true})
 
 		res := hs.Search(true, []string{"a"}, now.Add(-1*time.Hour), now, "")
 		if len(res) != 1 || res[0].Topic != "a" {

@@ -2,7 +2,6 @@ package emqutiti
 
 import (
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -12,23 +11,10 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type historyAppender interface {
-	Add(Message)
-}
-
-type historyQuerier interface {
-	Search(archived bool, topics []string, start, end time.Time, payload string) []Message
-}
-
-type historyStore interface {
-	historyAppender
-	historyQuerier
-}
-
 type historyState struct {
 	list            list.Model
 	items           []historyItem
-	store           *HistoryStore
+	store           HistoryStore
 	selectionAnchor int
 	showArchived    bool
 	filterForm      *historyFilterForm

@@ -22,7 +22,7 @@ func messagesToHistoryItems(msgs []Message) ([]historyItem, []list.Item) {
 }
 
 // applyHistoryFilter parses the query and retrieves matching messages from the store.
-func applyHistoryFilter(q string, store historyQuerier, archived bool) ([]historyItem, []list.Item) {
+func applyHistoryFilter(q string, store HistoryStore, archived bool) ([]historyItem, []list.Item) {
 	if store == nil {
 		return nil, nil
 	}

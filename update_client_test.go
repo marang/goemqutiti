@@ -15,17 +15,17 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 	m, _ := initialModel(nil)
 	sel := true
 	hi := history.Item{Timestamp: time.Now(), Topic: "t1", Payload: "msg1", Kind: "pub", IsSelected: &sel}
-	m.history.items = []history.Item{hi}
-	m.history.list.SetItems([]list.Item{hi})
-	m.history.list.Select(0)
+	m.history.SetItems([]history.Item{hi})
+	m.history.List().SetItems([]list.Item{hi})
+	m.history.List().Select(0)
 
 	m.handleClientKey(tea.KeyMsg{Type: tea.KeyCtrlC})
 
-	if len(m.history.items) != 2 {
-		t.Fatalf("expected error appended to history, got %d items", len(m.history.items))
+	if len(m.history.Items()) != 2 {
+		t.Fatalf("expected error appended to history, got %d items", len(m.history.Items()))
 	}
-	if m.history.items[1].Kind != "log" {
-		t.Fatalf("expected last item kind 'log', got %q", m.history.items[1].Kind)
+	if m.history.Items()[1].Kind != "log" {
+		t.Fatalf("expected last item kind 'log', got %q", m.history.Items()[1].Kind)
 	}
 }
 
@@ -71,7 +71,7 @@ func TestHandleClientKeyFilterInitiation(t *testing.T) {
 	if m.ui.modeStack[0] != modeHistoryFilter {
 		t.Fatalf("expected modeHistoryFilter, got %v", m.ui.modeStack[0])
 	}
-	if m.history.filterForm == nil {
+	if m.history.FilterForm() == nil {
 		t.Fatalf("expected filter form to be initialized")
 	}
 }

@@ -212,7 +212,7 @@ func initialModel(conns *Connections) (*model, error) {
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, connComp, historyComp, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
+	providers := []FocusableSet{m, connComp, topicsComp, msgComp, m.payloads, tracesComp, m.help, m.confirm}
 	m.focusables = map[string]Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {
@@ -224,7 +224,7 @@ func initialModel(conns *Connections) (*model, error) {
 		fitems[i] = m.focusables[id]
 	}
 	m.focus = NewFocusMap(fitems)
-	m.history.list.SetDelegate(hDel)
+	m.history.List().SetDelegate(hDel)
 	traceDel.t = m.traces
 	m.traces.view.SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be

@@ -27,6 +27,18 @@ type historyFilterForm struct {
 	end     *ui.TextField
 }
 
+// Topic returns the topic field.
+func (f *historyFilterForm) Topic() *ui.SuggestField { return f.topic }
+
+// Payload returns the payload field.
+func (f *historyFilterForm) Payload() *ui.TextField { return f.payload }
+
+// Start returns the start time field.
+func (f *historyFilterForm) Start() *ui.TextField { return f.start }
+
+// End returns the end time field.
+func (f *historyFilterForm) End() *ui.TextField { return f.end }
+
 // newHistoryFilterForm builds a form with optional prefilled values.
 // Start and end remain blank when zero, allowing searches across all time.
 func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
@@ -56,6 +68,11 @@ func newHistoryFilterForm(topics []string, topic, payload string, start, end tim
 	}
 	f.ApplyFocus()
 	return f
+}
+
+// NewFilterForm builds a history filter form with optional prefilled values.
+func NewFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
+	return newHistoryFilterForm(topics, topic, payload, start, end)
 }
 
 // Update handles focus cycling and topic completion.

@@ -53,7 +53,7 @@ func (m *model) handleResizeUpKey() tea.Cmd {
 	} else if id == idHistory {
 		if m.layout.history.height > 1 {
 			m.layout.history.height--
-			m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
+			m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
 		}
 	} else if id == idTopics {
 		if m.layout.topics.height > 1 {
@@ -71,7 +71,7 @@ func (m *model) handleResizeDownKey() tea.Cmd {
 		m.message.input.SetHeight(m.layout.message.height)
 	} else if id == idHistory {
 		m.layout.history.height++
-		m.history.list.SetSize(m.ui.width-4, m.layout.history.height)
+		m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
 	} else if id == idTopics {
 		m.layout.topics.height++
 	}

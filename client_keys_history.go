@@ -17,7 +17,8 @@ import (
 // handleCopyKey copies selected or current history items to the clipboard.
 func (m *model) handleCopyKey() tea.Cmd {
 	var idxs []int
-	for i, it := range m.history.items {
+	hitems := m.history.Items()
+	for i, it := range hitems {
 		if it.IsSelected != nil && *it.IsSelected {
 			idxs = append(idxs, i)
 		}
@@ -25,7 +26,7 @@ func (m *model) handleCopyKey() tea.Cmd {
 	if len(idxs) > 0 {
 		sort.Ints(idxs)
 		var parts []string
-		items := m.history.list.Items()
+		items := m.history.List().Items()
 		for _, i := range idxs {
 			if i >= 0 && i < len(items) {
 				hi := items[i].(history.Item)
@@ -39,10 +40,10 @@ func (m *model) handleCopyKey() tea.Cmd {
 		if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
 			m.history.Append("", err.Error(), "log", err.Error())
 		}
-	} else if len(m.history.list.Items()) > 0 {
-		idx := m.history.list.Index()
+	} else if len(m.history.List().Items()) > 0 {
+		idx := m.history.List().Index()
 		if idx >= 0 {
-			hi := m.history.list.Items()[idx].(history.Item)
+			hi := m.history.List().Items()[idx].(history.Item)
 			text := hi.Payload
 			if hi.Kind != "log" {
 				text = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
@@ -68,18 +69,18 @@ func (m *model) handleClearFilterKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
 		return nil
 	}
-	m.history.filterQuery = ""
-	m.history.list.FilterInput.SetValue("")
-	m.history.list.SetFilterState(list.Unfiltered)
+	m.history.SetFilterQuery("")
+	m.history.List().FilterInput.SetValue("")
+	m.history.List().SetFilterState(list.Unfiltered)
 	var msgs []history.Message
-	if m.history.showArchived {
-		msgs = m.history.store.Search(true, nil, time.Time{}, time.Time{}, "")
+	if m.history.ShowArchived() {
+		msgs = m.history.Store().Search(true, nil, time.Time{}, time.Time{}, "")
 	} else {
-		msgs = m.history.store.Search(false, nil, time.Time{}, time.Time{}, "")
+		msgs = m.history.Store().Search(false, nil, time.Time{}, time.Time{}, "")
 	}
-	var items []list.Item
-	m.history.items, items = messagesToHistoryItems(msgs)
-	m.history.list.SetItems(items)
+	hitems, items := messagesToHistoryItems(msgs)
+	m.history.SetItems(hitems)
+	m.history.List().SetItems(items)
 	return nil
 }
 
@@ -88,16 +89,16 @@ func (m *model) handleHistoryViewKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
 		return nil
 	}
-	idx := m.history.list.Index()
-	if idx < 0 || idx >= len(m.history.list.Items()) {
+	idx := m.history.List().Index()
+	if idx < 0 || idx >= len(m.history.List().Items()) {
 		return nil
 	}
-	hi := m.history.list.Items()[idx].(history.Item)
+	hi := m.history.List().Items()[idx].(history.Item)
 	if utf8.RuneCountInString(hi.Payload) <= historyPreviewLimit {
 		return nil
 	}
-	m.history.detailItem = hi
-	m.history.detail.SetContent(hi.Payload)
-	m.history.detail.SetYOffset(0)
+	m.history.SetDetailItem(hi)
+	m.history.Detail().SetContent(hi.Payload)
+	m.history.Detail().SetYOffset(0)
 	return m.setMode(modeHistoryDetail)
 }

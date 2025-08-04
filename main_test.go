@@ -14,7 +14,7 @@ func TestMain(m *testing.M) {
 		os.Exit(1)
 	}
 	os.Setenv("HOME", dir)
-	cfgDir := filepath.Join(dir, ".emqutiti")
+	cfgDir := filepath.Join(dir, ".config", "emqutiti")
 	os.MkdirAll(cfgDir, 0o755)
 	os.WriteFile(filepath.Join(cfgDir, "config.toml"), []byte{}, 0o644)
 	code := m.Run()

@@ -14,13 +14,13 @@ type Config struct {
 	Profiles       []Profile `toml:"profiles"`
 }
 
-// DefaultUserConfigFile returns ~/.emqutiti/config.toml.
+// DefaultUserConfigFile returns ~/.config/emqutiti/config.toml.
 func DefaultUserConfigFile() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".emqutiti", "config.toml"), nil
+	return filepath.Join(home, ".config", "emqutiti", "config.toml"), nil
 }
 
 // LoadConfig reads profiles from a TOML file and resolves keyring references.

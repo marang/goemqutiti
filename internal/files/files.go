@@ -7,7 +7,7 @@ import (
 
 // DataDir returns the base data directory for the given profile.
 // If the profile is empty, "default" is used.
-// The directory is placed under ~/.emqutiti/data.
+// The directory is placed under ~/.config/emqutiti/data.
 func DataDir(profile string) string {
 	if profile == "" {
 		profile = "default"
@@ -16,7 +16,7 @@ func DataDir(profile string) string {
 	if err != nil {
 		return filepath.Join("data", profile)
 	}
-	return filepath.Join(home, ".emqutiti", "data", profile)
+	return filepath.Join(home, ".config", "emqutiti", "data", profile)
 }
 
 // EnsureDir creates the directory with 0755 permissions if it does not exist.

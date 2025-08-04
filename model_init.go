@@ -9,7 +9,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	_ "github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"

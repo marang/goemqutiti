@@ -6,8 +6,6 @@ import (
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
 )
@@ -21,7 +19,7 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 	m.history.List().SetItems([]list.Item{hi})
 	m.history.List().Select(0)
 
-	clientkeys.HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlC})
+	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlC})
 
 	if len(m.history.Items()) != 2 {
 		t.Fatalf("expected error appended to history, got %d items", len(m.history.Items()))
@@ -45,7 +43,7 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 	m.connections.SetConnected("test")
 	m.connections.Manager.Errors["test"] = "boom"
 
-	clientkeys.HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlX})
+	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlX})
 
 	if m.mqttClient != nil {
 		t.Fatalf("expected mqttClient nil after disconnect")
@@ -68,7 +66,7 @@ func TestHandleClientKeyFilterInitiation(t *testing.T) {
 	m.focus.Set(idx)
 	m.ui.focusIndex = idx
 
-	clientkeys.HandleClientKey(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
+	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
 
 	if m.ui.modeStack[0] != modeHistoryFilter {
 		t.Fatalf("expected modeHistoryFilter, got %v", m.ui.modeStack[0])

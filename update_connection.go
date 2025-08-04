@@ -7,16 +7,6 @@ import (
 	connections "github.com/marang/emqutiti/connections"
 )
 
-type connectResult struct {
-	client  *MQTTClient
-	profile connections.Profile
-	err     error
-}
-
-func (r connectResult) Client() connections.Client   { return r.client }
-func (r connectResult) Profile() connections.Profile { return r.profile }
-func (r connectResult) Err() error                   { return r.err }
-
 // statusFunc reports connection status messages.
 type statusFunc func(string)
 
@@ -28,7 +18,7 @@ func connectBroker(p connections.Profile, fn statusFunc) tea.Cmd {
 			fn(fmt.Sprintf("Connecting to %s", brokerURL))
 		}
 		client, err := NewMQTTClient(p, fn)
-		return connectResult{client: client, profile: p, err: err}
+		return connections.ConnectResult{Client: client, Profile: p, Err: err}
 	}
 }
 

@@ -12,96 +12,90 @@ import (
 	"github.com/marang/emqutiti/history"
 )
 
-// connectionsModel wraps model to satisfy the connections.API interface.
-type connectionsModel struct{ *model }
-
-func (m *model) connectionsAPI() connections.API { return &connectionsModel{m} }
-
 // Manager returns the underlying Connections manager.
-func (c *connectionsModel) Manager() *connections.Connections { return &c.connections.Manager }
+func (m *model) Manager() *connections.Connections { return &m.connections.Manager }
 
-func (c *connectionsModel) SetConnecting(name string) { c.connections.SetConnecting(name) }
-func (c *connectionsModel) SetConnected(name string)  { c.connections.SetConnected(name) }
-func (c *connectionsModel) SetDisconnected(name, detail string) {
-	c.connections.SetDisconnected(name, detail)
+func (m *model) SetConnecting(name string) { m.connections.SetConnecting(name) }
+func (m *model) SetConnected(name string)  { m.connections.SetConnected(name) }
+func (m *model) SetDisconnected(name, detail string) {
+	m.connections.SetDisconnected(name, detail)
 }
 
-func (c *connectionsModel) ListenStatus() tea.Cmd { return c.connections.ListenStatus() }
-func (c *connectionsModel) SendStatus(msg string) { c.connections.SendStatus(msg) }
-func (c *connectionsModel) FlushStatus()          { c.connections.FlushStatus() }
+func (m *model) SendStatus(msg string) { m.connections.SendStatus(msg) }
+func (m *model) FlushStatus()          { m.connections.FlushStatus() }
 
-func (c *connectionsModel) RefreshConnectionItems() { c.connections.RefreshConnectionItems() }
-func (c *connectionsModel) SubscribeActiveTopics() {
-	if c.mqttClient == nil {
+func (m *model) RefreshConnectionItems() { m.connections.RefreshConnectionItems() }
+func (m *model) SubscribeActiveTopics() {
+	if m.mqttClient == nil {
 		return
 	}
-	for _, t := range c.topics.Items {
+	for _, t := range m.topics.Items {
 		if t.Subscribed {
-			c.mqttClient.Subscribe(t.Name, 0, nil)
+			m.mqttClient.Subscribe(t.Name, 0, nil)
 		}
 	}
 }
-func (c *connectionsModel) ConnectionMessage() string       { return c.connections.Connection }
-func (c *connectionsModel) SetConnectionMessage(msg string) { c.connections.Connection = msg }
-func (c *connectionsModel) Active() string                  { return c.connections.Active }
-func (c *connectionsModel) BeginAdd() {
+func (m *model) ConnectionMessage() string       { return m.connections.Connection }
+func (m *model) SetConnectionMessage(msg string) { m.connections.Connection = msg }
+func (m *model) Active() string                  { return m.connections.Active }
+func (m *model) BeginAdd() {
 	f := connections.NewForm(connections.Profile{}, -1)
-	c.connections.Form = &f
+	m.connections.Form = &f
 }
-func (c *connectionsModel) BeginEdit(index int) {
-	if index >= 0 && index < len(c.connections.Manager.Profiles) {
-		f := connections.NewForm(c.connections.Manager.Profiles[index], index)
-		c.connections.Form = &f
+func (m *model) BeginEdit(index int) {
+	if index >= 0 && index < len(m.connections.Manager.Profiles) {
+		f := connections.NewForm(m.connections.Manager.Profiles[index], index)
+		m.connections.Form = &f
 	}
 }
-func (c *connectionsModel) BeginDelete(index int) {
-	if index < 0 || index >= len(c.connections.Manager.Profiles) {
+func (m *model) BeginDelete(index int) {
+	if index < 0 || index >= len(m.connections.Manager.Profiles) {
 		return
 	}
-	name := c.connections.Manager.Profiles[index].Name
+	name := m.connections.Manager.Profiles[index].Name
 	info := "This also deletes history and traces"
-	rf := func() tea.Cmd { return c.setFocus(c.ui.focusOrder[c.ui.focusIndex]) }
-	c.startConfirm(
+	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+	m.startConfirm(
 		fmt.Sprintf("Delete broker '%s'? [y/n]", name),
 		info,
 		rf,
 		func() tea.Cmd {
-			c.connections.Manager.DeleteConnection(index)
-			c.RefreshConnectionItems()
+			m.connections.Manager.DeleteConnection(index)
+			m.RefreshConnectionItems()
 			return nil
 		},
 		nil,
 	)
 }
-func (c *connectionsModel) Connect(p connections.Profile) tea.Cmd {
-	c.connections.FlushStatus()
+func (m *model) Connect(p connections.Profile) tea.Cmd {
+	m.connections.FlushStatus()
 	if p.FromEnv {
 		connections.ApplyEnvVars(&p)
 	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
 		p.Password = env
 	}
-	c.connections.SetConnecting(p.Name)
+	m.connections.SetConnecting(p.Name)
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-	c.connections.Connection = "Connecting to " + brokerURL
-	c.RefreshConnectionItems()
-	return connectBroker(p, c.connections.SendStatus)
+	m.connections.Connection = "Connecting to " + brokerURL
+	m.RefreshConnectionItems()
+	return connectBroker(p, m.connections.SendStatus)
 }
-func (c *connectionsModel) HandleConnectResult(msg connections.ConnectResult) {
-	profile := msg.Profile()
+func (m *model) HandleConnectResult(msg connections.ConnectResult) {
+	profile := msg.Profile
 	brokerURL := fmt.Sprintf("%s://%s:%d", profile.Schema, profile.Host, profile.Port)
-	if err := msg.Err(); err != nil {
-		c.connections.SetDisconnected(profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, err))
-		c.connections.Connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, err)
-		c.RefreshConnectionItems()
+	if err := msg.Err; err != nil {
+		m.connections.SetDisconnected(profile.Name, fmt.Sprintf("Failed to connect to %s: %v", brokerURL, err))
+		m.connections.Connection = fmt.Sprintf("Failed to connect to %s: %v", brokerURL, err)
+		m.RefreshConnectionItems()
 		return
 	}
-	c.mqttClient = msg.Client().(*MQTTClient)
-	c.connections.Active = profile.Name
-	if st := c.history.Store(); st != nil {
+	m.mqttClient = msg.Client.(*MQTTClient)
+	m.connections.Active = profile.Name
+	if st := m.history.Store(); st != nil {
 		st.Close()
 	}
 	if idx, err := history.OpenStore(profile.Name); err == nil {
-		c.history.SetStore(idx)
+		m.history.SetStore(idx)
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		hitems := make([]history.Item, len(msgs))
 		items := make([]list.Item, len(msgs))
@@ -110,32 +104,29 @@ func (c *connectionsModel) HandleConnectResult(msg connections.ConnectResult) {
 			hitems[i] = hi
 			items[i] = hi
 		}
-		c.history.SetItems(hitems)
-		c.history.List().SetItems(items)
+		m.history.SetItems(hitems)
+		m.history.List().SetItems(items)
 	}
-	ts, ps := c.connections.RestoreState(profile.Name)
-	c.topics.SetSnapshot(ts)
-	c.payloads.SetSnapshot(ps)
-	c.topics.SortTopics()
-	c.topics.RebuildActiveTopicList()
-	c.SubscribeActiveTopics()
-	c.connections.Connection = "Connected to " + brokerURL
-	c.connections.SetConnected(profile.Name)
-	c.RefreshConnectionItems()
+	ts, ps := m.connections.RestoreState(profile.Name)
+	m.topics.SetSnapshot(ts)
+	m.payloads.SetSnapshot(ps)
+	m.topics.SortTopics()
+	m.topics.RebuildActiveTopicList()
+	m.SubscribeActiveTopics()
+	m.connections.Connection = "Connected to " + brokerURL
+	m.connections.SetConnected(profile.Name)
+	m.RefreshConnectionItems()
 }
-func (c *connectionsModel) DisconnectActive() {
-	if c.mqttClient != nil {
-		c.mqttClient.Disconnect()
-		c.connections.SetDisconnected(c.connections.Active, "")
-		c.RefreshConnectionItems()
-		c.connections.Connection = ""
-		c.connections.Active = ""
-		c.mqttClient = nil
+func (m *model) DisconnectActive() {
+	if m.mqttClient != nil {
+		m.mqttClient.Disconnect()
+		m.connections.SetDisconnected(m.connections.Active, "")
+		m.RefreshConnectionItems()
+		m.connections.Connection = ""
+		m.connections.Active = ""
+		m.mqttClient = nil
 	}
 }
-func (c *connectionsModel) ResizeTraces(width, height int) { c.traces.List().SetSize(width, height) }
-func (c *connectionsModel) ResetElemPos()                  { c.ui.elemPos = map[string]int{} }
-func (c *connectionsModel) SetElemPos(id string, pos int)  { c.ui.elemPos[id] = pos }
-func (c *connectionsModel) OverlayHelp(view string) string { return c.overlayHelp(view) }
+func (m *model) ResizeTraces(width, height int) { m.traces.List().SetSize(width, height) }
 
-var _ connections.API = (*connectionsModel)(nil)
+var _ connections.API = (*model)(nil)

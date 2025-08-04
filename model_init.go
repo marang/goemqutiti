@@ -124,7 +124,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.message = msgComp
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = confirm.NewComponent(m, m, nil, nil, nil)
-	connComp := connections.NewComponent(navAdapter{m}, m.connectionsAPI())
+	connComp := connections.NewComponent(navAdapter{m}, m)
 	topicsComp := topics.New(m)
 	m.topics = topicsComp
 	m.payloads = payloads.New(m, &m.connections)

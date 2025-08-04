@@ -18,10 +18,10 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupManyTopics(m, 10)
-	m.layout.topics.height = 2
+	rowH := lipgloss.Height(ui.Chip.Render("t"))
+	m.layout.topics.height = rowH
 	m.viewClient()
 	m.setFocus(idTopics)
-	rowH := lipgloss.Height(ui.ChipStyle.Render("t"))
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
 	if !handled {
 		t.Fatalf("expected scroll event handled")

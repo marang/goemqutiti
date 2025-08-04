@@ -102,17 +102,28 @@ func (m *model) handleScrollKeys(key string) tea.Cmd {
 	}
 }
 
-// handlePublishKey publishes the current message to subscribed topics.
+// handlePublishKey publishes the current message to flagged topics or the
+// selected topic if none are flagged.
 func (m *model) handlePublishKey() tea.Cmd {
 	if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
 		payload := m.message.Input().Value()
+		var targets []string
 		for _, t := range m.topics.Items {
-			if t.Subscribed {
-				m.payloads.Add(t.Name, payload)
-				m.history.Append(t.Name, payload, "pub", fmt.Sprintf("Published to %s: %s", t.Name, payload))
-				if m.mqttClient != nil {
-					m.mqttClient.Publish(t.Name, 0, false, payload)
-				}
+			if t.Publish {
+				targets = append(targets, t.Name)
+			}
+		}
+		if len(targets) == 0 {
+			sel := m.topics.Selected()
+			if sel >= 0 && sel < len(m.topics.Items) {
+				targets = append(targets, m.topics.Items[sel].Name)
+			}
+		}
+		for _, topic := range targets {
+			m.payloads.Add(topic, payload)
+			m.history.Append(topic, payload, "pub", fmt.Sprintf("Published to %s: %s", topic, payload))
+			if m.mqttClient != nil {
+				m.mqttClient.Publish(topic, 0, false, payload)
 			}
 		}
 	}

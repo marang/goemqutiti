@@ -1,42 +1,45 @@
-package emqutiti
+package focus
 
-import (
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/marang/emqutiti/topics"
-)
+import tea "github.com/charmbracelet/bubbletea"
 
 // Focusable represents a UI element that can gain or lose focus.
-type Focusable = topics.Focusable
+type Focusable interface {
+	Focus()
+	Blur()
+	IsFocused() bool
+	View() string
+}
 
 // FocusableSet exposes a collection of focusable elements.
 type FocusableSet interface {
 	Focusables() map[string]Focusable
 }
 
-type teaFocusable interface {
+// TeaFocusable adapts Bubble Tea models to Focusable.
+type TeaFocusable interface {
 	Focus() tea.Cmd
 	Blur()
 	Focused() bool
 	View() string
 }
 
-// adapt converts a Bubble Tea focusable model into the Focusable interface.
-func adapt(f teaFocusable) Focusable { return focusAdapter{f} }
+// Adapt converts a Bubble Tea focusable model into the Focusable interface.
+func Adapt(f TeaFocusable) Focusable { return focusAdapter{f} }
 
-type focusAdapter struct{ f teaFocusable }
+type focusAdapter struct{ f TeaFocusable }
 
 func (a focusAdapter) Focus()          { _ = a.f.Focus() }
 func (a focusAdapter) Blur()           { a.f.Blur() }
 func (a focusAdapter) IsFocused() bool { return a.f.Focused() }
 func (a focusAdapter) View() string    { return a.f.View() }
 
-// nullFocusable is a no-op focusable used for non-interactive areas.
-type nullFocusable struct{ focused bool }
+// NullFocusable is a no-op focusable used for non-interactive areas.
+type NullFocusable struct{ focused bool }
 
-func (n *nullFocusable) Focus()          { n.focused = true }
-func (n *nullFocusable) Blur()           { n.focused = false }
-func (n *nullFocusable) IsFocused() bool { return n.focused }
-func (n *nullFocusable) View() string    { return "" }
+func (n *NullFocusable) Focus()          { n.focused = true }
+func (n *NullFocusable) Blur()           { n.focused = false }
+func (n *NullFocusable) IsFocused() bool { return n.focused }
+func (n *NullFocusable) View() string    { return "" }
 
 // FocusMap manages focus among a set of focusable elements.
 type FocusMap struct {

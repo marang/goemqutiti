@@ -12,6 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -180,11 +181,11 @@ func (c *Component) UpdateInput(msg tea.Msg) tea.Cmd {
 }
 
 // Focusables exposes focusable elements for the topics component.
-func (c *Component) Focusables() map[string]Focusable {
-	return map[string]Focusable{
+func (c *Component) Focusables() map[string]focus.Focusable {
+	return map[string]focus.Focusable{
 		idTopicsEnabled:  &c.panes.subscribed,
 		idTopicsDisabled: &c.panes.unsubscribed,
-		idTopic:          adapt(&c.Input),
+		idTopic:          focus.Adapt(&c.Input),
 	}
 }
 

@@ -347,8 +347,11 @@ func (c *Component) EnsureVisible(width int) {
 	var chips []string
 	for _, t := range c.Items {
 		st := ui.ChipStyle
-		if !t.Subscribed {
+		switch {
+		case !t.Subscribed:
 			st = ui.ChipInactive
+		case t.Publish:
+			st = ui.ChipPublish
 		}
 		chips = append(chips, st.Render(t.Name))
 	}

@@ -14,17 +14,16 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 	var chips []string
 	for i, t := range m.topics.Items {
 		st := ui.ChipStyle
-		if !t.Subscribed {
+		switch {
+		case !t.Subscribed:
 			st = ui.ChipInactive
+		case t.Publish:
+			st = ui.ChipPublish
 		}
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.Selected() {
 			st = st.BorderForeground(ui.ColPurple)
 		}
-		name := t.Name
-		if t.Publish {
-			name = "★ " + name
-		}
-		chips = append(chips, st.Render(name))
+		chips = append(chips, st.Render(t.Name))
 	}
 
 	chipRows, bounds := topics.LayoutChips(chips, m.ui.width-4)

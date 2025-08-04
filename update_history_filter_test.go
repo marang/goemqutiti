@@ -84,3 +84,32 @@ func TestHistoryFilterUpdatesCounts(t *testing.T) {
 		t.Fatalf("expected count in label, got %q", view)
 	}
 }
+
+// Test that the archived checkbox filters messages accordingly.
+func TestHistoryFilterArchived(t *testing.T) {
+	m, _ := initialModel(nil)
+	hs := &historyStore{}
+	m.history.SetStore(hs)
+	ts := time.Now()
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Archived: true})
+
+	// default unchecked state shows unarchived messages
+	m.startHistoryFilter()
+	m.history.FilterForm().Start().SetValue("")
+	m.history.FilterForm().End().SetValue("")
+	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
+	if len(m.history.Items()) != 1 || m.history.Items()[0].Archived {
+		t.Fatalf("expected one active message, got %v", m.history.Items())
+	}
+
+	// enabling checkbox returns archived messages
+	m.startHistoryFilter()
+	m.history.FilterForm().Start().SetValue("")
+	m.history.FilterForm().End().SetValue("")
+	m.history.FilterForm().Archived().SetBool(true)
+	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
+	if len(m.history.Items()) != 1 || !m.history.Items()[0].Archived {
+		t.Fatalf("expected one archived message, got %v", m.history.Items())
+	}
+}

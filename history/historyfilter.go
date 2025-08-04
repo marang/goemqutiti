@@ -16,15 +16,17 @@ const (
 	idxFilterPayload
 	idxFilterStart
 	idxFilterEnd
+	idxFilterArchived
 )
 
 // historyFilterForm captures filter inputs for history searches.
 type historyFilterForm struct {
 	ui.Form
-	topic   *ui.SuggestField
-	payload *ui.TextField
-	start   *ui.TextField
-	end     *ui.TextField
+	topic    *ui.SuggestField
+	payload  *ui.TextField
+	start    *ui.TextField
+	end      *ui.TextField
+	archived *ui.CheckField
 }
 
 // Topic returns the topic field.
@@ -39,9 +41,12 @@ func (f *historyFilterForm) Start() *ui.TextField { return f.start }
 // End returns the end time field.
 func (f *historyFilterForm) End() *ui.TextField { return f.end }
 
+// Archived returns the archived checkbox field.
+func (f *historyFilterForm) Archived() *ui.CheckField { return f.archived }
+
 // newHistoryFilterForm builds a form with optional prefilled values.
 // Start and end remain blank when zero, allowing searches across all time.
-func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
+func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time, archived bool) historyFilterForm {
 	sort.Strings(topics)
 	tf := ui.NewSuggestField(topics, "topic")
 	tf.SetValue(topic)
@@ -59,20 +64,23 @@ func newHistoryFilterForm(topics []string, topic, payload string, start, end tim
 		ef.SetValue(end.Format(time.RFC3339))
 	}
 
+	af := ui.NewCheckField(archived)
+
 	f := historyFilterForm{
-		Form:    ui.Form{Fields: []ui.Field{tf, pf, sf, ef}},
-		topic:   tf,
-		payload: pf,
-		start:   sf,
-		end:     ef,
+		Form:     ui.Form{Fields: []ui.Field{tf, pf, sf, ef, af}},
+		topic:    tf,
+		payload:  pf,
+		start:    sf,
+		end:      ef,
+		archived: af,
 	}
 	f.ApplyFocus()
 	return f
 }
 
 // NewFilterForm builds a history filter form with optional prefilled values.
-func NewFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
-	return newHistoryFilterForm(topics, topic, payload, start, end)
+func NewFilterForm(topics []string, topic, payload string, start, end time.Time, archived bool) historyFilterForm {
+	return newHistoryFilterForm(topics, topic, payload, start, end, archived)
 }
 
 // Update handles focus cycling and topic completion.
@@ -116,6 +124,8 @@ func (f historyFilterForm) View() string {
 		fmt.Sprintf("Start: %s", f.start.View()),
 		"",
 		fmt.Sprintf("End:   %s", f.end.View()),
+		"",
+		fmt.Sprintf("Archived: %s", f.archived.View()),
 	)
 	return strings.Join(lines, "\n")
 }

@@ -20,7 +20,7 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 		case t.Publish:
 			st = ui.ChipPublish
 		}
-		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.Selected() {
+		if i == m.topics.Selected() {
 			st = st.BorderForeground(ui.ColPurple)
 		}
 		chips = append(chips, st.Render(t.Name))

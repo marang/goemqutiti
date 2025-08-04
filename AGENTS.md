@@ -43,7 +43,7 @@ Scroll with `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J`. In history,
 `ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
 
 ## Maintenance
-Keep `README.md`, `TODO.md`, `AGENTS.md`, and `docs/help.md` in sync when changes are made to the project or development workflow.
+Keep `README.md`, `TODO.md`, `AGENTS.md`, and `help/help.md` in sync when changes are made to the project or development workflow.
 
 ## Dependencies
 When adding or updating third-party packages, always consult the latest

@@ -1,6 +1,8 @@
 package help
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -30,5 +32,17 @@ func TestFocusablesExposeID(t *testing.T) {
 	c := New(&testNav{}, &w, &h, &elemPos)
 	if _, ok := c.Focusables()[ID]; !ok {
 		t.Fatalf("focusables missing %s", ID)
+	}
+}
+
+func TestRenderHelpGroupsSections(t *testing.T) {
+	txt := renderHelp()
+	ansi := regexp.MustCompile("\x1b\\[[0-9;]*m")
+	plain := ansi.ReplaceAllString(txt, "")
+	expected := []string{"Global", "Navigation", "Broker Manager", "History View", "Tips"}
+	for _, e := range expected {
+		if !strings.Contains(plain, e) {
+			t.Fatalf("missing section %q in help text", e)
+		}
 	}
 }

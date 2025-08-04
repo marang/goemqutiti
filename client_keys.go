@@ -61,6 +61,8 @@ func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 		return m.handlePublishKey()
 	case "enter":
 		return m.handleEnterKey()
+	case "p":
+		return m.handleTogglePublishKey()
 	case "a":
 		return m.handleArchiveKey()
 	case "delete":

@@ -54,6 +54,10 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 		topicsSP = m.topics.VP.ScrollPercent()
 	}
 	chipContent := m.topics.VP.View()
+	stateInfo := ui.InfoStyle.Render("blue=sub  fill=pub  gray=off  pink=sel")
+	keyInfo := ui.InfoStyle.Render("[←/→] move  [enter] toggle  [p] pub  [del] del")
+	chipContent = lipgloss.JoinVertical(lipgloss.Left, chipContent, stateInfo, keyInfo)
+	infoHeight := 2
 	visible := []topics.ChipBound{}
 	for _, b := range bounds {
 		if b.YPos >= startLine && b.YPos < endLine {
@@ -71,7 +75,11 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 	}
 	label := fmt.Sprintf("Topics %d/%d", active, len(m.topics.Items))
 	topicsFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
-	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight, ui.ColBlue, topicsFocused, topicsSP)
+	scroll := topicsSP
+	if scroll >= 0 {
+		scroll = scroll * float64(topicsBoxHeight-1) / float64(topicsBoxHeight+infoHeight-1)
+	}
+	topicsBox := ui.LegendBox(chipContent, label, m.ui.width-2, topicsBoxHeight+infoHeight, ui.ColBlue, topicsFocused, scroll)
 
 	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopic
 	topicBox := ui.LegendBox(m.topics.Input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)

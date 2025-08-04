@@ -81,7 +81,7 @@ func (h *Component) UpdateFilter(msg tea.Msg) tea.Cmd {
 			return cmd
 		case "enter":
 			q := h.filterForm.query()
-			topics, start, end, payload := parseHistoryQuery(q)
+			topics, start, end, payload := ParseQuery(q)
 			var msgs []Message
 			if h.showArchived {
 				msgs = h.store.Search(true, topics, start, end, payload)

@@ -3,7 +3,6 @@ package emqutiti
 import (
 	"fmt"
 	"strings"
-	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
@@ -11,40 +10,6 @@ import (
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
-
-// layoutChips lays out chips horizontally wrapping within width.
-func layoutChips(chips []string, width int) ([]string, []topics.ChipBound) {
-	var lines []string
-	var row []string
-	var bounds []topics.ChipBound
-	curX := 0
-	rowTop := 0
-	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
-	// Each chip is exactly chipH lines tall. Newlines inserted between rows
-	// simply stack the rows without extra blank lines, so the vertical offset
-	// for the next row increases by chipH.
-	rowSpacing := chipH
-	for _, c := range chips {
-		cw := lipgloss.Width(c)
-		if curX+cw > width && len(row) > 0 {
-			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
-			line = strings.TrimRightFunc(line, unicode.IsSpace)
-			lines = append(lines, line)
-			row = []string{}
-			curX = 0
-			rowTop += rowSpacing
-		}
-		row = append(row, c)
-		bounds = append(bounds, topics.ChipBound{XPos: curX, YPos: rowTop, Width: cw, Height: chipH})
-		curX += cw
-	}
-	if len(row) > 0 {
-		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
-		line = strings.TrimRightFunc(line, unicode.IsSpace)
-		lines = append(lines, line)
-	}
-	return lines, bounds
-}
 
 // clientInfoLine renders the connection status and keyboard shortcuts.
 func (m *model) clientInfoLine() string {
@@ -79,7 +44,7 @@ func (m *model) clientTopicsSection() (string, string, []topics.ChipBound) {
 		chips = append(chips, st.Render(t.Name))
 	}
 
-	chipRows, bounds := layoutChips(chips, m.ui.width-4)
+	chipRows, bounds := topics.LayoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {

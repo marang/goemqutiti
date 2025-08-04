@@ -39,6 +39,9 @@ func (m *model) handleCopyKey() tea.Cmd {
 		}
 		if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
 			m.history.Append("", err.Error(), "log", err.Error())
+		} else {
+			msg := fmt.Sprintf("Copied %d item(s)", len(parts))
+			m.history.Append("", msg, "log", msg)
 		}
 	} else if len(m.history.List().Items()) > 0 {
 		idx := m.history.List().Index()
@@ -50,6 +53,9 @@ func (m *model) handleCopyKey() tea.Cmd {
 			}
 			if err := clipboard.WriteAll(text); err != nil {
 				m.history.Append("", err.Error(), "log", err.Error())
+			} else {
+				msg := "Copied item"
+				m.history.Append("", msg, "log", msg)
 			}
 		}
 	}

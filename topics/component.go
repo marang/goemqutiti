@@ -338,7 +338,7 @@ func (c *Component) TopicAtPosition(x, y int) int {
 
 // Scroll moves the topics viewport by delta rows.
 func (c *Component) Scroll(delta int) {
-	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	rowH := lipgloss.Height(ui.Chip.Render("test"))
 	if delta > 0 {
 		c.VP.ScrollDown(delta * rowH)
 	} else if delta < 0 {
@@ -354,7 +354,7 @@ func (c *Component) EnsureVisible(width int) {
 	}
 	var chips []string
 	for _, t := range c.Items {
-		st := ui.ChipStyle
+		st := ui.Chip
 		switch {
 		case t.Publish:
 			st = ui.ChipPublish

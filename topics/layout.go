@@ -16,7 +16,7 @@ func LayoutChips(chips []string, width int) ([]string, []ChipBound) {
 	var bounds []ChipBound
 	curX := 0
 	rowTop := 0
-	chipH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	chipH := lipgloss.Height(ui.Chip.Render("test"))
 	rowSpacing := chipH
 	for _, c := range chips {
 		cw := lipgloss.Width(c)

@@ -13,21 +13,32 @@ import (
 func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 	var chips []string
 	for i, t := range m.topics.Items {
-		st := ui.ChipStyle
+		st := ui.ChipInactive
 		switch {
 		case t.Publish:
 			st = ui.ChipPublish
-		case !t.Subscribed:
-			st = ui.ChipInactive
+			if i == m.topics.Selected() {
+				st = ui.ChipPublishFocused
+			}
+		case t.Subscribed:
+			st = ui.Chip
+			if i == m.topics.Selected() {
+				st = ui.ChipFocused
+			}
+
+		default:
+			if i == m.topics.Selected() {
+				st = ui.ChipInactiveFocused
+			}
 		}
-		if i == m.topics.Selected() {
-			st = st.BorderForeground(ui.ColPurple)
-		}
+		// if i == m.topics.Selected() {
+		// 	st = ui.ChipStyleFocused // st.BorderForeground(ui.ColPurple)
+		// }
 		chips = append(chips, st.Render(t.Name))
 	}
 
 	chipRows, bounds := topics.LayoutChips(chips, m.ui.width-4)
-	rowH := lipgloss.Height(ui.ChipStyle.Render("test"))
+	rowH := lipgloss.Height(ui.Chip.Render("test"))
 	maxRows := m.layout.topics.height
 	if maxRows <= 0 {
 		maxRows = 1

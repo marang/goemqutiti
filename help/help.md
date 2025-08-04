@@ -22,8 +22,6 @@
 - Enter subscribes to the typed topic
 - Tab/Shift+Tab cycle focus
 - Use arrows or j/k to move through lists
-- 'p' toggles a publish star on the selected topic; only starred topics get
-  messages. If none are starred, the selected topic is used
 - 'p' flags the selected topic for publishing; only flagged topics get
   messages. If none are flagged, the selected topic is used
 - Ctrl+Up/Down scrolls the view

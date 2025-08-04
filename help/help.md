@@ -11,6 +11,7 @@
 | Ctrl+R | Manage traces |
 | Ctrl+F | Clear history filters |
 | Ctrl+B | Open broker manager |
+| Ctrl+X | Disconnect from broker |
 | Ctrl+S / Ctrl+Enter | Publish message |
 | Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 | Ctrl+Up/Down or Ctrl+K/J | Scroll view |
@@ -34,15 +35,22 @@
 
 ## Broker Manager
 
+- Enter connects or opens the client
 - 'x' disconnects the selected profile
+- 'a' adds a profile
+- 'e' edits the selected profile
+- Delete removes the selected profile
 
 ## History View
 
-- Shift selects ranges; Ctrl+A selects all
+- Space toggles selection
+- Shift+Up/Down extend selection
+- Ctrl+A selects all
 - 'a' archives selected messages
 - Delete removes selected messages
 - Ctrl+L toggles archived view
 - Press '/' to filter messages
+- Enter shows full message when truncated
 
 ## Tips
 

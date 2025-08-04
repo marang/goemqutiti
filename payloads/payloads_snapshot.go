@@ -11,9 +11,15 @@ func (p *Component) Snapshot() []Snapshot {
 
 // SetSnapshot replaces the current payloads with the provided snapshot.
 func (p *Component) SetSnapshot(ps []Snapshot) {
-	items := make([]Item, len(ps))
-	for i, item := range ps {
-		items[i] = Item{Topic: item.Topic, Payload: item.Payload}
+	seen := make(map[Item]struct{}, len(ps))
+	items := make([]Item, 0, len(ps))
+	for _, snap := range ps {
+		item := Item{Topic: snap.Topic, Payload: snap.Payload}
+		if _, ok := seen[item]; ok {
+			continue
+		}
+		seen[item] = struct{}{}
+		items = append(items, item)
 	}
-	p.items = items
+	p.SetItems(items)
 }

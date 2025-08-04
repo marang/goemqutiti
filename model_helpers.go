@@ -74,7 +74,7 @@ func (m *model) startHistoryFilter() tea.Cmd {
 		end = time.Now()
 		start = end.Add(-time.Hour)
 	}
-	hf := history.NewFilterForm(topics, topic, payload, start, end)
+	hf := history.NewFilterForm(topics, topic, payload, start, end, m.history.ShowArchived())
 	m.history.SetFilterForm(&hf)
 	return m.setMode(modeHistoryFilter)
 }

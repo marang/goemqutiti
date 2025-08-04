@@ -34,10 +34,11 @@ func (a historyModelAdapter) OverlayHelp(s string) string { return a.model.Overl
 // historyFilterForm captures filter inputs for history searches.
 type historyFilterForm struct {
 	ui.Form
-	topic   *ui.SuggestField
-	payload *ui.TextField
-	start   *ui.TextField
-	end     *ui.TextField
+	topic    *ui.SuggestField
+	payload  *ui.TextField
+	start    *ui.TextField
+	end      *ui.TextField
+	archived *ui.CheckField
 }
 
 const (
@@ -45,10 +46,11 @@ const (
 	idxFilterPayload
 	idxFilterStart
 	idxFilterEnd
+	idxFilterArchived
 )
 
 // newHistoryFilterForm builds a form with optional prefilled values.
-func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time) historyFilterForm {
+func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time, archived bool) historyFilterForm {
 	sort.Strings(topics)
 	tf := ui.NewSuggestField(topics, "topic")
 	tf.SetValue(topic)
@@ -66,12 +68,15 @@ func newHistoryFilterForm(topics []string, topic, payload string, start, end tim
 		ef.SetValue(end.Format(time.RFC3339))
 	}
 
+	af := ui.NewCheckField(archived)
+
 	f := historyFilterForm{
-		Form:    ui.Form{Fields: []ui.Field{tf, pf, sf, ef}},
-		topic:   tf,
-		payload: pf,
-		start:   sf,
-		end:     ef,
+		Form:     ui.Form{Fields: []ui.Field{tf, pf, sf, ef, af}},
+		topic:    tf,
+		payload:  pf,
+		start:    sf,
+		end:      ef,
+		archived: af,
 	}
 	f.ApplyFocus()
 	return f
@@ -118,6 +123,8 @@ func (f historyFilterForm) View() string {
 		fmt.Sprintf("Start: %s", f.start.View()),
 		"",
 		fmt.Sprintf("End:   %s", f.end.View()),
+		"",
+		fmt.Sprintf("Archived: %s", f.archived.View()),
 	)
 	return strings.Join(lines, "\n")
 }

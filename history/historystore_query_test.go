@@ -78,3 +78,20 @@ func TestParseQuery(t *testing.T) {
 		}
 	}
 }
+
+func TestApplyFilterArchived(t *testing.T) {
+	hs := &store{}
+	ts := time.Now()
+	hs.Append(Message{Timestamp: ts, Topic: "t1", Payload: "active", Kind: "pub"})
+	hs.Append(Message{Timestamp: ts.Add(time.Second), Topic: "t2", Payload: "arch", Kind: "pub", Archived: true})
+
+	items, _ := ApplyFilter("", hs, false)
+	if len(items) != 1 || items[0].Archived {
+		t.Fatalf("expected 1 unarchived item, got %v", items)
+	}
+
+	items, _ = ApplyFilter("", hs, true)
+	if len(items) != 1 || !items[0].Archived {
+		t.Fatalf("expected 1 archived item, got %v", items)
+	}
+}

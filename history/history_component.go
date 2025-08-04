@@ -80,14 +80,10 @@ func (h *Component) UpdateFilter(msg tea.Msg) tea.Cmd {
 			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(ID))
 			return cmd
 		case "enter":
+			h.showArchived = h.filterForm.archived.Bool()
 			q := h.filterForm.query()
 			topics, start, end, payload := ParseQuery(q)
-			var msgs []Message
-			if h.showArchived {
-				msgs = h.store.Search(true, topics, start, end, payload)
-			} else {
-				msgs = h.store.Search(false, topics, start, end, payload)
-			}
+			msgs := h.store.Search(h.showArchived, topics, start, end, payload)
 			var items []list.Item
 			h.items, items = MessagesToItems(msgs)
 			h.list.SetItems(items)

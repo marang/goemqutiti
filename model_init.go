@@ -151,7 +151,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.components = map[appMode]Component{
 		modeClient:         component{update: m.updateClient, view: m.viewClient},
 		modeConnections:    connComp,
-		modeEditConnection: component{update: m.updateForm, view: m.viewForm},
+		modeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
 		modeConfirmDelete:  m.confirm,
 		modeTopics:         topicsComp,
 		modePayloads:       m.payloads,

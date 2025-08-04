@@ -2,8 +2,8 @@ package emqutiti
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// updateForm handles the add/edit connection form.
-func (m *model) updateForm(msg tea.Msg) tea.Cmd {
+// updateConnectionForm handles the add/edit connection form.
+func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 	if m.connections.Form == nil {
 		return nil
 	}

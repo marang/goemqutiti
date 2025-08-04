@@ -77,7 +77,7 @@ func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	m.history.FilterForm().Start().SetValue("")
 	m.history.FilterForm().End().SetValue("")
 	m.history.UpdateFilter(tea.KeyMsg{Type: tea.KeyEnter})
-	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 24})
 
 	view := m.viewClient()
 	if !strings.Contains(view, "History (1/2 messages") {

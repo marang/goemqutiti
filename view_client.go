@@ -56,10 +56,9 @@ func (m *model) viewClient() string {
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)
 	m.ui.viewport.SetContent(box)
 	m.ui.viewport.Width = m.ui.width
-	// Deduct two lines for the info header and one for the footer note.
-	m.ui.viewport.Height = m.ui.height - 3
+	// Deduct two lines for the info header.
+	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	publishNote := ui.ConnStyle.Copy().Foreground(ui.ColDarkGray).Render("Topics with blue background will be published")
-	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, infoLine, view, publishNote))
+	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, infoLine, view))
 }

@@ -10,9 +10,9 @@ var (
 	BorderStyle  = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(ColBlue).Padding(0, 1)
 	GreenBorder  = BorderStyle.BorderForeground(ColGreen)
 
-	Chip                = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(ColBlue).Faint(true)
+	Chip                = lipgloss.NewStyle().Padding(0, 1).MarginRight(1).Border(lipgloss.NormalBorder()).BorderForeground(ColBlue)
 	ChipFocused         = Chip.BorderTopForeground(ColPink).BorderLeftForeground(ColPink).Foreground(ColPink)
-	ChipInactive        = Chip.BorderForeground(ColGray)
+	ChipInactive        = Chip.BorderForeground(ColGray).Foreground(ColGray)
 	ChipInactiveFocused = ChipInactive.BorderTopForeground(ColPink).BorderLeftForeground(ColPink).Foreground(ColPink)
 	ChipPublish         = Chip.BorderForeground(ColBlue).Background(ColBlue).Foreground(ColWhite).BorderStyle(lipgloss.InnerHalfBlockBorder())
 	ChipPublishFocused  = ChipPublish.BorderTopForeground(ColPink).BorderLeftForeground(ColPink) //.Background(ColPink)

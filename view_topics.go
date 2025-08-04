@@ -20,7 +20,11 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 		if m.ui.focusOrder[m.ui.focusIndex] == idTopics && i == m.topics.Selected() {
 			st = st.BorderForeground(ui.ColPurple)
 		}
-		chips = append(chips, st.Render(t.Name))
+		name := t.Name
+		if t.Publish {
+			name = "★ " + name
+		}
+		chips = append(chips, st.Render(name))
 	}
 
 	chipRows, bounds := topics.LayoutChips(chips, m.ui.width-4)

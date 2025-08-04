@@ -99,6 +99,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.topics.SetActivePane(0)
 		m.topics.RebuildActiveTopicList()
 		m.topics.SetSelected(0)
+		m.topics.List().SetSize(m.ui.width/2-4, m.ui.height-4)
 		return m.setMode(modeTopics)
 	case "ctrl+p":
 		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)

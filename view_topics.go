@@ -30,9 +30,6 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 				st = ui.ChipInactiveFocused
 			}
 		}
-		// if i == m.topics.Selected() {
-		// 	st = ui.ChipStyleFocused // st.BorderForeground(ui.ColPurple)
-		// }
 		chips = append(chips, st.Render(t.Name))
 	}
 
@@ -54,8 +51,8 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 		topicsSP = m.topics.VP.ScrollPercent()
 	}
 	chipContent := m.topics.VP.View()
-	stateInfo := ui.InfoStyle.Render("blue=sub  fill=pub  gray=off  pink=sel")
-	keyInfo := ui.InfoStyle.Render("[←/→] move  [enter] toggle  [p] pub  [del] del")
+	stateInfo := ui.InfoSubtleStyle.Render("blue=sub  fill=pub  gray=off  pink=sel")
+	keyInfo := ui.InfoSubtleStyle.Render("[←/→] move  [enter] toggle  [p] pub  [del] del")
 	chipContent = lipgloss.JoinVertical(lipgloss.Left, chipContent, stateInfo, keyInfo)
 	infoHeight := 2
 	visible := []topics.ChipBound{}

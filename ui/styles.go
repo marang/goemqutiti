@@ -17,9 +17,10 @@ var (
 	ChipPublish         = Chip.BorderForeground(ColBlue).Background(ColBlue).Foreground(ColWhite).BorderStyle(lipgloss.InnerHalfBlockBorder())
 	ChipPublishFocused  = ChipPublish.BorderTopForeground(ColPink).BorderLeftForeground(ColPink) //.Background(ColPink)
 
-	InfoStyle   = lipgloss.NewStyle().Foreground(ColBlue).PaddingLeft(1)
-	ErrorStyle  = lipgloss.NewStyle().Foreground(ColWarn).PaddingLeft(1)
-	ConnStyle   = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
+	InfoStyle       = lipgloss.NewStyle().Foreground(ColBlue).PaddingLeft(1)
+	ErrorStyle      = lipgloss.NewStyle().Foreground(ColWarn).PaddingLeft(1)
+	InfoSubtleStyle = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
+
 	HelpStyle   = lipgloss.NewStyle().Foreground(ColGreen)
 	HelpFocused = HelpStyle.Foreground(ColPink)
 	HelpHeader  = lipgloss.NewStyle().Foreground(ColCyan).Bold(true).Underline(true)

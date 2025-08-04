@@ -17,7 +17,7 @@ func (m *model) clientInfoLine() string {
 		clientID = r.ClientID()
 	}
 	status := strings.TrimSpace(m.connections.Connection + " " + clientID)
-	st := ui.ConnStyle
+	st := ui.InfoSubtleStyle
 	if strings.HasPrefix(m.connections.Connection, "Connected") {
 		st = st.Foreground(ui.ColGreen)
 	} else if strings.HasPrefix(m.connections.Connection, "Connection lost") || strings.HasPrefix(m.connections.Connection, "Failed") {

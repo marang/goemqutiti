@@ -282,10 +282,17 @@ func (c *Component) ToggleTopic(index int) tea.Cmd {
 	if index < 0 || index >= len(c.Items) {
 		return nil
 	}
+	name := c.Items[index].Name
 	t := &c.Items[index]
 	t.Subscribed = !t.Subscribed
 	c.SortTopics()
 	c.RebuildActiveTopicList()
+	for i, it := range c.Items {
+		if it.Name == name {
+			c.SetSelected(i)
+			break
+		}
+	}
 	topic := t.Name
 	sub := t.Subscribed
 	return func() tea.Msg { return ToggleMsg{Topic: topic, Subscribed: sub} }
@@ -298,6 +305,7 @@ func (c *Component) TogglePublish(index int) {
 	}
 	t := &c.Items[index]
 	t.Publish = !t.Publish
+	c.SetSelected(index)
 	c.RebuildActiveTopicList()
 }
 
@@ -388,7 +396,36 @@ func (c *Component) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
 	return nil
 }
 
-func (c *Component) SetSelected(i int) { c.selected = i }
-func (c *Component) Selected() int     { return c.selected }
+func (c *Component) SetSelected(i int) {
+	c.selected = i
+	if i < 0 || i >= len(c.Items) {
+		return
+	}
+	if c.Items[i].Subscribed {
+		idx := 0
+		for j := 0; j < len(c.Items); j++ {
+			if c.Items[j].Subscribed {
+				if j == i {
+					c.panes.subscribed.sel = idx
+					break
+				}
+				idx++
+			}
+		}
+	} else {
+		idx := 0
+		for j := 0; j < len(c.Items); j++ {
+			if !c.Items[j].Subscribed {
+				if j == i {
+					c.panes.unsubscribed.sel = idx
+					break
+				}
+				idx++
+			}
+		}
+	}
+}
+
+func (c *Component) Selected() int { return c.selected }
 
 var _ API = (*Component)(nil)

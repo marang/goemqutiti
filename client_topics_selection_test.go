@@ -27,3 +27,42 @@ func TestTopicSelectionPersistsAcrossFocus(t *testing.T) {
 		t.Fatalf("expected selected index 1 after Shift+Tab, got %d", m.topics.Selected())
 	}
 }
+
+func TestTopicInputInitiallyBlurred(t *testing.T) {
+	m, _ := initialModel(nil)
+	if m.topics.Input.Focused() {
+		t.Fatalf("topic input should not be focused on init")
+	}
+}
+
+func TestToggleTopicKeepsSelection(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.topics.Items = []topics.Item{
+		{Name: "a", Subscribed: true},
+		{Name: "b", Subscribed: true},
+		{Name: "c", Subscribed: true},
+	}
+	m.topics.SetSelected(2)
+	m.focus.Set(0)
+	m.ui.focusIndex = 0
+	m.handleEnterKey()
+	if m.topics.Items[m.topics.Selected()].Name != "c" {
+		t.Fatalf("expected to stay on topic 'c', got %q", m.topics.Items[m.topics.Selected()].Name)
+	}
+}
+
+func TestTogglePublishKeepsSelection(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.topics.Items = []topics.Item{
+		{Name: "a", Subscribed: true},
+		{Name: "b", Subscribed: true},
+		{Name: "c", Subscribed: true},
+	}
+	m.topics.SetSelected(2)
+	m.focus.Set(0)
+	m.ui.focusIndex = 0
+	m.handleTogglePublishKey()
+	if m.topics.Items[m.topics.Selected()].Name != "c" {
+		t.Fatalf("expected to stay on topic 'c', got %q", m.topics.Items[m.topics.Selected()].Name)
+	}
+}

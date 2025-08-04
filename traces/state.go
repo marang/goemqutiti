@@ -49,21 +49,20 @@ func saveTraces(data map[string]TracerConfig) {
 	if err != nil {
 		return
 	}
-	var cfg struct {
-		Traces map[string]persistedTrace `toml:"traces"`
-	}
+	cfg := map[string]interface{}{}
 	toml.DecodeFile(fp, &cfg) // ignore errors for new files
-	cfg.Traces = make(map[string]persistedTrace)
+	traces := map[string]interface{}{}
 	for k, v := range data {
-		pt := persistedTrace{Profile: v.Profile, Topics: v.Topics}
+		sub := map[string]interface{}{"profile": v.Profile, "topics": v.Topics}
 		if !v.Start.IsZero() {
-			pt.Start = v.Start.Format(time.RFC3339)
+			sub["start"] = v.Start.Format(time.RFC3339)
 		}
 		if !v.End.IsZero() {
-			pt.End = v.End.Format(time.RFC3339)
+			sub["end"] = v.End.Format(time.RFC3339)
 		}
-		cfg.Traces[k] = pt
+		traces[k] = sub
 	}
+	cfg["traces"] = traces
 	var buf bytes.Buffer
 	toml.NewEncoder(&buf).Encode(cfg)
 	os.MkdirAll(filepath.Dir(fp), os.ModePerm)

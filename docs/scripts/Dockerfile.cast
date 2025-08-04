@@ -16,7 +16,7 @@ COPY . .
 RUN go build -o emqutiti .
 
 # Prepare default config
-# RUN mkdir -p /root/.emqutiti && \
+# RUN mkdir -p /root/.config/emqutiti && \
 #     printf '%s\n' \
 #     'default_profile = "HiveMQ"' \
 #     '' \
@@ -29,7 +29,7 @@ RUN go build -o emqutiti .
 #     '  ssl_tls = true' \
 #     '  mqtt_version = "3"' \
 #     '  clean_start = false' \
-#     > /root/.emqutiti/config.toml
+#     > /root/.config/emqutiti/config.toml
 
 ENV PATH="/root/.cargo/bin:$PATH"
 ENV HOME="/root"

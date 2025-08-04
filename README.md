@@ -2,7 +2,7 @@
 
 Emqutiti is a polished MQTT client for the terminal built on
 [Bubble Tea](https://github.com/charmbracelet/bubbletea). Profiles live in
-`~/.emqutiti/config.toml` so you can switch brokers with a few key presses. The
+`~/.config/emqutiti/config.toml` so you can switch brokers with a few key presses. The
 short demo below shows the app in action.
 
 ## Features
@@ -38,10 +38,10 @@ Press `Ctrl+R` in the UI to manage recorded traces.
 
 ### Headless tracing
 
-Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages without the UI. Traces are stored under `~/.emqutiti/data/<profile>/traces` and can be viewed in the application (run `emqutiti` and press `CTRL+R` in the app to view traces)
+Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages without the UI. Traces are stored under `~/.config/emqutiti/data/<profile>/traces` and can be viewed in the application (run `emqutiti` and press `CTRL+R` in the app to view traces)
 
 ## Configuration
-stored in `~/.emqutiti/config.toml` describing broker profiles. You can also create connections within the UI.
+stored in `~/.config/emqutiti/config.toml` describing broker profiles. You can also create connections within the UI.
 
 Minimal config example:
 

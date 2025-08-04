@@ -4,8 +4,8 @@
 set -euo pipefail
 
 restore_config() {
-    mkdir -p /root/.emqutiti
-    cat > /root/.emqutiti/config.toml <<EOF
+    mkdir -p /root/.config/emqutiti
+    cat > /root/.config/emqutiti/config.toml <<EOF
 default_profile = "HiveMQ"
 
 [[profiles]]

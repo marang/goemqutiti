@@ -7,6 +7,7 @@ import (
 	"github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
@@ -121,15 +122,15 @@ type model struct {
 	// logic which the model delegates to at runtime.
 	components map[appMode]Component
 
-	focusables map[string]Focusable
-	focus      *FocusMap
+	focusables map[string]focus.Focusable
+	focus      *focus.FocusMap
 }
 
 // Focusables returns the base focusable elements managed by the model.
-func (m *model) Focusables() map[string]Focusable {
-	return map[string]Focusable{
-		idTopics:      &nullFocusable{},
-		idHistory:     &nullFocusable{},
-		traces.IDList: &nullFocusable{},
+func (m *model) Focusables() map[string]focus.Focusable {
+	return map[string]focus.Focusable{
+		idTopics:      &focus.NullFocusable{},
+		idHistory:     &focus.NullFocusable{},
+		traces.IDList: &focus.NullFocusable{},
 	}
 }

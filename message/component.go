@@ -4,7 +4,7 @@ import (
 	"github.com/charmbracelet/bubbles/textarea"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -67,24 +67,6 @@ func (c *Component) Input() *textarea.Model { return &c.TA }
 func (c *Component) SetPayload(payload string) { c.TA.SetValue(payload) }
 
 // Focusables exposes focusable elements for the message component.
-func (c *Component) Focusables() map[string]topics.Focusable {
-	return map[string]topics.Focusable{ID: adapt(&c.TA)}
+func (c *Component) Focusables() map[string]focus.Focusable {
+	return map[string]focus.Focusable{ID: focus.Adapt(&c.TA)}
 }
-
-// --- focus adapter helpers ---
-
-type teaFocusable interface {
-	Focus() tea.Cmd
-	Blur()
-	Focused() bool
-	View() string
-}
-
-func adapt(f teaFocusable) topics.Focusable { return focusAdapter{f} }
-
-type focusAdapter struct{ f teaFocusable }
-
-func (a focusAdapter) Focus()          { _ = a.f.Focus() }
-func (a focusAdapter) Blur()           { a.f.Blur() }
-func (a focusAdapter) IsFocused() bool { return a.f.Focused() }
-func (a focusAdapter) View() string    { return a.f.View() }

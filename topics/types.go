@@ -1,30 +1,5 @@
 package topics
 
-import tea "github.com/charmbracelet/bubbletea"
-
-type Focusable interface {
-	Focus()
-	Blur()
-	IsFocused() bool
-	View() string
-}
-
-type teaFocusable interface {
-	Focus() tea.Cmd
-	Blur()
-	Focused() bool
-	View() string
-}
-
-func adapt(f teaFocusable) Focusable { return focusAdapter{f} }
-
-type focusAdapter struct{ f teaFocusable }
-
-func (a focusAdapter) Focus()          { _ = a.f.Focus() }
-func (a focusAdapter) Blur()           { a.f.Blur() }
-func (a focusAdapter) IsFocused() bool { return a.f.Focused() }
-func (a focusAdapter) View() string    { return a.f.View() }
-
 const (
 	idTopicsEnabled  = "topics-enabled"
 	idTopicsDisabled = "topics-disabled"

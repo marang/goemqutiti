@@ -14,7 +14,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/ansi"
 
-	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -101,7 +101,7 @@ func (t *Component) Focus() tea.Cmd { return nil }
 func (t *Component) Blur() {}
 
 // Focusables satisfies FocusableSet; the base model provides the trace list focusable.
-func (t *Component) Focusables() map[string]topics.Focusable { return map[string]topics.Focusable{} }
+func (t *Component) Focusables() map[string]focus.Focusable { return map[string]focus.Focusable{} }
 
 // List exposes the trace configuration list model.
 func (t *Component) List() *list.Model { return &t.list }

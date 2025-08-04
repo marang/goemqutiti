@@ -11,6 +11,7 @@ import (
 
 	_ "github.com/marang/emqutiti/clientkeys"
 	"github.com/marang/emqutiti/confirm"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/message"
@@ -132,18 +133,18 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.traces = tracesComp
 
 	// Collect focusable elements from model and components.
-	providers := []FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help}
-	m.focusables = map[string]Focusable{}
+	providers := []focus.FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help}
+	m.focusables = map[string]focus.Focusable{}
 	for _, p := range providers {
 		for id, f := range p.Focusables() {
 			m.focusables[id] = f
 		}
 	}
-	fitems := make([]Focusable, len(order))
+	fitems := make([]focus.Focusable, len(order))
 	for i, id := range order {
 		fitems[i] = m.focusables[id]
 	}
-	m.focus = NewFocusMap(fitems)
+	m.focus = focus.NewFocusMap(fitems)
 	traceDel.T = m.traces
 	m.traces.ViewList().SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be

@@ -5,7 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -85,8 +85,8 @@ func (p *Component) Focus() tea.Cmd { return nil }
 func (p *Component) Blur() {}
 
 // Focusables exposes focusable elements for the payloads component.
-func (p *Component) Focusables() map[string]topics.Focusable {
-	return map[string]topics.Focusable{IDList: &nullFocusable{}}
+func (p *Component) Focusables() map[string]focus.Focusable {
+	return map[string]focus.Focusable{IDList: &nullFocusable{}}
 }
 
 func (p *Component) Add(topic, payload string) {

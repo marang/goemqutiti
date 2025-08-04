@@ -2,7 +2,7 @@ package help
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/focus"
 )
 
 // ID is the focus identifier for the help component.
@@ -16,5 +16,5 @@ type Navigator interface {
 	Height() int
 }
 
-// Focusable re-exports the topics.Focusable interface.
-type Focusable = topics.Focusable
+// Focusable re-exports the focus.Focusable interface.
+type Focusable = focus.Focusable

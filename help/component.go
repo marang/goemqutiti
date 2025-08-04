@@ -5,7 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/marang/emqutiti/topics"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -80,23 +80,6 @@ func (h *Component) Blur() { h.focused = false }
 func (h *Component) Focused() bool { return h.focused }
 
 // Focusables exposes focusable elements for the help component.
-func (h *Component) Focusables() map[string]topics.Focusable {
-	return map[string]topics.Focusable{ID: adapt(h)}
+func (h *Component) Focusables() map[string]focus.Focusable {
+	return map[string]focus.Focusable{ID: focus.Adapt(h)}
 }
-
-// teaFocusable adapts the component for use with FocusMap.
-type teaFocusable interface {
-	Focus() tea.Cmd
-	Blur()
-	Focused() bool
-	View() string
-}
-
-func adapt(f teaFocusable) topics.Focusable { return focusAdapter{f} }
-
-type focusAdapter struct{ f teaFocusable }
-
-func (a focusAdapter) Focus()          { _ = a.f.Focus() }
-func (a focusAdapter) Blur()           { a.f.Blur() }
-func (a focusAdapter) IsFocused() bool { return a.f.Focused() }
-func (a focusAdapter) View() string    { return a.f.View() }

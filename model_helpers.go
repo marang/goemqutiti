@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/marang/emqutiti/confirm"
+	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/history"
 )
 
@@ -80,8 +81,10 @@ func (m *model) startHistoryFilter() tea.Cmd {
 
 // setMode updates the current mode and focus order.
 func (m *model) setMode(mode appMode) tea.Cmd {
-	if m.focus != nil && len(m.focus.items) > 0 {
-		m.focus.items[m.focus.focusIndex].Blur()
+	if m.focus != nil && len(m.ui.focusOrder) > m.ui.focusIndex {
+		if f, ok := m.focusables[m.ui.focusOrder[m.ui.focusIndex]]; ok {
+			f.Blur()
+		}
 	}
 	// push mode to stack
 	if len(m.ui.modeStack) == 0 || m.ui.modeStack[0] != mode {
@@ -105,11 +108,11 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 		order = []string{idHelp}
 	}
 	m.ui.focusOrder = append([]string(nil), order...)
-	items := make([]Focusable, len(order))
+	items := make([]focus.Focusable, len(order))
 	for i, id := range order {
 		items[i] = m.focusables[id]
 	}
-	m.focus = NewFocusMap(items)
+	m.focus = focus.NewFocusMap(items)
 	m.ui.focusIndex = m.focus.Index()
 	m.help.Blur()
 	return nil

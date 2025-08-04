@@ -81,7 +81,7 @@ func TestSaveLoadState(t *testing.T) {
 
 	data := map[string]connections.ConnectionSnapshot{
 		"p1": {
-			Topics:   []connections.TopicSnapshot{{Title: "foo", Active: true}},
+			Topics:   []connections.TopicSnapshot{{Title: "foo", Subscribed: true, Publish: true}},
 			Payloads: []connections.PayloadSnapshot{{Topic: "foo", Payload: "bar"}},
 		},
 	}

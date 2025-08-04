@@ -9,7 +9,7 @@ type TopicSnapshot = connections.TopicSnapshot
 func (c *Component) Snapshot() []connections.TopicSnapshot {
 	out := make([]connections.TopicSnapshot, len(c.Items))
 	for i, t := range c.Items {
-		out[i] = connections.TopicSnapshot{Title: t.Name, Active: t.Subscribed}
+		out[i] = connections.TopicSnapshot{Title: t.Name, Subscribed: t.Subscribed, Publish: t.Publish}
 	}
 	return out
 }
@@ -18,6 +18,6 @@ func (c *Component) Snapshot() []connections.TopicSnapshot {
 func (c *Component) SetSnapshot(ts []connections.TopicSnapshot) {
 	c.Items = make([]Item, len(ts))
 	for i, t := range ts {
-		c.Items[i] = Item{Name: t.Title, Subscribed: t.Active}
+		c.Items[i] = Item{Name: t.Title, Subscribed: t.Subscribed, Publish: t.Publish}
 	}
 }

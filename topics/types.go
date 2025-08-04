@@ -6,19 +6,29 @@ const (
 	idTopic          = "topic"
 )
 
-// Item represents a topic and its subscription state.
+// Item represents a topic with subscription and publish state.
 type Item struct {
 	Name       string
 	Subscribed bool
+	Publish    bool
 }
 
 func (t Item) FilterValue() string { return t.Name }
-func (t Item) Title() string       { return t.Name }
-func (t Item) Description() string {
-	if t.Subscribed {
-		return "subscribed"
+func (t Item) Title() string {
+	if t.Publish {
+		return "★ " + t.Name
 	}
-	return "unsubscribed"
+	return t.Name
+}
+func (t Item) Description() string {
+	status := "unsubscribed"
+	if t.Subscribed {
+		status = "subscribed"
+	}
+	if t.Publish {
+		status += ", publish"
+	}
+	return status
 }
 
 type ChipBound struct {

@@ -396,6 +396,9 @@ func (c *Component) HandleClick(msg tea.MouseMsg, vpOffset int) tea.Cmd {
 	return nil
 }
 
+// List exposes the topics list model.
+func (c *Component) List() *list.Model { return &c.list }
+
 func (c *Component) SetSelected(i int) {
 	c.selected = i
 	if i < 0 || i >= len(c.Items) {

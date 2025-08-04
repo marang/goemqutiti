@@ -22,6 +22,7 @@ func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
 	}
 	m.traces.ViewList().SetSize(msg.Width-4, m.layout.trace.height)
 	m.traces.List().SetSize(msg.Width-4, msg.Height-4)
+	m.topics.List().SetSize(msg.Width/2-4, msg.Height-4)
 	m.help.SetSize(msg.Width, msg.Height)
 	m.history.Detail().Width = msg.Width - 4
 	m.history.Detail().Height = msg.Height - 4

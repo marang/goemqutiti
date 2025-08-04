@@ -50,7 +50,7 @@ type FocusMap struct {
 // NewFocusMap creates a FocusMap and focuses the first element if present.
 func NewFocusMap(items []Focusable) *FocusMap {
 	fm := &FocusMap{items: items}
-	if len(items) > 0 {
+	if len(items) > 0 && items[0] != nil {
 		items[0].Focus()
 	}
 	return fm

@@ -110,7 +110,11 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 	m.ui.focusOrder = append([]string(nil), order...)
 	items := make([]focus.Focusable, len(order))
 	for i, id := range order {
-		items[i] = m.focusables[id]
+		if f := m.focusables[id]; f != nil {
+			items[i] = f
+		} else {
+			items[i] = &focus.NullFocusable{}
+		}
 	}
 	m.focus = focus.NewFocusMap(items)
 	m.ui.focusIndex = m.focus.Index()

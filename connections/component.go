@@ -81,13 +81,7 @@ func (c *State) FlushStatus() { FlushStatus(c.StatusChan) }
 // RefreshConnectionItems rebuilds the connections list to show status
 // information.
 func (c *State) RefreshConnectionItems() {
-	items := []list.Item{}
-	for _, p := range c.Manager.Profiles {
-		status := c.Manager.Statuses[p.Name]
-		detail := c.Manager.Errors[p.Name]
-		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
-	}
-	c.Manager.ConnectionsList.SetItems(items)
+	c.Manager.refreshList()
 }
 
 // SaveCurrent persists topics and payloads for the active connection.
@@ -156,6 +150,15 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 		case "ctrl+r":
 			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
 			return c.nav.SetMode(modeTracer)
+		case "ctrl+o":
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 {
+				if mgr.DefaultProfileName == mgr.Profiles[i].Name {
+					mgr.ClearDefault()
+				} else {
+					mgr.SetDefault(i)
+				}
+			}
 		case "a":
 			c.api.BeginAdd()
 			return c.nav.SetMode(modeEditConnection)
@@ -198,7 +201,7 @@ func (c *Component) View() string {
 	c.api.ResetElemPos()
 	c.api.SetElemPos(idConnList, 1)
 	listView := c.api.Manager().ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+R traces")
+	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+O default  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	view := ui.LegendBox(content, "Brokers", c.nav.Width()-2, 0, ui.ColBlue, true, -1)
 	return c.api.OverlayHelp(view)

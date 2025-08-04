@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func TestParseHistoryQuery(t *testing.T) {
+func TestParseQuery(t *testing.T) {
 	cases := []struct {
 		query   string
 		topics  []string
@@ -52,7 +52,7 @@ func TestParseHistoryQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		gotTopics, gotStart, gotEnd, gotPayload := parseHistoryQuery(c.query)
+		gotTopics, gotStart, gotEnd, gotPayload := ParseQuery(c.query)
 
 		if !reflect.DeepEqual(gotTopics, c.topics) {
 			t.Errorf("topics mismatch for %q: %v != %v", c.query, gotTopics, c.topics)

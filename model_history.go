@@ -140,36 +140,6 @@ func (f historyFilterForm) query() string {
 	return strings.Join(parts, " ")
 }
 
-// parseHistoryQuery interprets a filter string.
-func parseHistoryQuery(q string) (topics []string, start, end time.Time, payload string) {
-	var payloadParts []string
-	for _, f := range strings.Fields(q) {
-		switch {
-		case strings.HasPrefix(f, "topic="):
-			ts := strings.TrimPrefix(f, "topic=")
-			if ts != "" {
-				topics = strings.Split(ts, ",")
-			}
-		case strings.HasPrefix(f, "start="):
-			t, err := time.Parse(time.RFC3339, strings.TrimPrefix(f, "start="))
-			if err == nil {
-				start = t
-			}
-		case strings.HasPrefix(f, "end="):
-			t, err := time.Parse(time.RFC3339, strings.TrimPrefix(f, "end="))
-			if err == nil {
-				end = t
-			}
-		case strings.HasPrefix(f, "payload="):
-			payloadParts = append(payloadParts, strings.TrimPrefix(f, "payload="))
-		default:
-			payloadParts = append(payloadParts, f)
-		}
-	}
-	payload = strings.Join(payloadParts, " ")
-	return
-}
-
 // historyStore provides an in-memory implementation of history.Store for tests.
 type historyStore struct{ msgs []history.Message }
 

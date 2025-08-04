@@ -195,13 +195,13 @@ func (i *store) Count(archived bool) int {
 	return c
 }
 
-// parseHistoryQuery interprets a filter string in the form:
+// ParseQuery interprets a filter string in the form:
 //
 //	"topic=a,b start=2023-01-02T15:04:05Z end=2023-01-02T16:00 payload=foo".
 //
 // Fields may appear in any order and are optional. Unrecognised tokens are
 // treated as payload search text.
-func parseHistoryQuery(q string) (topics []string, start, end time.Time, payload string) {
+func ParseQuery(q string) (topics []string, start, end time.Time, payload string) {
 	var payloadParts []string
 	for _, f := range strings.Fields(q) {
 		switch {

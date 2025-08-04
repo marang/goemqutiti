@@ -27,7 +27,7 @@ func ApplyFilter(q string, store Store, archived bool) ([]Item, []list.Item) {
 	if store == nil {
 		return nil, nil
 	}
-	topics, start, end, payload := parseHistoryQuery(q)
+	topics, start, end, payload := ParseQuery(q)
 	var msgs []Message
 	if archived {
 		msgs = store.Search(true, topics, start, end, payload)

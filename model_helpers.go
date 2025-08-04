@@ -65,7 +65,7 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	var topic, payload string
 	var start, end time.Time
 	if m.history.FilterQuery() != "" {
-		ts, s, e, p := parseHistoryQuery(m.history.FilterQuery())
+		ts, s, e, p := history.ParseQuery(m.history.FilterQuery())
 		if len(ts) > 0 {
 			topic = ts[0]
 		}

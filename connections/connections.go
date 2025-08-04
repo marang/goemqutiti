@@ -89,6 +89,9 @@ func (m *Connections) EditConnection(index int, p Profile) {
 				delete(m.Errors, oldName)
 				m.Errors[p.Name] = errMsg
 			}
+			if m.DefaultProfileName == oldName {
+				m.DefaultProfileName = p.Name
+			}
 		}
 		if err := persistProfileChange(&m.Profiles, m.DefaultProfileName, p, index); err != nil {
 			log.Printf("Failed to persist profile %s: %v", p.Name, err)
@@ -113,13 +116,33 @@ func (m *Connections) DeleteConnection(index int) {
 	}
 }
 
+// SetDefault marks the profile at index as the default and saves the config.
+func (m *Connections) SetDefault(index int) {
+	if index >= 0 && index < len(m.Profiles) {
+		m.DefaultProfileName = m.Profiles[index].Name
+		saveConfig(m.Profiles, m.DefaultProfileName)
+		m.refreshList()
+	}
+}
+
+// ClearDefault removes any default profile and saves the config.
+func (m *Connections) ClearDefault() {
+	m.DefaultProfileName = ""
+	saveConfig(m.Profiles, "")
+	m.refreshList()
+}
+
 // refreshList rebuilds the list items from the current profiles.
 func (m *Connections) refreshList() {
 	items := []list.Item{}
 	for _, p := range m.Profiles {
 		status := m.Statuses[p.Name]
 		detail := m.Errors[p.Name]
-		items = append(items, connectionItem{title: p.Name, status: status, detail: detail})
+		title := p.Name
+		if p.Name == m.DefaultProfileName {
+			title += " *"
+		}
+		items = append(items, connectionItem{title: title, status: status, detail: detail})
 	}
 	m.ConnectionsList.SetItems(items)
 }

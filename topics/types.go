@@ -14,12 +14,7 @@ type Item struct {
 }
 
 func (t Item) FilterValue() string { return t.Name }
-func (t Item) Title() string {
-	if t.Publish {
-		return "★ " + t.Name
-	}
-	return t.Name
-}
+func (t Item) Title() string       { return t.Name }
 func (t Item) Description() string {
 	status := "unsubscribed"
 	if t.Subscribed {

@@ -11,7 +11,6 @@ import (
 func initTopics() state {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
-	ti.Focus()
 	ti.CharLimit = 32
 	ti.Prompt = "> "
 	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)

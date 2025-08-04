@@ -80,3 +80,15 @@ func (m *model) handleDeleteTopicKey() tea.Cmd {
 	}, nil)
 	return nil
 }
+
+// handleTogglePublishKey toggles the publish flag on the selected topic.
+func (m *model) handleTogglePublishKey() tea.Cmd {
+	if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
+		sel := m.topics.Selected()
+		if sel >= 0 && sel < len(m.topics.Items) {
+			m.topics.TogglePublish(sel)
+			m.topics.EnsureVisible(m.ui.width - 4)
+		}
+	}
+	return nil
+}

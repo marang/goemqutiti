@@ -1,9 +1,9 @@
 package topics
 
 const (
-	idTopicsEnabled  = "topics-enabled"
-	idTopicsDisabled = "topics-disabled"
-	idTopic          = "topic"
+	idTopicsSubscribed   = "topics-subscribed"
+	idTopicsUnsubscribed = "topics-unsubscribed"
+	idTopic              = "topic"
 )
 
 // Item represents a topic with subscription and publish state.

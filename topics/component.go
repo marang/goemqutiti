@@ -65,11 +65,11 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			return c.api.ShowClient()
 		case "left":
 			if c.panes.active == 1 {
-				fcmd = c.api.SetFocus(idTopicsEnabled)
+				fcmd = c.api.SetFocus(idTopicsSubscribed)
 			}
 		case "right":
 			if c.panes.active == 0 {
-				fcmd = c.api.SetFocus(idTopicsDisabled)
+				fcmd = c.api.SetFocus(idTopicsUnsubscribed)
 			}
 		case "delete":
 			i := c.selected
@@ -110,8 +110,8 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 // View displays the topic manager list.
 func (c *Component) View() string {
 	c.api.ResetElemPos()
-	c.api.SetElemPos(idTopicsEnabled, 1)
-	c.api.SetElemPos(idTopicsDisabled, 1)
+	c.api.SetElemPos(idTopicsSubscribed, 1)
+	c.api.SetElemPos(idTopicsUnsubscribed, 1)
 	help := ui.InfoStyle.Render("[space] toggle  [p] publish  [del] delete  [esc] back")
 	activeView := c.list.View()
 	var left, right string
@@ -121,16 +121,16 @@ func (c *Component) View() string {
 		other.SetShowTitle(false)
 		other.Paginator.Page = c.panes.unsubscribed.page
 		other.Select(c.panes.unsubscribed.sel)
-		left = ui.LegendBox(activeView, "Enabled", c.api.Width()/2-2, 0, ui.ColBlue, c.api.FocusedID() == idTopicsEnabled, -1)
-		right = ui.LegendBox(other.View(), "Disabled", c.api.Width()/2-2, 0, ui.ColBlue, false, -1)
+		left = ui.LegendBox(activeView, "Subscribed", c.api.Width()/2-2, 0, ui.ColBlue, c.api.FocusedID() == idTopicsSubscribed, -1)
+		right = ui.LegendBox(other.View(), "Unsubscribed", c.api.Width()/2-2, 0, ui.ColBlue, false, -1)
 	} else {
 		other := list.New(c.SubscribedItems(), list.NewDefaultDelegate(), c.list.Width(), c.list.Height())
 		other.DisableQuitKeybindings()
 		other.SetShowTitle(false)
 		other.Paginator.Page = c.panes.subscribed.page
 		other.Select(c.panes.subscribed.sel)
-		left = ui.LegendBox(other.View(), "Enabled", c.api.Width()/2-2, 0, ui.ColBlue, false, -1)
-		right = ui.LegendBox(activeView, "Disabled", c.api.Width()/2-2, 0, ui.ColBlue, c.api.FocusedID() == idTopicsDisabled, -1)
+		left = ui.LegendBox(other.View(), "Subscribed", c.api.Width()/2-2, 0, ui.ColBlue, false, -1)
+		right = ui.LegendBox(activeView, "Unsubscribed", c.api.Width()/2-2, 0, ui.ColBlue, c.api.FocusedID() == idTopicsUnsubscribed, -1)
 	}
 	panes := lipgloss.JoinHorizontal(lipgloss.Top, left, right)
 	content := lipgloss.JoinVertical(lipgloss.Left, panes, help)
@@ -151,9 +151,9 @@ func (c *Component) UpdateInput(msg tea.Msg) tea.Cmd {
 // Focusables exposes focusable elements for the topics component.
 func (c *Component) Focusables() map[string]focus.Focusable {
 	return map[string]focus.Focusable{
-		idTopicsEnabled:  &c.panes.subscribed,
-		idTopicsDisabled: &c.panes.unsubscribed,
-		idTopic:          focus.Adapt(&c.Input),
+		idTopicsSubscribed:   &c.panes.subscribed,
+		idTopicsUnsubscribed: &c.panes.unsubscribed,
+		idTopic:              focus.Adapt(&c.Input),
 	}
 }
 

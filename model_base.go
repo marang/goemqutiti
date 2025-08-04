@@ -8,15 +8,15 @@ import (
 )
 
 const (
-	idTopics         = "topics"          // topics chip list
-	idTopic          = "topic"           // topic input box
-	idMessage        = message.ID        // message input box
-	idHistory        = "history"         // history list
-	idConnList       = "conn-list"       // broker list
-	idTopicsEnabled  = "topics-enabled"  // enabled topics pane
-	idTopicsDisabled = "topics-disabled" // disabled topics pane
-	idPayloadList    = payloads.IDList   // payload manager list
-	idHelp           = help.ID           // help icon
+	idTopics             = "topics"              // topics chip list
+	idTopic              = "topic"               // topic input box
+	idMessage            = message.ID            // message input box
+	idHistory            = "history"             // history list
+	idConnList           = "conn-list"           // broker list
+	idTopicsSubscribed   = "topics-subscribed"   // subscribed topics pane
+	idTopicsUnsubscribed = "topics-unsubscribed" // unsubscribed topics pane
+	idPayloadList        = payloads.IDList       // payload manager list
+	idHelp               = help.ID               // help icon
 )
 
 type appMode int
@@ -42,7 +42,7 @@ var focusByMode = map[appMode][]string{
 	modeConnections:    {idConnList, idHelp},
 	modeEditConnection: {idConnList, idHelp},
 	modeConfirmDelete:  {},
-	modeTopics:         {idTopicsEnabled, idTopicsDisabled, idHelp},
+	modeTopics:         {idTopicsSubscribed, idTopicsUnsubscribed, idHelp},
 	modePayloads:       {idPayloadList, idHelp},
 	modeTracer:         {traces.IDList, idHelp},
 	modeEditTrace:      {idHelp},

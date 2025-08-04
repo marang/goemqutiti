@@ -12,24 +12,15 @@ type Client interface {
 }
 
 // ConnectResult represents the outcome of a connection attempt.
-type ConnectResult interface {
-	Client() Client
-	Profile() Profile
-	Err() error
-}
-
-// ConnectionStatusManager exposes methods to update connection status
-// information.
-type ConnectionStatusManager interface {
-	SetConnecting(name string)
-	SetConnected(name string)
-	SetDisconnected(name, detail string)
+type ConnectResult struct {
+	Client  Client
+	Profile Profile
+	Err     error
 }
 
 // API defines the methods used by the connections component to interact
 // with the application without depending on concrete model types.
 type API interface {
-	ConnectionStatusManager
 	Manager() *Connections
 	ListenStatus() tea.Cmd
 	SendStatus(string)
@@ -49,6 +40,9 @@ type API interface {
 	ResetElemPos()
 	SetElemPos(id string, pos int)
 	OverlayHelp(view string) string
+	SetConnecting(name string)
+	SetConnected(name string)
+	SetDisconnected(name, detail string)
 }
 
 // Navigator exposes navigation helpers required by the component.

@@ -45,8 +45,6 @@ type State struct {
 	Saved       map[string]ConnectionSnapshot
 }
 
-var _ ConnectionStatusManager = (*State)(nil)
-
 // SetConnecting marks the named connection as in progress.
 func (c *State) SetConnecting(name string) {
 	c.Manager.Statuses[name] = "connecting"
@@ -127,7 +125,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case ConnectResult:
 		c.api.HandleConnectResult(msg)
-		if msg.Err() == nil {
+		if msg.Err == nil {
 			cmd = c.nav.SetMode(modeClient)
 			return tea.Batch(cmd, c.api.ListenStatus())
 		}

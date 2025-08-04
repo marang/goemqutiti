@@ -88,6 +88,11 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			if i >= 0 && i < len(c.Items) {
 				tcmd = c.ToggleTopic(i)
 			}
+		case "p":
+			i := c.selected
+			if i >= 0 && i < len(c.Items) {
+				c.TogglePublish(i)
+			}
 		}
 	}
 	c.list, cmd = c.list.Update(msg)
@@ -107,7 +112,7 @@ func (c *Component) View() string {
 	c.api.ResetElemPos()
 	c.api.SetElemPos(idTopicsEnabled, 1)
 	c.api.SetElemPos(idTopicsDisabled, 1)
-	help := ui.InfoStyle.Render("[space] toggle  [del] delete  [esc] back")
+	help := ui.InfoStyle.Render("[space] toggle  [p] publish  [del] delete  [esc] back")
 	activeView := c.list.View()
 	var left, right string
 	if c.panes.active == 0 {
@@ -284,6 +289,16 @@ func (c *Component) ToggleTopic(index int) tea.Cmd {
 	topic := t.Name
 	sub := t.Subscribed
 	return func() tea.Msg { return ToggleMsg{Topic: topic, Subscribed: sub} }
+}
+
+// TogglePublish toggles the publish flag of the topic at index.
+func (c *Component) TogglePublish(index int) {
+	if index < 0 || index >= len(c.Items) {
+		return
+	}
+	t := &c.Items[index]
+	t.Publish = !t.Publish
+	c.RebuildActiveTopicList()
 }
 
 // RemoveTopic deletes the topic at index and emits an unsubscribe event.

@@ -21,7 +21,7 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 	m.layout.topics.height = 2
 	m.viewClient()
 	m.setFocus(idTopics)
-	rowH := lipgloss.Height(ui.ChipStyle.Render("t"))
+	rowH := lipgloss.Height(ui.Chip.Render("t"))
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
 	if !handled {
 		t.Fatalf("expected scroll event handled")

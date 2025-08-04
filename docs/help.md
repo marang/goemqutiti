@@ -33,6 +33,7 @@
 ## Broker Manager
 
 - 'x' disconnects the selected profile
+- `Ctrl+O` toggles the default profile
 
 ## History View
 

@@ -30,6 +30,8 @@ yay -S emqutiti
 emqutiti
 ```
 
+If a profile is marked as default, the app connects to it automatically on start.
+
 ### Importing from CSV or XLS
 
 Launch `emqutiti --import data.csv -p local` to map columns to JSON and publish them. The wizard supports dry runs and will remember settings in future versions.
@@ -63,6 +65,7 @@ Tips:
 - Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_BROKER_PASSWORD`.
 
 - Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.
+- Set `default_profile` to auto-connect on launch. Use `Ctrl+O` in the broker manager to toggle it.
 
 ### Shortcuts
 
@@ -92,6 +95,7 @@ Tips:
 #### Broker Manager
 
 - `x` disconnects the selected profile
+- `Ctrl+O` toggles the default profile
 
 #### History View
 

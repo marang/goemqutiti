@@ -15,7 +15,7 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 	for i, t := range m.topics.Items {
 		st := ui.ChipInactive
 		switch {
-		case t.Publish:
+		case t.Publish && t.Subscribed:
 			st = ui.ChipPublish
 			if i == m.topics.Selected() {
 				st = ui.ChipPublishFocused
@@ -25,7 +25,6 @@ func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 			if i == m.topics.Selected() {
 				st = ui.ChipFocused
 			}
-
 		default:
 			if i == m.topics.Selected() {
 				st = ui.ChipInactiveFocused

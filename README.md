@@ -99,12 +99,18 @@ Tips:
 
 #### History View
 
-- Shift selects ranges; `Ctrl+A` selects all
-- `Ctrl+C` copies selected history entries
-- `a` archives selected messages
-- `Delete` removes selected messages
-- `Ctrl+L` toggles archived view
-- Press `/` to filter messages
+| Key | Action |
+| --- | ------ |
+| Space | Toggle selection |
+| Shift+Up / Shift+Down | Extend selection |
+| Ctrl+A | Select all |
+| Ctrl+C | Copy selected history entries |
+| a | Archive selected messages |
+| Delete | Remove selected messages |
+| Ctrl+L | Toggle archived view |
+| / | Filter messages |
+| Ctrl+F | Clear all history filters |
+| Enter | View full message |
 
 ## License
 

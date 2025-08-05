@@ -37,6 +37,19 @@ func TestHasDataAndClear(t *testing.T) {
 	}
 }
 
+func TestHasDataEmptyDir(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+
+	has, err := tracerHasData("test", "k1")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if has {
+		t.Fatalf("expected no data")
+	}
+}
+
 func TestTracerAddError(t *testing.T) {
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)

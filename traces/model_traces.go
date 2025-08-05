@@ -130,7 +130,7 @@ func (t *Component) loadTraceMessages(index int) {
 	}
 	t.Component.SetItems(histItems)
 	t.Component.List().SetItems(listItems)
-	t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
+	t.Component.List().SetSize(t.api.Width()-4, t.api.Height()-4)
 	t.viewKey = it.key
 	_ = t.api.SetModeViewTrace()
 }

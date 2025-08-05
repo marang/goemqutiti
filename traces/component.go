@@ -114,7 +114,7 @@ func (h *histModel) SetFocus(id string) tea.Cmd { return h.api.SetFocus(id) }
 
 func (h *histModel) Width() int { return h.api.Width() }
 
-func (h *histModel) Height() int { return h.api.TraceHeight() }
+func (h *histModel) Height() int { return h.api.Height() }
 
 func (h *histModel) OverlayHelp(v string) string { return h.api.OverlayHelp(v) }
 

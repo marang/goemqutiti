@@ -54,7 +54,7 @@ func newMQTTClient(p connections.Profile) (*mqttClient, error) {
 		opts.SetWill(p.LastWillTopic, p.LastWillPayload, byte(p.LastWillQos), p.LastWillRetain)
 	}
 	if p.SSL {
-		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: true})
+		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: p.SkipTLSVerify})
 	}
 	client := mqtt.NewClient(opts)
 	if token := client.Connect(); token.Wait() && token.Error() != nil {

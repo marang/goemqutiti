@@ -42,6 +42,11 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.SSL = bv
 		}
 	},
+	"skip_tls_verify": func(p *Profile, v string) {
+		if bv, err := strconv.ParseBool(v); err == nil {
+			p.SkipTLSVerify = bv
+		}
+	},
 	"mqtt_version": func(p *Profile, v string) { p.MQTTVersion = v },
 	"connect_timeout": func(p *Profile, v string) {
 		if iv, err := strconv.Atoi(v); err == nil {

@@ -63,7 +63,7 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 	}
 
 	if p.SSL {
-		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: true})
+		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: p.SkipTLSVerify})
 	}
 	opts.OnConnect = func(client mqtt.Client) {
 		log.Println("Connected to MQTT broker")

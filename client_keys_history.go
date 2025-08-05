@@ -53,9 +53,6 @@ func (m *model) handleCopyKey() tea.Cmd {
 			}
 			if err := clipboard.WriteAll(text); err != nil {
 				m.history.Append("", err.Error(), "log", err.Error())
-			} else {
-				msg := "Copied item"
-				m.history.Append("", msg, "log", msg)
 			}
 		}
 	}

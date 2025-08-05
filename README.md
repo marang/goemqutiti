@@ -74,7 +74,6 @@ Tips:
 
 | Action | Key |
 | --- | --- |
-| Copy selected entry | `Ctrl+C` |
 | Exit the program | `Ctrl+D` |
 | Manage payloads | `Ctrl+P` |
 | Manage topics | `Ctrl+T` |
@@ -101,6 +100,7 @@ Tips:
 #### History View
 
 - Shift selects ranges; `Ctrl+A` selects all
+- `Ctrl+C` copies selected history entries
 - `a` archives selected messages
 - `Delete` removes selected messages
 - `Ctrl+L` toggles archived view

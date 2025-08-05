@@ -52,6 +52,7 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 	m.history.SetItems([]history.Item{hi})
 	m.history.List().SetItems([]list.Item{hi})
 	m.history.List().Select(0)
+	m.SetFocus(idHistory)
 
 	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlC})
 

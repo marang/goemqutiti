@@ -98,7 +98,10 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				tracerAdd(t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"})
+				if err := tracerAdd(t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"}); err != nil {
+					fmt.Printf("tracerAdd: %v\n", err)
+					return
+				}
 				t.mu.Lock()
 				for _, sub := range t.cfg.Topics {
 					if tracerMatch(sub, m.Topic()) {

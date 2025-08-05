@@ -4,12 +4,9 @@ import tea "github.com/charmbracelet/bubbletea"
 
 // SetFocus moves focus to the given element id.
 func (m *model) SetFocus(id string) tea.Cmd {
-	for i, name := range m.ui.focusOrder {
-		if name == id {
-			m.focus.Set(i)
-			m.ui.focusIndex = m.focus.Index()
-			break
-		}
+	if i, ok := m.ui.focusMap[id]; ok {
+		m.focus.Set(i)
+		m.ui.focusIndex = m.focus.Index()
 	}
 	m.ScrollToFocused()
 	return nil

@@ -87,6 +87,10 @@ func initMessage() message.State {
 
 func initUI(order []string) uiState {
 	vp := viewport.New(0, 0)
+	fm := make(map[string]int, len(order))
+	for i, id := range order {
+		fm[id] = i
+	}
 	return uiState{
 		focusIndex: 0,
 		modeStack:  []appMode{modeClient},
@@ -95,6 +99,7 @@ func initUI(order []string) uiState {
 		viewport:   vp,
 		elemPos:    map[string]int{},
 		focusOrder: order,
+		focusMap:   fm,
 	}
 }
 

@@ -62,7 +62,8 @@ password = "keyring:emqutiti-local/user"
 Tips:
 - More options like TLS and session settings are available; see the `config` package for details.
 - Set `random_id_suffix = true` for unique client IDs.
-- Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_BROKER_PASSWORD`.
+- Set `skip_tls_verify = true` to bypass TLS certificate checks (useful for self-signed brokers).
+- Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_SKIP_TLS_VERIFY` or `EMQUTITI_LOCAL_BROKER_PASSWORD`.
 
 - Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.
 - Set `default_profile` to auto-connect on launch. Use `Ctrl+O` in the broker manager to toggle it.

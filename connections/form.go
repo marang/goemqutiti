@@ -45,6 +45,7 @@ var formFields = []fieldDef{
 	{key: "Password", label: "Password", fieldType: ftPassword},
 	{key: "FromEnv", label: "Load from env", placeholder: "Values from env", fieldType: ftBool},
 	{key: "SSL", label: "SSL/TLS", placeholder: "SSL/TLS", fieldType: ftBool},
+	{key: "SkipTLSVerify", label: "Skip TLS verify", placeholder: "Skip TLS verify", fieldType: ftBool},
 	{key: "MQTTVersion", label: "MQTT Version", placeholder: "MQTT Version", fieldType: ftSelect, options: []string{"3", "4", "5"}},
 	{key: "ConnectTimeout", label: "Connect Timeout (s)", placeholder: "Connect Timeout (s)", fieldType: ftText},
 	{key: "KeepAlive", label: "Keep Alive (s)", placeholder: "Keep Alive (s)", fieldType: ftText},

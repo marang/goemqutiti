@@ -54,8 +54,8 @@ func (m *model) BeginDelete(index int) {
 	}
 	name := m.connections.Manager.Profiles[index].Name
 	info := "This also deletes history and traces"
-	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-	m.startConfirm(
+	rf := func() tea.Cmd { return m.SetFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+	m.StartConfirm(
 		fmt.Sprintf("Delete broker '%s'? [y/n]", name),
 		info,
 		rf,

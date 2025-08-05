@@ -18,7 +18,7 @@ func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
-			cmd := m.setMode(modeConnections)
+			cmd := m.SetMode(modeConnections)
 			m.connections.Form = nil
 			return cmd
 		case "enter":
@@ -33,7 +33,7 @@ func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 				m.connections.Manager.AddConnection(p)
 			}
 			m.connections.RefreshConnectionItems()
-			cmd := m.setMode(modeConnections)
+			cmd := m.SetMode(modeConnections)
 			m.connections.Form = nil
 			return cmd
 		}

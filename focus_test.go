@@ -2,15 +2,15 @@ package emqutiti
 
 import "testing"
 
-// Test that setFocus correctly focuses the message input
+// Test that SetFocus correctly focuses the message input
 func TestSetFocusMessage(t *testing.T) {
 	m, _ := initialModel(nil)
 	if m.message.Input().Focused() {
 		t.Fatalf("message input should start blurred")
 	}
-	m.setFocus(idMessage)
+	m.SetFocus(idMessage)
 	if !m.message.Input().Focused() {
-		t.Fatalf("message input not focused after setFocus")
+		t.Fatalf("message input not focused after SetFocus")
 	}
 	if m.focus.Index() != 2 {
 		t.Fatalf("focusIndex expected 2, got %d", m.focus.Index())

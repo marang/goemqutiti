@@ -20,12 +20,12 @@ type historyModelAdapter struct{ *model }
 
 func (a historyModelAdapter) SetMode(mode history.Mode) tea.Cmd {
 	if am, ok := mode.(appMode); ok {
-		return a.model.setMode(am)
+		return a.model.SetMode(am)
 	}
 	return nil
 }
-func (a historyModelAdapter) PreviousMode() history.Mode  { return a.model.previousMode() }
-func (a historyModelAdapter) CurrentMode() history.Mode   { return a.model.currentMode() }
+func (a historyModelAdapter) PreviousMode() history.Mode  { return a.model.PreviousMode() }
+func (a historyModelAdapter) CurrentMode() history.Mode   { return a.model.CurrentMode() }
 func (a historyModelAdapter) SetFocus(id string) tea.Cmd  { return a.model.SetFocus(id) }
 func (a historyModelAdapter) Width() int                  { return a.model.Width() }
 func (a historyModelAdapter) Height() int                 { return a.model.Height() }

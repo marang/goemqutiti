@@ -2,8 +2,8 @@ package emqutiti
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// setFocus moves focus to the given element id.
-func (m *model) setFocus(id string) tea.Cmd {
+// SetFocus moves focus to the given element id.
+func (m *model) SetFocus(id string) tea.Cmd {
 	for i, name := range m.ui.focusOrder {
 		if name == id {
 			m.focus.Set(i)
@@ -11,7 +11,7 @@ func (m *model) setFocus(id string) tea.Cmd {
 			break
 		}
 	}
-	m.scrollToFocused()
+	m.ScrollToFocused()
 	return nil
 }
 
@@ -28,18 +28,18 @@ func (m *model) focusFromMouse(y int) tea.Cmd {
 	}
 	if chosen != "" {
 		if chosen != m.ui.focusOrder[m.ui.focusIndex] {
-			return m.setFocus(chosen)
+			return m.SetFocus(chosen)
 		}
 		return nil
 	}
 	if len(m.ui.focusOrder) > 0 && m.ui.focusOrder[m.ui.focusIndex] != m.ui.focusOrder[0] {
-		return m.setFocus(m.ui.focusOrder[0])
+		return m.SetFocus(m.ui.focusOrder[0])
 	}
 	return nil
 }
 
-// scrollToFocused ensures the focused element is visible in the viewport.
-func (m *model) scrollToFocused() {
+// ScrollToFocused ensures the focused element is visible in the viewport.
+func (m *model) ScrollToFocused() {
 	if len(m.ui.focusOrder) == 0 {
 		return
 	}

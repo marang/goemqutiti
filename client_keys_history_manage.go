@@ -115,8 +115,8 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 		}
 	}
 	m.history.SetItems(hitems)
-	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-	m.startConfirm("Delete selected messages? [y/n]", "", rf, func() tea.Cmd {
+	rf := func() tea.Cmd { return m.SetFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+	m.StartConfirm("Delete selected messages? [y/n]", "", rf, func() tea.Cmd {
 		hitems := m.history.Items()
 		for i := len(hitems) - 1; i >= 0; i-- {
 			it := hitems[i]

@@ -42,14 +42,14 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.ui.viewport.ScrollDown(1)
 		return nil, true
 	case "tab":
-		if m.currentMode() == modeHistoryFilter {
+		if m.CurrentMode() == modeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
 		if len(m.ui.focusOrder) > 0 {
 			m.focus.Next()
 			m.ui.focusIndex = m.focus.Index()
 			id := m.ui.focusOrder[m.ui.focusIndex]
-			m.setFocus(id)
+			m.SetFocus(id)
 			if id == idTopics {
 				if len(m.topics.Items) > 0 {
 					sel := m.topics.Selected()
@@ -64,14 +64,14 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 	case "shift+tab":
-		if m.currentMode() == modeHistoryFilter {
+		if m.CurrentMode() == modeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
 		if len(m.ui.focusOrder) > 0 {
 			m.focus.Prev()
 			m.ui.focusIndex = m.focus.Index()
 			id := m.ui.focusOrder[m.ui.focusIndex]
-			m.setFocus(id)
+			m.SetFocus(id)
 			if id == idTopics {
 				if len(m.topics.Items) > 0 {
 					sel := m.topics.Selected()
@@ -87,10 +87,10 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 	}
 
-	if m.currentMode() != modeHistoryFilter &&
+	if m.CurrentMode() != modeHistoryFilter &&
 		(msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 		m.help.Focused() {
-		return m.setMode(modeHelp), true
+		return m.SetMode(modeHelp), true
 	}
 	return nil, false
 }

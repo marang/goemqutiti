@@ -10,7 +10,7 @@ func (m *model) handleTabKey() tea.Cmd {
 		m.focus.Next()
 		m.ui.focusIndex = m.focus.Index()
 		id := m.ui.focusOrder[m.ui.focusIndex]
-		m.setFocus(id)
+		m.SetFocus(id)
 		if id == idTopics {
 			if len(m.topics.Items) > 0 {
 				sel := m.topics.Selected()
@@ -32,7 +32,7 @@ func (m *model) handleShiftTabKey() tea.Cmd {
 		m.focus.Prev()
 		m.ui.focusIndex = m.focus.Index()
 		id := m.ui.focusOrder[m.ui.focusIndex]
-		m.setFocus(id)
+		m.SetFocus(id)
 		if id == idTopics {
 			if len(m.topics.Items) > 0 {
 				sel := m.topics.Selected()
@@ -94,19 +94,19 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.connections.RefreshConnectionItems()
 		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
 		m.traces.SavePlannedTraces()
-		return m.setMode(modeConnections)
+		return m.SetMode(modeConnections)
 	case "ctrl+t":
 		m.topics.SetActivePane(0)
 		m.topics.RebuildActiveTopicList()
 		m.topics.SetSelected(0)
 		m.topics.List().SetSize(m.ui.width/2-4, m.ui.height-4)
-		return m.setMode(modeTopics)
+		return m.SetMode(modeTopics)
 	case "ctrl+p":
 		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)
-		return m.setMode(modePayloads)
+		return m.SetMode(modePayloads)
 	case "ctrl+r":
 		m.traces.List().SetSize(m.ui.width-4, m.ui.height-4)
-		return m.setMode(modeTracer)
+		return m.SetMode(modeTracer)
 	default:
 		return nil
 	}

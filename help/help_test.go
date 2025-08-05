@@ -41,7 +41,15 @@ func TestRenderHelpGroupsSections(t *testing.T) {
 	txt := renderHelp()
 	ansi := regexp.MustCompile("\x1b\\[[0-9;]*m")
 	plain := ansi.ReplaceAllString(txt, "")
-	expected := []string{"Global", "Navigation", "Broker Manager", "History View", "Tips"}
+	expected := []string{
+		"Global",
+		"Broker Manager",
+		"Topics",
+		"Payloads",
+		"History",
+		"Traces",
+		"Tips",
+	}
 	for _, e := range expected {
 		if !strings.Contains(plain, e) {
 			t.Fatalf("missing section %q in help text", e)

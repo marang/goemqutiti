@@ -90,7 +90,7 @@ func (t *Tracer) Start() error {
 		}
 
 		for _, topic := range t.cfg.Topics {
-			client.Subscribe(topic, 0, func(_ mqtt.Client, m mqtt.Message) {
+			if err := client.Subscribe(topic, 0, func(_ mqtt.Client, m mqtt.Message) {
 				ts := time.Now()
 				if !t.cfg.End.IsZero() && ts.After(t.cfg.End) {
 					return
@@ -109,7 +109,10 @@ func (t *Tracer) Start() error {
 					}
 				}
 				t.mu.Unlock()
-			})
+			}); err != nil {
+				fmt.Printf("subscribe %s: %v\n", topic, err)
+				return
+			}
 		}
 
 		for {

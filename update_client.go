@@ -12,11 +12,17 @@ import (
 func (m *model) handleTopicToggle(msg topics.ToggleMsg) tea.Cmd {
 	if m.mqttClient != nil {
 		if msg.Subscribed {
-			m.mqttClient.Subscribe(msg.Topic, 0, nil)
-			m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.Topic))
+			if err := m.mqttClient.Subscribe(msg.Topic, 0, nil); err != nil {
+				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribe error for %s: %v", msg.Topic, err))
+			} else {
+				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.Topic))
+			}
 		} else {
-			m.mqttClient.Unsubscribe(msg.Topic)
-			m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.Topic))
+			if err := m.mqttClient.Unsubscribe(msg.Topic); err != nil {
+				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribe error for %s: %v", msg.Topic, err))
+			} else {
+				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.Topic))
+			}
 		}
 	}
 	return nil

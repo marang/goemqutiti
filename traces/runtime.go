@@ -34,11 +34,21 @@ type Tracer struct {
 	client  Client
 	cancel  context.CancelFunc
 	done    chan struct{}
+	report  chan error
 }
 
 // newTracer creates a new Tracer with the given config.
 func newTracer(cfg TracerConfig, c Client) *Tracer {
-	return &Tracer{cfg: cfg, client: c}
+	return &Tracer{cfg: cfg, client: c, report: make(chan error, 1)}
+}
+
+func (t *Tracer) reportErr(err error) {
+	if t.report != nil {
+		select {
+		case t.report <- err:
+		default:
+		}
+	}
 }
 
 // Start begins the trace.
@@ -70,6 +80,9 @@ func (t *Tracer) Start() error {
 			t.cancel = nil
 			t.mu.Unlock()
 			close(t.done)
+			if t.report != nil {
+				close(t.report)
+			}
 		}()
 
 		delay := time.Until(t.cfg.Start)
@@ -103,7 +116,7 @@ func (t *Tracer) Start() error {
 					return
 				}
 				if err := tracerAdd(t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"}); err != nil {
-					fmt.Printf("tracerAdd: %v\n", err)
+					t.reportErr(fmt.Errorf("tracerAdd: %w", err))
 					return
 				}
 				t.mu.Lock()

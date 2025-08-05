@@ -2,7 +2,9 @@ package traces
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/dgraph-io/badger/v4"
@@ -10,7 +12,10 @@ import (
 	"github.com/marang/emqutiti/internal/files"
 )
 
-var jsonMarshal = json.Marshal
+var (
+	jsonMarshal         = json.Marshal
+	errManifestNotFound = errors.New("badger: manifest not found")
+)
 
 // openTracerStore opens the trace database for the profile.
 // When readonly is true, the database is opened in read-only mode.
@@ -19,8 +24,17 @@ func openTracerStore(profile string, readonly bool) (*badger.DB, error) {
 		profile = "default"
 	}
 	path := filepath.Join(files.DataDir(profile), "traces")
-	if err := files.EnsureDir(path); err != nil {
-		return nil, err
+	if readonly {
+		if _, err := os.Stat(filepath.Join(path, "MANIFEST")); err != nil {
+			if os.IsNotExist(err) {
+				return nil, errManifestNotFound
+			}
+			return nil, err
+		}
+	} else {
+		if err := files.EnsureDir(path); err != nil {
+			return nil, err
+		}
 	}
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	if readonly {
@@ -124,6 +138,9 @@ func tracerDelete(profile, key string) error {
 func tracerHasData(profile, key string) (bool, error) {
 	keys, err := tracerKeys(profile, key)
 	if err != nil {
+		if errors.Is(err, errManifestNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 	return len(keys) > 0, nil

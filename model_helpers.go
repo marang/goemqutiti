@@ -10,14 +10,17 @@ import (
 	"github.com/marang/emqutiti/history"
 )
 
+// historyDelegateHeight matches historyDelegate.Height(); history items render a
+// header and payload line, so each entry is two rows tall.
+const historyDelegateHeight = 2
+
 // historyIndexAt converts a Y coordinate into an index within the history list.
 func (m *model) historyIndexAt(y int) int {
 	rel := y - (m.ui.elemPos[idHistory] + 1) + m.ui.viewport.YOffset
 	if rel < 0 {
 		return -1
 	}
-	h := 2 // historyDelegate height
-	idx := rel / h
+	idx := rel / historyDelegateHeight
 	lst := m.history.List()
 	start := lst.Paginator.Page * lst.Paginator.PerPage
 	i := start + idx
@@ -41,7 +44,7 @@ func (m *model) SetElemPos(id string, pos int) { m.ui.elemPos[id] = pos }
 
 // StartConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
-	m.confirm = confirm.NewComponent(m, m, returnFocus, action, cancel)
+	m.confirm = confirm.NewDialog(m, m, returnFocus, action, cancel)
 	m.confirm.Start(prompt, info)
 	m.components[constants.ModeConfirmDelete] = m.confirm
 }
@@ -98,8 +101,10 @@ func (m *model) SetMode(mode constants.AppMode) tea.Cmd {
 		order = []string{idHelp}
 	}
 	m.ui.focusOrder = append([]string(nil), order...)
+	m.ui.focusMap = make(map[string]int, len(order))
 	items := make([]focus.Focusable, len(order))
 	for i, id := range order {
+		m.ui.focusMap[id] = i
 		if f := m.focusables[id]; f != nil {
 			items[i] = f
 		} else {

@@ -7,7 +7,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-type Component struct {
+// Dialog manages confirmation dialogs.
+type Dialog struct {
 	nav    Navigator
 	status StatusListener
 
@@ -19,19 +20,19 @@ type Component struct {
 	focused     bool
 }
 
-func NewComponent(nav Navigator, status StatusListener, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *Component {
-	return &Component{nav: nav, status: status, returnFocus: returnFocus, action: action, cancel: cancel}
+func NewDialog(nav Navigator, status StatusListener, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) *Dialog {
+	return &Dialog{nav: nav, status: status, returnFocus: returnFocus, action: action, cancel: cancel}
 }
 
-func (c *Component) Init() tea.Cmd { return nil }
+func (d *Dialog) Init() tea.Cmd { return nil }
 
-func (c *Component) Start(prompt, info string) {
-	c.prompt = prompt
-	c.info = info
-	_ = c.nav.SetConfirmMode()
+func (d *Dialog) Start(prompt, info string) {
+	d.prompt = prompt
+	d.info = info
+	_ = d.nav.SetConfirmMode()
 }
 
-func (c *Component) Update(msg tea.Msg) tea.Cmd {
+func (d *Dialog) Update(msg tea.Msg) tea.Cmd {
 	switch t := msg.(type) {
 	case tea.KeyMsg:
 		switch t.String() {
@@ -39,59 +40,59 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			return tea.Quit
 		case "y":
 			var acmd tea.Cmd
-			if c.action != nil {
-				acmd = c.action()
-				c.action = nil
+			if d.action != nil {
+				acmd = d.action()
+				d.action = nil
 			}
-			if c.cancel != nil {
-				c.cancel = nil
+			if d.cancel != nil {
+				d.cancel = nil
 			}
-			cmd := c.nav.SetPreviousMode()
-			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
+			cmd := d.nav.SetPreviousMode()
+			cmds := []tea.Cmd{cmd, d.status.ListenStatus()}
 			if acmd != nil {
 				cmds = append(cmds, acmd)
 			}
-			if c.returnFocus != nil {
-				cmds = append(cmds, c.returnFocus())
-				c.returnFocus = nil
+			if d.returnFocus != nil {
+				cmds = append(cmds, d.returnFocus())
+				d.returnFocus = nil
 			} else {
-				c.nav.ScrollToFocused()
+				d.nav.ScrollToFocused()
 			}
 			return tea.Batch(cmds...)
 		case "n", "esc":
-			if c.cancel != nil {
-				c.cancel()
-				c.cancel = nil
+			if d.cancel != nil {
+				d.cancel()
+				d.cancel = nil
 			}
-			cmd := c.nav.SetPreviousMode()
-			cmds := []tea.Cmd{cmd, c.status.ListenStatus()}
-			if c.returnFocus != nil {
-				cmds = append(cmds, c.returnFocus())
-				c.returnFocus = nil
+			cmd := d.nav.SetPreviousMode()
+			cmds := []tea.Cmd{cmd, d.status.ListenStatus()}
+			if d.returnFocus != nil {
+				cmds = append(cmds, d.returnFocus())
+				d.returnFocus = nil
 			} else {
-				c.nav.ScrollToFocused()
+				d.nav.ScrollToFocused()
 			}
 			return tea.Batch(cmds...)
 		}
 	}
-	return c.status.ListenStatus()
+	return d.status.ListenStatus()
 }
 
-func (c *Component) View() string {
-	content := c.prompt
-	if c.info != "" {
-		content = lipgloss.JoinVertical(lipgloss.Left, c.prompt, c.info)
+func (d *Dialog) View() string {
+	content := d.prompt
+	if d.info != "" {
+		content = lipgloss.JoinVertical(lipgloss.Left, d.prompt, d.info)
 	}
 	content = lipgloss.NewStyle().Padding(1, 2).Render(content)
-	box := ui.LegendBox(content, "Confirm", c.nav.Width()/2, 0, ui.ColBlue, true, -1)
-	return lipgloss.Place(c.nav.Width(), c.nav.Height(), lipgloss.Center, lipgloss.Center, box)
+	box := ui.LegendBox(content, "Confirm", d.nav.Width()/2, 0, ui.ColBlue, true, -1)
+	return lipgloss.Place(d.nav.Width(), d.nav.Height(), lipgloss.Center, lipgloss.Center, box)
 }
 
-func (c *Component) Focus() tea.Cmd {
-	c.focused = true
+func (d *Dialog) Focus() tea.Cmd {
+	d.focused = true
 	return nil
 }
 
-func (c *Component) Blur() { c.focused = false }
+func (d *Dialog) Blur() { d.focused = false }
 
-func (c *Component) Focused() bool { return c.focused }
+func (d *Dialog) Focused() bool { return d.focused }

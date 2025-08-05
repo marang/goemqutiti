@@ -88,6 +88,10 @@ func initMessage() message.State {
 
 func initUI(order []string) uiState {
 	vp := viewport.New(0, 0)
+	fm := make(map[string]int, len(order))
+	for i, id := range order {
+		fm[id] = i
+	}
 	return uiState{
 		focusIndex: 0,
 		modeStack:  []constants.AppMode{constants.ModeClient},
@@ -96,6 +100,7 @@ func initUI(order []string) uiState {
 		viewport:   vp,
 		elemPos:    map[string]int{},
 		focusOrder: order,
+		focusMap:   fm,
 	}
 }
 
@@ -124,7 +129,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	msgComp := message.NewComponent(m, ms)
 	m.message = msgComp
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
-	m.confirm = confirm.NewComponent(m, m, nil, nil, nil)
+	m.confirm = confirm.NewDialog(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m)
 	topicsComp := topics.New(m)
 	m.topics = topicsComp

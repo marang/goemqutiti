@@ -7,7 +7,7 @@ type API interface {
 	StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func())
 }
 
-// Navigator defines navigation helpers required by the confirm component.
+// Navigator defines navigation helpers required by the confirm dialog.
 type Navigator interface {
 	SetConfirmMode() tea.Cmd
 	SetPreviousMode() tea.Cmd

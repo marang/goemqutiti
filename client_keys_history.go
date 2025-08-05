@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/history"
 )
 
@@ -104,5 +105,5 @@ func (m *model) handleHistoryViewKey() tea.Cmd {
 	m.history.SetDetailItem(hi)
 	m.history.Detail().SetContent(hi.Payload)
 	m.history.Detail().SetYOffset(0)
-	return m.SetMode(modeHistoryDetail)
+	return m.SetMode(constants.ModeHistoryDetail)
 }

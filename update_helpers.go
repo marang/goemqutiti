@@ -1,6 +1,10 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
+)
 
 // handleWindowSize adjusts the layout when the terminal is resized.
 func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
@@ -42,7 +46,7 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.ui.viewport.ScrollDown(1)
 		return nil, true
 	case "tab":
-		if m.CurrentMode() == modeHistoryFilter {
+		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
 		if len(m.ui.focusOrder) > 0 {
@@ -64,7 +68,7 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 	case "shift+tab":
-		if m.CurrentMode() == modeHistoryFilter {
+		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
 		if len(m.ui.focusOrder) > 0 {
@@ -87,10 +91,10 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 	}
 
-	if m.CurrentMode() != modeHistoryFilter &&
+	if m.CurrentMode() != constants.ModeHistoryFilter &&
 		(msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
 		m.help.Focused() {
-		return m.SetMode(modeHelp), true
+		return m.SetMode(constants.ModeHelp), true
 	}
 	return nil, false
 }

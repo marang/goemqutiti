@@ -8,15 +8,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
-)
-
-const (
-	modeClient         = 0
-	modeConnections    = 1
-	modeEditConnection = 2
-	modeTracer         = 6
-	idConnList         = "conn-list"
 )
 
 // connectionItem represents a single broker profile in the list.
@@ -123,7 +116,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	case ConnectResult:
 		c.api.HandleConnectResult(msg)
 		if msg.Err == nil {
-			cmd = c.nav.SetMode(modeClient)
+			cmd = c.nav.SetMode(constants.ModeClient)
 			return tea.Batch(cmd, c.api.ListenStatus())
 		}
 		return c.api.ListenStatus()
@@ -140,7 +133,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 						c.api.SetConnectionMessage("Connected to " + brokerURL)
 						c.api.SetConnected(p.Name)
 						c.api.RefreshConnectionItems()
-						return c.nav.SetMode(modeClient)
+						return c.nav.SetMode(constants.ModeClient)
 					}
 					return c.api.Connect(p)
 				}
@@ -152,7 +145,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			return tea.Quit
 		case "ctrl+r":
 			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
-			return c.nav.SetMode(modeTracer)
+			return c.nav.SetMode(constants.ModeTracer)
 		case "ctrl+o":
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 {
@@ -164,12 +157,12 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			}
 		case "a":
 			c.api.BeginAdd()
-			return c.nav.SetMode(modeEditConnection)
+			return c.nav.SetMode(constants.ModeEditConnection)
 		case "e":
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 && i < len(mgr.Profiles) {
 				c.api.BeginEdit(i)
-				return c.nav.SetMode(modeEditConnection)
+				return c.nav.SetMode(constants.ModeEditConnection)
 			}
 		case "enter":
 			i := mgr.ConnectionsList.Index()
@@ -180,7 +173,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 					c.api.SetConnectionMessage("Connected to " + brokerURL)
 					c.api.SetConnected(p.Name)
 					c.api.RefreshConnectionItems()
-					return c.nav.SetMode(modeClient)
+					return c.nav.SetMode(constants.ModeClient)
 				}
 				return c.api.Connect(p)
 			}
@@ -202,7 +195,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 // View renders the connections UI component.
 func (c *Component) View() string {
 	c.api.ResetElemPos()
-	c.api.SetElemPos(idConnList, 1)
+	c.api.SetElemPos(constants.IDConnList, 1)
 	listView := c.api.Manager().ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+O default  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
@@ -221,7 +214,7 @@ func (c *Component) Blur() { c.api.Manager().Focused = false }
 
 // Focusables exposes focusable elements for the connections component.
 func (c *Component) Focusables() map[string]Focusable {
-	return map[string]Focusable{idConnList: &nullFocusable{}}
+	return map[string]Focusable{constants.IDConnList: &nullFocusable{}}
 }
 
 // nullFocusable is a no-op focusable used for non-interactive areas.

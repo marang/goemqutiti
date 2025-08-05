@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/confirm"
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
@@ -25,10 +26,10 @@ import (
 
 type navAdapter struct{ navigator }
 
-func (n navAdapter) SetMode(mode int) tea.Cmd { return n.navigator.SetMode(appMode(mode)) }
-func (n navAdapter) Width() int               { return n.navigator.Width() }
-func (n navAdapter) Height() int              { return n.navigator.Height() }
-func (n navAdapter) PreviousMode() int        { return int(n.navigator.PreviousMode()) }
+func (n navAdapter) SetMode(mode constants.AppMode) tea.Cmd { return n.navigator.SetMode(mode) }
+func (n navAdapter) Width() int                             { return n.navigator.Width() }
+func (n navAdapter) Height() int                            { return n.navigator.Height() }
+func (n navAdapter) PreviousMode() constants.AppMode        { return n.navigator.PreviousMode() }
 
 func initConnections(conns *connections.Connections) (connections.State, error) {
 	var connModel connections.Connections
@@ -89,7 +90,7 @@ func initUI(order []string) uiState {
 	vp := viewport.New(0, 0)
 	return uiState{
 		focusIndex: 0,
-		modeStack:  []appMode{modeClient},
+		modeStack:  []constants.AppMode{constants.ModeClient},
 		width:      0,
 		height:     0,
 		viewport:   vp,
@@ -109,7 +110,7 @@ func initLayout() layoutConfig {
 
 // initialModel creates the main program model with optional connection data.
 func initialModel(conns *connections.Connections) (*model, error) {
-	order := append([]string(nil), focusByMode[modeClient]...)
+	order := append([]string(nil), focusByMode[constants.ModeClient]...)
 	cs, loadErr := initConnections(conns)
 	st, _ := history.OpenStore("")
 	ms := initMessage()
@@ -148,19 +149,19 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.traces.ViewList().SetDelegate(traceDel)
 	// Register mode components so that view and update logic can be
 	// delegated based on the current application mode.
-	m.components = map[appMode]Component{
-		modeClient:         component{update: m.updateClient, view: m.viewClient},
-		modeConnections:    connComp,
-		modeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
-		modeConfirmDelete:  m.confirm,
-		modeTopics:         topicsComp,
-		modePayloads:       m.payloads,
-		modeTracer:         tracesComp,
-		modeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
-		modeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
-		modeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
-		modeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
-		modeHelp:           m.help,
+	m.components = map[constants.AppMode]Component{
+		constants.ModeClient:         component{update: m.updateClient, view: m.viewClient},
+		constants.ModeConnections:    connComp,
+		constants.ModeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
+		constants.ModeConfirmDelete:  m.confirm,
+		constants.ModeTopics:         topicsComp,
+		constants.ModePayloads:       m.payloads,
+		constants.ModeTracer:         tracesComp,
+		constants.ModeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
+		constants.ModeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
+		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
+		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
+		constants.ModeHelp:           m.help,
 	}
 
 	if importFile != "" {
@@ -194,8 +195,8 @@ func initialModel(conns *connections.Connections) (*model, error) {
 				m.mqttClient = client
 				m.connections.Active = cfg.Name
 				m.importer = importer.New(client, importFile)
-				m.components[modeImporter] = m.importer
-				m.SetMode(modeImporter)
+				m.components[constants.ModeImporter] = m.importer
+				m.SetMode(constants.ModeImporter)
 			} else {
 				return nil, fmt.Errorf("connect error: %w", err)
 			}

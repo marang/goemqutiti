@@ -2,6 +2,8 @@ package emqutiti
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // handleTabKey moves focus forward.
@@ -94,19 +96,19 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.connections.RefreshConnectionItems()
 		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
 		m.traces.SavePlannedTraces()
-		return m.SetMode(modeConnections)
+		return m.SetMode(constants.ModeConnections)
 	case "ctrl+t":
 		m.topics.SetActivePane(0)
 		m.topics.RebuildActiveTopicList()
 		m.topics.SetSelected(0)
 		m.topics.List().SetSize(m.ui.width/2-4, m.ui.height-4)
-		return m.SetMode(modeTopics)
+		return m.SetMode(constants.ModeTopics)
 	case "ctrl+p":
 		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)
-		return m.SetMode(modePayloads)
+		return m.SetMode(constants.ModePayloads)
 	case "ctrl+r":
 		m.traces.List().SetSize(m.ui.width-4, m.ui.height-4)
-		return m.SetMode(modeTracer)
+		return m.SetMode(constants.ModeTracer)
 	default:
 		return nil
 	}

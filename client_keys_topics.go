@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/topics"
 )
 
@@ -47,7 +48,7 @@ func (m *model) handleEnterKey() tea.Cmd {
 		if topic != "" && !m.topics.HasTopic(topic) {
 			m.topics.Items = append(m.topics.Items, topics.Item{Name: topic, Subscribed: true})
 			m.topics.SortTopics()
-			if m.CurrentMode() == modeTopics {
+			if m.CurrentMode() == constants.ModeTopics {
 				m.topics.RebuildActiveTopicList()
 			}
 			m.topics.Input.SetValue("")
@@ -73,7 +74,7 @@ func (m *model) handleDeleteTopicKey() tea.Cmd {
 	rf := func() tea.Cmd { return m.SetFocus(m.ui.focusOrder[m.ui.focusIndex]) }
 	m.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 		cmd := m.topics.RemoveTopic(idx)
-		if m.CurrentMode() == modeTopics {
+		if m.CurrentMode() == constants.ModeTopics {
 			m.topics.RebuildActiveTopicList()
 		}
 		return cmd

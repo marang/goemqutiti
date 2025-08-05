@@ -2,6 +2,7 @@ package help
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 )
 
@@ -10,8 +11,8 @@ const ID = "help"
 
 // Navigator provides navigation control for the help component.
 type Navigator interface {
-	SetMode(mode int) tea.Cmd
-	PreviousMode() int
+	SetMode(mode constants.AppMode) tea.Cmd
+	PreviousMode() constants.AppMode
 	Width() int
 	Height() int
 }

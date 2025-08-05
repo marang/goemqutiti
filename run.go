@@ -11,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/traces"
 )
@@ -116,7 +117,7 @@ func Main() {
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
-	_ = initial.SetMode(modeConnections)
+	_ = initial.SetMode(constants.ModeConnections)
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {

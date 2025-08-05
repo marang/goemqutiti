@@ -2,8 +2,6 @@ package traces
 
 import (
 	"fmt"
-	connections "github.com/marang/emqutiti/connections"
-	"io"
 	"os"
 	"strings"
 	"time"
@@ -11,10 +9,11 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 
+	connections "github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
+	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -72,10 +71,10 @@ func (t *traceItem) Description() string {
 
 // state groups state related to tracing functionality.
 type State struct {
-	list    list.Model
-	items   []*traceItem
-	form    *traceForm
-	view    list.Model
+	list  list.Model
+	items []*traceItem
+	form  *traceForm
+	*history.Component
 	viewKey string
 }
 
@@ -88,7 +87,40 @@ type Component struct {
 	store Store
 }
 
+type histModel struct {
+	api       API
+	prev, cur constants.AppMode
+}
+
+func (h *histModel) SetMode(mode history.Mode) tea.Cmd {
+	if m, ok := mode.(constants.AppMode); ok {
+		h.prev = h.cur
+		h.cur = m
+		switch m {
+		case constants.ModeTracer:
+			return h.api.SetModeTracer()
+		case constants.ModeViewTrace:
+			return h.api.SetModeViewTrace()
+		}
+	}
+	return nil
+}
+
+func (h *histModel) PreviousMode() history.Mode { return h.prev }
+
+func (h *histModel) CurrentMode() history.Mode { return h.cur }
+
+func (h *histModel) SetFocus(id string) tea.Cmd { return h.api.SetFocus(id) }
+
+func (h *histModel) Width() int { return h.api.Width() }
+
+func (h *histModel) Height() int { return h.api.TraceHeight() }
+
+func (h *histModel) OverlayHelp(v string) string { return h.api.OverlayHelp(v) }
+
 func NewComponent(api API, ts State, store Store) *Component {
+	hm := &histModel{api: api, cur: constants.ModeViewTrace, prev: constants.ModeTracer}
+	ts.Component = history.NewComponent(hm, nil)
 	return &Component{State: &ts, api: api, store: store}
 }
 
@@ -107,62 +139,7 @@ func (t *Component) Focusables() map[string]focus.Focusable { return map[string]
 func (t *Component) List() *list.Model { return &t.list }
 
 // ViewList exposes the trace message list model.
-func (t *Component) ViewList() *list.Model { return &t.view }
-
-// traceMsgItem holds a trace message with its sequence number.
-type traceMsgItem struct {
-	idx int
-	msg TracerMessage
-}
-
-// FilterValue implements list.Item for filtering.
-func (t traceMsgItem) FilterValue() string { return t.msg.Payload }
-
-// Title implements list.Item.
-func (t traceMsgItem) Title() string { return t.msg.Topic }
-
-// Description implements list.Item.
-func (t traceMsgItem) Description() string { return t.msg.Payload }
-
-// MsgDelegate renders trace messages with numbering and timestamp.
-type MsgDelegate struct{ T *Component }
-
-// Height returns the line height for an item.
-func (d MsgDelegate) Height() int { return 2 }
-
-// Spacing satisfies list.ItemDelegate.
-func (d MsgDelegate) Spacing() int { return 0 }
-
-// Update is a no-op for this delegate.
-func (d MsgDelegate) Update(msg tea.Msg, m *list.Model) tea.Cmd { return nil }
-
-// Render draws a trace message item with numbering and timestamp.
-func (d MsgDelegate) Render(w io.Writer, m list.Model, index int, item list.Item) {
-	it := item.(traceMsgItem)
-	width := m.Width()
-	innerWidth := width - 2
-	if innerWidth < 0 {
-		innerWidth = 0
-	}
-	ts := it.msg.Timestamp.Format("2006-01-02T15:04:05.000000000Z07:00")
-	header := fmt.Sprintf("%d %s %s:", it.idx, ts, it.msg.Topic)
-	lines := []string{lipgloss.PlaceHorizontal(innerWidth, lipgloss.Left,
-		lipgloss.NewStyle().Foreground(ui.ColBlue).Render(header))}
-	for _, l := range strings.Split(it.msg.Payload, "\n") {
-		wrapped := ansi.Wrap(l, innerWidth, " ")
-		for _, wl := range strings.Split(wrapped, "\n") {
-			lines = append(lines, lipgloss.PlaceHorizontal(innerWidth, lipgloss.Left,
-				lipgloss.NewStyle().Foreground(ui.ColSub).Render(wl)))
-		}
-	}
-	barColor := ui.ColDarkGray
-	if index == d.T.view.Index() {
-		barColor = ui.ColPurple
-	}
-	bar := lipgloss.NewStyle().Foreground(barColor)
-	lines = ui.FormatHistoryLines(lines, width, bar)
-	fmt.Fprint(w, strings.Join(lines, "\n"))
-}
+func (t *Component) ViewList() *list.Model { return t.Component.List() }
 
 type traceTickMsg struct{}
 
@@ -319,7 +296,6 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 
 // UpdateView displays messages captured for a trace.
 func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -330,13 +306,14 @@ func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
 		case "ctrl+shift+up":
 			if t.api.TraceHeight() > 1 {
 				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
-				t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
+				t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 			}
+			return nil
 		case "ctrl+shift+down":
 			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
-			t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
+			t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
+			return nil
 		}
 	}
-	t.view, cmd = t.view.Update(msg)
-	return cmd
+	return t.Component.Update(msg)
 }

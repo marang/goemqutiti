@@ -2,12 +2,14 @@ package traces
 
 import (
 	"fmt"
-	connections "github.com/marang/emqutiti/connections"
 	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+
+	connections "github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/history"
 )
 
 // forceStartTrace launches the tracer at index without checking existing data.
@@ -119,12 +121,16 @@ func (t *Component) loadTraceMessages(index int) {
 		t.api.LogHistory("", err.Error(), "log", err.Error())
 		return
 	}
-	items := make([]list.Item, len(msgs))
+	histItems := make([]history.Item, len(msgs))
+	listItems := make([]list.Item, len(msgs))
 	for i, mmsg := range msgs {
-		items[i] = traceMsgItem{idx: i + 1, msg: mmsg}
+		hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind}
+		histItems[i] = hi
+		listItems[i] = hi
 	}
-	t.view.SetItems(items)
-	t.view.SetSize(t.api.Width()-4, t.api.TraceHeight())
+	t.Component.SetItems(histItems)
+	t.Component.List().SetItems(listItems)
+	t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 	t.viewKey = it.key
 	_ = t.api.SetModeViewTrace()
 }

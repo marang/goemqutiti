@@ -119,7 +119,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	cs, loadErr := initConnections(conns)
 	st, _ := history.OpenStore("")
 	ms := initMessage()
-	tr, traceDel := traces.Init()
+	tr := traces.Init()
 	m := &model{
 		connections: cs,
 		ui:          initUI(order),
@@ -150,8 +150,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		fitems[i] = m.focusables[id]
 	}
 	m.focus = focus.NewFocusMap(fitems)
-	traceDel.T = m.traces
-	m.traces.ViewList().SetDelegate(traceDel)
+	// history component handles its own delegate
 	// Register mode components so that view and update logic can be
 	// delegated based on the current application mode.
 	m.components = map[constants.AppMode]Component{

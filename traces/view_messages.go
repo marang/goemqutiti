@@ -11,7 +11,7 @@ import (
 func (t *Component) ViewMessages() string {
 	t.api.ResetElemPos()
 	title := fmt.Sprintf("Trace %s", t.viewKey)
-	listLines := strings.Split(t.view.View(), "\n")
+	listLines := strings.Split(t.Component.List().View(), "\n")
 	help := ui.InfoStyle.Render("[esc] back")
 	listLines = append(listLines, help)
 	target := len(listLines)

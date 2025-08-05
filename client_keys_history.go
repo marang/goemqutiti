@@ -2,7 +2,6 @@ package emqutiti
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -14,46 +13,48 @@ import (
 	"github.com/marang/emqutiti/history"
 )
 
+// copyHistoryItems writes the provided history items to the clipboard and logs
+// the result.
+func (m *model) copyHistoryItems(items []history.Item) (int, error) {
+	var parts []string
+	for _, hi := range items {
+		text := hi.Payload
+		if hi.Kind != "log" {
+			text = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
+		}
+		parts = append(parts, text)
+	}
+	if len(parts) == 0 {
+		return 0, nil
+	}
+	if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
+		m.history.Append("", err.Error(), "log", err.Error())
+		return 0, err
+	}
+	msg := "Copied item"
+	if len(parts) > 1 {
+		msg = fmt.Sprintf("Copied %d item(s)", len(parts))
+	}
+	m.history.Append("", msg, "log", msg)
+	return len(parts), nil
+}
+
 // handleCopyKey copies selected or current history items to the clipboard.
 func (m *model) handleCopyKey() tea.Cmd {
-	var idxs []int
+	var selected []history.Item
 	hitems := m.history.Items()
-	for i, it := range hitems {
+	for _, it := range hitems {
 		if it.IsSelected != nil && *it.IsSelected {
-			idxs = append(idxs, i)
+			selected = append(selected, it)
 		}
 	}
-	if len(idxs) > 0 {
-		sort.Ints(idxs)
-		var parts []string
-		items := m.history.List().Items()
-		for _, i := range idxs {
-			if i >= 0 && i < len(items) {
-				hi := items[i].(history.Item)
-				txt := hi.Payload
-				if hi.Kind != "log" {
-					txt = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
-				}
-				parts = append(parts, txt)
-			}
-		}
-		if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
-			m.history.Append("", err.Error(), "log", err.Error())
-		} else {
-			msg := fmt.Sprintf("Copied %d item(s)", len(parts))
-			m.history.Append("", msg, "log", msg)
-		}
-	} else if len(m.history.List().Items()) > 0 {
+	switch {
+	case len(selected) > 0:
+		m.copyHistoryItems(selected)
+	case len(hitems) > 0:
 		idx := m.history.List().Index()
-		if idx >= 0 {
-			hi := m.history.List().Items()[idx].(history.Item)
-			text := hi.Payload
-			if hi.Kind != "log" {
-				text = fmt.Sprintf("%s: %s", hi.Topic, hi.Payload)
-			}
-			if err := clipboard.WriteAll(text); err != nil {
-				m.history.Append("", err.Error(), "log", err.Error())
-			}
+		if idx >= 0 && idx < len(hitems) {
+			m.copyHistoryItems([]history.Item{hitems[idx]})
 		}
 	}
 	return nil

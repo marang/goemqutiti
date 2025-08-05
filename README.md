@@ -103,18 +103,19 @@ Tips:
 | Manage topics | `Ctrl+T` |
 | Manage traces | `Ctrl+R` |
 | Open broker manager | `Ctrl+B` |
+| Disconnect from broker | `Ctrl+X` |
 | Publish message | `Ctrl+S` or `Ctrl+Enter` |
-| Clear history filters | `Ctrl+F` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
-| Scroll view | `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J` |
+| Scroll view | `Up`/`Down` or `j`/`k` |
 
 #### Navigation
 
-- `Esc` navigates back
-- Enter subscribes to the typed topic
-- Tab/Shift+Tab cycle focus
-- Use ↑/↓ or `j`/`k` to move through lists
-- All `Ctrl` shortcuts work even when an input is active
+| Action | Key |
+| --- | --- |
+| Back | `Esc` |
+| Cycle focus | `Tab` / `Shift+Tab` |
+| Scroll view | `Up`/`Down` or `j`/`k` |
+| Switch pane | `Left` / `Right` |
 
 #### Broker Manager
 

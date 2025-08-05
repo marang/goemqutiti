@@ -1,6 +1,8 @@
 package traces
 
 import (
+	"bytes"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -39,6 +41,49 @@ func TestSaveTracesPreservesExistingConfig(t *testing.T) {
 	}
 	if !strings.Contains(s, "[traces]") {
 		t.Fatalf("missing traces section: %s", s)
+	}
+}
+
+func TestLoadTracesInvalidTimes(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+	cfgPath, err := connections.DefaultUserConfigFile()
+	if err != nil {
+		t.Fatalf("cfg path: %v", err)
+	}
+	if err := os.MkdirAll(filepath.Dir(cfgPath), 0o755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	cfg := `[traces]
+  [traces.t1]
+  profile = "p1"
+  start = "bad"
+  [traces.t2]
+  profile = "p2"
+  end = "also-bad"
+`
+	if err := os.WriteFile(cfgPath, []byte(cfg), 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+	var buf bytes.Buffer
+	log.SetOutput(&buf)
+	defer log.SetOutput(os.Stderr)
+	traces := loadTraces()
+	if _, ok := traces["t1"]; !ok {
+		t.Fatalf("missing t1 trace")
+	}
+	if _, ok := traces["t2"]; !ok {
+		t.Fatalf("missing t2 trace")
+	}
+	if !traces["t1"].Start.IsZero() {
+		t.Fatalf("expected zero start time")
+	}
+	if !traces["t2"].End.IsZero() {
+		t.Fatalf("expected zero end time")
+	}
+	out := buf.String()
+	if !strings.Contains(out, "invalid start time") || !strings.Contains(out, "invalid end time") {
+		t.Fatalf("expected log messages, got: %s", out)
 	}
 }
 

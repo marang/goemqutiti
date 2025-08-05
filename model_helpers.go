@@ -9,14 +9,17 @@ import (
 	"github.com/marang/emqutiti/history"
 )
 
+// historyDelegateHeight matches historyDelegate.Height(); history items render a
+// header and payload line, so each entry is two rows tall.
+const historyDelegateHeight = 2
+
 // historyIndexAt converts a Y coordinate into an index within the history list.
 func (m *model) historyIndexAt(y int) int {
 	rel := y - (m.ui.elemPos[idHistory] + 1) + m.ui.viewport.YOffset
 	if rel < 0 {
 		return -1
 	}
-	h := 2 // historyDelegate height
-	idx := rel / h
+	idx := rel / historyDelegateHeight
 	lst := m.history.List()
 	start := lst.Paginator.Page * lst.Paginator.PerPage
 	i := start + idx

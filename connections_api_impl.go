@@ -38,18 +38,22 @@ func (m *model) SubscribeActiveTopics() {
 func (m *model) ConnectionMessage() string       { return m.connections.Connection }
 func (m *model) SetConnectionMessage(msg string) { m.connections.Connection = msg }
 func (m *model) Active() string                  { return m.connections.Active }
+
+func (m *model) validProfileIndex(idx int) bool {
+	return idx >= 0 && idx < len(m.connections.Manager.Profiles)
+}
 func (m *model) BeginAdd() {
 	f := connections.NewForm(connections.Profile{}, -1)
 	m.connections.Form = &f
 }
 func (m *model) BeginEdit(index int) {
-	if index >= 0 && index < len(m.connections.Manager.Profiles) {
+	if m.validProfileIndex(index) {
 		f := connections.NewForm(m.connections.Manager.Profiles[index], index)
 		m.connections.Form = &f
 	}
 }
 func (m *model) BeginDelete(index int) {
-	if index < 0 || index >= len(m.connections.Manager.Profiles) {
+	if !m.validProfileIndex(index) {
 		return
 	}
 	name := m.connections.Manager.Profiles[index].Name

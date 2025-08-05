@@ -6,6 +6,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	connections "github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/topics"
 )
 
@@ -48,7 +49,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
-	if m.CurrentMode() != modeConfirmDelete {
+	if m.CurrentMode() != constants.ModeConfirmDelete {
 		cmds = append(cmds, m.updateClientInputs(msg)...)
 		m.filterHistoryList()
 	}

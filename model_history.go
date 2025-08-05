@@ -8,6 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/ui"
 )
@@ -19,7 +20,7 @@ const historyPreviewLimit = 256
 type historyModelAdapter struct{ *model }
 
 func (a historyModelAdapter) SetMode(mode history.Mode) tea.Cmd {
-	if am, ok := mode.(appMode); ok {
+	if am, ok := mode.(constants.AppMode); ok {
 		return a.model.SetMode(am)
 	}
 	return nil

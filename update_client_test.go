@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/topics"
 )
@@ -101,8 +102,8 @@ func TestHandleClientKeyFilterInitiation(t *testing.T) {
 
 	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'/'}})
 
-	if m.ui.modeStack[0] != modeHistoryFilter {
-		t.Fatalf("expected modeHistoryFilter, got %v", m.ui.modeStack[0])
+	if m.ui.modeStack[0] != constants.ModeHistoryFilter {
+		t.Fatalf("expected ModeHistoryFilter, got %v", m.ui.modeStack[0])
 	}
 	if m.history.FilterForm() == nil {
 		t.Fatalf("expected filter form to be initialized")

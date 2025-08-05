@@ -1,10 +1,14 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
+)
 
 type navigator interface {
-	SetMode(appMode) tea.Cmd
-	PreviousMode() appMode
+	SetMode(constants.AppMode) tea.Cmd
+	PreviousMode() constants.AppMode
 	Width() int
 	Height() int
 }

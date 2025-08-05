@@ -1,6 +1,10 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
+)
 
 // updateConnectionForm handles the add/edit connection form.
 func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
@@ -18,7 +22,7 @@ func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
-			cmd := m.SetMode(modeConnections)
+			cmd := m.SetMode(constants.ModeConnections)
 			m.connections.Form = nil
 			return cmd
 		case "enter":
@@ -33,7 +37,7 @@ func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 				m.connections.Manager.AddConnection(p)
 			}
 			m.connections.RefreshConnectionItems()
-			cmd := m.SetMode(modeConnections)
+			cmd := m.SetMode(constants.ModeConnections)
 			m.connections.Form = nil
 			return cmd
 		}

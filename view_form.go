@@ -3,13 +3,14 @@ package emqutiti
 import (
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
 )
 
 // viewForm renders the add/edit broker form alongside the list.
 func (m *model) viewForm() string {
 	m.ui.elemPos = map[string]int{}
-	m.ui.elemPos[idConnList] = 1
+	m.ui.elemPos[constants.IDConnList] = 1
 	if m.connections.Form == nil {
 		return ""
 	}

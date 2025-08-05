@@ -3,6 +3,8 @@ package connections
 import (
 	tea "github.com/charmbracelet/bubbletea"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // Client defines the MQTT functions used by the connections package.
@@ -47,7 +49,7 @@ type API interface {
 
 // Navigator exposes navigation helpers required by the component.
 type Navigator interface {
-	SetMode(mode int) tea.Cmd
+	SetMode(mode constants.AppMode) tea.Cmd
 	Width() int
 	Height() int
 }

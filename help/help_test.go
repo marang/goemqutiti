@@ -6,14 +6,16 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
-type testNav struct{ mode int }
+type testNav struct{ mode constants.AppMode }
 
-func (t *testNav) SetMode(mode int) tea.Cmd { t.mode = mode; return nil }
-func (t *testNav) PreviousMode() int        { return 7 }
-func (t *testNav) Width() int               { return 0 }
-func (t *testNav) Height() int              { return 0 }
+func (t *testNav) SetMode(mode constants.AppMode) tea.Cmd { t.mode = mode; return nil }
+func (t *testNav) PreviousMode() constants.AppMode        { return constants.ModeHelp }
+func (t *testNav) Width() int                             { return 0 }
+func (t *testNav) Height() int                            { return 0 }
 
 func TestEscReturnsToPreviousMode(t *testing.T) {
 	w, h := 0, 0

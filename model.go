@@ -14,6 +14,8 @@ import (
 	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/traces"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 var _ Handler = (*model)(nil)
@@ -87,13 +89,13 @@ type layoutConfig struct {
 
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
-	focusIndex int            // index of the currently focused element
-	modeStack  []appMode      // mode stack, index 0 is current
-	width      int            // terminal width
-	height     int            // terminal height
-	viewport   viewport.Model // scrolling container for the main view
-	elemPos    map[string]int // cached Y positions of each box
-	focusOrder []string       // order of focusable elements
+	focusIndex int                 // index of the currently focused element
+	modeStack  []constants.AppMode // mode stack, index 0 is current
+	width      int                 // terminal width
+	height     int                 // terminal height
+	viewport   viewport.Model      // scrolling container for the main view
+	elemPos    map[string]int      // cached Y positions of each box
+	focusOrder []string            // order of focusable elements
 	focusMap   map[string]int // maps element IDs to their index
 }
 
@@ -118,7 +120,7 @@ type model struct {
 	// components maps each application mode to its corresponding component
 	// implementation. These components handle mode-specific update and view
 	// logic which the model delegates to at runtime.
-	components map[appMode]Component
+	components map[constants.AppMode]Component
 
 	focusables map[string]focus.Focusable
 	focus      *focus.FocusMap

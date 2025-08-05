@@ -12,10 +12,15 @@
 | Ctrl+X | Disconnect from broker |
 | Ctrl+S / Ctrl+Enter | Publish message |
 | Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
-| Ctrl+Up/Down or Ctrl+K/J | Scroll view |
-| Esc | Navigate back |
+
+## Navigation
+
+| Key | Action |
+| --- | ------ |
+| Esc | Back |
 | Tab / Shift+Tab | Cycle focus |
-| Up/Down or j/k | Move through lists |
+| Up/Down or j/k | Scroll view |
+| Left / Right | Switch pane |
 
 ## Broker Manager
 
@@ -32,7 +37,6 @@
 
 | Key | Action |
 | --- | ------ |
-| Left / Right | Switch pane |
 | Enter / Space | Toggle subscription |
 | p | Toggle publish highlight |
 | Delete | Delete topic |
@@ -67,14 +71,6 @@
 | Enter | Start or stop trace |
 | v | View trace messages |
 | Delete | Remove trace |
-| Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
-
-## Traces view
-
-| Key | Action |
-| --- | ------ |
-| Esc | Back |
-| Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 
 ## Tips
 

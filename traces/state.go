@@ -55,10 +55,10 @@ func loadTraces() (out map[string]TracerConfig) {
 }
 
 // saveTraces updates the Traces section in config.toml.
-func saveTraces(data map[string]TracerConfig) {
+func saveTraces(data map[string]TracerConfig) error {
 	fp, err := connections.DefaultUserConfigFile()
 	if err != nil {
-		return
+		return err
 	}
 	cfg := map[string]interface{}{}
 	toml.DecodeFile(fp, &cfg) // ignore errors for new files
@@ -75,21 +75,28 @@ func saveTraces(data map[string]TracerConfig) {
 	}
 	cfg["traces"] = traces
 	var buf bytes.Buffer
-	toml.NewEncoder(&buf).Encode(cfg)
-	os.MkdirAll(filepath.Dir(fp), os.ModePerm)
-	os.WriteFile(fp, buf.Bytes(), 0644)
+	if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(fp), os.ModePerm); err != nil {
+		return err
+	}
+	if err := os.WriteFile(fp, buf.Bytes(), 0644); err != nil {
+		return err
+	}
+	return nil
 }
 
 // addTrace merges a single trace configuration into the existing file.
-func addTrace(cfg TracerConfig) {
+func addTrace(cfg TracerConfig) error {
 	traces := loadTraces()
 	traces[cfg.Key] = cfg
-	saveTraces(traces)
+	return saveTraces(traces)
 }
 
 // removeTrace deletes a trace from the configuration file.
-func removeTrace(key string) {
+func removeTrace(key string) error {
 	traces := loadTraces()
 	delete(traces, key)
-	saveTraces(traces)
+	return saveTraces(traces)
 }

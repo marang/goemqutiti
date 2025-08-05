@@ -1,6 +1,7 @@
 package traces
 
 import (
+	"errors"
 	"testing"
 	"time"
 )
@@ -33,5 +34,19 @@ func TestHasDataAndClear(t *testing.T) {
 	has, err = tracerHasData("test", "k1")
 	if err != nil || has {
 		t.Fatalf("expected no data")
+	}
+}
+
+func TestTracerAddError(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("HOME", dir)
+
+	old := jsonMarshal
+	jsonMarshal = func(any) ([]byte, error) { return nil, errors.New("fail") }
+	defer func() { jsonMarshal = old }()
+
+	err := tracerAdd("test", "k1", TracerMessage{Timestamp: time.Now()})
+	if err == nil {
+		t.Fatalf("expected error")
 	}
 }

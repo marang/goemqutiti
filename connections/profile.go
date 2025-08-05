@@ -18,6 +18,7 @@ type Profile struct {
 	Password            string `toml:"password" env:"password"`
 	FromEnv             bool   `toml:"from_env"`
 	SSL                 bool   `toml:"ssl_tls" env:"ssl_tls"`
+	SkipTLSVerify       bool   `toml:"skip_tls_verify" env:"skip_tls_verify"`
 	MQTTVersion         string `toml:"mqtt_version" env:"mqtt_version"`
 	ConnectTimeout      int    `toml:"connect_timeout" env:"connect_timeout"`
 	KeepAlive           int    `toml:"keep_alive" env:"keep_alive"`

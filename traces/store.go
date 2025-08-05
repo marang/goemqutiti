@@ -10,6 +10,8 @@ import (
 	"github.com/marang/emqutiti/internal/files"
 )
 
+var jsonMarshal = json.Marshal
+
 // openTracerStore opens the trace database for the profile.
 // When readonly is true, the database is opened in read-only mode.
 func openTracerStore(profile string, readonly bool) (*badger.DB, error) {
@@ -36,7 +38,10 @@ func tracerAdd(profile, key string, msg TracerMessage) error {
 	defer db.Close()
 
 	dbKey := []byte(fmt.Sprintf("trace/%s/%s/%020d", key, msg.Topic, msg.Timestamp.UnixNano()))
-	val, _ := json.Marshal(msg)
+	val, err := jsonMarshal(msg)
+	if err != nil {
+		return err
+	}
 	return db.Update(func(txn *badger.Txn) error {
 		return txn.Set(dbKey, val)
 	})

@@ -1,14 +1,47 @@
 package emqutiti
 
 import (
+	"errors"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/history"
+	"github.com/marang/emqutiti/topics"
 )
+
+type mockToken struct{ err error }
+
+func (t *mockToken) Wait() bool                     { return true }
+func (t *mockToken) WaitTimeout(time.Duration) bool { return true }
+func (t *mockToken) Done() <-chan struct{}          { ch := make(chan struct{}); close(ch); return ch }
+func (t *mockToken) Error() error                   { return t.err }
+
+type failingClient struct {
+	subErr   error
+	unsubErr error
+}
+
+func (c *failingClient) IsConnected() bool                                  { return true }
+func (c *failingClient) IsConnectionOpen() bool                             { return true }
+func (c *failingClient) Connect() mqtt.Token                                { return &mockToken{} }
+func (c *failingClient) Disconnect(uint)                                    {}
+func (c *failingClient) Publish(string, byte, bool, interface{}) mqtt.Token { return &mockToken{} }
+func (c *failingClient) Subscribe(string, byte, mqtt.MessageHandler) mqtt.Token {
+	return &mockToken{err: c.subErr}
+}
+func (c *failingClient) SubscribeMultiple(map[string]byte, mqtt.MessageHandler) mqtt.Token {
+	return &mockToken{}
+}
+func (c *failingClient) Unsubscribe(...string) mqtt.Token     { return &mockToken{err: c.unsubErr} }
+func (c *failingClient) AddRoute(string, mqtt.MessageHandler) {}
+func (c *failingClient) OptionsReader() mqtt.ClientOptionsReader {
+	return mqtt.NewOptionsReader(mqtt.NewClientOptions())
+}
 
 // Test copy behavior when history items are selected.
 func TestHandleClientKeyCopySelected(t *testing.T) {
@@ -73,5 +106,33 @@ func TestHandleClientKeyFilterInitiation(t *testing.T) {
 	}
 	if m.history.FilterForm() == nil {
 		t.Fatalf("expected filter form to be initialized")
+	}
+}
+
+// Test error handling when topic subscription fails.
+func TestHandleTopicToggleSubscribeError(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.mqttClient = &MQTTClient{Client: &failingClient{subErr: errors.New("sub boom")}}
+	m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
+	items := m.history.Items()
+	if len(items) != 1 {
+		t.Fatalf("expected 1 history item, got %d", len(items))
+	}
+	if items[0].Kind != "log" || !strings.Contains(items[0].Payload, "sub boom") {
+		t.Fatalf("expected log with error, got kind %q payload %q", items[0].Kind, items[0].Payload)
+	}
+}
+
+// Test error handling when topic unsubscription fails.
+func TestHandleTopicToggleUnsubscribeError(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.mqttClient = &MQTTClient{Client: &failingClient{unsubErr: errors.New("unsub boom")}}
+	m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
+	items := m.history.Items()
+	if len(items) != 1 {
+		t.Fatalf("expected 1 history item, got %d", len(items))
+	}
+	if items[0].Kind != "log" || !strings.Contains(items[0].Payload, "unsub boom") {
+		t.Fatalf("expected log with error, got kind %q payload %q", items[0].Kind, items[0].Payload)
 	}
 }

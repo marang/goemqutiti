@@ -59,21 +59,44 @@ func Main() {
 		}
 		var start, end time.Time
 		if traceStart != "" {
-			start, _ = time.Parse(time.RFC3339, traceStart)
+			var err error
+			start, err = time.Parse(time.RFC3339, traceStart)
+			if err != nil {
+				log.Println("invalid trace start time:", err)
+				return
+			}
 		}
 		if traceEnd != "" {
-			end, _ = time.Parse(time.RFC3339, traceEnd)
+			var err error
+			end, err = time.Parse(time.RFC3339, traceEnd)
+			if err != nil {
+				log.Println("invalid trace end time:", err)
+				return
+			}
 			if end.Before(time.Now()) {
 				log.Println("trace end time already passed")
 				return
 			}
 		}
-		exists, _ := traces.FileStore{}.HasData(profileName, traceKey)
+		exists, err := traces.FileStore{}.HasData(profileName, traceKey)
+		if err != nil {
+			log.Println("trace data check failed:", err)
+			return
+		}
 		if exists {
 			log.Println("trace key already exists")
 			return
 		}
-		traces.FileStore{}.AddTrace(traces.TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
+		if err := (traces.FileStore{}).AddTrace(traces.TracerConfig{
+			Profile: profileName,
+			Topics:  tlist,
+			Start:   start,
+			End:     end,
+			Key:     traceKey,
+		}); err != nil {
+			log.Println(err)
+			return
+		}
 		if err := traces.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			log.Println(err)
 		}

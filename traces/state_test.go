@@ -28,7 +28,9 @@ func TestSaveTracesPreservesExistingConfig(t *testing.T) {
 	data := map[string]TracerConfig{
 		"t1": {Profile: "p1", Topics: []string{"a"}, Start: time.Unix(0, 0)},
 	}
-	saveTraces(data)
+	if err := saveTraces(data); err != nil {
+		t.Fatalf("saveTraces: %v", err)
+	}
 	out, err := os.ReadFile(cfgPath)
 	if err != nil {
 		t.Fatalf("read config: %v", err)
@@ -82,5 +84,31 @@ func TestLoadTracesInvalidTimes(t *testing.T) {
 	out := buf.String()
 	if !strings.Contains(out, "invalid start time") || !strings.Contains(out, "invalid end time") {
 		t.Fatalf("expected log messages, got: %s", out)
+	}
+}
+
+func TestSaveTracesWriteError(t *testing.T) {
+	dir := t.TempDir()
+	cfgFile := filepath.Join(dir, ".config")
+	if err := os.WriteFile(cfgFile, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	t.Setenv("HOME", dir)
+	data := map[string]TracerConfig{"t1": {Profile: "p", Topics: []string{"a"}}}
+	if err := saveTraces(data); err == nil {
+		t.Fatal("expected error")
+	}
+}
+
+func TestAddTraceWriteError(t *testing.T) {
+	dir := t.TempDir()
+	cfgFile := filepath.Join(dir, ".config")
+	if err := os.WriteFile(cfgFile, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	t.Setenv("HOME", dir)
+	cfg := TracerConfig{Profile: "p", Topics: []string{"a"}, Key: "k"}
+	if err := addTrace(cfg); err == nil {
+		t.Fatal("expected error")
 	}
 }

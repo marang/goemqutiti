@@ -35,7 +35,9 @@ func (t *Component) forceStartTrace(index int) {
 		return
 	}
 	item.tracer = tr
-	addTrace(item.cfg)
+	if err := addTrace(item.cfg); err != nil {
+		t.api.LogHistory("", err.Error(), "log", err.Error())
+	}
 }
 
 // startTrace starts the tracer at index, prompting if data already exists.
@@ -101,7 +103,9 @@ func (t *Component) SavePlannedTraces() {
 			data[it.key] = it.cfg
 		}
 	}
-	saveTraces(data)
+	if err := saveTraces(data); err != nil {
+		t.api.LogHistory("", err.Error(), "log", err.Error())
+	}
 }
 
 // loadTraceMessages loads messages for the trace at index and shows them.

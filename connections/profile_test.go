@@ -160,7 +160,9 @@ func TestSaveConfig(t *testing.T) {
 	defer os.Setenv("HOME", oldHome)
 
 	profiles := []Profile{{Name: "a"}}
-	saveConfig(profiles, "a")
+	if err := saveConfig(profiles, "a"); err != nil {
+		t.Fatalf("saveConfig: %v", err)
+	}
 	cfgPath, _ := DefaultUserConfigFile()
 	var cfg userConfig
 	if _, err := toml.DecodeFile(cfgPath, &cfg); err != nil {
@@ -225,6 +227,23 @@ func TestPersistProfileChange(t *testing.T) {
 	pw, err := keyring.Get("emqutiti-test", "user")
 	if err != nil || pw != "secret" {
 		t.Fatalf("keyring not saved: %q %v", pw, err)
+	}
+}
+
+func TestPersistProfileChangeWriteError(t *testing.T) {
+	dir := t.TempDir()
+	cfgFile := filepath.Join(dir, ".config")
+	if err := os.WriteFile(cfgFile, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", dir)
+	defer os.Setenv("HOME", oldHome)
+
+	profiles := []Profile{}
+	p := Profile{Name: "test", Username: "user", Password: "secret"}
+	if err := persistProfileChange(&profiles, "test", p, -1); err == nil {
+		t.Fatal("expected error")
 	}
 }
 func TestDefaultPasswordEnvOverride(t *testing.T) {

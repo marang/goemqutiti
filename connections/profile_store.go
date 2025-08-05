@@ -12,14 +12,14 @@ import (
 )
 
 // saveConfig persists profiles and default selection to config.toml.
-func saveConfig(profiles []Profile, defaultName string) {
+func saveConfig(profiles []Profile, defaultName string) error {
 	saved := LoadState()
 	cfg := userConfig{
 		DefaultProfileName: defaultName,
 		Profiles:           profiles,
 		Saved:              saved,
 	}
-	writeConfig(cfg)
+	return writeConfig(cfg)
 }
 
 // savePasswordToKeyring stores a password in the system keyring.
@@ -58,7 +58,9 @@ func persistProfileChange(profiles *[]Profile, defaultName string, p Profile, id
 	} else {
 		*profiles = append(*profiles, p)
 	}
-	saveConfig(*profiles, defaultName)
+	if err := saveConfig(*profiles, defaultName); err != nil {
+		return err
+	}
 	if !p.FromEnv {
 		if err := savePasswordToKeyring(p.Name, p.Username, plain); err != nil {
 			return err

@@ -2,6 +2,7 @@ package connections
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -90,7 +91,9 @@ func (c *State) SaveCurrent(topics []TopicSnapshot, payloads []PayloadSnapshot) 
 		return
 	}
 	c.Saved[c.Active] = ConnectionSnapshot{Topics: topics, Payloads: payloads}
-	SaveState(c.Saved)
+	if err := SaveState(c.Saved); err != nil {
+		log.Printf("Failed to save connection state: %v", err)
+	}
 }
 
 // RestoreState returns saved topics and payloads for the named connection.

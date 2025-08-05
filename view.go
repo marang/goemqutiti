@@ -31,7 +31,7 @@ func (m *model) OverlayHelp(view string) string { return m.overlayHelp(view) }
 
 // View renders the application UI based on the current mode.
 func (m *model) View() string {
-	if c, ok := m.components[m.currentMode()]; ok {
+	if c, ok := m.components[m.CurrentMode()]; ok {
 		return c.View()
 	}
 	return ""

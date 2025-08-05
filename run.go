@@ -116,7 +116,7 @@ func Main() {
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
-	_ = initial.setMode(modeConnections)
+	_ = initial.SetMode(modeConnections)
 	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {

@@ -47,7 +47,7 @@ func (m *model) handleEnterKey() tea.Cmd {
 		if topic != "" && !m.topics.HasTopic(topic) {
 			m.topics.Items = append(m.topics.Items, topics.Item{Name: topic, Subscribed: true})
 			m.topics.SortTopics()
-			if m.currentMode() == modeTopics {
+			if m.CurrentMode() == modeTopics {
 				m.topics.RebuildActiveTopicList()
 			}
 			m.topics.Input.SetValue("")
@@ -70,10 +70,10 @@ func (m *model) handleEnterKey() tea.Cmd {
 func (m *model) handleDeleteTopicKey() tea.Cmd {
 	idx := m.topics.Selected()
 	name := m.topics.Items[idx].Name
-	rf := func() tea.Cmd { return m.setFocus(m.ui.focusOrder[m.ui.focusIndex]) }
-	m.startConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
+	rf := func() tea.Cmd { return m.SetFocus(m.ui.focusOrder[m.ui.focusIndex]) }
+	m.StartConfirm(fmt.Sprintf("Delete topic '%s'? [y/n]", name), "", rf, func() tea.Cmd {
 		cmd := m.topics.RemoveTopic(idx)
-		if m.currentMode() == modeTopics {
+		if m.CurrentMode() == modeTopics {
 			m.topics.RebuildActiveTopicList()
 		}
 		return cmd

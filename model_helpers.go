@@ -32,25 +32,14 @@ func (m *model) FocusedID() string { return m.ui.focusOrder[m.ui.focusIndex] }
 // ListenStatus proxies connection status updates for components.
 func (m *model) ListenStatus() tea.Cmd { return m.connections.ListenStatus() }
 
-// ScrollToFocused ensures the focused element is visible.
-func (m *model) ScrollToFocused() { m.scrollToFocused() }
-
 // ResetElemPos clears cached element positions.
 func (m *model) ResetElemPos() { m.ui.elemPos = map[string]int{} }
 
 // SetElemPos records the position of a UI element.
 func (m *model) SetElemPos(id string, pos int) { m.ui.elemPos[id] = pos }
 
-// SetFocus delegates focus changes to the model's focus manager.
-func (m *model) SetFocus(id string) tea.Cmd { return m.setFocus(id) }
-
 // StartConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
-	m.startConfirm(prompt, info, returnFocus, action, cancel)
-}
-
-// startConfirm displays a confirmation dialog and runs the action on accept.
-func (m *model) startConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
 	m.confirm = confirm.NewComponent(m, m, returnFocus, action, cancel)
 	m.confirm.Start(prompt, info)
 	m.components[modeConfirmDelete] = m.confirm
@@ -76,11 +65,11 @@ func (m *model) startHistoryFilter() tea.Cmd {
 	}
 	hf := history.NewFilterForm(topics, topic, payload, start, end, m.history.ShowArchived())
 	m.history.SetFilterForm(&hf)
-	return m.setMode(modeHistoryFilter)
+	return m.SetMode(modeHistoryFilter)
 }
 
-// setMode updates the current mode and focus order.
-func (m *model) setMode(mode appMode) tea.Cmd {
+// SetMode updates the current mode and focus order.
+func (m *model) SetMode(mode appMode) tea.Cmd {
 	if m.focus != nil && len(m.ui.focusOrder) > m.ui.focusIndex {
 		if f, ok := m.focusables[m.ui.focusOrder[m.ui.focusIndex]]; ok {
 			f.Blur()
@@ -122,36 +111,27 @@ func (m *model) setMode(mode appMode) tea.Cmd {
 	return nil
 }
 
-// currentMode returns the active application mode.
-func (m *model) currentMode() appMode {
+// CurrentMode returns the active application mode.
+func (m *model) CurrentMode() appMode {
 	if len(m.ui.modeStack) == 0 {
 		return modeClient
 	}
 	return m.ui.modeStack[0]
 }
 
-// previousMode returns the last mode before the current one.
-func (m *model) previousMode() appMode {
+// PreviousMode returns the last mode before the current one.
+func (m *model) PreviousMode() appMode {
 	if len(m.ui.modeStack) > 1 {
 		return m.ui.modeStack[1]
 	}
-	return m.currentMode()
+	return m.CurrentMode()
 }
 
-// SetMode exposes setMode to satisfy the navigator interface.
-func (m *model) SetMode(mode appMode) tea.Cmd { return m.setMode(mode) }
-
-// PreviousMode exposes previousMode to satisfy the navigator interface.
-func (m *model) PreviousMode() appMode { return m.previousMode() }
-
 // SetConfirmMode switches to the confirmation screen.
-func (m *model) SetConfirmMode() tea.Cmd { return m.setMode(modeConfirmDelete) }
+func (m *model) SetConfirmMode() tea.Cmd { return m.SetMode(modeConfirmDelete) }
 
 // SetPreviousMode returns to the prior screen.
-func (m *model) SetPreviousMode() tea.Cmd { return m.setMode(m.previousMode()) }
-
-// CurrentMode exposes currentMode to satisfy component interfaces.
-func (m *model) CurrentMode() appMode { return m.currentMode() }
+func (m *model) SetPreviousMode() tea.Cmd { return m.SetMode(m.PreviousMode()) }
 
 // Width returns the current UI width.
 func (m *model) Width() int { return m.ui.width }
@@ -163,4 +143,4 @@ func (m *model) MessageHeight() int { return m.layout.message.height }
 func (m *model) Height() int { return m.ui.height }
 
 // SetClientMode switches to the main client screen.
-func (m *model) SetClientMode() tea.Cmd { return m.setMode(modeClient) }
+func (m *model) SetClientMode() tea.Cmd { return m.SetMode(modeClient) }

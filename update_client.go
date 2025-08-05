@@ -48,7 +48,7 @@ func (m *model) updateClient(msg tea.Msg) tea.Cmd {
 		cmds = append(cmds, cmd)
 	}
 
-	if m.currentMode() != modeConfirmDelete {
+	if m.CurrentMode() != modeConfirmDelete {
 		cmds = append(cmds, m.updateClientInputs(msg)...)
 		m.filterHistoryList()
 	}

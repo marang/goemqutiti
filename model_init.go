@@ -195,7 +195,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 				m.connections.Active = cfg.Name
 				m.importer = importer.New(client, importFile)
 				m.components[modeImporter] = m.importer
-				m.setMode(modeImporter)
+				m.SetMode(modeImporter)
 			} else {
 				return nil, fmt.Errorf("connect error: %w", err)
 			}

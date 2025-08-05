@@ -14,7 +14,7 @@ func TestHandlePublishKeyFlags(t *testing.T) {
 		{Name: "c", Publish: true},
 	}
 	m.message.SetPayload("hello")
-	m.setFocus(idMessage)
+	m.SetFocus(idMessage)
 	m.handlePublishKey()
 	items := m.payloads.Items()
 	if len(items) != 2 {
@@ -33,7 +33,7 @@ func TestHandlePublishKeyFallback(t *testing.T) {
 	}
 	m.topics.SetSelected(1)
 	m.message.SetPayload("hi")
-	m.setFocus(idMessage)
+	m.SetFocus(idMessage)
 	m.handlePublishKey()
 	items := m.payloads.Items()
 	if len(items) != 1 {

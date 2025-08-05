@@ -24,7 +24,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if c, ok := m.components[m.currentMode()]; ok {
+	if c, ok := m.components[m.CurrentMode()]; ok {
 		cmd := c.Update(msg)
 		return m, cmd
 	}

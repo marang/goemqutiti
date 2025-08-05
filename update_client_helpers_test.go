@@ -21,7 +21,7 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 	rowH := lipgloss.Height(ui.Chip.Render("t"))
 	m.layout.topics.height = rowH
 	m.viewClient()
-	m.setFocus(idTopics)
+	m.SetFocus(idTopics)
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
 	if !handled {
 		t.Fatalf("expected scroll event handled")
@@ -51,7 +51,7 @@ func TestHandleHistorySelectionShift(t *testing.T) {
 		items[i] = it
 	}
 	m.history.List().SetItems(items)
-	m.setFocus(idHistory)
+	m.SetFocus(idHistory)
 
 	m.history.HandleSelection(0, true)
 	if m.history.SelectionAnchor() != 0 {
@@ -98,7 +98,7 @@ func TestHandleHistoryClick(t *testing.T) {
 	items := []list.Item{m.history.Items()[0]}
 	m.history.List().SetItems(items)
 	m.viewClient()
-	m.setFocus(idHistory)
+	m.SetFocus(idHistory)
 	y := m.ui.elemPos[idHistory] + 1
 	m.history.HandleClick(tea.MouseMsg{Y: y}, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	if m.history.List().Index() != 0 {
@@ -117,7 +117,7 @@ func TestHistoryScroll(t *testing.T) {
 		items[i] = it
 	}
 	m.history.List().SetItems(items)
-	m.setFocus(idHistory)
+	m.SetFocus(idHistory)
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
 	if !handled {
 		t.Fatalf("expected scroll event handled")

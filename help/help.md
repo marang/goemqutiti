@@ -15,42 +15,58 @@
 | Ctrl+S / Ctrl+Enter | Publish message |
 | Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 | Ctrl+Up/Down or Ctrl+K/J | Scroll view |
-
-## Navigation
-
-- Esc navigates back
-- Enter subscribes to the typed topic
-- Tab/Shift+Tab cycle focus
-- Use arrows or j/k to move through lists
-- 'p' toggles a publish highlight on the selected topic; topics with a blue
-  background get messages. If none are highlighted, the selected topic is used
-- Ctrl+Up/Down scrolls the view
-- Press '/' in history for a filter dialog with topic suggestions shown
-  under the field; Tab or arrows cycle matches and Enter or space accepts
-  the highlight. A text box lets you match message contents, and start
-  and end fields default to the last hour on first open and stay blank
-  once removed so you can search all time. Active filters appear above the
-  history list and `Ctrl+F` resets them.
-- All Ctrl shortcuts work even when an input is active
+| Esc | Navigate back |
+| Tab / Shift+Tab | Cycle focus |
+| Up/Down or j/k | Move through lists |
 
 ## Broker Manager
 
-- Enter connects or opens the client
-- 'x' disconnects the selected profile
-- 'a' adds a profile
-- 'e' edits the selected profile
-- Delete removes the selected profile
+| Key | Action |
+| --- | ------ |
+| Enter | Connect or open client |
+| x | Disconnect selected profile |
+| a | Add profile |
+| e | Edit selected profile |
+| Delete | Remove selected profile |
+| Ctrl+O | Toggle default profile |
 
-## History View
+## Topics
 
-- Space toggles selection
-- Shift+Up/Down extend selection
-- Ctrl+A selects all
-- 'a' archives selected messages
-- Delete removes selected messages
-- Ctrl+L toggles archived view
-- Press '/' to filter messages
-- Enter shows full message when truncated
+| Key | Action |
+| --- | ------ |
+| Left / Right | Switch pane |
+| Enter / Space | Toggle subscription |
+| p | Toggle publish highlight |
+| Delete | Delete topic |
+
+## Payloads
+
+| Key | Action |
+| --- | ------ |
+| Enter | Load payload |
+| Delete | Delete payload |
+
+## History
+
+| Key | Action |
+| --- | ------ |
+| Space | Toggle selection |
+| Shift+Up / Shift+Down | Extend selection |
+| Ctrl+A | Select all |
+| a | Archive selected messages |
+| Delete | Remove selected messages |
+| Ctrl+L | Toggle archived view |
+| / | Filter messages |
+| Enter | View full message |
+
+## Traces
+
+| Key | Action |
+| --- | ------ |
+| a | Add trace |
+| Enter | Start or stop trace |
+| v | View trace messages |
+| Delete | Remove trace |
 
 ## Tips
 

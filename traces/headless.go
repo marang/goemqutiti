@@ -121,9 +121,15 @@ func Run(key, topics, profileName, startStr, endStr string) error {
 		tlist[i] = strings.TrimSpace(tlist[i])
 	}
 	cfg := TracerConfig{Profile: p.Name, Topics: tlist, Start: start, End: end, Key: key}
+	if err := tracerClearData(cfg.Profile, cfg.Key); err != nil {
+		return fmt.Errorf("clear data: %w", err)
+	}
 	tr := newTracer(cfg, client)
 	if err := tr.Start(); err != nil {
 		return fmt.Errorf("trace start: %w", err)
+	}
+	if err := addTrace(cfg); err != nil {
+		return fmt.Errorf("add trace: %w", err)
 	}
 
 	sig := make(chan os.Signal, 1)

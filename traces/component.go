@@ -201,7 +201,7 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 				rf := func() tea.Cmd { return t.api.SetFocus(t.api.FocusedID()) }
 				t.api.StartConfirm(
 					fmt.Sprintf("Delete trace '%s'? [y/n]", key),
-					"this also removes all stored data from the Badger DB",
+					"This also removes all stored data of this trace",
 					rf,
 					func() tea.Cmd {
 						t.stopTrace(i)

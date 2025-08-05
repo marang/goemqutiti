@@ -19,7 +19,7 @@ type Publisher interface {
 	Publish(topic string, qos byte, retained bool, payload interface{}) error
 }
 
-// Wizard runs an interactive import wizard.
+// Model runs an interactive import wizard.
 type Model struct {
 	step        int
 	file        textinput.Model

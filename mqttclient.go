@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	connections "github.com/marang/emqutiti/connections"
-	"log"
 	"strconv"
 	"time"
 
@@ -66,13 +65,11 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: p.SkipTLSVerify})
 	}
 	opts.OnConnect = func(client mqtt.Client) {
-		log.Println("Connected to MQTT broker")
 		if fn != nil {
 			fn("Connected to MQTT broker")
 		}
 	}
 	opts.OnConnectionLost = func(client mqtt.Client, err error) {
-		log.Printf("Connection lost: %v", err)
 		if fn != nil {
 			fn(fmt.Sprintf("Connection lost: %v", err))
 		}

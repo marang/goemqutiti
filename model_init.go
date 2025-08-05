@@ -123,7 +123,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	msgComp := message.NewComponent(m, ms)
 	m.message = msgComp
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
-	m.confirm = confirm.NewComponent(m, m, nil, nil, nil)
+	m.confirm = confirm.NewDialog(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m)
 	topicsComp := topics.New(m)
 	m.topics = topicsComp

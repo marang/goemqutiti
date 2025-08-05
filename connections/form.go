@@ -13,6 +13,7 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+// Form collects broker configuration fields.
 type Form struct {
 	ui.Form
 	Index   int  // -1 for new

@@ -110,7 +110,7 @@ type model struct {
 
 	ui uiState
 
-	confirm *confirm.Component
+	confirm *confirm.Dialog
 
 	layout layoutConfig
 

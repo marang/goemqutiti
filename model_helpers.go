@@ -40,7 +40,7 @@ func (m *model) SetElemPos(id string, pos int) { m.ui.elemPos[id] = pos }
 
 // StartConfirm displays a confirmation dialog and runs the action on accept.
 func (m *model) StartConfirm(prompt, info string, returnFocus func() tea.Cmd, action func() tea.Cmd, cancel func()) {
-	m.confirm = confirm.NewComponent(m, m, returnFocus, action, cancel)
+	m.confirm = confirm.NewDialog(m, m, returnFocus, action, cancel)
 	m.confirm.Start(prompt, info)
 	m.components[modeConfirmDelete] = m.confirm
 }

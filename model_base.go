@@ -29,6 +29,7 @@ var focusByMode = map[constants.AppMode][]string{
 	constants.ModeTracer:         {traces.IDList, idHelp},
 	constants.ModeEditTrace:      {traces.IDForm, idHelp},
 	constants.ModeViewTrace:      {idHelp},
+	constants.ModeTraceFilter:    {idHelp},
 	constants.ModeImporter:       {idHelp},
 	constants.ModeHistoryFilter:  {idHelp},
 	constants.ModeHistoryDetail:  {idHelp},

@@ -13,6 +13,7 @@ const (
 	ModeTracer
 	ModeEditTrace
 	ModeViewTrace
+	ModeTraceFilter
 	ModeImporter
 	ModeHistoryFilter
 	ModeHistoryDetail

@@ -163,6 +163,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		constants.ModeTracer:         tracesComp,
 		constants.ModeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
 		constants.ModeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
+		constants.ModeTraceFilter:    component{update: m.traces.UpdateFilter, view: m.traces.ViewFilter},
 		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
 		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
 		constants.ModeHelp:           m.help,

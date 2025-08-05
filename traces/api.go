@@ -19,6 +19,7 @@ type API interface {
 	SetModeTracer() tea.Cmd
 	SetModeEditTrace() tea.Cmd
 	SetModeViewTrace() tea.Cmd
+	SetModeTraceFilter() tea.Cmd
 	SetFocus(id string) tea.Cmd
 	FocusedID() string
 	ResetElemPos()

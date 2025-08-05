@@ -10,10 +10,11 @@ import (
 
 func (m *model) tracesStore() traces.Store { return traces.FileStore{} }
 
-func (m *model) SetModeClient() tea.Cmd    { return m.SetMode(constants.ModeClient) }
-func (m *model) SetModeTracer() tea.Cmd    { return m.SetMode(constants.ModeTracer) }
-func (m *model) SetModeEditTrace() tea.Cmd { return m.SetMode(constants.ModeEditTrace) }
-func (m *model) SetModeViewTrace() tea.Cmd { return m.SetMode(constants.ModeViewTrace) }
+func (m *model) SetModeClient() tea.Cmd      { return m.SetMode(constants.ModeClient) }
+func (m *model) SetModeTracer() tea.Cmd      { return m.SetMode(constants.ModeTracer) }
+func (m *model) SetModeEditTrace() tea.Cmd   { return m.SetMode(constants.ModeEditTrace) }
+func (m *model) SetModeViewTrace() tea.Cmd   { return m.SetMode(constants.ModeViewTrace) }
+func (m *model) SetModeTraceFilter() tea.Cmd { return m.SetMode(constants.ModeTraceFilter) }
 
 func (m *model) Profiles() []connections.Profile { return m.connections.Manager.Profiles }
 

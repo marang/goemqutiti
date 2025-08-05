@@ -76,6 +76,7 @@ type State struct {
 	form  *traceForm
 	*history.Component
 	viewKey string
+	hmodel  *histModel
 }
 
 // Component implements the traces interface for managing traces. It owns the
@@ -110,6 +111,12 @@ func (h *histModel) PreviousMode() history.Mode { return h.prev }
 
 func (h *histModel) CurrentMode() history.Mode { return h.cur }
 
+func (h *histModel) SetModeTraceFilter() tea.Cmd {
+	h.prev = h.cur
+	h.cur = constants.ModeTraceFilter
+	return h.api.SetModeTraceFilter()
+}
+
 func (h *histModel) SetFocus(id string) tea.Cmd { return h.api.SetFocus(id) }
 
 func (h *histModel) Width() int { return h.api.Width() }
@@ -121,6 +128,7 @@ func (h *histModel) OverlayHelp(v string) string { return h.api.OverlayHelp(v) }
 func NewComponent(api API, ts State, store Store) *Component {
 	hm := &histModel{api: api, cur: constants.ModeViewTrace, prev: constants.ModeTracer}
 	ts.Component = history.NewComponent(hm, nil)
+	ts.hmodel = hm
 	return &Component{State: &ts, api: api, store: store}
 }
 
@@ -146,6 +154,29 @@ type traceTickMsg struct{}
 // traceTicker schedules periodic refresh events while traces run.
 func traceTicker() tea.Cmd {
 	return tea.Tick(500*time.Millisecond, func(t time.Time) tea.Msg { return traceTickMsg{} })
+}
+
+func (t *Component) startFilter() tea.Cmd {
+	idx := t.traceIndex(t.viewKey)
+	var topics []string
+	if idx >= 0 {
+		topics = append(topics, t.items[idx].cfg.Topics...)
+	}
+	var topic, payload string
+	var start, end time.Time
+	if t.FilterQuery() != "" {
+		ts, s, e, p := history.ParseQuery(t.FilterQuery())
+		if len(ts) > 0 {
+			topic = ts[0]
+		}
+		start, end, payload = s, e, p
+	} else {
+		end = time.Now()
+		start = end.Add(-time.Hour)
+	}
+	hf := history.NewFilterForm(topics, topic, payload, start, end, t.ShowArchived())
+	t.SetFilterForm(&hf)
+	return t.hmodel.SetModeTraceFilter()
 }
 
 // Update manages the traces list and responds to key presses.
@@ -337,6 +368,8 @@ func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
 			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
 			t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 			return nil
+		case "/":
+			return t.startFilter()
 		}
 	}
 	return t.Component.Update(msg)

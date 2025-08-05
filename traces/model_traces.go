@@ -123,14 +123,17 @@ func (t *Component) loadTraceMessages(index int) {
 	}
 	histItems := make([]history.Item, len(msgs))
 	listItems := make([]list.Item, len(msgs))
+	hmsgs := make([]history.Message, len(msgs))
 	for i, mmsg := range msgs {
 		hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind}
 		histItems[i] = hi
 		listItems[i] = hi
+		hmsgs[i] = history.Message{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: false}
 	}
 	t.Component.SetItems(histItems)
 	t.Component.List().SetItems(listItems)
-	t.Component.List().SetSize(t.api.Width()-4, t.api.Height()-4)
+	t.Component.SetStore(newMemStore(hmsgs))
+	t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 	t.viewKey = it.key
 	_ = t.api.SetModeViewTrace()
 }

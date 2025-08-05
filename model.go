@@ -16,8 +16,6 @@ import (
 	"github.com/marang/emqutiti/traces"
 )
 
-// reference history package to avoid unused import warning
-var _ = history.ID
 var _ Handler = (*model)(nil)
 var _ message.Model = (*model)(nil)
 

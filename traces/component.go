@@ -132,7 +132,7 @@ func (t *Component) Focus() tea.Cmd { return nil }
 
 func (t *Component) Blur() {}
 
-// Focusables satisfies FocusableSet; the base model provides the trace list focusable.
+// Focusables satisfies FocusableSet; the base model provides trace focusables.
 func (t *Component) Focusables() map[string]focus.Focusable { return map[string]focus.Focusable{} }
 
 // List exposes the trace configuration list model.
@@ -171,7 +171,11 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 			topics := t.api.SubscribedTopics()
 			f := newTraceForm(opts, t.api.ActiveConnection(), topics)
 			t.form = &f
-			return tea.Batch(t.api.SetModeEditTrace(), textinput.Blink)
+			return tea.Batch(
+				t.api.SetModeEditTrace(),
+				t.api.SetFocus(IDForm),
+				textinput.Blink,
+			)
 		case "enter":
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {

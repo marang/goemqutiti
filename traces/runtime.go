@@ -82,11 +82,15 @@ func (t *Tracer) Start() error {
 		}
 
 		endCh := make(<-chan time.Time)
+		var timer *time.Timer
 		if !t.cfg.End.IsZero() {
 			if d := time.Until(t.cfg.End); d > 0 {
-				timer := time.NewTimer(d)
+				timer = time.NewTimer(d)
 				endCh = timer.C
 			}
+		}
+		if timer != nil {
+			defer timer.Stop()
 		}
 
 		for _, topic := range t.cfg.Topics {

@@ -8,7 +8,6 @@
 | Ctrl+P | Manage payloads |
 | Ctrl+T | Manage topics |
 | Ctrl+R | Manage traces |
-| Ctrl+F | Clear history filters |
 | Ctrl+B | Open broker manager |
 | Ctrl+X | Disconnect from broker |
 | Ctrl+S / Ctrl+Enter | Publish message |
@@ -57,6 +56,7 @@
 | Delete | Remove selected messages |
 | Ctrl+L | Toggle archived view |
 | / | Filter messages |
+| Ctrl+F | Clear all history filters |
 | Enter | View full message |
 
 ## Traces

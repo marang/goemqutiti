@@ -67,6 +67,14 @@ func (t *Tracer) Start() error {
 
 	client := t.client
 
+	db, err := openTracerStore(t.cfg.Profile, false)
+	if err != nil {
+		t.mu.Lock()
+		t.running = false
+		t.mu.Unlock()
+		return err
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.cancel = cancel
 	t.done = make(chan struct{})
@@ -74,6 +82,7 @@ func (t *Tracer) Start() error {
 	go func() {
 		defer func() {
 			client.Disconnect()
+			db.Close()
 			cancel()
 			t.mu.Lock()
 			t.running = false
@@ -115,7 +124,7 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				if err := tracerAdd(t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"}); err != nil {
+				if err := tracerAddDB(db, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"}); err != nil {
 					t.reportErr(fmt.Errorf("tracerAdd: %w", err))
 					return
 				}

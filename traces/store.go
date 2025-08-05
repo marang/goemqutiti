@@ -61,6 +61,20 @@ func tracerAdd(profile, key string, msg TracerMessage) error {
 	})
 }
 
+// tracerAddDB stores a trace message using an existing database handle.
+// It allows callers to reuse an open Badger instance to avoid repeated
+// open/close cycles which can fail when the database is already in use.
+func tracerAddDB(db *badger.DB, key string, msg TracerMessage) error {
+	dbKey := []byte(fmt.Sprintf("trace/%s/%s/%020d", key, msg.Topic, msg.Timestamp.UnixNano()))
+	val, err := jsonMarshal(msg)
+	if err != nil {
+		return err
+	}
+	return db.Update(func(txn *badger.Txn) error {
+		return txn.Set(dbKey, val)
+	})
+}
+
 // Messages returns all messages stored for the given trace key.
 func tracerMessages(profile, key string) ([]TracerMessage, error) {
 	db, err := openTracerStore(profile, true)

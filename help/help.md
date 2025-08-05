@@ -28,7 +28,7 @@
 | Delete | Remove selected profile |
 | Ctrl+O | Toggle default profile |
 
-## Topics
+## Topics manager
 
 | Key | Action |
 | --- | ------ |
@@ -37,7 +37,7 @@
 | p | Toggle publish highlight |
 | Delete | Delete topic |
 
-## Payloads
+## Payloads manager
 
 | Key | Action |
 | --- | ------ |
@@ -59,7 +59,7 @@
 | Ctrl+F | Clear all history filters |
 | Enter | View full message |
 
-## Traces
+## Traces manager
 
 | Key | Action |
 | --- | ------ |
@@ -67,6 +67,14 @@
 | Enter | Start or stop trace |
 | v | View trace messages |
 | Delete | Remove trace |
+| Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
+
+## Traces view
+
+| Key | Action |
+| --- | ------ |
+| Esc | Back |
+| Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 
 ## Tips
 

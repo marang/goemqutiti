@@ -42,6 +42,9 @@ func (m *model) copyHistoryItems(items []history.Item) (int, error) {
 
 // handleCopyKey copies selected or current history items to the clipboard.
 func (m *model) handleCopyKey() tea.Cmd {
+	if m.ui.focusOrder[m.ui.focusIndex] != idHistory {
+		return nil
+	}
 	var selected []history.Item
 	hitems := m.history.Items()
 	for _, it := range hitems {

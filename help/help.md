@@ -4,7 +4,6 @@
 
 | Key | Action |
 | --- | ------ |
-| Ctrl+C | Copy selected entry |
 | Ctrl+D | Exit the program |
 | Ctrl+P | Manage payloads |
 | Ctrl+T | Manage topics |
@@ -53,6 +52,7 @@
 | Space | Toggle selection |
 | Shift+Up / Shift+Down | Extend selection |
 | Ctrl+A | Select all |
+| Ctrl+C | Copy selected history entries |
 | a | Archive selected messages |
 | Delete | Remove selected messages |
 | Ctrl+L | Toggle archived view |

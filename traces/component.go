@@ -114,7 +114,7 @@ func (h *histModel) SetFocus(id string) tea.Cmd { return h.api.SetFocus(id) }
 
 func (h *histModel) Width() int { return h.api.Width() }
 
-func (h *histModel) Height() int { return h.api.TraceHeight() }
+func (h *histModel) Height() int { return h.api.Height() }
 
 func (h *histModel) OverlayHelp(v string) string { return h.api.OverlayHelp(v) }
 
@@ -207,14 +207,6 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 				return traceTicker()
 			}
 			return nil
-		case "ctrl+shift+up":
-			if t.api.TraceHeight() > 1 {
-				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
-				t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
-			}
-		case "ctrl+shift+down":
-			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
-			t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
 		}
 	}
 	t.list, cmd = t.list.Update(msg)
@@ -303,16 +295,6 @@ func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
 			return t.api.SetModeTracer()
 		case "ctrl+d":
 			return tea.Quit
-		case "ctrl+shift+up":
-			if t.api.TraceHeight() > 1 {
-				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
-				t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
-			}
-			return nil
-		case "ctrl+shift+down":
-			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
-			t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
-			return nil
 		}
 	}
 	return t.Component.Update(msg)

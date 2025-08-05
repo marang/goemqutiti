@@ -108,7 +108,9 @@ func (m *Connections) DeleteConnection(index int) {
 		delete(m.Statuses, name)
 		delete(m.Errors, name)
 		// Persist removal so the connection no longer appears after a restart
-		saveConfig(m.Profiles, m.DefaultProfileName)
+		if err := saveConfig(m.Profiles, m.DefaultProfileName); err != nil {
+			log.Printf("Failed to save config after deleting %s: %v", name, err)
+		}
 		if err := deleteProfileData(name); err != nil {
 			log.Printf("Failed to remove data for profile %s: %v", name, err)
 		}
@@ -120,7 +122,9 @@ func (m *Connections) DeleteConnection(index int) {
 func (m *Connections) SetDefault(index int) {
 	if index >= 0 && index < len(m.Profiles) {
 		m.DefaultProfileName = m.Profiles[index].Name
-		saveConfig(m.Profiles, m.DefaultProfileName)
+		if err := saveConfig(m.Profiles, m.DefaultProfileName); err != nil {
+			log.Printf("Failed to save default profile: %v", err)
+		}
 		m.refreshList()
 	}
 }
@@ -128,7 +132,9 @@ func (m *Connections) SetDefault(index int) {
 // ClearDefault removes any default profile and saves the config.
 func (m *Connections) ClearDefault() {
 	m.DefaultProfileName = ""
-	saveConfig(m.Profiles, "")
+	if err := saveConfig(m.Profiles, ""); err != nil {
+		log.Printf("Failed to clear default profile: %v", err)
+	}
 	m.refreshList()
 }
 

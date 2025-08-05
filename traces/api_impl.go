@@ -5,10 +5,12 @@ package traces
 // replaced for testing.
 type FileStore struct{}
 
-func (FileStore) LoadTraces() map[string]TracerConfig     { return loadTraces() }
-func (FileStore) SaveTraces(data map[string]TracerConfig) { saveTraces(data) }
-func (FileStore) AddTrace(cfg TracerConfig)               { addTrace(cfg) }
-func (FileStore) RemoveTrace(key string)                  { removeTrace(key) }
+func (FileStore) LoadTraces() map[string]TracerConfig { return loadTraces() }
+func (FileStore) SaveTraces(data map[string]TracerConfig) error {
+	return saveTraces(data)
+}
+func (FileStore) AddTrace(cfg TracerConfig) error { return addTrace(cfg) }
+func (FileStore) RemoveTrace(key string) error    { return removeTrace(key) }
 func (FileStore) Messages(profile, key string) ([]TracerMessage, error) {
 	return tracerMessages(profile, key)
 }

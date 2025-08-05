@@ -38,27 +38,32 @@ func LoadState() map[string]ConnectionSnapshot {
 }
 
 // writeConfig writes the entire configuration back to disk.
-func writeConfig(cfg userConfig) {
+func writeConfig(cfg userConfig) error {
 	fp, err := DefaultUserConfigFile()
 	if err != nil {
-		return
+		return err
 	}
-	os.MkdirAll(filepath.Dir(fp), os.ModePerm)
+	if err := os.MkdirAll(filepath.Dir(fp), os.ModePerm); err != nil {
+		return err
+	}
 	var buf bytes.Buffer
 	if err := toml.NewEncoder(&buf).Encode(cfg); err != nil {
-		return
+		return err
 	}
-	os.WriteFile(fp, buf.Bytes(), 0644)
+	if err := os.WriteFile(fp, buf.Bytes(), 0644); err != nil {
+		return err
+	}
+	return nil
 }
 
 // SaveState updates only the Saved section in config.toml.
-func SaveState(data map[string]ConnectionSnapshot) {
+func SaveState(data map[string]ConnectionSnapshot) error {
 	fp, err := DefaultUserConfigFile()
 	if err != nil {
-		return
+		return err
 	}
 	var cfg userConfig
 	toml.DecodeFile(fp, &cfg) // ignore errors for new files
 	cfg.Saved = data
-	writeConfig(cfg)
+	return writeConfig(cfg)
 }

@@ -85,7 +85,9 @@ func TestSaveLoadState(t *testing.T) {
 			Payloads: []connections.PayloadSnapshot{{Topic: "foo", Payload: "bar"}},
 		},
 	}
-	connections.SaveState(data)
+	if err := connections.SaveState(data); err != nil {
+		t.Fatalf("SaveState: %v", err)
+	}
 	got := connections.LoadState()
 	if !reflect.DeepEqual(got, data) {
 		t.Fatalf("state mismatch: %#v != %#v", got, data)
@@ -104,7 +106,9 @@ func TestSaveLoadTraces(t *testing.T) {
 		"t1": {Profile: "p1", Topics: []string{"a"}, Start: start, End: end, Key: "t1"},
 	}
 	store := traces.FileStore{}
-	store.SaveTraces(data)
+	if err := store.SaveTraces(data); err != nil {
+		t.Fatalf("SaveTraces: %v", err)
+	}
 	got := store.LoadTraces()
 	// Compare only relevant fields
 	if len(got) != len(data) {
@@ -115,5 +119,21 @@ func TestSaveLoadTraces(t *testing.T) {
 		if g.Profile != v.Profile || len(g.Topics) != len(v.Topics) || g.Topics[0] != v.Topics[0] || !g.Start.Equal(v.Start) || !g.End.Equal(v.End) {
 			t.Fatalf("trace mismatch: %#v != %#v", g, v)
 		}
+	}
+}
+
+func TestSaveStateWriteError(t *testing.T) {
+	dir := t.TempDir()
+	cfgFile := filepath.Join(dir, ".config")
+	if err := os.WriteFile(cfgFile, []byte("x"), 0o644); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	oldHome := os.Getenv("HOME")
+	os.Setenv("HOME", dir)
+	defer os.Setenv("HOME", oldHome)
+
+	err := connections.SaveState(map[string]connections.ConnectionSnapshot{})
+	if err == nil {
+		t.Fatal("expected error")
 	}
 }

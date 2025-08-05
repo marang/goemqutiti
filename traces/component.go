@@ -222,7 +222,9 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 					items = append(items, it)
 				}
 				t.list.SetItems(items)
-				removeTrace(key)
+				if err := removeTrace(key); err != nil {
+					t.api.LogHistory("", err.Error(), "log", err.Error())
+				}
 			}
 			if t.anyTraceRunning() {
 				return traceTicker()
@@ -302,7 +304,10 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 			items := t.list.Items()
 			items = append(items, newItem)
 			t.list.SetItems(items)
-			addTrace(cfg)
+			if err := addTrace(cfg); err != nil {
+				t.form.errMsg = err.Error()
+				return nil
+			}
 			t.form = nil
 			return t.api.SetModeTracer()
 		}

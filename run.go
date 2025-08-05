@@ -87,7 +87,16 @@ func Main() {
 			log.Println("trace key already exists")
 			return
 		}
-		traces.FileStore{}.AddTrace(traces.TracerConfig{Profile: profileName, Topics: tlist, Start: start, End: end, Key: traceKey})
+		if err := (traces.FileStore{}).AddTrace(traces.TracerConfig{
+			Profile: profileName,
+			Topics:  tlist,
+			Start:   start,
+			End:     end,
+			Key:     traceKey,
+		}); err != nil {
+			log.Println(err)
+			return
+		}
 		if err := traces.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			log.Println(err)
 		}

@@ -35,9 +35,9 @@ type API interface {
 // Store defines persistence and messaging operations for traces.
 type Store interface {
 	LoadTraces() map[string]TracerConfig
-	SaveTraces(map[string]TracerConfig)
-	AddTrace(TracerConfig)
-	RemoveTrace(string)
+	SaveTraces(map[string]TracerConfig) error
+	AddTrace(TracerConfig) error
+	RemoveTrace(string) error
 	Messages(profile, key string) ([]TracerMessage, error)
 	HasData(profile, key string) (bool, error)
 	ClearData(profile, key string) error

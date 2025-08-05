@@ -2,27 +2,38 @@ package emqutiti
 
 import (
 	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	connections "github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/topics"
 )
 
+// logTopicAction appends a log entry for a topic action.
+// action should be "subscribe" or "unsubscribe".
+func (m *model) logTopicAction(topic, action string, err error) {
+	act := strings.ToUpper(action[:1]) + action[1:]
+	if err != nil {
+		m.history.Append(topic, "", "log", fmt.Sprintf("%s error for %s: %v", act, topic, err))
+		return
+	}
+	switch action {
+	case "subscribe":
+		m.history.Append(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
+	case "unsubscribe":
+		m.history.Append(topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", topic))
+	}
+}
+
 // handleTopicToggle subscribes or unsubscribes from a topic and logs the action.
 func (m *model) handleTopicToggle(msg topics.ToggleMsg) tea.Cmd {
 	if m.mqttClient != nil {
 		if msg.Subscribed {
-			if err := m.mqttClient.Subscribe(msg.Topic, 0, nil); err != nil {
-				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribe error for %s: %v", msg.Topic, err))
-			} else {
-				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", msg.Topic))
-			}
+			err := m.mqttClient.Subscribe(msg.Topic, 0, nil)
+			m.logTopicAction(msg.Topic, "subscribe", err)
 		} else {
-			if err := m.mqttClient.Unsubscribe(msg.Topic); err != nil {
-				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribe error for %s: %v", msg.Topic, err))
-			} else {
-				m.history.Append(msg.Topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", msg.Topic))
-			}
+			err := m.mqttClient.Unsubscribe(msg.Topic)
+			m.logTopicAction(msg.Topic, "unsubscribe", err)
 		}
 	}
 	return nil

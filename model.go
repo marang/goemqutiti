@@ -96,7 +96,7 @@ type uiState struct {
 	viewport   viewport.Model      // scrolling container for the main view
 	elemPos    map[string]int      // cached Y positions of each box
 	focusOrder []string            // order of focusable elements
-	focusMap   map[string]int // maps element IDs to their index
+	focusMap   map[string]int      // maps element IDs to their index
 }
 
 type model struct {
@@ -132,5 +132,6 @@ func (m *model) Focusables() map[string]focus.Focusable {
 		idTopics:      &focus.NullFocusable{},
 		idHistory:     &focus.NullFocusable{},
 		traces.IDList: &focus.NullFocusable{},
+		traces.IDForm: &focus.NullFocusable{},
 	}
 }

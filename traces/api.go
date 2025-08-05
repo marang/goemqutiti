@@ -9,6 +9,9 @@ import (
 // IDList identifies the trace list focusable element.
 const IDList = "trace-list"
 
+// IDForm identifies the trace form focusable element.
+const IDForm = "trace-form"
+
 // API defines interactions required by the traces component from the host model.
 type API interface {
 	confirm.API

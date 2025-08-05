@@ -97,8 +97,10 @@ func (m *model) SetMode(mode appMode) tea.Cmd {
 		order = []string{idHelp}
 	}
 	m.ui.focusOrder = append([]string(nil), order...)
+	m.ui.focusMap = make(map[string]int, len(order))
 	items := make([]focus.Focusable, len(order))
 	for i, id := range order {
+		m.ui.focusMap[id] = i
 		if f := m.focusables[id]; f != nil {
 			items[i] = f
 		} else {

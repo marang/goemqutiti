@@ -171,7 +171,11 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 			topics := t.api.SubscribedTopics()
 			f := newTraceForm(opts, t.api.ActiveConnection(), topics)
 			t.form = &f
-			return tea.Batch(t.api.SetModeEditTrace(), textinput.Blink)
+			return tea.Batch(
+				t.api.SetModeEditTrace(),
+				t.api.SetFocus(IDForm),
+				textinput.Blink,
+			)
 		case "enter":
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
@@ -191,20 +195,35 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 		case "delete":
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
-				key := t.items[i].key
-				t.stopTrace(i)
-				t.items = append(t.items[:i], t.items[i+1:]...)
-				items := []list.Item{}
-				for _, it := range t.items {
-					items = append(items, it)
-				}
-				t.list.SetItems(items)
-				if err := removeTrace(key); err != nil {
-					t.api.LogHistory("", err.Error(), "log", err.Error())
-				}
-			}
-			if t.anyTraceRunning() {
-				return traceTicker()
+				it := t.items[i]
+				key := it.key
+				cfg := it.cfg
+				rf := func() tea.Cmd { return t.api.SetFocus(t.api.FocusedID()) }
+				t.api.StartConfirm(
+					fmt.Sprintf("Delete trace '%s'? [y/n]", key),
+					"This also removes all stored data of this trace",
+					rf,
+					func() tea.Cmd {
+						t.stopTrace(i)
+						t.items = append(t.items[:i], t.items[i+1:]...)
+						items := make([]list.Item, len(t.items))
+						for idx, itm := range t.items {
+							items[idx] = itm
+						}
+						t.list.SetItems(items)
+						if err := t.store.RemoveTrace(key); err != nil {
+							t.api.LogHistory("", err.Error(), "log", err.Error())
+						}
+						if err := t.store.ClearData(cfg.Profile, key); err != nil {
+							t.api.LogHistory("", err.Error(), "log", err.Error())
+						}
+						if t.anyTraceRunning() {
+							return traceTicker()
+						}
+						return nil
+					},
+					nil,
+				)
 			}
 			return nil
 		case "ctrl+shift+up":
@@ -229,16 +248,18 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 	if t.form == nil {
 		return nil
 	}
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
+	if km, ok := msg.(tea.KeyMsg); ok {
+		switch km.String() {
 		case "ctrl+d":
 			return tea.Quit
 		case "esc":
 			t.form = nil
 			return t.api.SetModeTracer()
-		case "enter":
+		}
+		if t.api.FocusedID() != IDForm {
+			return nil
+		}
+		if km.String() == "enter" {
 			cfg := t.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
 				t.form.errMsg = "key, profile and topics required"
@@ -288,7 +309,10 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 			t.form = nil
 			return t.api.SetModeTracer()
 		}
+	} else if t.api.FocusedID() != IDForm {
+		return nil
 	}
+	var cmd tea.Cmd
 	f, cmd := t.form.Update(msg)
 	t.form = &f
 	return cmd

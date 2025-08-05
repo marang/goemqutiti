@@ -8,6 +8,7 @@
 - Summarize changes and test results in pull request descriptions.
 - Keep documentation snappy. Use bullet lists and short sections so the README
   is easy to skim. Mention the main keyboard shortcuts.
+- Favor idiomatic Go patterns and avoid redundant code.
 
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name. The importer code lives in the main package and runs via these flags.

@@ -2,6 +2,7 @@ package traces
 
 import (
 	"bytes"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,29 +19,39 @@ type persistedTrace struct {
 }
 
 // loadTraces retrieves planned traces from config.toml.
-func loadTraces() map[string]TracerConfig {
+func loadTraces() (out map[string]TracerConfig) {
+	out = map[string]TracerConfig{}
 	fp, err := connections.DefaultUserConfigFile()
 	if err != nil {
-		return map[string]TracerConfig{}
+		return
 	}
 	var cfg struct {
 		Traces map[string]persistedTrace `toml:"traces"`
 	}
 	if _, err := toml.DecodeFile(fp, &cfg); err != nil {
-		return map[string]TracerConfig{}
+		return
 	}
-	out := make(map[string]TracerConfig)
 	for k, v := range cfg.Traces {
 		var start, end time.Time
 		if v.Start != "" {
-			start, _ = time.Parse(time.RFC3339, v.Start)
+			t, err := time.Parse(time.RFC3339, v.Start)
+			if err != nil {
+				log.Printf("invalid start time for trace %q: %v", k, err)
+			} else {
+				start = t
+			}
 		}
 		if v.End != "" {
-			end, _ = time.Parse(time.RFC3339, v.End)
+			t, err := time.Parse(time.RFC3339, v.End)
+			if err != nil {
+				log.Printf("invalid end time for trace %q: %v", k, err)
+			} else {
+				end = t
+			}
 		}
 		out[k] = TracerConfig{Profile: v.Profile, Topics: v.Topics, Start: start, End: end, Key: k}
 	}
-	return out
+	return
 }
 
 // saveTraces updates the Traces section in config.toml.

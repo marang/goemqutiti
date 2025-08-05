@@ -40,7 +40,31 @@ Press `Ctrl+R` in the UI to manage recorded traces.
 
 ### Headless tracing
 
-Use `emqutiti --trace myrun --topics "sensors/#" -p local` to capture messages without the UI. Traces are stored under `~/.config/emqutiti/data/<profile>/traces` and can be viewed in the application (run `emqutiti` and press `CTRL+R` in the app to view traces)
+Run traces without the UI:
+
+```
+emqutiti --trace myrun --topics "sensors/#" -p local
+```
+
+Flags:
+
+- `--trace` trace name
+- `--topics` topic filter
+- `-p`, `--profile` connection profile
+- `--start` RFC3339 start time
+- `--end` RFC3339 end time
+
+Times must be RFC3339 formatted.
+
+Example scheduled run:
+
+```
+emqutiti --trace myrun --topics "sensors/#" -p local --start "2025-08-05T11:47:00Z" --end "2025-08-05T11:49:00Z"
+```
+
+Traces are stored under `~/.config/emqutiti/data/<profile>/traces` and can
+be viewed in the application (run `emqutiti` and press `CTRL+R` in the app
+to view traces).
 
 ## Configuration
 stored in `~/.config/emqutiti/config.toml` describing broker profiles. You can also create connections within the UI.

@@ -85,7 +85,6 @@ func (m *mqttClient) Disconnect() {
 }
 
 // Run executes the tracer headlessly using configuration from config.toml.
-// Run executes the tracer headlessly using configuration from config.toml.
 func Run(key, topics, profileName, startStr, endStr string) error {
 	if key == "" || topics == "" {
 		return fmt.Errorf("-trace and -topics are required")

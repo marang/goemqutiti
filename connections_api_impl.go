@@ -31,7 +31,9 @@ func (m *model) SubscribeActiveTopics() {
 	}
 	for _, t := range m.topics.Items {
 		if t.Subscribed {
-			m.mqttClient.Subscribe(t.Name, 0, nil)
+			if err := m.mqttClient.Subscribe(t.Name, 0, nil); err != nil {
+				m.connections.SendStatus(fmt.Sprintf("Subscribe error for %s: %v", t.Name, err))
+			}
 		}
 	}
 }

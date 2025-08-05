@@ -7,7 +7,17 @@ import (
 // ViewForm renders the form for new traces.
 func (t *Component) ViewForm() string {
 	t.api.ResetElemPos()
+	focused := t.api.FocusedID() == IDForm
+	if t.form != nil {
+		if focused {
+			t.form.ApplyFocus()
+		} else {
+			for _, fld := range t.form.Fields {
+				fld.Blur()
+			}
+		}
+	}
 	content := t.form.View()
-	view := ui.LegendBox(content, "New Trace", t.api.Width()-2, 0, ui.ColBlue, true, -1)
+	view := ui.LegendBox(content, "New Trace", t.api.Width()-2, 0, ui.ColBlue, focused, -1)
 	return t.api.OverlayHelp(view)
 }

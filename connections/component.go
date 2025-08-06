@@ -196,6 +196,9 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 func (c *Component) View() string {
 	c.api.ResetElemPos()
 	c.api.SetElemPos(constants.IDConnList, 1)
+	cw := c.nav.Width() - 4
+	ch := c.nav.Height() - 6
+	c.api.Manager().ConnectionsList.SetSize(cw, ch)
 	listView := c.api.Manager().ConnectionsList.View()
 	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+O default  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)

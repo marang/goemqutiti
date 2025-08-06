@@ -73,6 +73,21 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.ReconnectPeriod = iv
 		}
 	},
+	"publish_timeout": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.PublishTimeout = iv
+		}
+	},
+	"subscribe_timeout": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.SubscribeTimeout = iv
+		}
+	},
+	"unsubscribe_timeout": func(p *Profile, v string) {
+		if iv, err := strconv.Atoi(v); err == nil {
+			p.UnsubscribeTimeout = iv
+		}
+	},
 	"clean_start": func(p *Profile, v string) {
 		if bv, err := strconv.ParseBool(v); err == nil {
 			p.CleanStart = bv

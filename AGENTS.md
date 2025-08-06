@@ -1,14 +1,24 @@
 # Repo Guidelines
 
-- Always run `gofmt -w` on modified Go files.
-- Run `go vet ./...` and attempt `go test ./...` before committing.
-- Run `go mod tidy` whenever dependencies change.
-- Avoid committing binary artifacts such as GIFs. Generate them locally from `.cast` files instead.
-- Keep commit messages short and descriptive; wrap lines at 72 characters.
-- Summarize changes and test results in pull request descriptions.
-- Keep documentation snappy. Use bullet lists and short sections so the README
-  is easy to skim. Mention the main keyboard shortcuts.
-- Favor idiomatic Go patterns and avoid redundant code.
+## Quick Reference
+- **Scope:** This file applies to the entire repository. A nested
+  `AGENTS.md` overrides these rules for files in its directory tree.
+- **Formatting:** Run `gofmt -w` on modified Go files and favor idiomatic Go
+  patterns.
+- **Checks:** Execute `go vet ./...` and `go test ./...` before committing.
+  Run `go mod tidy` when dependencies change.
+- **Artifacts:** Avoid committing binary files such as GIFs. Generate them
+  locally from `.cast` recordings instead.
+- **Commits:** Keep messages short, wrap lines at 72 characters, and summarize
+  changes and test results in pull requests.
+- **Docs:** Keep `README.md`, `TODO.md`, `AGENTS.md`, and `help/help.md` in
+  sync. Docs live under `docs/`; use short sections and bullet lists so
+  they are easy to skim and mention key shortcuts.
+- **Key directories:** `cmd/` contains the CLI entry point, `ui/` holds TUI
+  components, and `docs/` stores user docs.
+- **Pitfalls:** Keyboard shortcuts bound to letters can interfere with text
+  entry—prefer `Ctrl` combinations. `ExampleSet_manual` in
+  `keyring_util_test.go` requires a real keyring and is skipped by default.
 
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or `Ctrl+Enter` when the message field is focused. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name. The importer code lives in the main package and runs via these flags.

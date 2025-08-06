@@ -1,6 +1,12 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/marang/emqutiti/constants"
+	"github.com/marang/emqutiti/ui"
+)
 
 // isHistoryFocused reports if the history list has focus.
 func (m *model) isHistoryFocused() bool {
@@ -37,6 +43,10 @@ func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 	cmd := m.focusFromMouse(msg.Y)
 	if m.isHistoryFocused() && !m.history.ShowArchived() {
 		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
+	}
+	helpWidth := lipgloss.Width(ui.HelpStyle.Render("?"))
+	if msg.Y == 1 && msg.X >= m.ui.width-helpWidth+1 {
+		m.SetMode(constants.ModeHelp)
 	}
 	return cmd
 }

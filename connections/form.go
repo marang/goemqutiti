@@ -109,7 +109,11 @@ func NewForm(p Profile, idx int) Form {
 		case ftBool:
 			fields[i] = ui.NewCheckField(boolVal)
 		case ftSelect:
-			fields[i] = ui.NewSelectField(strVal, fd.options)
+			sf, err := ui.NewSelectField(strVal, fd.options)
+			if err != nil {
+				sf = &ui.SelectField{}
+			}
+			fields[i] = sf
 		case ftPassword:
 			fields[i] = ui.NewTextField(strVal, placeholder, true)
 		default:

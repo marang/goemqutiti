@@ -26,12 +26,18 @@ const (
 // newTraceForm builds a form for creating or editing a trace.
 func newTraceForm(profiles []string, current string, topics []string) traceForm {
 	keyField := ui.NewTextField("", "Key")
-	profileField := ui.NewSelectField(current, profiles)
+	profileField, err := ui.NewSelectField(current, profiles)
+	if err != nil {
+		profileField = &ui.SelectField{}
+	}
 	topicsField := ui.NewTextField(strings.Join(topics, ","), "Topics")
 	startField := ui.NewTextField("", "2006-01-02T15:04:05Z")
 	endField := ui.NewTextField("", "2006-01-02T15:04:05Z")
 	fields := []ui.Field{keyField, profileField, topicsField, startField, endField}
 	tf := traceForm{Form: ui.Form{Fields: fields, Focus: 0}}
+	if err != nil {
+		tf.errMsg = err.Error()
+	}
 	tf.ApplyFocus()
 	return tf
 }

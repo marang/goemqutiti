@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,7 +18,10 @@ type SelectField struct {
 	readOnly bool
 }
 
-func NewSelectField(val string, opts []string) *SelectField {
+func NewSelectField(val string, opts []string) (*SelectField, error) {
+	if len(opts) == 0 {
+		return nil, fmt.Errorf("no options provided")
+	}
 	idx := 0
 	for i, o := range opts {
 		if o == val {
@@ -25,7 +29,7 @@ func NewSelectField(val string, opts []string) *SelectField {
 			break
 		}
 	}
-	return &SelectField{options: opts, Index: idx}
+	return &SelectField{options: opts, Index: idx}, nil
 }
 
 func (s *SelectField) Focus() {
@@ -68,6 +72,13 @@ func (s *SelectField) Update(msg tea.Msg) tea.Cmd {
 }
 
 func (s *SelectField) View() string {
+	if len(s.options) == 0 {
+		val := "-"
+		if s.focused {
+			return FocusedStyle.Render(val)
+		}
+		return BlurredStyle.Render(val)
+	}
 	val := s.options[s.Index]
 	if s.focused {
 		return FocusedStyle.Render(val)
@@ -75,7 +86,12 @@ func (s *SelectField) View() string {
 	return val
 }
 
-func (s *SelectField) Value() string { return s.options[s.Index] }
+func (s *SelectField) Value() string {
+	if len(s.options) == 0 {
+		return ""
+	}
+	return s.options[s.Index]
+}
 
 // OptionsView renders the available options when the field is focused.
 // The current selection is highlighted.

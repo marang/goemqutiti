@@ -1,18 +1,54 @@
 package emqutiti
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 
 	"github.com/marang/emqutiti/history"
 )
+
+type dummyToken struct{ err error }
+
+func (t *dummyToken) Wait() bool                     { return true }
+func (t *dummyToken) WaitTimeout(time.Duration) bool { return true }
+func (t *dummyToken) Done() <-chan struct{} {
+	ch := make(chan struct{})
+	close(ch)
+	return ch
+}
+func (t *dummyToken) Error() error { return t.err }
+
+type fakeClient struct {
+	subErr   error
+	unsubErr error
+}
+
+func (c *fakeClient) IsConnected() bool                                  { return true }
+func (c *fakeClient) IsConnectionOpen() bool                             { return true }
+func (c *fakeClient) Connect() mqtt.Token                                { return &dummyToken{} }
+func (c *fakeClient) Disconnect(uint)                                    {}
+func (c *fakeClient) Publish(string, byte, bool, interface{}) mqtt.Token { return &dummyToken{} }
+func (c *fakeClient) Subscribe(string, byte, mqtt.MessageHandler) mqtt.Token {
+	return &dummyToken{err: c.subErr}
+}
+func (c *fakeClient) SubscribeMultiple(map[string]byte, mqtt.MessageHandler) mqtt.Token {
+	return &dummyToken{}
+}
+func (c *fakeClient) Unsubscribe(...string) mqtt.Token     { return &dummyToken{err: c.unsubErr} }
+func (c *fakeClient) AddRoute(string, mqtt.MessageHandler) {}
+func (c *fakeClient) OptionsReader() mqtt.ClientOptionsReader {
+	return mqtt.NewOptionsReader(mqtt.NewClientOptions())
+}
 
 func TestHandleMouseScrollTopics(t *testing.T) {
 	m, _ := initialModel(nil)
@@ -134,5 +170,79 @@ func TestUpdateClientStatus(t *testing.T) {
 	cmds = m.updateClientStatus()
 	if len(cmds) != 2 {
 		t.Fatalf("expected 2 cmds got %d", len(cmds))
+	}
+}
+
+func TestHandleTopicToggleActions(t *testing.T) {
+	t.Run("subscribe", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.mqttClient = &MQTTClient{Client: &fakeClient{}}
+		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		if items[0].Payload != "Subscribed to topic: t1" {
+			t.Fatalf("unexpected payload %q", items[0].Payload)
+		}
+	})
+
+	t.Run("unsubscribe", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.mqttClient = &MQTTClient{Client: &fakeClient{}}
+		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		if items[0].Payload != "Unsubscribed from topic: t1" {
+			t.Fatalf("unexpected payload %q", items[0].Payload)
+		}
+	})
+
+	t.Run("subscribe error", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.mqttClient = &MQTTClient{Client: &fakeClient{subErr: errors.New("boom")}}
+		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		if !strings.Contains(items[0].Payload, "boom") {
+			t.Fatalf("expected error payload, got %q", items[0].Payload)
+		}
+	})
+
+	t.Run("unsubscribe error", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.mqttClient = &MQTTClient{Client: &fakeClient{unsubErr: errors.New("boom")}}
+		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		if !strings.Contains(items[0].Payload, "boom") {
+			t.Fatalf("expected error payload, got %q", items[0].Payload)
+		}
+	})
+
+	t.Run("no client", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		if !strings.Contains(items[0].Payload, "no mqtt client") {
+			t.Fatalf("unexpected payload %q", items[0].Payload)
+		}
+	})
+}
+
+func TestLogTopicActionEmpty(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.logTopicAction("t1", "", nil)
+	if len(m.history.Items()) != 0 {
+		t.Fatalf("expected no history items, got %d", len(m.history.Items()))
 	}
 }

@@ -13,6 +13,9 @@ import (
 // logTopicAction appends a log entry for a topic action.
 // action should be "subscribe" or "unsubscribe".
 func (m *model) logTopicAction(topic, action string, err error) {
+	if len(action) == 0 {
+		return
+	}
 	act := strings.ToUpper(action[:1]) + action[1:]
 	if err != nil {
 		m.history.Append(topic, "", "log", fmt.Sprintf("%s error for %s: %v", act, topic, err))

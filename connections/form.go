@@ -9,6 +9,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/ui"
 )
@@ -171,24 +172,39 @@ func (f Form) Update(msg tea.Msg) (Form, tea.Cmd) {
 	return f, tea.Batch(cmds...)
 }
 
-// View renders the form with labels and field contents.
+// View renders the form with labels in a left column and inputs on the right.
 func (f Form) View() string {
-	var s string
+	var rows []string
+	maxLabel := 0
+	for _, fd := range formFields {
+		if w := lipgloss.Width(fd.label); w > maxLabel {
+			maxLabel = w
+		}
+	}
+	labelStyle := lipgloss.NewStyle().Width(maxLabel).Align(lipgloss.Right)
 	for i, in := range f.Fields {
 		label := formFields[i].label
 		if i == f.Focus {
 			label = ui.FocusedStyle.Render(label)
 		}
-		s += fmt.Sprintf("%s: %s\n", label, in.View())
+		left := labelStyle.Render(label)
+		row := lipgloss.JoinHorizontal(lipgloss.Top, left, ": ", in.View())
+		rows = append(rows, row)
+		if sf, ok := in.(*ui.SelectField); ok && f.IsFocused(i) {
+			if opts := sf.OptionsView(); opts != "" {
+				indent := lipgloss.NewStyle().MarginLeft(maxLabel + 2).Render(opts)
+				rows = append(rows, indent)
+			}
+		}
 	}
 	idxFromEnv := fieldIndex["FromEnv"]
 	idxName := fieldIndex["Name"]
 	if chk, ok := f.Fields[idxFromEnv].(*ui.CheckField); ok && chk.Bool() {
 		prefix := EnvPrefix(f.Fields[idxName].Value())
-		s += ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>") + "\n"
+		rows = append(rows, ui.InfoStyle.Render("Values loaded from env vars: "+prefix+"<FIELD>"))
 	}
-	s += "\n" + ui.InfoStyle.Render("[enter] save  [esc] cancel")
-	return s
+	rows = append(rows, "", ui.InfoStyle.Render("[enter] save  [esc] cancel"))
+	return strings.Join(rows, "\n")
 }
 
 // Profile builds a Profile struct from the form values.

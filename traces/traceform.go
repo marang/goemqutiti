@@ -69,6 +69,11 @@ func (f traceForm) View() string {
 			label = ui.FocusedStyle.Render(label)
 		}
 		b.WriteString(label + ": " + fld.View() + "\n")
+		if sf, ok := fld.(*ui.SelectField); ok && f.IsFocused(i) {
+			if opts := sf.OptionsView(); opts != "" {
+				b.WriteString(opts + "\n")
+			}
+		}
 	}
 	if f.errMsg != "" {
 		b.WriteString("\n" + ui.ErrorStyle.Render(f.errMsg))

@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"strings"
+
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/constants"
 )
@@ -73,3 +76,20 @@ func (s *SelectField) View() string {
 }
 
 func (s *SelectField) Value() string { return s.options[s.Index] }
+
+// OptionsView renders the available options when the field is focused.
+// The current selection is highlighted.
+func (s *SelectField) OptionsView() string {
+	if !s.focused || len(s.options) == 0 {
+		return ""
+	}
+	items := make([]string, len(s.options))
+	for i, opt := range s.options {
+		st := lipgloss.NewStyle().Foreground(ColBlue)
+		if i == s.Index {
+			st = st.Foreground(ColPink)
+		}
+		items[i] = st.Render(opt)
+	}
+	return strings.Join(items, "\n")
+}

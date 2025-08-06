@@ -144,9 +144,17 @@ This project is licensed under the terms of the MIT License. See [LICENSE](LICEN
 
 ## Testing
 
-Unit tests can be run with `go test ./...`. The example `ExampleSet_manual` in
-`keyring_util_test.go` interacts with the real system keyring and is excluded
-from automated runs. Execute it manually when a keyring is available.
+Unit tests run quickly offline with `go test ./...`; network calls are
+stubbed (the TLS client tests spin up a temporary loopback server).
+
+The example `ExampleSet_manual` in `keyring_util_test.go` touches the real
+system keyring and is skipped by default. Run it only when a keyring is
+available:
+
+```bash
+go test -run ExampleSet_manual -tags manual
+```
+
 Tests also cover configuration parsing and saved state persistence.
 
 Before sending a pull request run `go vet ./...` along with the tests to catch

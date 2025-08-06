@@ -8,9 +8,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-// clientInfoLine renders the connection status and keyboard shortcuts.
+// clientInfoLine renders the connection status.
 func (m *model) clientInfoLine() string {
-	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces.")
 	clientID := ""
 	if m.mqttClient != nil {
 		r := m.mqttClient.Client.OptionsReader()
@@ -23,14 +22,13 @@ func (m *model) clientInfoLine() string {
 	} else if strings.HasPrefix(m.connections.Connection, "Connection lost") || strings.HasPrefix(m.connections.Connection, "Failed") {
 		st = st.Foreground(ui.ColWarn)
 	}
-	connLine := st.Render(status)
-	return lipgloss.JoinVertical(lipgloss.Left, infoShortcuts, connLine)
+	return st.Render(status)
 }
 
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
 	m.ui.elemPos = map[string]int{}
-	infoLine := m.clientInfoLine()
+	statusLine := m.clientInfoLine()
 	topicsBox, topicBox, bounds := m.renderTopicsSection()
 	messageBox := m.message.View()
 	messagesBox := m.renderHistorySection()
@@ -60,5 +58,5 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, infoLine, view))
+	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, statusLine, view))
 }

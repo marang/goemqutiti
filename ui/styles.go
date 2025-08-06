@@ -21,8 +21,8 @@ var (
 	ErrorStyle      = lipgloss.NewStyle().Foreground(ColWarn).PaddingLeft(1)
 	InfoSubtleStyle = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
 
-	HelpStyle   = lipgloss.NewStyle().Foreground(ColGreen)
-	HelpFocused = HelpStyle.Background(ColPink)
+	HelpStyle   = lipgloss.NewStyle().Foreground(ColCyan)
+	HelpFocused = HelpStyle.Foreground(ColDarkGray).Background(ColPink)
 	HelpHeader  = lipgloss.NewStyle().Foreground(ColCyan).Bold(true).Underline(true)
 	HelpKey     = lipgloss.NewStyle().Foreground(ColGreen).Width(20)
 )

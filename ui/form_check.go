@@ -48,10 +48,14 @@ func (c *CheckField) View() string {
 	if c.value {
 		box = "[x]"
 	}
-	if c.focused {
+	switch {
+	case c.readOnly:
+		return BlurredStyle.Render(box)
+	case c.focused:
 		return FocusedStyle.Render(box)
+	default:
+		return box
 	}
-	return box
 }
 
 func (c *CheckField) Value() string { return fmt.Sprintf("%v", c.value) }

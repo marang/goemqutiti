@@ -13,6 +13,8 @@ type Field interface {
 	Update(msg tea.Msg) tea.Cmd
 	View() string
 	Value() string
+	ReadOnly() bool
+	SetReadOnly(bool)
 }
 
 // KeyConsumer reports whether a field wants to handle a key itself instead of
@@ -64,14 +66,5 @@ func (f *Form) IsFocused(idx int) bool {
 	if idx != f.Focus || idx < 0 || idx >= len(f.Fields) {
 		return false
 	}
-	switch fld := f.Fields[idx].(type) {
-	case *TextField:
-		return fld.Model.Focused() && !fld.readOnly
-	case *SelectField:
-		return fld.focused && !fld.readOnly
-	case *CheckField:
-		return fld.focused && !fld.readOnly
-	default:
-		return true
-	}
+	return !f.Fields[idx].ReadOnly()
 }

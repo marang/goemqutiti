@@ -80,10 +80,14 @@ func (s *SelectField) View() string {
 		return BlurredStyle.Render(val)
 	}
 	val := s.options[s.Index]
-	if s.focused {
+	switch {
+	case s.readOnly:
+		return BlurredStyle.Render(val)
+	case s.focused:
 		return FocusedStyle.Render(val)
+	default:
+		return val
 	}
-	return val
 }
 
 func (s *SelectField) Value() string {

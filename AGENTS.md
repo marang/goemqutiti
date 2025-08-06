@@ -41,7 +41,12 @@ Scroll with `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J`. In history,
 - New UI code should reuse this logic instead of writing custom forms.
 
 ## Test Info
-`ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not run during `go test ./...` and can be executed manually if needed.
+`ExampleSet_manual` in `keyring_util_test.go` requires a real keyring. It does not
+run during `go test ./...` and can be executed manually if needed:
+
+```bash
+go test -run ExampleSet_manual -tags manual
+```
 
 ## Maintenance
 Keep `README.md`, `TODO.md`, `AGENTS.md`, and `help/help.md` in sync when changes are made to the project or development workflow.

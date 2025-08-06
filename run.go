@@ -34,19 +34,28 @@ var (
 	traceTopics string
 	traceStart  string
 	traceEnd    string
+
+	traceStore traces.Store = traces.FileStore{}
+	traceRun                = traces.Run
+
+	runTraceFn  = runTrace
+	runImportFn = runImport
+	runUIFn     = runUI
 )
 
-// init registers CLI flags for tracing and import modes.
-func init() {
-	flag.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
-	flag.StringVar(&importFile, "i", "", "(shorthand)")
-	flag.StringVar(&profileName, "profile", "", "Connection profile to use")
-	flag.StringVar(&profileName, "p", "", "(shorthand)")
-	flag.StringVar(&traceKey, "trace", "", "Trace key to store messages under")
-	flag.StringVar(&traceTopics, "topics", "", "Comma-separated topics to trace")
-	flag.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
-	flag.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
+func registerFlags(fs *flag.FlagSet) {
+	fs.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
+	fs.StringVar(&importFile, "i", "", "(shorthand)")
+	fs.StringVar(&profileName, "profile", "", "Connection profile to use")
+	fs.StringVar(&profileName, "p", "", "(shorthand)")
+	fs.StringVar(&traceKey, "trace", "", "Trace key to store messages under")
+	fs.StringVar(&traceTopics, "topics", "", "Comma-separated topics to trace")
+	fs.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
+	fs.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
 }
+
+// init registers CLI flags for tracing and import modes.
+func init() { registerFlags(flag.CommandLine) }
 
 // Main parses flags, sets up logging, and launches the UI or other modes.
 
@@ -54,80 +63,64 @@ func Main() {
 	flag.Parse()
 
 	if traceKey != "" {
-		tlist := strings.Split(traceTopics, ",")
-		for i := range tlist {
-			tlist[i] = strings.TrimSpace(tlist[i])
-		}
-		var start, end time.Time
-		if traceStart != "" {
-			var err error
-			start, err = time.Parse(time.RFC3339, traceStart)
-			if err != nil {
-				log.Println("invalid trace start time:", err)
-				return
-			}
-		}
-		if traceEnd != "" {
-			var err error
-			end, err = time.Parse(time.RFC3339, traceEnd)
-			if err != nil {
-				log.Println("invalid trace end time:", err)
-				return
-			}
-			if end.Before(time.Now()) {
-				log.Println("trace end time already passed")
-				return
-			}
-		}
-		exists, err := traces.FileStore{}.HasData(profileName, traceKey)
-		if err != nil {
-			log.Println("trace data check failed:", err)
-			return
-		}
-		if exists {
-			log.Println("trace key already exists")
-			return
-		}
-		if err := (traces.FileStore{}).AddTrace(traces.TracerConfig{
-			Profile: profileName,
-			Topics:  tlist,
-			Start:   start,
-			End:     end,
-			Key:     traceKey,
-		}); err != nil {
-			log.Println(err)
-			return
-		}
-		if err := traces.Run(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
+		if err := runTraceFn(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
 	if importFile != "" {
-		if err := runImport(importFile, profileName); err != nil {
+		if err := runImportFn(importFile, profileName); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	// Start Bubble Tea UI without connecting. The user can choose a profile
-	// from the connection manager once the program starts.
-	initial, err := initialModel(nil)
-	if err != nil {
-		log.Printf("Warning: %v", err)
-	}
-	_ = initial.SetMode(constants.ModeConnections)
-	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
-	finalModel, err := p.Run()
-	if err != nil {
+	if err := runUIFn(); err != nil {
 		log.Fatalf("Error running program: %v", err)
 	}
-	if m, ok := finalModel.(*model); ok {
-		if st := m.history.Store(); st != nil {
-			st.Close()
+}
+
+func runTrace(key, topics, profile, startStr, endStr string) error {
+	tlist := strings.Split(topics, ",")
+	for i := range tlist {
+		tlist[i] = strings.TrimSpace(tlist[i])
+	}
+	var start, end time.Time
+	var err error
+	if startStr != "" {
+		start, err = time.Parse(time.RFC3339, startStr)
+		if err != nil {
+			return fmt.Errorf("invalid trace start time: %w", err)
 		}
 	}
+	if endStr != "" {
+		end, err = time.Parse(time.RFC3339, endStr)
+		if err != nil {
+			return fmt.Errorf("invalid trace end time: %w", err)
+		}
+		if end.Before(time.Now()) {
+			return fmt.Errorf("trace end time already passed")
+		}
+	}
+	exists, err := traceStore.HasData(profile, key)
+	if err != nil {
+		return fmt.Errorf("trace data check failed: %w", err)
+	}
+	if exists {
+		return fmt.Errorf("trace key already exists")
+	}
+	cfg := traces.TracerConfig{
+		Profile: profile,
+		Topics:  tlist,
+		Start:   start,
+		End:     end,
+		Key:     key,
+	}
+	if err := traceStore.AddTrace(cfg); err != nil {
+		return err
+	}
+	return traceRun(key, topics, profile, startStr, endStr)
 }
 
 // runImport launches the interactive import wizard using the provided file
@@ -151,6 +144,25 @@ func runImport(path, profile string) error {
 	prog := tea.NewProgram(importerTeaModel{w}, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		return fmt.Errorf("import error: %w", err)
+	}
+	return nil
+}
+
+func runUI() error {
+	initial, err := initialModel(nil)
+	if err != nil {
+		log.Printf("Warning: %v", err)
+	}
+	_ = initial.SetMode(constants.ModeConnections)
+	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
+	finalModel, err := p.Run()
+	if err != nil {
+		return err
+	}
+	if m, ok := finalModel.(*model); ok {
+		if st := m.history.Store(); st != nil {
+			st.Close()
+		}
 	}
 	return nil
 }

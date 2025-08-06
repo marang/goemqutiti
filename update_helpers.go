@@ -12,7 +12,7 @@ func calcHistorySize(width, height, currentHeight int) (int, int) {
 	if currentHeight == 0 {
 		currentHeight = (height-1)/3 + 10
 	}
-	return width - 4, currentHeight
+	return calcMessageWidth(width), currentHeight
 }
 
 // calcMessageWidth returns the width for message inputs and lists.
@@ -22,7 +22,7 @@ func calcMessageWidth(width int) int {
 
 // calcConnectionsSize returns the width and height for the connections list.
 func calcConnectionsSize(width, height int) (int, int) {
-	return width - 4, height - 6
+	return calcMessageWidth(width), height - 6
 }
 
 // calcTopicsInputWidth returns the width for the topics input.
@@ -40,7 +40,7 @@ func calcTraceHeight(height, currentHeight int) int {
 
 // calcTraceListSize returns size for trace lists.
 func calcTraceListSize(width, height int) (int, int) {
-	return width - 4, height - 4
+	return calcMessageWidth(width), height - 4
 }
 
 // calcTopicsListSize returns size for the topics list.
@@ -50,7 +50,7 @@ func calcTopicsListSize(width, height int) (int, int) {
 
 // calcDetailSize returns size for the history detail view.
 func calcDetailSize(width, height int) (int, int) {
-	return width - 4, height - 4
+	return calcMessageWidth(width), height - 4
 }
 
 // calcViewportHeight returns the viewport height, reserving two lines for headers.

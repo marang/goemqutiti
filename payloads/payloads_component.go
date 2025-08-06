@@ -64,6 +64,30 @@ func (p *Component) Update(msg tea.Msg) tea.Cmd {
 				}
 			}
 		}
+		p.list, cmd = p.list.Update(msg)
+		return tea.Batch(cmd, p.status.ListenStatus())
+	case tea.MouseMsg:
+		p.list, cmd = p.list.Update(msg)
+		idx := p.list.Index()
+		items := p.list.Items()
+		if msg.Action == tea.MouseActionPress && idx >= 0 && idx < len(items) {
+			switch msg.Button {
+			case tea.MouseButtonLeft:
+				pi := items[idx].(Item)
+				return tea.Batch(
+					cmd,
+					func() tea.Msg { return LoadMsg{Topic: pi.Topic, Payload: pi.Payload} },
+					p.m.SetClientMode(),
+					p.status.ListenStatus(),
+				)
+			case tea.MouseButtonRight:
+				p.items = append(p.items[:idx], p.items[idx+1:]...)
+				items = append(items[:idx], items[idx+1:]...)
+				p.list.SetItems(items)
+				return tea.Batch(cmd, p.status.ListenStatus())
+			}
+		}
+		return tea.Batch(cmd, p.status.ListenStatus())
 	}
 	p.list, cmd = p.list.Update(msg)
 	return tea.Batch(cmd, p.status.ListenStatus())

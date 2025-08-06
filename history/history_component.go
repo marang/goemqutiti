@@ -39,6 +39,14 @@ func (h *Component) Init() tea.Cmd { return nil }
 // Update updates the history list. The caller must ensure the list has focus.
 func (h *Component) Update(msg tea.Msg) tea.Cmd {
 	var cmd tea.Cmd
+	switch m := msg.(type) {
+	case tea.MouseMsg:
+		h.list, cmd = h.list.Update(m)
+		if m.Action == tea.MouseActionPress && m.Button == tea.MouseButtonLeft {
+			h.HandleSelection(h.list.Index(), m.Shift)
+		}
+		return cmd
+	}
 	h.list, cmd = h.list.Update(msg)
 	return cmd
 }

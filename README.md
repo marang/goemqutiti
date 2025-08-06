@@ -34,7 +34,7 @@ If a profile is marked as default, the app connects to it automatically on start
 
 ### Importing from CSV or XLS
 
-Launch `emqutiti --import data.csv -p local` to map columns to JSON and publish them. The wizard supports dry runs and will remember settings in future versions.
+Launch `emqutiti -i data.csv -p local` (or `--import data.csv --profile local`) to map columns to JSON and publish them. The wizard supports dry runs and will remember settings in future versions.
 
 Press `Ctrl+R` in the UI to manage recorded traces.
 
@@ -43,16 +43,22 @@ Press `Ctrl+R` in the UI to manage recorded traces.
 Run traces without the UI:
 
 ```
-emqutiti --trace myrun --topics "sensors/#" -p local
+emqutiti --trace run1 --topics "sensors/#" -p local
 ```
 
 Flags:
 
-- `--trace` trace name
-- `--topics` topic filter
-- `-p`, `--profile` connection profile
-- `--start` RFC3339 start time
-- `--end` RFC3339 end time
+General
+
+- `-i, --import FILE` Launch import wizard with optional file path (e.g., `-i data.csv`)
+- `-p, --profile NAME` Connection profile name to use (e.g., `-p local`)
+
+Trace
+
+- `--trace KEY` Trace key name to store messages (e.g., `--trace run1`)
+- `--topics LIST` Comma-separated topics to trace (e.g., `--topics "sensors/#"`)
+- `--start TIME` Optional RFC3339 start time (e.g., `--start "2025-08-05T11:47:00Z"`)
+- `--end TIME` Optional RFC3339 end time (e.g., `--end "2025-08-05T11:49:00Z"`)
 
 Times must be RFC3339 formatted.
 

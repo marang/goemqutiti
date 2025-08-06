@@ -61,12 +61,26 @@ type mqttClient interface {
 func registerFlags(fs *flag.FlagSet) {
 	fs.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
 	fs.StringVar(&importFile, "i", "", "(shorthand)")
-	fs.StringVar(&profileName, "profile", "", "Connection profile to use")
+	fs.StringVar(&profileName, "profile", "", "Connection profile name to use")
 	fs.StringVar(&profileName, "p", "", "(shorthand)")
-	fs.StringVar(&traceKey, "trace", "", "Trace key to store messages under")
+	fs.StringVar(&traceKey, "trace", "", "Trace key name to store messages")
 	fs.StringVar(&traceTopics, "topics", "", "Comma-separated topics to trace")
 	fs.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
 	fs.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
+
+	fs.Usage = func() {
+		w := fs.Output()
+		fmt.Fprintf(w, "Usage: %s [flags]\n\n", os.Args[0])
+		fmt.Fprintln(w, "General:")
+		fmt.Fprintln(w, "  -i, --import FILE     Launch import wizard with optional file path (e.g., -i data.csv)")
+		fmt.Fprintln(w, "  -p, --profile NAME    Connection profile name to use (e.g., -p local)")
+		fmt.Fprintln(w, "")
+		fmt.Fprintln(w, "Trace:")
+		fmt.Fprintln(w, "      --trace KEY       Trace key name to store messages (e.g., --trace run1)")
+		fmt.Fprintln(w, "      --topics LIST     Comma-separated topics to trace (e.g., --topics \"sensors/#\")")
+		fmt.Fprintln(w, "      --start TIME      Optional RFC3339 trace start time (e.g., --start \"2025-08-05T11:47:00Z\")")
+		fmt.Fprintln(w, "      --end TIME        Optional RFC3339 trace end time (e.g., --end \"2025-08-05T11:49:00Z\")")
+	}
 }
 
 // init registers CLI flags for tracing and import modes.

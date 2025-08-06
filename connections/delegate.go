@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/marang/emqutiti/ui"
 )
@@ -30,7 +31,8 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 	if index == m.Index() {
 		border = lipgloss.NewStyle().Foreground(ui.ColPurple).Render("┃")
 	}
-	name := lipgloss.PlaceHorizontal(width-2, lipgloss.Left, ci.title)
+	name := ansi.Truncate(ci.title, width-2, "")
+	name = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, name)
 	color := ui.ColGray
 	switch ci.status {
 	case "connected":
@@ -41,8 +43,10 @@ func (d connectionDelegate) Render(w io.Writer, m list.Model, index int, item li
 		color = ui.ColCyan
 	}
 	status := lipgloss.NewStyle().Foreground(color).Render(ci.status)
+	status = ansi.Truncate(status, width-2, "")
 	status = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, status)
-	detail := lipgloss.PlaceHorizontal(width-2, lipgloss.Left,
-		lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.detail))
+	detail := lipgloss.NewStyle().Foreground(ui.ColGray).Render(ci.detail)
+	detail = ansi.Truncate(detail, width-2, "")
+	detail = lipgloss.PlaceHorizontal(width-2, lipgloss.Left, detail)
 	fmt.Fprintf(w, "%s %s\n%s %s\n%s %s", border, name, border, status, border, detail)
 }

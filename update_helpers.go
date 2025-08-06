@@ -91,7 +91,8 @@ func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
 
 // handleKeyNav processes global navigation key presses.
 func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
+	key := msg.String()
+	switch key {
 	case constants.KeyCtrlUp, constants.KeyCtrlK:
 		m.ui.viewport.ScrollUp(1)
 		return nil, true
@@ -145,7 +146,7 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 	}
 
 	if m.CurrentMode() != constants.ModeHistoryFilter &&
-		(msg.String() == constants.KeyEnter || msg.String() == constants.KeySpaceBar || msg.String() == constants.KeySpace) &&
+		(key == constants.KeyEnter || key == constants.KeySpaceBar || key == constants.KeySpace) &&
 		m.help.Focused() {
 		return m.SetMode(constants.ModeHelp), true
 	}

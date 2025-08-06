@@ -11,6 +11,8 @@ const (
 	KeyDown          = "down"
 	KeyLeft          = "left"
 	KeyRight         = "right"
+	KeyPgUp          = "pgup"
+	KeyPgDown        = "pgdown"
 	KeyK             = "k"
 	KeyJ             = "j"
 	KeyH             = "h"

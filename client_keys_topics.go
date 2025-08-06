@@ -33,7 +33,7 @@ func (m *model) handleRightKey() tea.Cmd {
 // handleTopicScroll handles scroll keys when topics are focused.
 func (m *model) handleTopicScroll(key string) tea.Cmd {
 	delta := -1
-	if key == "down" || key == "j" {
+	if key == constants.KeyDown || key == constants.KeyJ {
 		delta = 1
 	}
 	m.topics.Scroll(delta)

@@ -22,7 +22,7 @@ var (
 	InfoSubtleStyle = lipgloss.NewStyle().Foreground(ColGray).PaddingLeft(1)
 
 	HelpStyle   = lipgloss.NewStyle().Foreground(ColGreen)
-	HelpFocused = HelpStyle.Foreground(ColPink)
+	HelpFocused = HelpStyle.Background(ColPink)
 	HelpHeader  = lipgloss.NewStyle().Foreground(ColCyan).Bold(true).Underline(true)
 	HelpKey     = lipgloss.NewStyle().Foreground(ColGreen).Width(20)
 )

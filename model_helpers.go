@@ -93,6 +93,16 @@ func (m *model) SetMode(mode constants.AppMode) tea.Cmd {
 			i++
 		}
 	}
+	// prune help mode from history to avoid navigation dead-ends
+	if mode != constants.ModeHelp {
+		for i := 1; i < len(m.ui.modeStack); {
+			if m.ui.modeStack[i] == constants.ModeHelp {
+				m.ui.modeStack = append(m.ui.modeStack[:i], m.ui.modeStack[i+1:]...)
+			} else {
+				i++
+			}
+		}
+	}
 	if len(m.ui.modeStack) > 10 {
 		m.ui.modeStack = m.ui.modeStack[:10]
 	}

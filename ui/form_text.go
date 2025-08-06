@@ -50,3 +50,15 @@ func (t *TextField) Value() string { return t.Model.Value() }
 func (t *TextField) Focus()       { t.Model.Focus() }
 func (t *TextField) Blur()        { t.Model.Blur() }
 func (t *TextField) View() string { return t.Model.View() }
+
+// WantsKey reports whether the field wants to handle navigation keys itself
+// instead of letting the form cycle focus. Plain "j" and "k" are treated as
+// normal input so users can type them without jumping to another field.
+func (t *TextField) WantsKey(k tea.KeyMsg) bool {
+	switch k.String() {
+	case "j", "k":
+		return true
+	default:
+		return false
+	}
+}

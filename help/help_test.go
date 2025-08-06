@@ -49,6 +49,7 @@ func TestRenderHelpGroupsSections(t *testing.T) {
 		"History",
 		"Traces",
 		"Tips",
+		"CLI Flags",
 	}
 	for _, e := range expected {
 		if !strings.Contains(plain, e) {

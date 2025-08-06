@@ -75,3 +75,17 @@
 ## Tips
 
 - Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.
+
+## CLI Flags
+
+**General**
+
+- `-i, --import FILE` Launch import wizard with optional file path (e.g., `-i data.csv`)
+- `-p, --profile NAME` Connection profile name to use (e.g., `-p local`)
+
+**Trace**
+
+- `--trace KEY` Trace key name to store messages (e.g., `--trace run1`)
+- `--topics LIST` Comma-separated topics to trace (e.g., `--topics "sensors/#"`)
+- `--start TIME` Optional RFC3339 start time (e.g., `--start "2025-08-05T11:47:00Z"`)
+- `--end TIME` Optional RFC3339 end time (e.g., `--end "2025-08-05T11:49:00Z"`)

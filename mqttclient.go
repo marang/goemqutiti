@@ -18,10 +18,9 @@ type MQTTMessage struct {
 }
 
 type MQTTClient struct {
-	Client             mqtt.Client
-  // MessageChan receives published messages. It is closed when
-	// Disconnect is called, so consumers must handle channel
-	// closure.
+	Client mqtt.Client
+	// MessageChan receives published messages. It closes when Disconnect is
+	// called, so consumers must handle channel closure.
 	MessageChan        chan MQTTMessage
 	publishTimeout     time.Duration
 	subscribeTimeout   time.Duration
@@ -159,13 +158,14 @@ func (m *MQTTClient) Unsubscribe(topic string) error {
 	return nil
 }
 
-// Disconnect cleanly closes the connection to the broker and closes
-// MessageChan. Consumers must handle channel closure.
+// Disconnect cleanly closes the connection to the broker. It also closes
+// MessageChan to signal completion; consumers must handle channel closure.
 func (m *MQTTClient) Disconnect() {
 	if m.Client != nil && m.Client.IsConnected() {
 		// Allow up to 250 milliseconds for pending work to complete.
 		m.Client.Disconnect(250)
 	}
+	// Close MessageChan after disconnecting to stop message delivery.
 	if m.MessageChan != nil {
 		close(m.MessageChan)
 		m.MessageChan = nil

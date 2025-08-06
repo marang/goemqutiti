@@ -52,9 +52,9 @@ func (s *SelectField) Update(msg tea.Msg) tea.Cmd {
 	}
 	if km, ok := msg.(tea.KeyMsg); ok {
 		switch km.String() {
-		case constants.KeyLeft, constants.KeyH:
+		case constants.KeyLeft, constants.KeyH, constants.KeyUp:
 			s.Index--
-		case constants.KeyRight, constants.KeyL, constants.KeySpaceBar:
+		case constants.KeyRight, constants.KeyL, constants.KeySpaceBar, constants.KeyDown:
 			s.Index++
 		}
 		if s.Index < 0 {
@@ -65,6 +65,20 @@ func (s *SelectField) Update(msg tea.Msg) tea.Cmd {
 		}
 	}
 	return nil
+}
+
+// WantsKey reports whether the select field will handle the key itself instead
+// of letting the form move focus.
+func (s *SelectField) WantsKey(k tea.KeyMsg) bool {
+	if !s.focused || s.readOnly {
+		return false
+	}
+	switch k.String() {
+	case constants.KeyUp, constants.KeyDown:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *SelectField) View() string {

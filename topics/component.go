@@ -95,6 +95,13 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 				c.TogglePublish(i)
 			}
 		}
+	case tea.MouseMsg:
+		if msg.Action == tea.MouseActionPress {
+			switch msg.Button {
+			case tea.MouseButtonLeft, tea.MouseButtonRight:
+				tcmd = c.HandleClick(msg, c.VP.YOffset)
+			}
+		}
 	}
 	c.list, cmd = c.list.Update(msg)
 	if c.panes.active == 0 {

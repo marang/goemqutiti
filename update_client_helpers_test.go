@@ -242,7 +242,11 @@ func TestHandleTopicToggleActions(t *testing.T) {
 func TestLogTopicActionEmpty(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.logTopicAction("t1", "", nil)
-	if len(m.history.Items()) != 0 {
-		t.Fatalf("expected no history items, got %d", len(m.history.Items()))
+	items := m.history.Items()
+	if len(items) != 1 {
+		t.Fatalf("expected 1 history item, got %d", len(items))
+	}
+	if items[0].Kind != "log" || items[0].Payload != "No action specified for topic: t1" {
+		t.Fatalf("unexpected log item: kind %q payload %q", items[0].Kind, items[0].Payload)
 	}
 }

@@ -123,9 +123,7 @@ func NewForm(p Profile, idx int) Form {
 			if i == idxName || i == idxFromEnv {
 				continue
 			}
-			if ro, ok := fld.(interface{ SetReadOnly(bool) }); ok {
-				ro.SetReadOnly(true)
-			}
+			fld.SetReadOnly(true)
 		}
 	}
 	cf := Form{Form: ui.Form{Fields: fields, Focus: 0}, Index: idx, fromEnv: p.FromEnv}

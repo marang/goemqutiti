@@ -84,6 +84,7 @@ password = "keyring:emqutiti-local/user"
 ```
 
 Tips:
+- `schema` can be `mqtt`, `mqtts`, `tcp`, `ssl`, `ws`, or `wss`.
 - More options like TLS and session settings are available; see the `config` package for details.
 - Set `random_id_suffix = true` for unique client IDs.
 - Set `skip_tls_verify = true` to bypass TLS certificate checks (useful for self-signed brokers).

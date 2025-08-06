@@ -37,7 +37,7 @@ type fieldDef struct {
 
 var formFields = []fieldDef{
 	{key: "Name", label: "Name", placeholder: "Name", fieldType: ftText},
-	{key: "Schema", label: "Schema", placeholder: "Schema", fieldType: ftSelect, options: []string{"tcp", "ssl", "ws", "wss"}},
+	{key: "Schema", label: "Schema", placeholder: "Schema", fieldType: ftSelect, options: []string{"tcp", "ssl", "ws", "wss", "mqtt", "mqtts"}},
 	{key: "Host", label: "Host", placeholder: "Host", fieldType: ftText},
 	{key: "Port", label: "Port", placeholder: "Port", fieldType: ftText},
 	{key: "ClientID", label: "Client ID", placeholder: "Client ID", fieldType: ftText},

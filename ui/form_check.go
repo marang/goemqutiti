@@ -16,9 +16,18 @@ type CheckField struct {
 // NewCheckField creates a CheckField with initial value.
 func NewCheckField(val bool) *CheckField { return &CheckField{value: val} }
 
-func (c *CheckField) Focus()              { c.focused = true }
-func (c *CheckField) Blur()               { c.focused = false }
-func (c *CheckField) SetReadOnly(ro bool) { c.readOnly = ro }
+func (c *CheckField) Focus() {
+	if !c.readOnly {
+		c.focused = true
+	}
+}
+func (c *CheckField) Blur() { c.focused = false }
+func (c *CheckField) SetReadOnly(ro bool) {
+	c.readOnly = ro
+	if ro {
+		c.Blur()
+	}
+}
 
 // ReadOnly reports whether the field is read only.
 func (c *CheckField) ReadOnly() bool { return c.readOnly }

@@ -48,8 +48,11 @@ func (t *TextField) Update(msg tea.Msg) tea.Cmd {
 
 // Value returns the text content of the field.
 func (t *TextField) Value() string { return t.Model.Value() }
-
-func (t *TextField) Focus()       { t.Model.Focus() }
+func (t *TextField) Focus() {
+	if !t.readOnly {
+		t.Model.Focus()
+	}
+}
 func (t *TextField) Blur()        { t.Model.Blur() }
 func (t *TextField) View() string { return t.Model.View() }
 

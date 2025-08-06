@@ -89,7 +89,7 @@ func (m *model) handleResizeDownKey() tea.Cmd {
 // handleModeSwitchKey switches application modes for special key combos.
 func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
-	case "ctrl+b":
+	case constants.KeyCtrlB:
 		if err := m.connections.Manager.LoadProfiles(""); err != nil {
 			m.history.Append("", err.Error(), "log", err.Error())
 		}
@@ -97,16 +97,16 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())
 		m.traces.SavePlannedTraces()
 		return m.SetMode(constants.ModeConnections)
-	case "ctrl+t":
+	case constants.KeyCtrlT:
 		m.topics.SetActivePane(0)
 		m.topics.RebuildActiveTopicList()
 		m.topics.SetSelected(0)
 		m.topics.List().SetSize(m.ui.width/2-4, m.ui.height-4)
 		return m.SetMode(constants.ModeTopics)
-	case "ctrl+p":
+	case constants.KeyCtrlP:
 		m.payloads.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.SetMode(constants.ModePayloads)
-	case "ctrl+r":
+	case constants.KeyCtrlR:
 		m.traces.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.SetMode(constants.ModeTracer)
 	default:

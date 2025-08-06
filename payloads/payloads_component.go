@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
@@ -34,11 +35,11 @@ func (p *Component) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "esc":
+		case constants.KeyEsc:
 			return p.m.SetClientMode()
-		case "delete":
+		case constants.KeyDelete:
 			i := p.list.Index()
 			if i >= 0 {
 				items := p.list.Items()
@@ -49,7 +50,7 @@ func (p *Component) Update(msg tea.Msg) tea.Cmd {
 				}
 			}
 			return p.status.ListenStatus()
-		case "enter":
+		case constants.KeyEnter:
 			i := p.list.Index()
 			if i >= 0 {
 				items := p.list.Items()

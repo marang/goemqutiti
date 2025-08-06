@@ -1,6 +1,10 @@
 package ui
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
+)
 
 // Field represents a single input element used by forms.
 type Field interface {
@@ -29,9 +33,9 @@ func (f *Form) CycleFocus(msg tea.KeyMsg) {
 		return
 	}
 	switch msg.String() {
-	case "tab", "down", "j":
+	case constants.KeyTab, constants.KeyDown, constants.KeyJ:
 		f.Focus++
-	case "shift+tab", "up", "k":
+	case constants.KeyShiftTab, constants.KeyUp, constants.KeyK:
 		f.Focus--
 	default:
 		return

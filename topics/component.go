@@ -10,6 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
@@ -59,19 +60,19 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "esc":
+		case constants.KeyEsc:
 			return c.api.ShowClient()
-		case "left":
+		case constants.KeyLeft:
 			if c.panes.active == 1 {
 				fcmd = c.api.SetFocus(idTopicsSubscribed)
 			}
-		case "right":
+		case constants.KeyRight:
 			if c.panes.active == 0 {
 				fcmd = c.api.SetFocus(idTopicsUnsubscribed)
 			}
-		case "delete":
+		case constants.KeyDelete:
 			i := c.selected
 			if i >= 0 && i < len(c.Items) {
 				name := c.Items[i].Name
@@ -83,12 +84,12 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 				}, nil)
 				return c.api.ListenStatus()
 			}
-		case "enter", " ":
+		case constants.KeyEnter, constants.KeySpaceBar:
 			i := c.selected
 			if i >= 0 && i < len(c.Items) {
 				tcmd = c.ToggleTopic(i)
 			}
-		case "p":
+		case constants.KeyP:
 			i := c.selected
 			if i >= 0 && i < len(c.Items) {
 				c.TogglePublish(i)

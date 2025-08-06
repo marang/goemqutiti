@@ -6,6 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -13,7 +14,7 @@ import (
 func (m *Model) updateReview(msg tea.Msg) tea.Cmd {
 	if km, ok := msg.(tea.KeyMsg); ok {
 		switch km.String() {
-		case "p":
+		case constants.KeyP:
 			m.dryRun = false
 			m.index = 0
 			m.published = nil
@@ -21,7 +22,7 @@ func (m *Model) updateReview(msg tea.Msg) tea.Cmd {
 			m.history.GotoTop()
 			m.step = stepPublish
 			return tea.Batch(m.progress.SetPercent(0), m.nextPublishCmd())
-		case "d":
+		case constants.KeyD:
 			m.dryRun = true
 			m.index = 0
 			m.published = nil
@@ -29,11 +30,11 @@ func (m *Model) updateReview(msg tea.Msg) tea.Cmd {
 			m.history.GotoTop()
 			m.step = stepPublish
 			return tea.Batch(m.progress.SetPercent(0), m.nextPublishCmd())
-		case "e":
+		case constants.KeyE:
 			m.step = stepMap
-		case "q":
+		case constants.KeyQ:
 			m.step = stepDone
-		case "ctrl+p":
+		case constants.KeyCtrlP:
 			m.step = stepTemplate
 			m.tmpl.Focus()
 		}

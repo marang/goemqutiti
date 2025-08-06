@@ -19,13 +19,13 @@ func (m *model) updateConnectionForm(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "esc":
+		case constants.KeyEsc:
 			cmd := m.SetMode(constants.ModeConnections)
 			m.connections.Form = nil
 			return cmd
-		case "enter":
+		case constants.KeyEnter:
 			p, err := m.connections.Form.Profile()
 			if err != nil {
 				m.connections.SendStatus(err.Error())

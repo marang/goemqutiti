@@ -187,13 +187,13 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 		// refresh
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			t.SavePlannedTraces()
 			return tea.Quit
-		case "esc":
+		case constants.KeyEsc:
 			t.SavePlannedTraces()
 			return t.api.SetModeClient()
-		case "a":
+		case constants.KeyA:
 			profs := t.api.Profiles()
 			opts := make([]string, len(profs))
 			for i, p := range profs {
@@ -207,7 +207,7 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 				t.api.SetFocus(IDForm),
 				textinput.Blink,
 			)
-		case "enter":
+		case constants.KeyEnter:
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
 				it := t.items[i]
@@ -217,13 +217,13 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 					t.startTrace(i)
 				}
 			}
-		case "v":
+		case constants.KeyV:
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
 				t.loadTraceMessages(i)
 				return nil
 			}
-		case "delete":
+		case constants.KeyDelete:
 			i := t.list.Index()
 			if i >= 0 && i < len(t.items) {
 				it := t.items[i]
@@ -257,12 +257,12 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 				)
 			}
 			return nil
-		case "ctrl+shift+up":
+		case constants.KeyCtrlShiftUp:
 			if t.api.TraceHeight() > 1 {
 				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
 				t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
 			}
-		case "ctrl+shift+down":
+		case constants.KeyCtrlShiftDown:
 			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
 			t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
 		}
@@ -281,16 +281,16 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 	}
 	if km, ok := msg.(tea.KeyMsg); ok {
 		switch km.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "esc":
+		case constants.KeyEsc:
 			t.form = nil
 			return t.api.SetModeTracer()
 		}
 		if t.api.FocusedID() != IDForm {
 			return nil
 		}
-		if km.String() == "enter" {
+		if km.String() == constants.KeyEnter {
 			cfg := t.form.Config()
 			if cfg.Key == "" || len(cfg.Topics) == 0 || cfg.Profile == "" {
 				t.form.errMsg = "key, profile and topics required"
@@ -354,21 +354,21 @@ func (t *Component) UpdateView(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "esc":
+		case constants.KeyEsc:
 			return t.api.SetModeTracer()
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "ctrl+shift+up":
+		case constants.KeyCtrlShiftUp:
 			if t.api.TraceHeight() > 1 {
 				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
 				t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 			}
 			return nil
-		case "ctrl+shift+down":
+		case constants.KeyCtrlShiftDown:
 			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
 			t.Component.List().SetSize(t.api.Width()-4, t.api.TraceHeight())
 			return nil
-		case "/":
+		case constants.KeySlash:
 			return t.startFilter()
 		}
 	}

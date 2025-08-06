@@ -2,7 +2,6 @@ package emqutiti
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -50,39 +49,6 @@ const (
 	idxFilterArchived
 )
 
-// newHistoryFilterForm builds a form with optional prefilled values.
-func newHistoryFilterForm(topics []string, topic, payload string, start, end time.Time, archived bool) historyFilterForm {
-	sort.Strings(topics)
-	tf := ui.NewSuggestField(topics, "topic")
-	tf.SetValue(topic)
-
-	pf := ui.NewTextField("", "text contains")
-	pf.SetValue(payload)
-
-	sf := ui.NewTextField("", "start (RFC3339)")
-	if !start.IsZero() {
-		sf.SetValue(start.Format(time.RFC3339))
-	}
-
-	ef := ui.NewTextField("", "end (RFC3339)")
-	if !end.IsZero() {
-		ef.SetValue(end.Format(time.RFC3339))
-	}
-
-	af := ui.NewCheckField(archived)
-
-	f := historyFilterForm{
-		Form:     ui.Form{Fields: []ui.Field{tf, pf, sf, ef, af}},
-		topic:    tf,
-		payload:  pf,
-		start:    sf,
-		end:      ef,
-		archived: af,
-	}
-	f.ApplyFocus()
-	return f
-}
-
 // Update handles focus cycling and topic completion.
 func (f historyFilterForm) Update(msg tea.Msg) (historyFilterForm, tea.Cmd) {
 	var cmd tea.Cmd
@@ -128,24 +94,6 @@ func (f historyFilterForm) View() string {
 		fmt.Sprintf("Archived: %s", f.archived.View()),
 	)
 	return strings.Join(lines, "\n")
-}
-
-// query builds a history search string.
-func (f historyFilterForm) query() string {
-	var parts []string
-	if v := f.topic.Value(); v != "" {
-		parts = append(parts, "topic="+v)
-	}
-	if v := f.payload.Value(); v != "" {
-		parts = append(parts, "payload="+v)
-	}
-	if v := f.start.Value(); v != "" {
-		parts = append(parts, "start="+v)
-	}
-	if v := f.end.Value(); v != "" {
-		parts = append(parts, "end="+v)
-	}
-	return strings.Join(parts, " ")
 }
 
 // historyStore provides an in-memory implementation of history.Store for tests.

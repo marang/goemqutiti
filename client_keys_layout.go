@@ -53,17 +53,18 @@ func (m *model) handleShiftTabKey() tea.Cmd {
 // handleResizeUpKey reduces the height of the focused pane.
 func (m *model) handleResizeUpKey() tea.Cmd {
 	id := m.ui.focusOrder[m.ui.focusIndex]
-	if id == idMessage {
+	switch id {
+	case idMessage:
 		if m.layout.message.height > 1 {
 			m.layout.message.height--
 			m.message.Input().SetHeight(m.layout.message.height)
 		}
-	} else if id == idHistory {
+	case idHistory:
 		if m.layout.history.height > 1 {
 			m.layout.history.height--
 			m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
 		}
-	} else if id == idTopics {
+	case idTopics:
 		if m.layout.topics.height > 1 {
 			m.layout.topics.height--
 		}
@@ -74,13 +75,14 @@ func (m *model) handleResizeUpKey() tea.Cmd {
 // handleResizeDownKey increases the height of the focused pane.
 func (m *model) handleResizeDownKey() tea.Cmd {
 	id := m.ui.focusOrder[m.ui.focusIndex]
-	if id == idMessage {
+	switch id {
+	case idMessage:
 		m.layout.message.height++
 		m.message.Input().SetHeight(m.layout.message.height)
-	} else if id == idHistory {
+	case idHistory:
 		m.layout.history.height++
 		m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
-	} else if id == idTopics {
+	case idTopics:
 		m.layout.topics.height++
 	}
 	return nil

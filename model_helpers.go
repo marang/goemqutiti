@@ -1,34 +1,15 @@
 package emqutiti
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/confirm"
 	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/history"
 )
-
-// historyDelegateHeight matches historyDelegate.Height(); history items render a
-// header and payload line, so each entry is two rows tall.
-const historyDelegateHeight = 2
-
-// historyIndexAt converts a Y coordinate into an index within the history list.
-func (m *model) historyIndexAt(y int) int {
-	rel := y - (m.ui.elemPos[idHistory] + 1) + m.ui.viewport.YOffset
-	if rel < 0 {
-		return -1
-	}
-	idx := rel / historyDelegateHeight
-	lst := m.history.List()
-	start := lst.Paginator.Page * lst.Paginator.PerPage
-	i := start + idx
-	if i >= len(lst.Items()) || i < 0 {
-		return -1
-	}
-	return i
-}
 
 // FocusedID returns the identifier of the currently focused element.
 func (m *model) FocusedID() string { return m.ui.focusOrder[m.ui.focusIndex] }

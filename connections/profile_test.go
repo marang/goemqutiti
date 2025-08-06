@@ -250,7 +250,7 @@ func TestPersistProfileChangeWriteError(t *testing.T) {
 	}
 }
 func TestDefaultPasswordEnvOverride(t *testing.T) {
-	p := Profile{Name: "test", Password: "orig", FromEnv: false}
+	p := Profile{Password: "orig", FromEnv: false}
 	os.Setenv("EMQUTITI_DEFAULT_PASSWORD", "envpw")
 	t.Cleanup(func() { os.Unsetenv("EMQUTITI_DEFAULT_PASSWORD") })
 	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {

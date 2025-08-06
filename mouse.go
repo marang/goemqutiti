@@ -1,6 +1,12 @@
 package emqutiti
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/marang/emqutiti/constants"
+	"github.com/marang/emqutiti/ui"
+)
 
 // isHistoryFocused reports if the history list has focus.
 func (m *model) isHistoryFocused() bool {
@@ -32,13 +38,33 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	return nil, false
 }
 
+// handleHelpClick switches to help mode when the icon is clicked.
+func (m *model) handleHelpClick(msg tea.MouseMsg) (tea.Cmd, bool) {
+	helpWidth := lipgloss.Width(ui.HelpStyle.Render("?"))
+	if msg.Y == 0 && msg.X >= m.ui.width-helpWidth {
+		return m.SetMode(constants.ModeHelp), true
+	}
+	return nil, false
+}
+
 // handleMouseLeft manages left-click focus and selection.
 func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
+	if cmd, handled := m.handleHelpClick(msg); handled {
+		return cmd
+	}
 	cmd := m.focusFromMouse(msg.Y)
 	if m.isHistoryFocused() && !m.history.ShowArchived() {
 		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	}
 	return cmd
+}
+
+// handleMouse processes mouse events common to all modes.
+func (m *model) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	if cmd, handled := m.handleHelpClick(msg); handled {
+		return cmd
+	}
+	return nil
 }
 
 // handleClientMouse processes mouse events in client mode.

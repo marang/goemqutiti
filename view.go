@@ -14,10 +14,14 @@ func (m *model) overlayHelp(view string) string {
 		help = ui.HelpFocused.Render("?")
 	}
 	m.ui.elemPos[idHelp] = 0
-	lines := strings.Split(view, "\n")
-	if len(lines) == 0 {
-		return help
+
+	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+D quit.")
+	lines := []string{}
+	if view != "" {
+		lines = strings.Split(view, "\n")
 	}
+	lines = append([]string{infoShortcuts}, lines...)
+
 	first := lipgloss.NewStyle().Width(m.ui.width-lipgloss.Width(help)).Render(lines[0]) + help
 	if len(lines) == 1 {
 		return first

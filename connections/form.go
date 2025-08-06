@@ -180,6 +180,11 @@ func (f Form) View() string {
 			label = ui.FocusedStyle.Render(label)
 		}
 		s += fmt.Sprintf("%s: %s\n", label, in.View())
+		if sf, ok := in.(*ui.SelectField); ok && f.IsFocused(i) {
+			if opts := sf.OptionsView(); opts != "" {
+				s += opts + "\n"
+			}
+		}
 	}
 	idxFromEnv := fieldIndex["FromEnv"]
 	idxName := fieldIndex["Name"]

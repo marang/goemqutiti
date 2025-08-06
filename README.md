@@ -16,7 +16,7 @@ short demo below shows the app in action.
 ## Installation
 ### From Source
 ```bash
-go install github.com/marang/emqutiti@latest
+go install github.com/marang/emqutiti/cmd/emqutiti@latest
 ```
 
 ### Arch Linux

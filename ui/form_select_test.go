@@ -3,7 +3,8 @@ package ui
 import (
 	"strings"
 	"testing"
-  tea "github.com/charmbracelet/bubbletea"
+
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -22,11 +23,14 @@ func TestSelectFieldEmptyOptions(t *testing.T) {
 	view := sf.View()
 	if !strings.Contains(view, "-") {
 		t.Fatalf("expected placeholder in view, got %q", view)
-  }
+	}
 }
 
 func TestSelectFieldCyclesOptions(t *testing.T) {
-	sf := NewSelectField("one", []string{"one", "two", "three"})
+	sf, err := NewSelectField("one", []string{"one", "two", "three"})
+	if err != nil {
+		t.Fatalf("err when creating a new selectfield %v", err)
+	}
 	sf.Focus()
 
 	// cycle backward from first wraps to last
@@ -55,7 +59,10 @@ func TestSelectFieldCyclesOptions(t *testing.T) {
 }
 
 func TestSelectFieldOptionsView(t *testing.T) {
-	sf := NewSelectField("two", []string{"one", "two", "three"})
+	sf, err := NewSelectField("two", []string{"one", "two", "three"})
+	if err != nil {
+		t.Fatalf("err when creating a new selectfield %v", err)
+	}
 	if opts := sf.OptionsView(); opts != "" {
 		t.Fatalf("expected empty options when unfocused, got %q", opts)
 	}
@@ -72,7 +79,10 @@ func TestSelectFieldOptionsView(t *testing.T) {
 }
 
 func TestSelectFieldReadOnly(t *testing.T) {
-	sf := NewSelectField("one", []string{"one", "two"})
+	sf, err := NewSelectField("one", []string{"one", "two"})
+	if err != nil {
+		t.Fatalf("err when creating a new selectfield %v", err)
+	}
 	sf.SetReadOnly(true)
 	sf.Focus()
 

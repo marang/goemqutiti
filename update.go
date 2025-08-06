@@ -18,6 +18,10 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.topics.SetTopic(msg.Topic)
 		m.message.SetPayload(msg.Payload)
 		return m, nil
+	case tea.MouseMsg:
+		if cmd := m.handleMouse(msg); cmd != nil {
+			return m, cmd
+		}
 	case tea.KeyMsg:
 		if cmd, handled := m.handleKeyNav(msg); handled {
 			return m, cmd

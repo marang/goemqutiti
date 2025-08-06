@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 
 	"github.com/marang/emqutiti/ui"
 )
@@ -15,14 +16,23 @@ func (m *model) overlayHelp(view string) string {
 	}
 	m.ui.elemPos[idHelp] = 0
 
-	infoShortcuts := ui.InfoStyle.Render("Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+D quit.")
+	info := "Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+D quit."
+	pad := lipgloss.Width(ui.InfoStyle.Render(""))
+	available := m.ui.width - lipgloss.Width(help) - pad
+	if available < 0 {
+		available = 0
+	}
+	if runewidth.StringWidth(info) > available {
+		info = runewidth.Truncate(info, available, "")
+	}
+	infoShortcuts := ui.InfoStyle.Render(info)
 	lines := []string{}
 	if view != "" {
 		lines = strings.Split(view, "\n")
 	}
 	lines = append([]string{infoShortcuts}, lines...)
 
-	first := lipgloss.NewStyle().Width(m.ui.width-lipgloss.Width(help)).Render(lines[0]) + help
+	first := lipgloss.NewStyle().Width(available+pad).Render(lines[0]) + help
 	if len(lines) == 1 {
 		return first
 	}

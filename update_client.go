@@ -30,16 +30,25 @@ func (m *model) logTopicAction(topic, action string, err error) {
 }
 
 // handleTopicToggle subscribes or unsubscribes from a topic and logs the action.
+// If the MQTT client is nil, the action is logged as an error.
 func (m *model) handleTopicToggle(msg topics.ToggleMsg) tea.Cmd {
-	if m.mqttClient != nil {
-		if msg.Subscribed {
-			err := m.mqttClient.Subscribe(msg.Topic, 0, nil)
-			m.logTopicAction(msg.Topic, "subscribe", err)
-		} else {
-			err := m.mqttClient.Unsubscribe(msg.Topic)
-			m.logTopicAction(msg.Topic, "unsubscribe", err)
-		}
+	action := "unsubscribe"
+	if msg.Subscribed {
+		action = "subscribe"
 	}
+
+	if m.mqttClient == nil {
+		m.logTopicAction(msg.Topic, action, fmt.Errorf("no mqtt client"))
+		return nil
+	}
+
+	var err error
+	if msg.Subscribed {
+		err = m.mqttClient.Subscribe(msg.Topic, 0, nil)
+	} else {
+		err = m.mqttClient.Unsubscribe(msg.Topic)
+	}
+	m.logTopicAction(msg.Topic, action, err)
 	return nil
 }
 

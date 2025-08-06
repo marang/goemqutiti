@@ -9,24 +9,27 @@ import (
 
 // Profile defines a broker connection.
 type Profile struct {
-	Name                string `toml:"name" env:"name"`
-	Schema              string `toml:"schema" env:"schema"`
-	Host                string `toml:"host" env:"host"`
-	Port                int    `toml:"port" env:"port"`
-	ClientID            string `toml:"client_id" env:"client_id"`
-	Username            string `toml:"username" env:"username"`
-	Password            string `toml:"password" env:"password"`
-	FromEnv             bool   `toml:"from_env"`
-	SSL                 bool   `toml:"ssl_tls" env:"ssl_tls"`
-	SkipTLSVerify       bool   `toml:"skip_tls_verify" env:"skip_tls_verify"`
-	MQTTVersion         string `toml:"mqtt_version" env:"mqtt_version"`
-	ConnectTimeout      int    `toml:"connect_timeout" env:"connect_timeout"`
-	KeepAlive           int    `toml:"keep_alive" env:"keep_alive"`
-	QoS                 int    `toml:"qos" env:"qos"`
-	AutoReconnect       bool   `toml:"auto_reconnect" env:"auto_reconnect"`
-	ReconnectPeriod     int    `toml:"reconnect_period" env:"reconnect_period"`
-	PublishTimeout      int    `toml:"publish_timeout" env:"publish_timeout"`
-	SubscribeTimeout    int    `toml:"subscribe_timeout" env:"subscribe_timeout"`
+	Name            string `toml:"name" env:"name"`
+	Schema          string `toml:"schema" env:"schema"`
+	Host            string `toml:"host" env:"host"`
+	Port            int    `toml:"port" env:"port"`
+	ClientID        string `toml:"client_id" env:"client_id"`
+	Username        string `toml:"username" env:"username"`
+	Password        string `toml:"password" env:"password"`
+	FromEnv         bool   `toml:"from_env"`
+	SSL             bool   `toml:"ssl_tls" env:"ssl_tls"`
+	SkipTLSVerify   bool   `toml:"skip_tls_verify" env:"skip_tls_verify"`
+	MQTTVersion     string `toml:"mqtt_version" env:"mqtt_version"`
+	ConnectTimeout  int    `toml:"connect_timeout" env:"connect_timeout"`
+	KeepAlive       int    `toml:"keep_alive" env:"keep_alive"`
+	QoS             int    `toml:"qos" env:"qos"`
+	AutoReconnect   bool   `toml:"auto_reconnect" env:"auto_reconnect"`
+	ReconnectPeriod int    `toml:"reconnect_period" env:"reconnect_period"`
+	// PublishTimeout is the time in seconds to wait for a publish token.
+	PublishTimeout int `toml:"publish_timeout" env:"publish_timeout"`
+	// SubscribeTimeout is the time in seconds to wait for a subscribe token.
+	SubscribeTimeout int `toml:"subscribe_timeout" env:"subscribe_timeout"`
+	// UnsubscribeTimeout is the time in seconds to wait for an unsubscribe token.
 	UnsubscribeTimeout  int    `toml:"unsubscribe_timeout" env:"unsubscribe_timeout"`
 	CleanStart          bool   `toml:"clean_start" env:"clean_start"`
 	SessionExpiry       int    `toml:"session_expiry_interval" env:"session_expiry_interval"`

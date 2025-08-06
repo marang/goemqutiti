@@ -99,6 +99,6 @@ func (s *SuggestField) WantsKey(k tea.KeyMsg) bool {
 	case "tab", "shift+tab", "up", "down", "enter", " ", "space":
 		return len(s.suggestions) > 0
 	default:
-		return false
+		return s.TextField.WantsKey(k)
 	}
 }

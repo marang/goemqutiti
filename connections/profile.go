@@ -25,6 +25,9 @@ type Profile struct {
 	QoS                 int    `toml:"qos" env:"qos"`
 	AutoReconnect       bool   `toml:"auto_reconnect" env:"auto_reconnect"`
 	ReconnectPeriod     int    `toml:"reconnect_period" env:"reconnect_period"`
+	PublishTimeout      int    `toml:"publish_timeout" env:"publish_timeout"`
+	SubscribeTimeout    int    `toml:"subscribe_timeout" env:"subscribe_timeout"`
+	UnsubscribeTimeout  int    `toml:"unsubscribe_timeout" env:"unsubscribe_timeout"`
 	CleanStart          bool   `toml:"clean_start" env:"clean_start"`
 	SessionExpiry       int    `toml:"session_expiry_interval" env:"session_expiry_interval"`
 	ReceiveMaximum      int    `toml:"receive_maximum" env:"receive_maximum"`

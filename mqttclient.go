@@ -10,17 +10,22 @@ import (
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 
+const defaultTokenTimeout = 5 * time.Second
+
 type MQTTMessage struct {
 	Topic   string
 	Payload string
 }
 
 type MQTTClient struct {
-	Client mqtt.Client
-	// MessageChan receives published messages. It is closed when
+	Client             mqtt.Client
+  // MessageChan receives published messages. It is closed when
 	// Disconnect is called, so consumers must handle channel
 	// closure.
-	MessageChan chan MQTTMessage
+	MessageChan        chan MQTTMessage
+	publishTimeout     time.Duration
+	subscribeTimeout   time.Duration
+	unsubscribeTimeout time.Duration
 }
 
 // NewMQTTClient creates and configures a new MQTT client based on the profile
@@ -88,7 +93,17 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 		return nil, fmt.Errorf("failed to connect: %w", token.Error())
 	}
 
-	return &MQTTClient{Client: client, MessageChan: msgChan}, nil
+	pubTimeout := time.Duration(p.PublishTimeout) * time.Second
+	subTimeout := time.Duration(p.SubscribeTimeout) * time.Second
+	unsubTimeout := time.Duration(p.UnsubscribeTimeout) * time.Second
+
+	return &MQTTClient{
+		Client:             client,
+		MessageChan:        msgChan,
+		publishTimeout:     pubTimeout,
+		subscribeTimeout:   subTimeout,
+		unsubscribeTimeout: unsubTimeout,
+	}, nil
 }
 
 // Publish sends the payload to the given topic using the underlying client.
@@ -96,7 +111,13 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 // broker.
 func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {
 	token := m.Client.Publish(topic, qos, retained, payload)
-	token.Wait()
+	timeout := m.publishTimeout
+	if timeout <= 0 {
+		timeout = defaultTokenTimeout
+	}
+	if !token.WaitTimeout(timeout) {
+		return fmt.Errorf("publish timeout after %v", timeout)
+	}
 	if token.Error() != nil {
 		return fmt.Errorf("publish failed: %w", token.Error())
 	}
@@ -108,7 +129,13 @@ func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload inte
 // returns an error if the request fails.
 func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) error {
 	token := m.Client.Subscribe(topic, qos, callback)
-	token.Wait()
+	timeout := m.subscribeTimeout
+	if timeout <= 0 {
+		timeout = defaultTokenTimeout
+	}
+	if !token.WaitTimeout(timeout) {
+		return fmt.Errorf("subscribe timeout after %v", timeout)
+	}
 	if token.Error() != nil {
 		return fmt.Errorf("subscribe failed: %w", token.Error())
 	}
@@ -119,7 +146,13 @@ func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHand
 // completion and returns an error if the unsubscribe request fails.
 func (m *MQTTClient) Unsubscribe(topic string) error {
 	token := m.Client.Unsubscribe(topic)
-	token.Wait()
+	timeout := m.unsubscribeTimeout
+	if timeout <= 0 {
+		timeout = defaultTokenTimeout
+	}
+	if !token.WaitTimeout(timeout) {
+		return fmt.Errorf("unsubscribe timeout after %v", timeout)
+	}
 	if token.Error() != nil {
 		return fmt.Errorf("unsubscribe failed: %w", token.Error())
 	}

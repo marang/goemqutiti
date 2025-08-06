@@ -84,3 +84,16 @@ func TestConnectionFormProfileInvalidInt(t *testing.T) {
 		t.Fatalf("expected port 0, got %d", p.Port)
 	}
 }
+
+func TestConnectionFormSchemaOptions(t *testing.T) {
+	cf := NewForm(Profile{Schema: "mqtt"}, -1)
+	sf := cf.Fields[fieldIndex["Schema"]].(*ui.SelectField)
+	if sf.Value() != "mqtt" {
+		t.Fatalf("expected schema mqtt, got %s", sf.Value())
+	}
+	cf = NewForm(Profile{Schema: "mqtts"}, -1)
+	sf = cf.Fields[fieldIndex["Schema"]].(*ui.SelectField)
+	if sf.Value() != "mqtts" {
+		t.Fatalf("expected schema mqtts, got %s", sf.Value())
+	}
+}

@@ -14,9 +14,12 @@ import (
 )
 
 func TestProfileBrokerURL(t *testing.T) {
-	p := Profile{Schema: "mqtt", Host: "example.com", Port: 1883}
-	if got := p.BrokerURL(); got != "mqtt://example.com:1883" {
-		t.Fatalf("BrokerURL() = %q", got)
+	for _, schema := range []string{"mqtt", "mqtts"} {
+		p := Profile{Schema: schema, Host: "example.com", Port: 1883}
+		want := schema + "://example.com:1883"
+		if got := p.BrokerURL(); got != want {
+			t.Fatalf("BrokerURL() = %q", got)
+		}
 	}
 }
 

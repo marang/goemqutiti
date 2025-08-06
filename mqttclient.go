@@ -16,7 +16,10 @@ type MQTTMessage struct {
 }
 
 type MQTTClient struct {
-	Client      mqtt.Client
+	Client mqtt.Client
+	// MessageChan receives published messages. It is closed when
+	// Disconnect is called, so consumers must handle channel
+	// closure.
 	MessageChan chan MQTTMessage
 }
 
@@ -123,10 +126,15 @@ func (m *MQTTClient) Unsubscribe(topic string) error {
 	return nil
 }
 
-// Disconnect cleanly closes the connection to the broker.
+// Disconnect cleanly closes the connection to the broker and closes
+// MessageChan. Consumers must handle channel closure.
 func (m *MQTTClient) Disconnect() {
 	if m.Client != nil && m.Client.IsConnected() {
 		// Allow up to 250 milliseconds for pending work to complete.
 		m.Client.Disconnect(250)
+	}
+	if m.MessageChan != nil {
+		close(m.MessageChan)
+		m.MessageChan = nil
 	}
 }

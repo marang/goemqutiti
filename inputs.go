@@ -4,6 +4,7 @@ import (
 	list "github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/history"
 )
 
@@ -34,7 +35,7 @@ func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 		switch mt := msg.(type) {
 		case tea.KeyMsg:
 			s := mt.String()
-			if s == "up" || s == "down" || s == "pgup" || s == "pgdown" || s == "k" || s == "j" {
+			if s == constants.KeyUp || s == constants.KeyDown || s == constants.KeyPgUp || s == constants.KeyPgDown || s == constants.KeyK || s == constants.KeyJ {
 				skipVP = true
 			}
 		case tea.MouseMsg:

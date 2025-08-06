@@ -6,6 +6,8 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // Connections manages the state and logic for handling broker profiles.
@@ -47,7 +49,7 @@ func (m Connections) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if m.Focused && msg.String() == "a" {
+		if m.Focused && msg.String() == constants.KeyA {
 			m.TextInput.Focus()
 		}
 	}

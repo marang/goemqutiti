@@ -41,7 +41,22 @@ var (
 	runTraceFn  = runTrace
 	runImportFn = runImport
 	runUIFn     = runUI
+
+	loadProfileFn   = connections.LoadProfile
+	newMQTTClientFn = func(p connections.Profile, fn statusFunc) (mqttClient, error) { return NewMQTTClient(p, fn) }
+	newImporterFn   = importer.New
+	initialModelFn  = initialModel
+	newProgramFn    = func(m tea.Model, opts ...tea.ProgramOption) program {
+		return tea.NewProgram(m, opts...)
+	}
 )
+
+type program interface{ Run() (tea.Model, error) }
+
+type mqttClient interface {
+	importer.Publisher
+	Disconnect()
+}
 
 func registerFlags(fs *flag.FlagSet) {
 	fs.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
@@ -126,7 +141,7 @@ func runTrace(key, topics, profile, startStr, endStr string) error {
 // runImport launches the interactive import wizard using the provided file
 // path and profile name.
 func runImport(path, profile string) error {
-	p, err := connections.LoadProfile(profile, "")
+	p, err := loadProfileFn(profile, "")
 	if err != nil {
 		return fmt.Errorf("error loading profile: %w", err)
 	}
@@ -134,14 +149,14 @@ func runImport(path, profile string) error {
 		p.Password = env
 	}
 
-	client, err := NewMQTTClient(*p, nil)
+	client, err := newMQTTClientFn(*p, nil)
 	if err != nil {
 		return fmt.Errorf("connect error: %w", err)
 	}
 	defer client.Disconnect()
 
-	w := importer.New(client, path)
-	prog := tea.NewProgram(importerTeaModel{w}, tea.WithAltScreen())
+	w := newImporterFn(client, path)
+	prog := newProgramFn(importerTeaModel{w}, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		return fmt.Errorf("import error: %w", err)
 	}
@@ -149,12 +164,12 @@ func runImport(path, profile string) error {
 }
 
 func runUI() error {
-	initial, err := initialModel(nil)
+	initial, err := initialModelFn(nil)
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
 	_ = initial.SetMode(constants.ModeConnections)
-	p := tea.NewProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
+	p := newProgramFn(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {
 		return err

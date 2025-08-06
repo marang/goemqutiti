@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	connections "github.com/marang/emqutiti/connections"
@@ -25,6 +26,32 @@ type MQTTClient struct {
 	publishTimeout     time.Duration
 	subscribeTimeout   time.Duration
 	unsubscribeTimeout time.Duration
+}
+
+// waitToken blocks until the MQTT token completes or the timeout expires.
+// It returns any error from the token or a timeout error.
+func waitToken(token mqtt.Token, timeout time.Duration, action string) error {
+	if timeout <= 0 {
+		timeout = defaultTokenTimeout
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	done := make(chan struct{})
+	go func() {
+		token.Wait()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+		if err := token.Error(); err != nil {
+			return fmt.Errorf("%s failed: %w", action, err)
+		}
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("%s timeout after %v", action, timeout)
+	}
 }
 
 // NewMQTTClient creates and configures a new MQTT client based on the profile
@@ -110,17 +137,7 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 // broker.
 func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload interface{}) error {
 	token := m.Client.Publish(topic, qos, retained, payload)
-	timeout := m.publishTimeout
-	if timeout <= 0 {
-		timeout = defaultTokenTimeout
-	}
-	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("publish timeout after %v", timeout)
-	}
-	if token.Error() != nil {
-		return fmt.Errorf("publish failed: %w", token.Error())
-	}
-	return nil
+	return waitToken(token, m.publishTimeout, "publish")
 }
 
 // Subscribe registers callback for messages on topic at the specified QoS.
@@ -128,34 +145,14 @@ func (m *MQTTClient) Publish(topic string, qos byte, retained bool, payload inte
 // returns an error if the request fails.
 func (m *MQTTClient) Subscribe(topic string, qos byte, callback mqtt.MessageHandler) error {
 	token := m.Client.Subscribe(topic, qos, callback)
-	timeout := m.subscribeTimeout
-	if timeout <= 0 {
-		timeout = defaultTokenTimeout
-	}
-	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("subscribe timeout after %v", timeout)
-	}
-	if token.Error() != nil {
-		return fmt.Errorf("subscribe failed: %w", token.Error())
-	}
-	return nil
+	return waitToken(token, m.subscribeTimeout, "subscribe")
 }
 
 // Unsubscribe removes the subscription for the topic. It waits for
 // completion and returns an error if the unsubscribe request fails.
 func (m *MQTTClient) Unsubscribe(topic string) error {
 	token := m.Client.Unsubscribe(topic)
-	timeout := m.unsubscribeTimeout
-	if timeout <= 0 {
-		timeout = defaultTokenTimeout
-	}
-	if !token.WaitTimeout(timeout) {
-		return fmt.Errorf("unsubscribe timeout after %v", timeout)
-	}
-	if token.Error() != nil {
-		return fmt.Errorf("unsubscribe failed: %w", token.Error())
-	}
-	return nil
+	return waitToken(token, m.unsubscribeTimeout, "unsubscribe")
 }
 
 // Disconnect cleanly closes the connection to the broker. It also closes

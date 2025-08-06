@@ -9,6 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -57,9 +58,9 @@ func (h *Component) UpdateDetail(msg tea.Msg) tea.Cmd {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "esc":
+		case constants.KeyEsc:
 			return h.m.SetMode(h.m.PreviousMode())
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
 		}
 	}
@@ -75,11 +76,11 @@ func (h *Component) UpdateFilter(msg tea.Msg) tea.Cmd {
 	switch t := msg.(type) {
 	case tea.KeyMsg:
 		switch t.String() {
-		case "esc":
+		case constants.KeyEsc:
 			h.filterForm = nil
 			cmd := tea.Batch(h.m.SetMode(h.m.PreviousMode()), h.m.SetFocus(ID))
 			return cmd
-		case "enter":
+		case constants.KeyEnter:
 			h.showArchived = h.filterForm.archived.Bool()
 			q := h.filterForm.query()
 			topics, start, end, payload := ParseQuery(q)

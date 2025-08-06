@@ -39,13 +39,13 @@ func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
 // handleKeyNav processes global navigation key presses.
 func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
-	case "ctrl+up", "ctrl+k":
+	case constants.KeyCtrlUp, constants.KeyCtrlK:
 		m.ui.viewport.ScrollUp(1)
 		return nil, true
-	case "ctrl+down", "ctrl+j":
+	case constants.KeyCtrlDown, constants.KeyCtrlJ:
 		m.ui.viewport.ScrollDown(1)
 		return nil, true
-	case "tab":
+	case constants.KeyTab:
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
@@ -67,7 +67,7 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 			}
 			return nil, true
 		}
-	case "shift+tab":
+	case constants.KeyShiftTab:
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
@@ -92,7 +92,7 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 	}
 
 	if m.CurrentMode() != constants.ModeHistoryFilter &&
-		(msg.String() == "enter" || msg.String() == " " || msg.String() == "space") &&
+		(msg.String() == constants.KeyEnter || msg.String() == constants.KeySpaceBar || msg.String() == constants.KeySpace) &&
 		m.help.Focused() {
 		return m.SetMode(constants.ModeHelp), true
 	}

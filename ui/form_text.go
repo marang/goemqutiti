@@ -3,6 +3,8 @@ package ui
 import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // TextField wraps a text input with optional read-only behaviour.
@@ -56,7 +58,7 @@ func (t *TextField) View() string { return t.Model.View() }
 // normal input so users can type them without jumping to another field.
 func (t *TextField) WantsKey(k tea.KeyMsg) bool {
 	switch k.String() {
-	case "j", "k":
+	case constants.KeyJ, constants.KeyK:
 		return true
 	default:
 		return false

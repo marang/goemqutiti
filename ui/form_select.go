@@ -2,6 +2,8 @@ package ui
 
 import (
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // SelectField allows choosing from a fixed list of options.
@@ -47,9 +49,9 @@ func (s *SelectField) Update(msg tea.Msg) tea.Cmd {
 	}
 	if km, ok := msg.(tea.KeyMsg); ok {
 		switch km.String() {
-		case "left", "h":
+		case constants.KeyLeft, constants.KeyH:
 			s.Index--
-		case "right", "l", " ":
+		case constants.KeyRight, constants.KeyL, constants.KeySpaceBar:
 			s.Index++
 		}
 		if s.Index < 0 {

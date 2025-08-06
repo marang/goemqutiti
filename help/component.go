@@ -5,6 +5,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/ui"
 )
@@ -38,9 +39,9 @@ func (h *Component) Update(msg tea.Msg) tea.Cmd {
 	switch t := msg.(type) {
 	case tea.KeyMsg:
 		switch t.String() {
-		case "esc":
+		case constants.KeyEsc:
 			return h.nav.SetMode(h.nav.PreviousMode())
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
 		}
 	}

@@ -4,6 +4,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -36,9 +37,9 @@ func (d *Dialog) Update(msg tea.Msg) tea.Cmd {
 	switch t := msg.(type) {
 	case tea.KeyMsg:
 		switch t.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "y":
+		case constants.KeyY:
 			var acmd tea.Cmd
 			if d.action != nil {
 				acmd = d.action()
@@ -59,7 +60,7 @@ func (d *Dialog) Update(msg tea.Msg) tea.Cmd {
 				d.nav.ScrollToFocused()
 			}
 			return tea.Batch(cmds...)
-		case "n", "esc":
+		case constants.KeyN, constants.KeyEsc:
 			if d.cancel != nil {
 				d.cancel()
 				d.cancel = nil

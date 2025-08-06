@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -18,13 +19,13 @@ func (m *Model) updateMap(msg tea.Msg) tea.Cmd {
 	switch ev := msg.(type) {
 	case tea.KeyMsg:
 		switch ev.String() {
-		case "tab", "shift+tab", "up", "down", "k", "j":
+		case constants.KeyTab, constants.KeyShiftTab, constants.KeyUp, constants.KeyDown, constants.KeyK, constants.KeyJ:
 			m.form.CycleFocus(ev)
-		case "ctrl+n":
+		case constants.KeyCtrlN:
 			m.step = stepTemplate
 			m.tmpl.Focus()
 			return nil
-		case "ctrl+p":
+		case constants.KeyCtrlP:
 			m.step = stepFile
 			return nil
 		}

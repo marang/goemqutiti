@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+
+	"github.com/marang/emqutiti/constants"
 )
 
 // Handler processes keyboard input in client mode.
@@ -23,49 +25,49 @@ func HandleClientKey(h Handler, msg tea.KeyMsg) tea.Cmd {
 // HandleClientKey processes keyboard events in client mode.
 func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
-	case "ctrl+d":
+	case constants.KeyCtrlD:
 		return m.handleQuitKey()
-	case "ctrl+c":
+	case constants.KeyCtrlC:
 		return m.handleCopyKey()
-	case "ctrl+x":
+	case constants.KeyCtrlX:
 		return m.handleDisconnectKey()
-	case "/":
+	case constants.KeySlash:
 		return m.handleHistoryFilterKey()
-	case "ctrl+f":
+	case constants.KeyCtrlF:
 		return m.handleClearFilterKey()
-	case "space":
+	case constants.KeySpace:
 		return m.handleSpaceKey()
-	case "shift+up":
+	case constants.KeyShiftUp:
 		return m.handleShiftUpKey()
-	case "shift+down":
+	case constants.KeyShiftDown:
 		return m.handleShiftDownKey()
-	case "tab":
+	case constants.KeyTab:
 		return m.handleTabKey()
-	case "shift+tab":
+	case constants.KeyShiftTab:
 		return m.handleShiftTabKey()
-	case "left":
+	case constants.KeyLeft:
 		return m.handleLeftKey()
-	case "right":
+	case constants.KeyRight:
 		return m.handleRightKey()
-	case "ctrl+shift+up":
+	case constants.KeyCtrlShiftUp:
 		return m.handleResizeUpKey()
-	case "ctrl+shift+down":
+	case constants.KeyCtrlShiftDown:
 		return m.handleResizeDownKey()
-	case "ctrl+a":
+	case constants.KeyCtrlA:
 		return m.handleSelectAllKey()
-	case "ctrl+l":
+	case constants.KeyCtrlL:
 		return m.handleToggleArchiveKey()
-	case "up", "down", "k", "j":
+	case constants.KeyUp, constants.KeyDown, constants.KeyK, constants.KeyJ:
 		return m.handleScrollKeys(msg.String())
-	case "ctrl+s", "ctrl+enter":
+	case constants.KeyCtrlS, constants.KeyCtrlEnter:
 		return m.handlePublishKey()
-	case "enter":
+	case constants.KeyEnter:
 		return m.handleEnterKey()
-	case "p":
+	case constants.KeyP:
 		return m.handleTogglePublishKey()
-	case "a":
+	case constants.KeyA:
 		return m.handleArchiveKey()
-	case "delete":
+	case constants.KeyDelete:
 		return m.handleDeleteKey()
 	default:
 		return m.handleModeSwitchKey(msg)

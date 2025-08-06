@@ -124,7 +124,7 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 		mgr := c.api.Manager()
 		if mgr.ConnectionsList.FilterState() == list.Filtering {
 			switch msg.String() {
-			case "enter":
+			case constants.KeyEnter:
 				i := mgr.ConnectionsList.Index()
 				if i >= 0 && i < len(mgr.Profiles) {
 					p := mgr.Profiles[i]
@@ -141,12 +141,12 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 			break
 		}
 		switch msg.String() {
-		case "ctrl+d":
+		case constants.KeyCtrlD:
 			return tea.Quit
-		case "ctrl+r":
+		case constants.KeyCtrlR:
 			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
 			return c.nav.SetMode(constants.ModeTracer)
-		case "ctrl+o":
+		case constants.KeyCtrlO:
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 {
 				if mgr.DefaultProfileName == mgr.Profiles[i].Name {
@@ -155,16 +155,16 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 					mgr.SetDefault(i)
 				}
 			}
-		case "a":
+		case constants.KeyA:
 			c.api.BeginAdd()
 			return c.nav.SetMode(constants.ModeEditConnection)
-		case "e":
+		case constants.KeyE:
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 && i < len(mgr.Profiles) {
 				c.api.BeginEdit(i)
 				return c.nav.SetMode(constants.ModeEditConnection)
 			}
-		case "enter":
+		case constants.KeyEnter:
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 && i < len(mgr.Profiles) {
 				p := mgr.Profiles[i]
@@ -177,13 +177,13 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 				}
 				return c.api.Connect(p)
 			}
-		case "delete":
+		case constants.KeyDelete:
 			i := mgr.ConnectionsList.Index()
 			if i >= 0 {
 				c.api.BeginDelete(i)
 				return c.api.ListenStatus()
 			}
-		case "x":
+		case constants.KeyX:
 			c.api.DisconnectActive()
 		}
 	}

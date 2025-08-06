@@ -56,6 +56,10 @@ func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 	if m.isHistoryFocused() && !m.history.ShowArchived() {
 		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	}
+	helpWidth := lipgloss.Width(ui.HelpStyle.Render("?"))
+	if msg.Y == 1 && msg.X >= m.ui.width-helpWidth+1 {
+		m.SetMode(constants.ModeHelp)
+	}
 	return cmd
 }
 

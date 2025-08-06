@@ -12,8 +12,10 @@ import (
 
 // logTopicAction appends a log entry for a topic action.
 // action should be "subscribe" or "unsubscribe".
+// An empty action logs a no-op message.
 func (m *model) logTopicAction(topic, action string, err error) {
 	if len(action) == 0 {
+		m.history.Append(topic, "", "log", fmt.Sprintf("No action specified for topic: %s", topic))
 		return
 	}
 	act := strings.ToUpper(action[:1]) + action[1:]

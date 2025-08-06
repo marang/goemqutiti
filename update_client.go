@@ -14,6 +14,7 @@ import (
 // action should be "subscribe" or "unsubscribe".
 func (m *model) logTopicAction(topic, action string, err error) {
 	if len(action) == 0 {
+		m.history.Append(topic, "", "log", fmt.Sprintf("No action specified for topic: %s", topic))
 		return
 	}
 	act := strings.ToUpper(action[:1]) + action[1:]

@@ -45,3 +45,6 @@ emqutiti
 docs/*.cast
 docs/*.gif
 
+# Crush agent files
+.crush/
+

@@ -18,6 +18,8 @@ type SelectField struct {
 	readOnly bool
 }
 
+// NewSelectField creates a new select field with the given value and options.
+// It returns an error if no options are provided.
 func NewSelectField(val string, opts []string) (*SelectField, error) {
 	if len(opts) == 0 {
 		return nil, fmt.Errorf("no options provided")

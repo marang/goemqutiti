@@ -25,4 +25,14 @@ var (
 	HelpFocused = HelpStyle.Foreground(ColDarkGray).Background(ColPink)
 	HelpHeader  = lipgloss.NewStyle().Foreground(ColCyan).Bold(true).Underline(true)
 	HelpKey     = lipgloss.NewStyle().Foreground(ColGreen).Width(20)
+
+	// Form field styles
+	FormLabel        = lipgloss.NewStyle().Foreground(ColBlue).Bold(true)
+	FormLabelFocused = lipgloss.NewStyle().Foreground(ColPink).Bold(true)
+	FormHelp         = lipgloss.NewStyle().Foreground(ColGray).Italic(true)
+	FormError        = lipgloss.NewStyle().Foreground(ColWarn)
+
+	// Focus indicators
+	FocusIndicator    = lipgloss.NewStyle().Foreground(ColPink).Bold(true)
+	ReadOnlyIndicator = lipgloss.NewStyle().Foreground(ColGray).Italic(true)
 )

@@ -87,7 +87,7 @@ func (s *SuggestField) SuggestionsView() string {
 	for i, sug := range s.suggestions {
 		st := lipgloss.NewStyle().Foreground(ColBlue)
 		if i == s.sel {
-			st = st.Foreground(ColPink)
+			st = st.Foreground(ColPink).Bold(true)
 		}
 		items[i] = st.Render(sug)
 	}

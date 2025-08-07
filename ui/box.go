@@ -27,9 +27,8 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 
 	b := lipgloss.RoundedBorder()
 	cy := ColCyan
-	labelStyle := lipgloss.NewStyle().Foreground(color)
 	top := lipgloss.NewStyle().Foreground(color).Render(
-		b.TopLeft+" "+labelStyle.Render(label)+" "+strings.Repeat(b.Top, width-lipgloss.Width(label)-4),
+		b.TopLeft+" "+label+" "+strings.Repeat(b.Top, width-lipgloss.Width(label)-4),
 	) + lipgloss.NewStyle().Foreground(cy).Render(b.TopRight)
 	bottom := lipgloss.NewStyle().Foreground(cy).Render(
 		b.BottomLeft + strings.Repeat(b.Bottom, width-2) + b.BottomRight,

@@ -3,6 +3,7 @@ package traces
 import (
 	"crypto/tls"
 	"fmt"
+	"log"
 	connections "github.com/marang/emqutiti/connections"
 	"os"
 	"os/signal"
@@ -144,7 +145,7 @@ func Run(key, topics, profileName, startStr, endStr string) error {
 	}
 
 	for t, c := range tr.Counts() {
-		fmt.Printf("%s: %d\n", t, c)
+		log.Printf("%s: %d", t, c)
 	}
 	return nil
 }

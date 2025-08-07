@@ -6,6 +6,8 @@ import (
 	"strings"
 )
 
+// sanitizeEnvName converts a profile name to a valid environment variable name
+// by replacing non-alphanumeric characters with underscores and converting to uppercase.
 func sanitizeEnvName(name string) string {
 	upper := strings.ToUpper(name)
 	var b strings.Builder
@@ -148,6 +150,10 @@ var profileEnvSetters = map[string]profileEnvSetter{
 }
 
 // ApplyEnvVars loads profile fields from environment variables when FromEnv is set.
+// It looks for variables with the prefix EMQUTITI_<PROFILENAME>_<FIELD> where
+// <PROFILENAME> is the profile name converted to uppercase with non-alphanumeric
+// characters replaced by underscores.
+// For backward compatibility, it also checks the old GOEMQUTITI_ prefix.
 func ApplyEnvVars(p *Profile) {
 	if !p.FromEnv {
 		return

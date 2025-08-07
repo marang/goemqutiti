@@ -34,14 +34,14 @@ func (s *SuggestField) Update(msg tea.Msg) tea.Cmd {
 	switch m := msg.(type) {
 	case tea.KeyMsg:
 		switch m.String() {
-		case constants.KeyTab, constants.KeyDown:
+		case constants.KeyRight, constants.KeyL, constants.KeySpaceBar:
 			if len(s.suggestions) > 0 {
 				s.sel = (s.sel + 1) % len(s.suggestions)
 				s.SetValue(s.suggestions[s.sel])
 				s.CursorEnd()
 				return nil
 			}
-		case constants.KeyShiftTab, constants.KeyUp:
+		case constants.KeyLeft, constants.KeyH:
 			if len(s.suggestions) > 0 {
 				s.sel--
 				if s.sel < 0 {
@@ -51,7 +51,7 @@ func (s *SuggestField) Update(msg tea.Msg) tea.Cmd {
 				s.CursorEnd()
 				return nil
 			}
-		case constants.KeyEnter, constants.KeySpaceBar, constants.KeySpace:
+		case constants.KeyEnter:
 			if len(s.suggestions) > 0 && s.sel >= 0 {
 				s.SetValue(s.suggestions[s.sel])
 				s.suggestions = nil
@@ -98,7 +98,7 @@ func (s *SuggestField) SuggestionsView() string {
 // suggestions instead of moving focus.
 func (s *SuggestField) WantsKey(k tea.KeyMsg) bool {
 	switch k.String() {
-	case constants.KeyTab, constants.KeyShiftTab, constants.KeyUp, constants.KeyDown, constants.KeyEnter, constants.KeySpaceBar, constants.KeySpace:
+	case constants.KeyLeft, constants.KeyRight, constants.KeyH, constants.KeyL, constants.KeyEnter, constants.KeySpaceBar:
 		return len(s.suggestions) > 0
 	default:
 		return s.TextField.WantsKey(k)

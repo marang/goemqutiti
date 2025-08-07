@@ -3,8 +3,8 @@ package traces
 import (
 	"crypto/tls"
 	"fmt"
-	"log"
 	connections "github.com/marang/emqutiti/connections"
+	"log"
 	"os"
 	"os/signal"
 	"strconv"

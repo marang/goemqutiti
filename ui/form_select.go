@@ -107,7 +107,7 @@ func (s *SelectField) OptionsView() string {
 	for i, opt := range s.options {
 		st := lipgloss.NewStyle().Foreground(ColBlue)
 		if i == s.Index {
-			st = st.Foreground(ColPink)
+			st = st.Foreground(ColPink).Bold(true)
 		}
 		items[i] = st.Render(opt)
 	}

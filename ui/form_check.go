@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // CheckField is a boolean toggle input.
@@ -55,7 +56,7 @@ func (c *CheckField) Update(msg tea.Msg) tea.Cmd {
 func (c *CheckField) View() string {
 	box := "[ ]"
 	if c.value {
-		box = "[x]"
+		box = "[✓]"
 	}
 	switch {
 	case c.readOnly:
@@ -63,6 +64,9 @@ func (c *CheckField) View() string {
 	case c.focused:
 		return FocusedStyle.Render(box)
 	default:
+		if c.value {
+			return lipgloss.NewStyle().Foreground(ColGreen).Render(box)
+		}
 		return box
 	}
 }

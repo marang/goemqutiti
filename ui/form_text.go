@@ -53,8 +53,13 @@ func (t *TextField) Focus() {
 		t.Model.Focus()
 	}
 }
-func (t *TextField) Blur()        { t.Model.Blur() }
-func (t *TextField) View() string { return t.Model.View() }
+func (t *TextField) Blur() { t.Model.Blur() }
+func (t *TextField) View() string {
+	if t.readOnly {
+		return BlurredStyle.Render(t.Model.View())
+	}
+	return t.Model.View()
+}
 
 // WantsKey reports whether the field wants to handle navigation keys itself
 // instead of letting the form cycle focus. Plain "j" and "k" are treated as

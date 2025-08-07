@@ -32,6 +32,35 @@ func FormatHistoryLines(lines []string, width int, bar lipgloss.Style) []string 
 	return out
 }
 
+// FormatHistoryLinesWithFocus wraps lines and prefixes them with a colored bar,
+// with an option to highlight specific lines.
+func FormatHistoryLinesWithFocus(lines []string, width int, bar lipgloss.Style, focusedLine int) []string {
+	inner := width - 2
+	if inner < 0 {
+		inner = 0
+	}
+	var out []string
+	prefix := bar.Render("┃")
+	focusedPrefix := lipgloss.NewStyle().Foreground(ColPink).Render("┃")
+
+	for i, l := range lines {
+		currentPrefix := prefix
+		if i == focusedLine {
+			currentPrefix = focusedPrefix
+		}
+
+		wrapped := ansi.Wrap(l, inner, " ")
+		for _, wl := range strings.Split(wrapped, "\n") {
+			content := wl
+			if i == focusedLine {
+				content = lipgloss.NewStyle().Foreground(ColPink).Render(wl)
+			}
+			out = append(out, currentPrefix+" "+lipgloss.PlaceHorizontal(width-2, lipgloss.Left, content))
+		}
+	}
+	return out
+}
+
 // NewHistoryView creates a HistoryView sized for the given outer box width and height.
 func NewHistoryView(boxWidth, height int) HistoryView {
 	vp := viewport.New(boxWidth-4, height)

@@ -51,14 +51,9 @@ from_env = true
 	if err := os.WriteFile(cfg, []byte(data), 0644); err != nil {
 		t.Fatalf("write config: %v", err)
 	}
-	os.Setenv("EMQUTITI_TEST_HOST", "example.com")
-	os.Setenv("EMQUTITI_TEST_PORT", "1884")
-	os.Setenv("EMQUTITI_TEST_SCHEMA", "ssl")
-	defer func() {
-		os.Unsetenv("EMQUTITI_TEST_HOST")
-		os.Unsetenv("EMQUTITI_TEST_PORT")
-		os.Unsetenv("EMQUTITI_TEST_SCHEMA")
-	}()
+	t.Setenv("EMQUTITI_TEST_HOST", "example.com")
+	t.Setenv("EMQUTITI_TEST_PORT", "1884")
+	t.Setenv("EMQUTITI_TEST_SCHEMA", "ssl")
 
 	c, err := connections.LoadFromConfig(cfg)
 	if err != nil {
@@ -75,9 +70,7 @@ from_env = true
 
 func TestSaveLoadState(t *testing.T) {
 	dir := t.TempDir()
-	oldHome := os.Getenv("HOME")
-	os.Setenv("HOME", dir)
-	defer os.Setenv("HOME", oldHome)
+	t.Setenv("HOME", dir)
 
 	data := map[string]connections.ConnectionSnapshot{
 		"p1": {
@@ -96,9 +89,7 @@ func TestSaveLoadState(t *testing.T) {
 
 func TestSaveLoadTraces(t *testing.T) {
 	dir := t.TempDir()
-	oldHome := os.Getenv("HOME")
-	os.Setenv("HOME", dir)
-	defer os.Setenv("HOME", oldHome)
+	t.Setenv("HOME", dir)
 
 	start := time.Date(2025, time.July, 28, 18, 25, 21, 0, time.UTC)
 	end := start.Add(time.Hour)
@@ -128,9 +119,7 @@ func TestSaveStateWriteError(t *testing.T) {
 	if err := os.WriteFile(cfgFile, []byte("x"), 0o644); err != nil {
 		t.Fatalf("write: %v", err)
 	}
-	oldHome := os.Getenv("HOME")
-	os.Setenv("HOME", dir)
-	defer os.Setenv("HOME", oldHome)
+	t.Setenv("HOME", dir)
 
 	err := connections.SaveState(map[string]connections.ConnectionSnapshot{})
 	if err == nil {

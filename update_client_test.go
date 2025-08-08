@@ -176,4 +176,17 @@ func TestLogTopicAction(t *testing.T) {
 			t.Fatalf("unexpected log item: kind %q payload %q", items[0].Kind, items[0].Payload)
 		}
 	})
+
+	t.Run("unknown", func(t *testing.T) {
+		m, _ := initialModel(nil)
+		m.logTopicAction("t1", "invalid", nil)
+		items := m.history.Items()
+		if len(items) != 1 {
+			t.Fatalf("expected 1 history item, got %d", len(items))
+		}
+		exp := "Unknown action for topic: t1"
+		if items[0].Kind != "log" || items[0].Payload != exp {
+			t.Fatalf("unexpected log item: kind %q payload %q", items[0].Kind, items[0].Payload)
+		}
+	})
 }

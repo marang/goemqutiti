@@ -2,7 +2,6 @@ package emqutiti
 
 import (
 	"fmt"
-	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	connections "github.com/marang/emqutiti/connections"
@@ -18,17 +17,26 @@ func (m *model) logTopicAction(topic, action string, err error) {
 		m.history.Append(topic, "", "log", fmt.Sprintf("No action specified for topic: %s", topic))
 		return
 	}
-	act := strings.ToUpper(action[:1]) + action[1:]
-	if err != nil {
-		m.history.Append(topic, "", "log", fmt.Sprintf("%s error for %s: %v", act, topic, err))
-		return
-	}
+
+	var label, success string
 	switch action {
 	case "subscribe":
-		m.history.Append(topic, "", "log", fmt.Sprintf("Subscribed to topic: %s", topic))
+		label = "Subscribe"
+		success = "Subscribed to topic: %s"
 	case "unsubscribe":
-		m.history.Append(topic, "", "log", fmt.Sprintf("Unsubscribed from topic: %s", topic))
+		label = "Unsubscribe"
+		success = "Unsubscribed from topic: %s"
+	default:
+		m.history.Append(topic, "", "log", fmt.Sprintf("Unknown action for topic: %s", topic))
+		return
 	}
+
+	if err != nil {
+		m.history.Append(topic, "", "log", fmt.Sprintf("%s error for %s: %v", label, topic, err))
+		return
+	}
+
+	m.history.Append(topic, "", "log", fmt.Sprintf(success, topic))
 }
 
 // handleTopicToggle subscribes or unsubscribes from a topic and logs the action.

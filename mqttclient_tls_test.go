@@ -10,6 +10,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -28,9 +29,15 @@ func startTLSServer(t *testing.T) (addr string, closeFn func()) {
 	if err != nil {
 		t.Fatalf("tls listen: %v", err)
 	}
+	var wg sync.WaitGroup
+	done := make(chan struct{})
+	handshake := make(chan struct{})
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		conn, err := ln.Accept()
 		if err != nil {
+			close(handshake)
 			return
 		}
 		defer conn.Close()
@@ -38,9 +45,15 @@ func startTLSServer(t *testing.T) (addr string, closeFn func()) {
 		buf := make([]byte, 1024)
 		conn.Read(buf)
 		conn.Write([]byte{0x20, 0x02, 0x00, 0x00})
-		time.Sleep(100 * time.Millisecond)
+		close(handshake)
+		<-done
 	}()
-	return ln.Addr().String(), func() { ln.Close() }
+	return ln.Addr().String(), func() {
+		ln.Close()
+		<-handshake
+		close(done)
+		wg.Wait()
+	}
 }
 
 func generateCert(t *testing.T) (certPEM, keyPEM []byte) {

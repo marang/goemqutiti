@@ -3,6 +3,7 @@ package traces
 import (
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ func (f fakeMessage) Ack()              {}
 type fakeClient struct {
 	subs  map[string]mqtt.MessageHandler
 	subCh chan struct{}
+	wg    *sync.WaitGroup
 }
 
 func newFakeClient() *fakeClient {
@@ -32,7 +34,12 @@ func newFakeClient() *fakeClient {
 }
 
 func (f *fakeClient) Subscribe(topic string, qos byte, cb mqtt.MessageHandler) error {
-	f.subs[topic] = cb
+	f.subs[topic] = func(c mqtt.Client, m mqtt.Message) {
+		cb(c, m)
+		if f.wg != nil {
+			f.wg.Done()
+		}
+	}
 	select {
 	case f.subCh <- struct{}{}:
 	default:
@@ -60,16 +67,20 @@ func TestTraceStartAndStore(t *testing.T) {
 		Key:     "k1",
 	}
 	fc := newFakeClient()
+	var wg sync.WaitGroup
+	wg.Add(2)
+	fc.wg = &wg
 	tr := newTracer(cfg, fc)
 	if err := tr.Start(); err != nil {
 		t.Fatalf("start: %v", err)
 	}
-	time.Sleep(20 * time.Millisecond)
+	<-fc.subCh
+	done := tr.done
 	fc.publish("a", "one")
 	fc.publish("a", "two")
-	time.Sleep(100 * time.Millisecond)
+	wg.Wait()
 	tr.Stop()
-	time.Sleep(200 * time.Millisecond)
+	<-done
 
 	keys, err := tracerKeys("test", "k1")
 	if err != nil {

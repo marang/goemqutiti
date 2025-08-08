@@ -3,6 +3,7 @@ package traces
 import (
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -25,6 +26,7 @@ func (f fakeMessage) Ack()              {}
 type fakeClient struct {
 	subs  map[string]mqtt.MessageHandler
 	subCh chan struct{}
+	mu    sync.RWMutex
 }
 
 func newFakeClient() *fakeClient {
@@ -32,18 +34,28 @@ func newFakeClient() *fakeClient {
 }
 
 func (f *fakeClient) Subscribe(topic string, qos byte, cb mqtt.MessageHandler) error {
+	f.mu.Lock()
 	f.subs[topic] = cb
+	f.mu.Unlock()
 	select {
 	case f.subCh <- struct{}{}:
 	default:
 	}
 	return nil
 }
-func (f *fakeClient) Unsubscribe(topic string) error { delete(f.subs, topic); return nil }
-func (f *fakeClient) Disconnect()                    {}
+func (f *fakeClient) Unsubscribe(topic string) error {
+	f.mu.Lock()
+	delete(f.subs, topic)
+	f.mu.Unlock()
+	return nil
+}
+func (f *fakeClient) Disconnect() {}
 
 func (f *fakeClient) publish(topic, payload string) {
-	if cb, ok := f.subs[topic]; ok {
+	f.mu.RLock()
+	cb, ok := f.subs[topic]
+	f.mu.RUnlock()
+	if ok {
 		cb(nil, fakeMessage{topic: topic, payload: []byte(payload)})
 	}
 }

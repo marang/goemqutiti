@@ -180,8 +180,7 @@ func TestMainDispatchUI(t *testing.T) {
 }
 
 func TestRunImport(t *testing.T) {
-	os.Setenv("EMQUTITI_DEFAULT_PASSWORD", "pw")
-	defer os.Unsetenv("EMQUTITI_DEFAULT_PASSWORD")
+	t.Setenv("EMQUTITI_DEFAULT_PASSWORD", "pw")
 
 	client := &stubMQTTClient{}
 	d := &appDeps{

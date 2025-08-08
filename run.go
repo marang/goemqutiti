@@ -34,21 +34,6 @@ var (
 	traceTopics string
 	traceStart  string
 	traceEnd    string
-
-	traceStore traces.Store = traces.FileStore{}
-	traceRun                = traces.Run
-
-	runTraceFn  = runTrace
-	runImportFn = runImport
-	runUIFn     = runUI
-
-	loadProfileFn   = connections.LoadProfile
-	newMQTTClientFn = func(p connections.Profile, fn statusFunc) (mqttClient, error) { return NewMQTTClient(p, fn) }
-	newImporterFn   = importer.New
-	initialModelFn  = initialModel
-	newProgramFn    = func(m tea.Model, opts ...tea.ProgramOption) program {
-		return tea.NewProgram(m, opts...)
-	}
 )
 
 type program interface{ Run() (tea.Model, error) }
@@ -56,6 +41,45 @@ type program interface{ Run() (tea.Model, error) }
 type mqttClient interface {
 	importer.Publisher
 	Disconnect()
+}
+
+type appDeps struct {
+	importFile  string
+	profileName string
+	traceKey    string
+	traceTopics string
+	traceStart  string
+	traceEnd    string
+
+	traceStore traces.Store
+	traceRun   func(string, string, string, string, string) error
+
+	loadProfile   func(string, string) (*connections.Profile, error)
+	newMQTTClient func(connections.Profile, statusFunc) (mqttClient, error)
+	newImporter   func(importer.Publisher, string) *importer.Model
+	initialModel  func(*connections.Connections) (*model, error)
+	newProgram    func(tea.Model, ...tea.ProgramOption) program
+
+	runTrace  func(*appDeps) error
+	runImport func(*appDeps) error
+	runUI     func(*appDeps) error
+}
+
+func newAppDeps() *appDeps {
+	return &appDeps{
+		traceStore:    traces.FileStore{},
+		traceRun:      traces.Run,
+		loadProfile:   connections.LoadProfile,
+		newMQTTClient: func(p connections.Profile, fn statusFunc) (mqttClient, error) { return NewMQTTClient(p, fn) },
+		newImporter:   importer.New,
+		initialModel:  initialModel,
+		newProgram: func(m tea.Model, opts ...tea.ProgramOption) program {
+			return tea.NewProgram(m, opts...)
+		},
+		runTrace:  runTrace,
+		runImport: runImport,
+		runUI:     runUI,
+	}
 }
 
 func registerFlags(fs *flag.FlagSet) {
@@ -90,41 +114,51 @@ func init() { registerFlags(flag.CommandLine) }
 
 func Main() {
 	flag.Parse()
+	d := newAppDeps()
+	d.importFile = importFile
+	d.profileName = profileName
+	d.traceKey = traceKey
+	d.traceTopics = traceTopics
+	d.traceStart = traceStart
+	d.traceEnd = traceEnd
+	runMain(d)
+}
 
-	if traceKey != "" {
-		if err := runTraceFn(traceKey, traceTopics, profileName, traceStart, traceEnd); err != nil {
+func runMain(d *appDeps) {
+	if d.traceKey != "" {
+		if err := d.runTrace(d); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	if importFile != "" {
-		if err := runImportFn(importFile, profileName); err != nil {
+	if d.importFile != "" {
+		if err := d.runImport(d); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	if err := runUIFn(); err != nil {
+	if err := d.runUI(d); err != nil {
 		log.Fatalf("Error running program: %v", err)
 	}
 }
 
-func runTrace(key, topics, profile, startStr, endStr string) error {
-	tlist := strings.Split(topics, ",")
+func runTrace(d *appDeps) error {
+	tlist := strings.Split(d.traceTopics, ",")
 	for i := range tlist {
 		tlist[i] = strings.TrimSpace(tlist[i])
 	}
 	var start, end time.Time
 	var err error
-	if startStr != "" {
-		start, err = time.Parse(time.RFC3339, startStr)
+	if d.traceStart != "" {
+		start, err = time.Parse(time.RFC3339, d.traceStart)
 		if err != nil {
 			return fmt.Errorf("invalid trace start time: %w", err)
 		}
 	}
-	if endStr != "" {
-		end, err = time.Parse(time.RFC3339, endStr)
+	if d.traceEnd != "" {
+		end, err = time.Parse(time.RFC3339, d.traceEnd)
 		if err != nil {
 			return fmt.Errorf("invalid trace end time: %w", err)
 		}
@@ -132,7 +166,7 @@ func runTrace(key, topics, profile, startStr, endStr string) error {
 			return fmt.Errorf("trace end time already passed")
 		}
 	}
-	exists, err := traceStore.HasData(profile, key)
+	exists, err := d.traceStore.HasData(d.profileName, d.traceKey)
 	if err != nil {
 		return fmt.Errorf("trace data check failed: %w", err)
 	}
@@ -140,22 +174,22 @@ func runTrace(key, topics, profile, startStr, endStr string) error {
 		return fmt.Errorf("trace key already exists")
 	}
 	cfg := traces.TracerConfig{
-		Profile: profile,
+		Profile: d.profileName,
 		Topics:  tlist,
 		Start:   start,
 		End:     end,
-		Key:     key,
+		Key:     d.traceKey,
 	}
-	if err := traceStore.AddTrace(cfg); err != nil {
+	if err := d.traceStore.AddTrace(cfg); err != nil {
 		return err
 	}
-	return traceRun(key, topics, profile, startStr, endStr)
+	return d.traceRun(d.traceKey, d.traceTopics, d.profileName, d.traceStart, d.traceEnd)
 }
 
 // runImport launches the interactive import wizard using the provided file
 // path and profile name.
-func runImport(path, profile string) error {
-	p, err := loadProfileFn(profile, "")
+func runImport(d *appDeps) error {
+	p, err := d.loadProfile(d.profileName, "")
 	if err != nil {
 		return fmt.Errorf("error loading profile: %w", err)
 	}
@@ -163,27 +197,27 @@ func runImport(path, profile string) error {
 		p.Password = env
 	}
 
-	client, err := newMQTTClientFn(*p, nil)
+	client, err := d.newMQTTClient(*p, nil)
 	if err != nil {
 		return fmt.Errorf("connect error: %w", err)
 	}
 	defer client.Disconnect()
 
-	w := newImporterFn(client, path)
-	prog := newProgramFn(importerTeaModel{w}, tea.WithAltScreen())
+	w := d.newImporter(client, d.importFile)
+	prog := d.newProgram(importerTeaModel{w}, tea.WithAltScreen())
 	if _, err := prog.Run(); err != nil {
 		return fmt.Errorf("import error: %w", err)
 	}
 	return nil
 }
 
-func runUI() error {
-	initial, err := initialModelFn(nil)
+func runUI(d *appDeps) error {
+	initial, err := d.initialModel(nil)
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
 	_ = initial.SetMode(constants.ModeConnections)
-	p := newProgramFn(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
+	p := d.newProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()
 	if err != nil {
 		return err

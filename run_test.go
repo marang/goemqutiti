@@ -63,21 +63,22 @@ func (s *stubHistoryStore) Close() error {
 }
 
 func TestRunTrace(t *testing.T) {
-	origStore, origRun := traceStore, traceRun
-	defer func() { traceStore = origStore; traceRun = origRun }()
-
 	st := &stubTraceStore{}
-	traceStore = st
 	called := false
-	traceRun = func(k, tp, pf, stt, end string) error {
-		called = true
-		if k != "k" || tp != "a,b" || pf != "p" {
-			t.Fatalf("unexpected args %v %v %v", k, tp, pf)
-		}
-		return nil
+	d := &appDeps{
+		traceKey:    "k",
+		traceTopics: "a,b",
+		profileName: "p",
+		traceStore:  st,
+		traceRun: func(k, tp, pf, stt, end string) error {
+			called = true
+			if k != "k" || tp != "a,b" || pf != "p" {
+				t.Fatalf("unexpected args %v %v %v", k, tp, pf)
+			}
+			return nil
+		},
 	}
-
-	if err := runTrace("k", "a,b", "p", "", ""); err != nil {
+	if err := runTrace(d); err != nil {
 		t.Fatalf("runTrace error: %v", err)
 	}
 	if !called {
@@ -89,12 +90,16 @@ func TestRunTrace(t *testing.T) {
 }
 
 func TestRunTraceEndPast(t *testing.T) {
-	origStore, origRun := traceStore, traceRun
-	defer func() { traceStore = origStore; traceRun = origRun }()
-
-	traceStore = &stubTraceStore{}
 	past := time.Now().Add(-time.Hour).Format(time.RFC3339)
-	if err := runTrace("k", "t", "p", "", past); err == nil {
+	d := &appDeps{
+		traceKey:    "k",
+		traceTopics: "t",
+		profileName: "p",
+		traceEnd:    past,
+		traceStore:  &stubTraceStore{},
+		traceRun:    func(string, string, string, string, string) error { return nil },
+	}
+	if err := runTrace(d); err == nil {
 		t.Fatalf("expected error for past end time")
 	}
 }
@@ -115,28 +120,23 @@ func TestMainDispatchImportFlags(t *testing.T) {
 	cases := [][]string{{"-i", "f", "-p", "pr"}, {"--import", "f", "--profile", "pr"}}
 	for _, c := range cases {
 		undo := resetFlags(c)
+		flag.Parse()
 		called := false
-		origImport, origTrace, origUI := runImportFn, runTraceFn, runUIFn
-		runImportFn = func(path, profile string) error {
+		d := newAppDeps()
+		d.runImport = func(ad *appDeps) error {
 			called = true
-			if path != "f" || profile != "pr" {
-				t.Fatalf("unexpected params %v %v", path, profile)
+			if ad.importFile != "f" || ad.profileName != "pr" {
+				t.Fatalf("unexpected params %v %v", ad.importFile, ad.profileName)
 			}
 			return nil
 		}
-		runTraceFn = func(string, string, string, string, string) error {
-			t.Fatalf("runTrace called")
-			return nil
-		}
-		runUIFn = func() error {
-			t.Fatalf("runUI called")
-			return nil
-		}
-		Main()
+		d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
+		d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
+		d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
+		runMain(d)
 		if !called {
 			t.Fatalf("runImport not called")
 		}
-		runImportFn, runTraceFn, runUIFn = origImport, origTrace, origUI
 		undo()
 	}
 }
@@ -144,73 +144,72 @@ func TestMainDispatchImportFlags(t *testing.T) {
 func TestMainDispatchTrace(t *testing.T) {
 	undo := resetFlags([]string{"--trace", "k", "--topics", "t"})
 	defer undo()
+	flag.Parse()
 	called := false
-	origImport, origTrace, origUI := runImportFn, runTraceFn, runUIFn
-	runTraceFn = func(k, tp, pf, st, en string) error {
+	d := newAppDeps()
+	d.runTrace = func(ad *appDeps) error {
 		called = true
-		if k != "k" || tp != "t" {
-			t.Fatalf("unexpected params %v %v", k, tp)
+		if ad.traceKey != "k" || ad.traceTopics != "t" {
+			t.Fatalf("unexpected params %v %v", ad.traceKey, ad.traceTopics)
 		}
 		return nil
 	}
-	runImportFn = func(string, string) error { t.Fatalf("runImport called"); return nil }
-	runUIFn = func() error { t.Fatalf("runUI called"); return nil }
-	Main()
+	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
+	d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
+	d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
+	runMain(d)
 	if !called {
 		t.Fatalf("runTrace not called")
 	}
-	runImportFn, runTraceFn, runUIFn = origImport, origTrace, origUI
 }
 
 func TestMainDispatchUI(t *testing.T) {
 	undo := resetFlags(nil)
 	defer undo()
+	flag.Parse()
 	called := false
-	origImport, origTrace, origUI := runImportFn, runTraceFn, runUIFn
-	runUIFn = func() error { called = true; return nil }
-	runImportFn = func(string, string) error { t.Fatalf("runImport called"); return nil }
-	runTraceFn = func(string, string, string, string, string) error {
-		t.Fatalf("runTrace called")
-		return nil
-	}
-	Main()
+	d := newAppDeps()
+	d.runUI = func(*appDeps) error { called = true; return nil }
+	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
+	d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
+	d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
+	runMain(d)
 	if !called {
 		t.Fatalf("runUI not called")
 	}
-	runImportFn, runTraceFn, runUIFn = origImport, origTrace, origUI
 }
 
 func TestRunImport(t *testing.T) {
-	origLoad, origClient, origImp, origProg := loadProfileFn, newMQTTClientFn, newImporterFn, newProgramFn
-	defer func() {
-		loadProfileFn, newMQTTClientFn, newImporterFn, newProgramFn = origLoad, origClient, origImp, origProg
-	}()
 	os.Setenv("EMQUTITI_DEFAULT_PASSWORD", "pw")
 	defer os.Unsetenv("EMQUTITI_DEFAULT_PASSWORD")
 
-	loadProfileFn = func(name, _ string) (*connections.Profile, error) {
-		if name != "pr" {
-			t.Fatalf("unexpected profile %s", name)
-		}
-		return &connections.Profile{}, nil
-	}
 	client := &stubMQTTClient{}
-	newMQTTClientFn = func(p connections.Profile, fn statusFunc) (mqttClient, error) {
-		if p.Password != "pw" {
-			t.Fatalf("expected password override, got %s", p.Password)
-		}
-		return client, nil
+	d := &appDeps{
+		importFile:  "file",
+		profileName: "pr",
+		loadProfile: func(name, _ string) (*connections.Profile, error) {
+			if name != "pr" {
+				t.Fatalf("unexpected profile %s", name)
+			}
+			return &connections.Profile{}, nil
+		},
+		newMQTTClient: func(p connections.Profile, fn statusFunc) (mqttClient, error) {
+			if p.Password != "pw" {
+				t.Fatalf("expected password override, got %s", p.Password)
+			}
+			return client, nil
+		},
+		newImporter: func(cl importer.Publisher, path string) *importer.Model {
+			if cl != client || path != "file" {
+				t.Fatalf("unexpected importer args")
+			}
+			return nil
+		},
+		newProgram: func(m tea.Model, opts ...tea.ProgramOption) program {
+			return stubProgram{run: func() (tea.Model, error) { return nil, nil }}
+		},
 	}
-	newImporterFn = func(cl importer.Publisher, path string) *importer.Model {
-		if cl != client || path != "file" {
-			t.Fatalf("unexpected importer args")
-		}
-		return nil
-	}
-	newProgramFn = func(m tea.Model, opts ...tea.ProgramOption) program {
-		return stubProgram{run: func() (tea.Model, error) { return nil, nil }}
-	}
-	if err := runImport("file", "pr"); err != nil {
+	if err := runImport(d); err != nil {
 		t.Fatalf("runImport error: %v", err)
 	}
 	if !client.disconnected {
@@ -219,20 +218,19 @@ func TestRunImport(t *testing.T) {
 }
 
 func TestRunUI(t *testing.T) {
-	origInit, origProg := initialModelFn, newProgramFn
-	defer func() { initialModelFn, newProgramFn = origInit, origProg }()
-
-	initialModelFn = func(*connections.Connections) (*model, error) {
-		return &model{help: &help.Component{}}, nil
-	}
 	st := &stubHistoryStore{}
-	newProgramFn = func(m tea.Model, opts ...tea.ProgramOption) program {
-		return stubProgram{run: func() (tea.Model, error) {
-			hc := history.NewComponent(nil, st)
-			return &model{history: hc}, nil
-		}}
+	d := &appDeps{
+		initialModel: func(*connections.Connections) (*model, error) {
+			return &model{help: &help.Component{}}, nil
+		},
+		newProgram: func(m tea.Model, opts ...tea.ProgramOption) program {
+			return stubProgram{run: func() (tea.Model, error) {
+				hc := history.NewComponent(nil, st)
+				return &model{history: hc}, nil
+			}}
+		},
 	}
-	if err := runUI(); err != nil {
+	if err := runUI(d); err != nil {
 		t.Fatalf("runUI error: %v", err)
 	}
 	if !st.closed {

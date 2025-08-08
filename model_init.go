@@ -113,6 +113,82 @@ func initLayout() layoutConfig {
 	}
 }
 
+// initComponents registers focusable elements and mode components.
+func initComponents(m *model, order []string, connComp Component) {
+	providers := []focus.FocusableSet{m, m.topics, m.message, m.payloads, m.traces, m.help}
+	m.focusables = map[string]focus.Focusable{}
+	for _, p := range providers {
+		for id, f := range p.Focusables() {
+			m.focusables[id] = f
+		}
+	}
+	fitems := make([]focus.Focusable, len(order))
+	for i, id := range order {
+		fitems[i] = m.focusables[id]
+	}
+	m.focus = focus.NewFocusMap(fitems)
+	m.components = map[constants.AppMode]Component{
+		constants.ModeClient:         component{update: m.updateClient, view: m.viewClient},
+		constants.ModeConnections:    connComp,
+		constants.ModeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
+		constants.ModeConfirmDelete:  m.confirm,
+		constants.ModeTopics:         m.topics,
+		constants.ModePayloads:       m.payloads,
+		constants.ModeTracer:         m.traces,
+		constants.ModeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
+		constants.ModeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
+		constants.ModeTraceFilter:    component{update: m.traces.UpdateFilter, view: m.traces.ViewFilter},
+		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
+		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
+		constants.ModeHelp:           m.help,
+	}
+}
+
+// initImporter bootstraps the importer for a selected profile.
+func initImporter(m *model) error {
+	if importFile == "" {
+		return nil
+	}
+	var p *connections.Profile
+	if profileName != "" {
+		for i := range m.connections.Manager.Profiles {
+			if m.connections.Manager.Profiles[i].Name == profileName {
+				p = &m.connections.Manager.Profiles[i]
+				break
+			}
+		}
+	} else if m.connections.Manager.DefaultProfileName != "" {
+		for i := range m.connections.Manager.Profiles {
+			if m.connections.Manager.Profiles[i].Name == m.connections.Manager.DefaultProfileName {
+				p = &m.connections.Manager.Profiles[i]
+				break
+			}
+		}
+	}
+	if p == nil && len(m.connections.Manager.Profiles) > 0 {
+		p = &m.connections.Manager.Profiles[0]
+	}
+	if p == nil {
+		return nil
+	}
+	cfg := *p
+	if cfg.FromEnv {
+		connections.ApplyEnvVars(&cfg)
+	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
+		cfg.Password = env
+	}
+	client, err := NewMQTTClient(cfg, nil)
+	if err != nil {
+		return fmt.Errorf("connect error: %w", err)
+	}
+	m.mqttClient = client
+	m.connections.Active = cfg.Name
+	m.importer = importer.New(client, importFile)
+	m.components[constants.ModeImporter] = m.importer
+	m.SetMode(constants.ModeImporter)
+	return nil
+}
+
 // initialModel creates the main program model with optional connection data.
 func initialModel(conns *connections.Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[constants.ModeClient]...)
@@ -126,86 +202,16 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		layout:      initLayout(),
 	}
 	m.history = history.NewComponent(historyModelAdapter{m}, st)
-	msgComp := message.NewComponent(m, ms)
-	m.message = msgComp
+	m.message = message.NewComponent(m, ms)
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = confirm.NewDialog(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m)
-	topicsComp := topics.New(m)
-	m.topics = topicsComp
+	m.topics = topics.New(m)
 	m.payloads = payloads.New(m, &m.connections)
-	tracesComp := traces.NewComponent(m, tr, m.tracesStore())
-	m.traces = tracesComp
-
-	// Collect focusable elements from model and components.
-	providers := []focus.FocusableSet{m, topicsComp, msgComp, m.payloads, tracesComp, m.help}
-	m.focusables = map[string]focus.Focusable{}
-	for _, p := range providers {
-		for id, f := range p.Focusables() {
-			m.focusables[id] = f
-		}
-	}
-	fitems := make([]focus.Focusable, len(order))
-	for i, id := range order {
-		fitems[i] = m.focusables[id]
-	}
-	m.focus = focus.NewFocusMap(fitems)
-	// history component handles its own delegate
-	// Register mode components so that view and update logic can be
-	// delegated based on the current application mode.
-	m.components = map[constants.AppMode]Component{
-		constants.ModeClient:         component{update: m.updateClient, view: m.viewClient},
-		constants.ModeConnections:    connComp,
-		constants.ModeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
-		constants.ModeConfirmDelete:  m.confirm,
-		constants.ModeTopics:         topicsComp,
-		constants.ModePayloads:       m.payloads,
-		constants.ModeTracer:         tracesComp,
-		constants.ModeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
-		constants.ModeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
-		constants.ModeTraceFilter:    component{update: m.traces.UpdateFilter, view: m.traces.ViewFilter},
-		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
-		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
-		constants.ModeHelp:           m.help,
-	}
-
-	if importFile != "" {
-		var p *connections.Profile
-		if profileName != "" {
-			for i := range m.connections.Manager.Profiles {
-				if m.connections.Manager.Profiles[i].Name == profileName {
-					p = &m.connections.Manager.Profiles[i]
-					break
-				}
-			}
-		} else if m.connections.Manager.DefaultProfileName != "" {
-			for i := range m.connections.Manager.Profiles {
-				if m.connections.Manager.Profiles[i].Name == m.connections.Manager.DefaultProfileName {
-					p = &m.connections.Manager.Profiles[i]
-					break
-				}
-			}
-		}
-		if p == nil && len(m.connections.Manager.Profiles) > 0 {
-			p = &m.connections.Manager.Profiles[0]
-		}
-		if p != nil {
-			cfg := *p
-			if cfg.FromEnv {
-				connections.ApplyEnvVars(&cfg)
-			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-				cfg.Password = env
-			}
-			if client, err := NewMQTTClient(cfg, nil); err == nil {
-				m.mqttClient = client
-				m.connections.Active = cfg.Name
-				m.importer = importer.New(client, importFile)
-				m.components[constants.ModeImporter] = m.importer
-				m.SetMode(constants.ModeImporter)
-			} else {
-				return nil, fmt.Errorf("connect error: %w", err)
-			}
-		}
+	m.traces = traces.NewComponent(m, tr, m.tracesStore())
+	initComponents(m, order, connComp)
+	if err := initImporter(m); err != nil {
+		return nil, err
 	}
 	m.topics.RebuildActiveTopicList()
 	return m, loadErr

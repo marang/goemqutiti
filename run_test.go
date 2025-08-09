@@ -50,7 +50,7 @@ func (s *stubMQTTClient) Disconnect() { s.disconnected = true }
 
 type stubHistoryStore struct{ closed bool }
 
-func (s *stubHistoryStore) Append(history.Message) {}
+func (s *stubHistoryStore) Append(history.Message) error { return nil }
 func (s *stubHistoryStore) Search(bool, []string, time.Time, time.Time, string) []history.Message {
 	return nil
 }

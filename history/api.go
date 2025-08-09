@@ -27,7 +27,7 @@ type Model interface {
 
 // Store defines operations for storing and querying history messages.
 type Store interface {
-	Append(Message)
+	Append(Message) error
 	Search(archived bool, topics []string, start, end time.Time, payload string) []Message
 	Delete(key string) error
 	Archive(key string) error

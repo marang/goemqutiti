@@ -15,7 +15,7 @@ func newMemStore(msgs []history.Message) *memStore {
 	return &memStore{msgs: msgs}
 }
 
-func (m *memStore) Append(history.Message) {}
+func (m *memStore) Append(history.Message) error { return nil }
 
 func (m *memStore) Search(archived bool, topics []string, start, end time.Time, payload string) []history.Message {
 	var out []history.Message

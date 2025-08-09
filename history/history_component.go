@@ -1,6 +1,7 @@
 package history
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -146,7 +147,9 @@ func (h *Component) Append(topic, payload, kind string, retained bool, logText s
 	}
 	hi := Item{Timestamp: ts, Topic: topic, Payload: text, Kind: kind, Archived: false, Retained: retained}
 	if h.store != nil {
-		h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false, Retained: retained})
+		if err := h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false, Retained: retained}); err != nil {
+			fmt.Printf("history append error: %v\n", err)
+		}
 	}
 	if !h.showArchived {
 		if h.filterQuery != "" {

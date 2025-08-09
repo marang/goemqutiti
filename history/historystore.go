@@ -47,20 +47,24 @@ func openStore(profile string) (Store, error) {
 	}
 	idx := &store{db: db}
 	// Load existing messages
-	db.View(func(txn *badger.Txn) error {
+	if err := db.View(func(txn *badger.Txn) error {
 		it := txn.NewIterator(badger.DefaultIteratorOptions)
 		defer it.Close()
 		for it.Rewind(); it.Valid(); it.Next() {
 			item := it.Item()
-			item.Value(func(val []byte) error {
-				var m Message
-				json.Unmarshal(val, &m)
-				idx.msgs = append(idx.msgs, m)
-				return nil
-			})
+			var m Message
+			if err := item.Value(func(val []byte) error {
+				return json.Unmarshal(val, &m)
+			}); err != nil {
+				return err
+			}
+			idx.msgs = append(idx.msgs, m)
 		}
 		return nil
-	})
+	}); err != nil {
+		db.Close()
+		return nil, err
+	}
 	return idx, nil
 }
 
@@ -73,7 +77,7 @@ func (i *store) Close() error {
 }
 
 // Append adds a message to the store.
-func (i *store) Append(msg Message) {
+func (i *store) Append(msg Message) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.msgs = append(i.msgs, msg)
@@ -83,11 +87,17 @@ func (i *store) Append(msg Message) {
 		// interpret '/' as a directory separator. Keeping slashes allows
 		// prefix queries on hierarchical topics.
 		key := []byte(fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano()))
-		val, _ := json.Marshal(msg)
-		i.db.Update(func(txn *badger.Txn) error {
+		val, err := json.Marshal(msg)
+		if err != nil {
+			return err
+		}
+		if err := i.db.Update(func(txn *badger.Txn) error {
 			return txn.Set(key, val)
-		})
+		}); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // Delete removes a message with the given key from the index.
@@ -125,7 +135,10 @@ func (i *store) Archive(key string) error {
 		if k == key {
 			if i.db != nil {
 				m.Archived = true
-				val, _ := json.Marshal(m)
+				val, err := json.Marshal(m)
+				if err != nil {
+					return err
+				}
 				if err := i.db.Update(func(txn *badger.Txn) error {
 					return txn.Set([]byte(key), val)
 				}); err != nil {

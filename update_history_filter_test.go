@@ -16,7 +16,9 @@ func TestUpdateHistoryFilter(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	m.startHistoryFilter()
 	m.history.FilterForm().Topic().SetValue("foo")
@@ -38,8 +40,12 @@ func TestHistoryFilterPersists(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
-	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false})
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	m.startHistoryFilter()
 	m.history.FilterForm().Topic().SetValue("foo")
@@ -69,8 +75,12 @@ func TestHistoryFilterUpdatesCounts(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
-	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false})
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	m.startHistoryFilter()
 	m.history.FilterForm().Topic().SetValue("foo")
@@ -91,8 +101,12 @@ func TestHistoryFilterArchived(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
-	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Archived: true, Retained: false})
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Archived: true, Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	// default unchecked state shows unarchived messages
 	m.startHistoryFilter()

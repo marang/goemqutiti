@@ -10,7 +10,9 @@ func TestArchiveAndSearch(t *testing.T) {
 	hs := &store{}
 	ts := time.Now()
 	msg := Message{Timestamp: ts, Topic: "t1", Payload: "p1", Kind: "pub", Retained: false}
-	hs.Append(msg)
+	if err := hs.Append(msg); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 	key := fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano())
 	if err := hs.Archive(key); err != nil {
 		t.Fatalf("Archive failed: %v", err)

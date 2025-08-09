@@ -82,8 +82,12 @@ func TestParseQuery(t *testing.T) {
 func TestApplyFilterArchived(t *testing.T) {
 	hs := &store{}
 	ts := time.Now()
-	hs.Append(Message{Timestamp: ts, Topic: "t1", Payload: "active", Kind: "pub", Retained: false})
-	hs.Append(Message{Timestamp: ts.Add(time.Second), Topic: "t2", Payload: "arch", Kind: "pub", Archived: true, Retained: false})
+	if err := hs.Append(Message{Timestamp: ts, Topic: "t1", Payload: "active", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
+	if err := hs.Append(Message{Timestamp: ts.Add(time.Second), Topic: "t2", Payload: "arch", Kind: "pub", Archived: true, Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	items, _ := ApplyFilter("", hs, false)
 	if len(items) != 1 || items[0].Archived {

@@ -194,6 +194,9 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[constants.ModeClient]...)
 	cs, loadErr := initConnections(conns)
 	st, err := history.OpenStore("")
+	if err != nil && loadErr == nil {
+		loadErr = err
+  }
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "history store error: %v\n", err)
 		st = nil

@@ -11,6 +11,7 @@ import (
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/proxy"
 	"github.com/marang/emqutiti/traces"
 )
 
@@ -121,6 +122,8 @@ func TestMainDispatchImportFlags(t *testing.T) {
 	for _, c := range cases {
 		undo := resetFlags(c)
 		flag.Parse()
+		orig := initProxy
+		initProxy = func() (string, *proxy.Proxy) { return "", nil }
 		called := false
 		d := newAppDeps()
 		d.runImport = func(ad *appDeps) error {
@@ -137,6 +140,7 @@ func TestMainDispatchImportFlags(t *testing.T) {
 		if !called {
 			t.Fatalf("runImport not called")
 		}
+		initProxy = orig
 		undo()
 	}
 }
@@ -145,6 +149,8 @@ func TestMainDispatchTrace(t *testing.T) {
 	undo := resetFlags([]string{"--trace", "k", "--topics", "t"})
 	defer undo()
 	flag.Parse()
+	orig := initProxy
+	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
 	d := newAppDeps()
 	d.runTrace = func(ad *appDeps) error {
@@ -161,12 +167,15 @@ func TestMainDispatchTrace(t *testing.T) {
 	if !called {
 		t.Fatalf("runTrace not called")
 	}
+	initProxy = orig
 }
 
 func TestMainDispatchUI(t *testing.T) {
 	undo := resetFlags(nil)
 	defer undo()
 	flag.Parse()
+	orig := initProxy
+	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
 	d := newAppDeps()
 	d.runUI = func(*appDeps) error { called = true; return nil }
@@ -177,6 +186,7 @@ func TestMainDispatchUI(t *testing.T) {
 	if !called {
 		t.Fatalf("runUI not called")
 	}
+	initProxy = orig
 }
 
 func TestRunImport(t *testing.T) {

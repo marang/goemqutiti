@@ -19,6 +19,7 @@ type userConfig struct {
 	DefaultProfileName string                        `toml:"default_profile"`
 	Profiles           []Profile                     `toml:"profiles"`
 	Saved              map[string]ConnectionSnapshot `toml:"saved"`
+	ProxyAddr          string                        `toml:"proxy_addr"`
 }
 
 // LoadState retrieves saved topics and payloads from config.toml.

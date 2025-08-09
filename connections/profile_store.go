@@ -18,6 +18,7 @@ func saveConfig(profiles []Profile, defaultName string) error {
 		DefaultProfileName: defaultName,
 		Profiles:           profiles,
 		Saved:              saved,
+		ProxyAddr:          LoadProxyAddr(),
 	}
 	return writeConfig(cfg)
 }

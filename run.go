@@ -9,6 +9,7 @@ import (
 	"time"
 
 	connections "github.com/marang/emqutiti/connections"
+	history "github.com/marang/emqutiti/history"
 
 	tea "github.com/charmbracelet/bubbletea"
 
@@ -64,6 +65,8 @@ type appDeps struct {
 	runTrace  func(*appDeps) error
 	runImport func(*appDeps) error
 	runUI     func(*appDeps) error
+
+	proxyAddr string
 }
 
 func newAppDeps() *appDeps {
@@ -126,6 +129,10 @@ func Main() {
 }
 
 func runMain(d *appDeps) {
+	addr, _ := initProxy()
+	history.SetProxyAddr(addr)
+	traces.SetProxyAddr(addr)
+	d.proxyAddr = addr
 	if d.traceKey != "" {
 		if err := d.runTrace(d); err != nil {
 			log.Println(err)
@@ -217,6 +224,10 @@ func runUI(d *appDeps) error {
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
+	log.SetFlags(0)
+	log.SetOutput(initial.logs)
+	stop := startProxyStatusLogger(d.proxyAddr)
+	defer stop()
 	_ = initial.SetMode(constants.ModeConnections)
 	p := d.newProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()

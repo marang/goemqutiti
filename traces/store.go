@@ -1,166 +1,112 @@
 package traces
 
 import (
+	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
-	"os"
-	"path/filepath"
 
-	"github.com/dgraph-io/badger/v4"
-
-	"github.com/marang/emqutiti/internal/files"
+	connections "github.com/marang/emqutiti/connections"
+	"github.com/marang/emqutiti/proxy"
 )
 
 var (
-	jsonMarshal         = json.Marshal
-	errManifestNotFound = errors.New("badger: manifest not found")
+	jsonMarshal = json.Marshal
+	proxyAddr   string
 )
 
-// openTracerStore opens the trace database for the profile.
-// When readonly is true, the database is opened in read-only mode.
-func openTracerStore(profile string, readonly bool) (*badger.DB, error) {
-	if profile == "" {
-		profile = "default"
+// SetProxyAddr configures the DB proxy address.
+func SetProxyAddr(addr string) { proxyAddr = addr }
+
+func addr() string {
+	if proxyAddr != "" {
+		return proxyAddr
 	}
-	path := filepath.Join(files.DataDir(profile), "traces")
-	if readonly {
-		if _, err := os.Stat(filepath.Join(path, "MANIFEST")); err != nil {
-			if os.IsNotExist(err) {
-				return nil, errManifestNotFound
-			}
-			return nil, err
-		}
-	} else {
-		if err := files.EnsureDir(path); err != nil {
-			return nil, err
-		}
-	}
-	opts := badger.DefaultOptions(path).WithLogger(nil)
-	if readonly {
-		opts = opts.WithReadOnly(true)
-	}
-	return badger.Open(opts)
+	return connections.LoadProxyAddr()
 }
 
-// Add stores a trace message under the given key.
+func tracerAddClient(cl proxy.DBProxyClient, profile, key string, msg TracerMessage) error {
+	dbKey := fmt.Sprintf("trace/%s/%s/%020d", key, msg.Topic, msg.Timestamp.UnixNano())
+	val, err := jsonMarshal(msg)
+	if err != nil {
+		return err
+	}
+	_, err = cl.Write(context.Background(), &proxy.WriteRequest{
+		Profile: profile,
+		Bucket:  "traces",
+		Key:     dbKey,
+		Value:   val,
+	})
+	return err
+}
+
 func tracerAdd(profile, key string, msg TracerMessage) error {
-	db, err := openTracerStore(profile, false)
+	cl, conn, err := proxy.NewClient(addr())
 	if err != nil {
 		return err
 	}
-	defer db.Close()
-
-	dbKey := []byte(fmt.Sprintf("trace/%s/%s/%020d", key, msg.Topic, msg.Timestamp.UnixNano()))
-	val, err := jsonMarshal(msg)
-	if err != nil {
-		return err
-	}
-	return db.Update(func(txn *badger.Txn) error {
-		return txn.Set(dbKey, val)
-	})
+	defer conn.Close()
+	return tracerAddClient(cl, profile, key, msg)
 }
 
-// tracerAddDB stores a trace message using an existing database handle.
-// It allows callers to reuse an open Badger instance to avoid repeated
-// open/close cycles which can fail when the database is already in use.
-func tracerAddDB(db *badger.DB, key string, msg TracerMessage) error {
-	dbKey := []byte(fmt.Sprintf("trace/%s/%s/%020d", key, msg.Topic, msg.Timestamp.UnixNano()))
-	val, err := jsonMarshal(msg)
-	if err != nil {
-		return err
-	}
-	return db.Update(func(txn *badger.Txn) error {
-		return txn.Set(dbKey, val)
+func tracerMessagesClient(cl proxy.DBProxyClient, profile, key string) ([]TracerMessage, error) {
+	prefix := fmt.Sprintf("trace/%s/", key)
+	resp, err := cl.Read(context.Background(), &proxy.ReadRequest{
+		Profile: profile,
+		Bucket:  "traces",
+		Key:     prefix,
 	})
+	if err != nil {
+		return nil, err
+	}
+	msgs := make([]TracerMessage, 0, len(resp.Values))
+	for _, v := range resp.Values {
+		var m TracerMessage
+		if err := json.Unmarshal(v, &m); err != nil {
+			return nil, err
+		}
+		msgs = append(msgs, m)
+	}
+	return msgs, nil
 }
 
-// Messages returns all messages stored for the given trace key.
 func tracerMessages(profile, key string) ([]TracerMessage, error) {
-	db, err := openTracerStore(profile, true)
+	cl, conn, err := proxy.NewClient(addr())
 	if err != nil {
 		return nil, err
 	}
-	defer db.Close()
-
-	prefix := []byte(fmt.Sprintf("trace/%s/", key))
-	var msgs []TracerMessage
-	err = db.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			item := it.Item()
-			if err := item.Value(func(val []byte) error {
-				var m TracerMessage
-				if err := json.Unmarshal(val, &m); err != nil {
-					return err
-				}
-				msgs = append(msgs, m)
-				return nil
-			}); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	return msgs, err
+	defer conn.Close()
+	return tracerMessagesClient(cl, profile, key)
 }
 
-// Keys returns all database keys for the given trace key.
-func tracerKeys(profile, key string) ([]string, error) {
-	db, err := openTracerStore(profile, true)
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	prefix := []byte(fmt.Sprintf("trace/%s/", key))
-	var out []string
-	err = db.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			out = append(out, string(it.Item().Key()))
-		}
-		return nil
-	})
-	return out, err
-}
-
-// Delete removes all stored messages for the given trace key.
-func tracerDelete(profile, key string) error {
-	db, err := openTracerStore(profile, false)
-	if err != nil {
-		return err
-	}
-	defer db.Close()
-
-	prefix := []byte(fmt.Sprintf("trace/%s/", key))
-	return db.Update(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		for it.Seek(prefix); it.ValidForPrefix(prefix); it.Next() {
-			if err := txn.Delete(it.Item().KeyCopy(nil)); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-}
-
-// HasData reports whether any messages are stored for the given trace key.
 func tracerHasData(profile, key string) (bool, error) {
-	keys, err := tracerKeys(profile, key)
+	cl, conn, err := proxy.NewClient(addr())
 	if err != nil {
-		if errors.Is(err, errManifestNotFound) {
-			return false, nil
-		}
 		return false, err
 	}
-	return len(keys) > 0, nil
+	defer conn.Close()
+	prefix := fmt.Sprintf("trace/%s/", key)
+	resp, err := cl.Read(context.Background(), &proxy.ReadRequest{
+		Profile: profile,
+		Bucket:  "traces",
+		Key:     prefix,
+	})
+	if err != nil {
+		return false, err
+	}
+	return len(resp.Values) > 0, nil
 }
 
-// ClearData deletes all messages stored for the trace key.
 func tracerClearData(profile, key string) error {
-	return tracerDelete(profile, key)
+	cl, conn, err := proxy.NewClient(addr())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+	prefix := fmt.Sprintf("trace/%s/", key)
+	_, err = cl.Delete(context.Background(), &proxy.DeleteRequest{
+		Profile: profile,
+		Bucket:  "traces",
+		Key:     prefix,
+	})
+	return err
 }

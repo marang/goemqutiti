@@ -34,4 +34,5 @@ var focusByMode = map[constants.AppMode][]string{
 	constants.ModeHistoryFilter:  {idHelp},
 	constants.ModeHistoryDetail:  {idHelp},
 	constants.ModeHelp:           {idHelp},
+	constants.ModeLogs:           {idHelp},
 }

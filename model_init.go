@@ -193,7 +193,11 @@ func initImporter(m *model) error {
 func initialModel(conns *connections.Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[constants.ModeClient]...)
 	cs, loadErr := initConnections(conns)
-	st, _ := history.OpenStore("")
+	st, err := history.OpenStore("")
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "history store error: %v\n", err)
+		st = nil
+	}
 	ms := initMessage()
 	tr := traces.Init()
 	m := &model{

@@ -12,7 +12,7 @@ sha256sums=('SKIP')
 
 build() {
   cd "emqutiti-$pkgver"
-  go build -o emqutiti
+  go build -o emqutiti ./cmd/emqutiti
 }
 
 package() {

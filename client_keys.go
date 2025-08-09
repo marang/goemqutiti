@@ -55,8 +55,6 @@ func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 		return m.handleResizeDownKey()
 	case constants.KeyCtrlA:
 		return m.handleSelectAllKey()
-	case constants.KeyCtrlL:
-		return m.handleToggleArchiveKey()
 	case constants.KeyUp, constants.KeyDown, constants.KeyK, constants.KeyJ:
 		return m.handleScrollKeys(msg.String())
 	case constants.KeyCtrlE:

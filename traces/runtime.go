@@ -7,6 +7,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/marang/emqutiti/proxy"
 )
 
 // Config defines the trace parameters.
@@ -67,7 +68,7 @@ func (t *Tracer) Start() error {
 
 	client := t.client
 
-	db, err := openTracerStore(t.cfg.Profile, false)
+	cl, conn, err := proxy.NewClient(addr())
 	if err != nil {
 		t.mu.Lock()
 		t.running = false
@@ -82,7 +83,7 @@ func (t *Tracer) Start() error {
 	go func() {
 		defer func() {
 			client.Disconnect()
-			db.Close()
+			conn.Close()
 			cancel()
 			t.mu.Lock()
 			t.running = false
@@ -124,7 +125,7 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				if err := tracerAddDB(db, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace", Retained: m.Retained()}); err != nil {
+				if err := tracerAddClient(cl, t.cfg.Profile, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace", Retained: m.Retained()}); err != nil {
 					t.reportErr(fmt.Errorf("tracerAdd: %w", err))
 					return
 				}

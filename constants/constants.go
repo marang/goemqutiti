@@ -18,6 +18,7 @@ const (
 	ModeHistoryFilter
 	ModeHistoryDetail
 	ModeHelp
+	ModeLogs
 )
 
 // ID constants for shared elements.

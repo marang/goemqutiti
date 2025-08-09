@@ -193,12 +193,12 @@ func initImporter(m *model) error {
 func initialModel(conns *connections.Connections) (*model, error) {
 	order := append([]string(nil), focusByMode[constants.ModeClient]...)
 	cs, loadErr := initConnections(conns)
-	st, err := history.OpenStore("")
-	if err != nil && loadErr == nil {
-		loadErr = err
-  }
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "history store error: %v\n", err)
+	st, herr := history.OpenStore("")
+	if herr != nil && loadErr == nil {
+		loadErr = herr
+	}
+	if herr != nil {
+		fmt.Fprintf(os.Stderr, "history store error: %v\n", herr)
 		st = nil
 	}
 	ms := initMessage()
@@ -209,6 +209,9 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		layout:      initLayout(),
 	}
 	m.history = history.NewComponent(historyModelAdapter{m}, st)
+	if herr != nil {
+		m.history.Append("", "", "log", false, fmt.Sprintf("history store error: %v", herr))
+	}
 	m.message = message.NewComponent(m, ms)
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = confirm.NewDialog(m, m, nil, nil, nil)

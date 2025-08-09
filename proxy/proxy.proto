@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package proxy;
+
+option go_package = "github.com/marang/emqutiti/proxy;proxy";
+
+message WriteRequest {
+  string profile = 1;
+  string bucket = 2;
+  string key = 3;
+  bytes value = 4;
+}
+
+message WriteResponse {}
+
+message ReadRequest {
+  string profile = 1;
+  string bucket = 2;
+  string key = 3;
+}
+
+message ReadResponse {
+  repeated bytes values = 1;
+}
+
+message DeleteRequest {
+  string profile = 1;
+  string bucket = 2;
+  string key = 3;
+}
+
+message DeleteResponse {}
+
+service DBProxy {
+  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
+}

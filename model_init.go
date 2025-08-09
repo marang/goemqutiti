@@ -14,6 +14,7 @@ import (
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/logs"
 	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/traces"
@@ -141,6 +142,7 @@ func initComponents(m *model, order []string, connComp Component) {
 		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
 		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
 		constants.ModeHelp:           m.help,
+		constants.ModeLogs:           m.logs,
 	}
 }
 
@@ -213,6 +215,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 		m.history.Append("", "", "log", false, fmt.Sprintf("history store error: %v", herr))
 	}
 	m.message = message.NewComponent(m, ms)
+	m.logs = logs.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.help = help.New(navAdapter{m}, &m.ui.width, &m.ui.height, &m.ui.elemPos)
 	m.confirm = confirm.NewDialog(m, m, nil, nil, nil)
 	connComp := connections.NewComponent(navAdapter{m}, m)

@@ -3,6 +3,7 @@ package emqutiti
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"strings"
@@ -217,6 +218,7 @@ func runUI(d *appDeps) error {
 	if err != nil {
 		log.Printf("Warning: %v", err)
 	}
+	log.SetOutput(io.MultiWriter(os.Stderr, initial.logs))
 	_ = initial.SetMode(constants.ModeConnections)
 	p := d.newProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()

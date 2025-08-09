@@ -7,6 +7,10 @@
   patterns.
 - **Checks:** Execute `go vet ./...` and `go test ./...` before committing.
   Run `go mod tidy` when dependencies change.
+- **Tasks:** Use the `Makefile` for common workflows:
+  `make build` compiles the app, `make test` runs vet and tests,
+  `make proto` regenerates gRPC code, and `make cast` records demo
+  sessions.
 - **Artifacts:** Avoid committing binary files such as GIFs. Generate them
   locally from `.cast` recordings instead.
 - **Commits:** Keep messages short, wrap lines at 72 characters, and summarize
@@ -23,6 +27,7 @@
 ## Agent Notes
 The TUI runs fullscreen with colorful borders. Press `Ctrl+B` to open the broker manager to add, edit, or delete MQTT profiles. Passwords are stored securely using the system keyring. Publish messages with `Ctrl+S` or use `Ctrl+E` to retain them, when the message field is focused. History labels retained messages. Use the `--import`/`-i` flag to launch an interactive wizard for CSV or XLS bulk publishing and select a connection with `--profile` or `-p`. The wizard lets you rename columns when mapping them to JSON fields. Leaving a mapping blank keeps the original column name. The importer code lives in the main package and runs via these flags.
 Press `Ctrl+D` from any screen to exit the program.
+Press `Ctrl+L` from any screen to open the log viewer; press `Esc` to return.
 Scroll with `Ctrl+Up`/`Ctrl+Down` or `Ctrl+K`/`Ctrl+J`. In history,
 `a` archives messages and `Delete` removes them.
 

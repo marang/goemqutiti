@@ -1,17 +1,29 @@
 package history
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
-	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/dgraph-io/badger/v4"
-
-	"github.com/marang/emqutiti/internal/files"
+	"github.com/marang/emqutiti/proxy"
+	"google.golang.org/grpc"
+	"os"
 )
+
+var proxyAddr string
+
+// SetProxyAddr configures the DB proxy address.
+func SetProxyAddr(addr string) { proxyAddr = addr }
+
+func addr() string {
+	if proxyAddr != "" {
+		return proxyAddr
+	}
+	return os.Getenv("EMQUTITI_PROXY_ADDR")
+}
 
 // Message holds a timestamped MQTT message with optional payload text.
 type Message struct {
@@ -25,9 +37,11 @@ type Message struct {
 
 // store stores messages in memory and optionally persists them to disk.
 type store struct {
-	mu   sync.RWMutex
-	msgs []Message
-	db   *badger.DB
+	mu      sync.RWMutex
+	msgs    []Message
+	cl      proxy.DBProxyClient
+	conn    *grpc.ClientConn
+	profile string
 }
 
 // openStore opens (or creates) a persistent message index for the given profile.
@@ -36,42 +50,35 @@ func openStore(profile string) (Store, error) {
 	if profile == "" {
 		profile = "default"
 	}
-	path := filepath.Join(files.DataDir(profile), "history")
-	if err := files.EnsureDir(path); err != nil {
-		return nil, err
+	a := addr()
+	if a == "" {
+		return nil, nil
 	}
-	opts := badger.DefaultOptions(path).WithLogger(nil)
-	db, err := badger.Open(opts)
+	cl, conn, err := proxy.NewClient(a)
 	if err != nil {
 		return nil, err
 	}
-	idx := &store{db: db}
-	// Load existing messages
-	if err := db.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			var m Message
-			if err := item.Value(func(val []byte) error {
-				return json.Unmarshal(val, &m)
-			}); err != nil {
-				return err
-			}
-			idx.msgs = append(idx.msgs, m)
-		}
-		return nil
-	}); err != nil {
-		db.Close()
+	idx := &store{cl: cl, conn: conn, profile: profile}
+	resp, err := cl.Read(context.Background(), &proxy.ReadRequest{Profile: profile, Bucket: "history", Key: ""})
+	if err != nil {
+		conn.Close()
 		return nil, err
+	}
+	for _, v := range resp.Values {
+		var m Message
+		if err := json.Unmarshal(v, &m); err != nil {
+			conn.Close()
+			return nil, err
+		}
+		idx.msgs = append(idx.msgs, m)
 	}
 	return idx, nil
 }
 
 // Close closes the underlying database.
 func (i *store) Close() error {
-	if i.db != nil {
-		return i.db.Close()
+	if i.conn != nil {
+		return i.conn.Close()
 	}
 	return nil
 }
@@ -81,19 +88,13 @@ func (i *store) Append(msg Message) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 	i.msgs = append(i.msgs, msg)
-	if i.db != nil {
-		// Keys use the format <topic>/<timestamp>. Slashes in the topic are
-		// safe because BadgerDB treats keys as byte strings and doesn't
-		// interpret '/' as a directory separator. Keeping slashes allows
-		// prefix queries on hierarchical topics.
-		key := []byte(fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano()))
+	if i.cl != nil {
+		key := fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano())
 		val, err := json.Marshal(msg)
 		if err != nil {
 			return err
 		}
-		if err := i.db.Update(func(txn *badger.Txn) error {
-			return txn.Set(key, val)
-		}); err != nil {
+		if _, err := i.cl.Write(context.Background(), &proxy.WriteRequest{Profile: i.profile, Bucket: "history", Key: key, Value: val}); err != nil {
 			return err
 		}
 	}
@@ -106,10 +107,8 @@ func (i *store) Delete(key string) error {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	if i.db != nil {
-		if err := i.db.Update(func(txn *badger.Txn) error {
-			return txn.Delete([]byte(key))
-		}); err != nil {
+	if i.cl != nil {
+		if _, err := i.cl.Delete(context.Background(), &proxy.DeleteRequest{Profile: i.profile, Bucket: "history", Key: key}); err != nil {
 			return err
 		}
 	}
@@ -133,22 +132,17 @@ func (i *store) Archive(key string) error {
 	for idx, m := range i.msgs {
 		k := fmt.Sprintf("%s/%020d", m.Topic, m.Timestamp.UnixNano())
 		if k == key {
-			if i.db != nil {
-				m.Archived = true
+			m.Archived = true
+			if i.cl != nil {
 				val, err := json.Marshal(m)
 				if err != nil {
 					return err
 				}
-				if err := i.db.Update(func(txn *badger.Txn) error {
-					return txn.Set([]byte(key), val)
-				}); err != nil {
+				if _, err := i.cl.Write(context.Background(), &proxy.WriteRequest{Profile: i.profile, Bucket: "history", Key: key, Value: val}); err != nil {
 					return err
 				}
-				i.msgs[idx] = m
-			} else {
-				m.Archived = true
-				i.msgs[idx] = m
 			}
+			i.msgs[idx] = m
 			return nil
 		}
 	}

@@ -80,6 +80,7 @@ func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
 	lw, lh := calcTopicsListSize(msg.Width, msg.Height)
 	m.topics.List().SetSize(lw, lh)
 	m.help.SetSize(msg.Width, msg.Height)
+	m.logs.SetSize(msg.Width, msg.Height)
 	dw, dh := calcDetailSize(msg.Width, msg.Height)
 	m.history.Detail().Width = dw
 	m.history.Detail().Height = dh

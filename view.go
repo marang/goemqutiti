@@ -16,7 +16,7 @@ func (m *model) overlayHelp(view string) string {
 	}
 	m.ui.elemPos[idHelp] = 0
 
-	info := "Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+D quit."
+	info := "Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+L logs, Ctrl+D quit."
 	pad := lipgloss.Width(ui.InfoStyle.Render(""))
 	available := m.ui.width - lipgloss.Width(help) - pad
 	if available < 0 {

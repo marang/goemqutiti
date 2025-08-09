@@ -12,6 +12,7 @@
 | Ctrl+X | Disconnect from broker |
 | Ctrl+S | Publish message |
 | Ctrl+E | Publish retained message |
+| Ctrl+L | Open log viewer |
 | Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 
 ## Navigation
@@ -59,7 +60,6 @@
 | Ctrl+C | Copy selected history entries |
 | a | Archive selected messages |
 | Delete | Remove selected messages |
-| Ctrl+L | Toggle archived view |
 | / | Filter messages |
 | Ctrl+F | Clear all history filters |
 | Enter | View full message |

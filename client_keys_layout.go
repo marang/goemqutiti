@@ -111,6 +111,10 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 	case constants.KeyCtrlR:
 		m.traces.List().SetSize(m.ui.width-4, m.ui.height-4)
 		return m.SetMode(constants.ModeTracer)
+	case constants.KeyCtrlL:
+		m.logs.SetSize(m.ui.width, m.ui.height)
+		m.logs.Focus()
+		return m.SetMode(constants.ModeLogs)
 	default:
 		return nil
 	}

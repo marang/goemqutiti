@@ -113,6 +113,7 @@ Tips:
 | Disconnect from broker | `Ctrl+X` |
 | Publish message | `Ctrl+S` |
 | Publish retained message | `Ctrl+E` |
+| Open log viewer | `Ctrl+L` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 | Scroll view | `Up`/`Down` or `j`/`k` |
 
@@ -140,7 +141,6 @@ Tips:
 | Ctrl+C | Copy selected history entries |
 | a | Archive selected messages |
 | Delete | Remove selected messages |
-| Ctrl+L | Toggle archived view |
 | / | Filter messages |
 | Ctrl+F | Clear all history filters |
 | Enter | View full message |
@@ -173,22 +173,17 @@ Additional notes for repository contributors are available in [AGENTS.md](AGENTS
 
 ## Development
 
+### Common tasks
+
+- `make build` – compile the `emqutiti` binary
+- `make test` – run `go vet` and unit tests
+- `make proto` – regenerate gRPC code from `proxy/proxy.proto`
+- `make cast` – record demos via `docs/scripts/Dockerfile.cast`
+
 ### Creating documentation
 
-#### Recording Demos for new features and howtos
+#### Recording demos for new features and howtos
 
-Build the provided `Dockerfile.cast` and run the helper inside
-an interactive container. The file is named this way so it won't
-clash with other `Dockerfile`s in the project. Use `-it` to allocate
-a TTY so asciinema can capture the session:
-
-```bash
-docker build -f docs/scripts/Dockerfile.cast -t emqutiti-caster .
-docker run --rm -it \
-  --network=host \
-  -v "$PWD/..:/app/docs" \
-  -v "$PWD/../scripts:/app/scripts" \
-  emqutiti-caster \
-  ./../scripts/record_casts.sh
-```
+Run `make cast` to build the helper image and execute
+`docs/scripts/record_casts.sh`. Cast and GIF files are written to `docs/`.
 You'll interact with the TUI inside the container just like running it locally.

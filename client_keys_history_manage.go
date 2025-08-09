@@ -3,35 +3,10 @@ package emqutiti
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
-
-	"github.com/marang/emqutiti/history"
 )
-
-// handleToggleArchiveKey toggles between active and archived history.
-func (m *model) handleToggleArchiveKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idHistory && m.history.Store() != nil {
-		m.history.SetShowArchived(!m.history.ShowArchived())
-		var msgs []history.Message
-		if m.history.ShowArchived() {
-			msgs = m.history.Store().Search(true, nil, time.Time{}, time.Time{}, "")
-		} else {
-			msgs = m.history.Store().Search(false, nil, time.Time{}, time.Time{}, "")
-		}
-		hitems, items := history.MessagesToItems(msgs)
-		m.history.SetItems(hitems)
-		m.history.List().SetItems(items)
-		if len(items) > 0 {
-			m.history.List().Select(len(items) - 1)
-		} else {
-			m.history.List().Select(-1)
-		}
-	}
-	return nil
-}
 
 // handleArchiveKey archives selected history messages.
 func (m *model) handleArchiveKey() tea.Cmd {

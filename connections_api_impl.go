@@ -103,7 +103,7 @@ func (m *model) HandleConnectResult(msg connections.ConnectResult) {
 	idx, err := history.OpenStore(profile.Name)
 	if err != nil {
 		m.connections.SendStatus(fmt.Sprintf("History open error for %s: %v", profile.Name, err))
-	} else {
+	} else if idx != nil {
 		m.history.SetStore(idx)
 		msgs := idx.Search(false, nil, time.Time{}, time.Time{}, "")
 		hitems := make([]history.Item, len(msgs))

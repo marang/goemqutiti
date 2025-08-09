@@ -2,12 +2,12 @@ package traces
 
 import (
 	"os"
-	"strings"
 	"sync"
 	"testing"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/marang/emqutiti/proxy"
 )
 
 type fakeMessage struct {
@@ -67,6 +67,12 @@ func (f *fakeClient) publish(topic, payload string) {
 func TestTraceStartAndStore(t *testing.T) {
 	dir := t.TempDir()
 	os.Setenv("HOME", dir)
+	p, err := proxy.StartProxy("127.0.0.1:0")
+	if err != nil {
+		t.Fatalf("start proxy: %v", err)
+	}
+	SetProxyAddr(p.Addr())
+	t.Cleanup(p.Stop)
 
 	cfg := TracerConfig{
 		Profile: "test",
@@ -91,17 +97,16 @@ func TestTraceStartAndStore(t *testing.T) {
 	tr.Stop()
 	<-done
 
-	keys, err := tracerKeys("test", "k1")
+	msgs, err := tracerMessages("test", "k1")
 	if err != nil {
-		t.Fatalf("trace keys: %v", err)
+		t.Fatalf("messages: %v", err)
 	}
-	if len(keys) != 2 {
-		t.Fatalf("expected 2 keys, got %d", len(keys))
+	if len(msgs) != 2 {
+		t.Fatalf("expected 2 messages, got %d", len(msgs))
 	}
-	prefix := "trace/k1/a/"
-	for _, k := range keys {
-		if !strings.HasPrefix(k, prefix) {
-			t.Fatalf("bad key %s", k)
+	for _, m := range msgs {
+		if m.Topic != "a" {
+			t.Fatalf("bad topic %s", m.Topic)
 		}
 	}
 }

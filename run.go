@@ -1,21 +1,19 @@
 package emqutiti
 
 import (
-	"context"
 	"flag"
 	"fmt"
-	connections "github.com/marang/emqutiti/connections"
 	"log"
 	"os"
-	"os/exec"
 	"strings"
 	"time"
+
+	connections "github.com/marang/emqutiti/connections"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/importer"
-	"github.com/marang/emqutiti/internal/proxy"
 	"github.com/marang/emqutiti/traces"
 )
 
@@ -66,12 +64,6 @@ type appDeps struct {
 	runTrace  func(*appDeps) error
 	runImport func(*appDeps) error
 	runUI     func(*appDeps) error
-
-	proxyAddr  string
-	dialProxy  func(string) (*proxy.Client, error)
-	spawnProxy func() error
-	canWrite   func(*proxy.Client) (bool, error)
-	readOnly   bool
 }
 
 func newAppDeps() *appDeps {
@@ -88,15 +80,6 @@ func newAppDeps() *appDeps {
 		runTrace:  runTrace,
 		runImport: runImport,
 		runUI:     runUI,
-		proxyAddr: "127.0.0.1:54545",
-		dialProxy: proxy.Connect,
-		spawnProxy: func() error {
-			cmd := exec.Command(os.Args[0], "serve")
-			return cmd.Start()
-		},
-		canWrite: func(c *proxy.Client) (bool, error) {
-			return c.CanWrite(context.Background())
-		},
 	}
 }
 
@@ -143,26 +126,6 @@ func Main() {
 }
 
 func runMain(d *appDeps) {
-	if d.dialProxy != nil {
-		client, err := d.dialProxy(d.proxyAddr)
-		if err != nil {
-			if d.spawnProxy != nil {
-				if spErr := d.spawnProxy(); spErr == nil {
-					client, err = d.dialProxy(d.proxyAddr)
-				}
-			}
-		}
-		if err != nil {
-			d.readOnly = true
-		} else if d.canWrite != nil {
-			writable, werr := d.canWrite(client)
-			if werr != nil || !writable {
-				d.readOnly = true
-			}
-			_ = client.Close()
-		}
-	}
-
 	if d.traceKey != "" {
 		if err := d.runTrace(d); err != nil {
 			log.Println(err)

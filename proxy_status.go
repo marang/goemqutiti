@@ -17,9 +17,6 @@ import (
 
 // startProxyStatusLogger logs proxy status immediately and at each interval.
 func startProxyStatusLogger(addr string) func() {
-	if addr == "" {
-		return func() {}
-	}
 	logProxyStatus(addr)
 	ticker := time.NewTicker(time.Minute)
 	done := make(chan struct{})
@@ -38,6 +35,11 @@ func startProxyStatusLogger(addr string) func() {
 }
 
 func logProxyStatus(addr string) {
+	if addr == "" {
+		msg := fmt.Sprintf("%s proxy addr not configured", time.Now().Format(time.RFC3339))
+		log.Println(lipgloss.NewStyle().Foreground(ui.ColWarn).Render(msg))
+		return
+	}
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		msg := fmt.Sprintf("%s proxy unreachable: %v", time.Now().Format(time.RFC3339), err)
@@ -56,9 +58,9 @@ func logProxyStatus(addr string) {
 	}
 	var infos []string
 	for _, db := range st.GetDbs() {
-		infos = append(infos, fmt.Sprintf("%s/%s=%dB", db.GetProfile(), db.GetBucket(), db.GetSize()))
+		infos = append(infos, fmt.Sprintf("%s/%s=%dB/%d", db.GetProfile(), db.GetBucket(), db.GetSize(), db.GetEntries()))
 	}
-	msg := fmt.Sprintf("%s clients:%d writes:%d reads:%d deletes:%d %s", time.Now().Format(time.RFC3339), st.GetClients(), st.GetWrites(), st.GetReads(), st.GetDeletes(), strings.Join(infos, " "))
+	msg := fmt.Sprintf("%s clients:%d published:%d subscribed:%d deletes:%d %s", time.Now().Format(time.RFC3339), st.GetClients(), st.GetWrites(), st.GetReads(), st.GetDeletes(), strings.Join(infos, " "))
 	log.Println(lipgloss.NewStyle().Foreground(ui.ColCyan).Render(msg))
 }
 

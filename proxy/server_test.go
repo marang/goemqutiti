@@ -20,6 +20,13 @@ func TestWriteRead(t *testing.T) {
 	if _, err := client.Write(context.Background(), &WriteRequest{Profile: "p1", Bucket: "b1", Key: "k", Value: val}); err != nil {
 		t.Fatalf("write: %v", err)
 	}
+	st, err := client.Status(context.Background(), &StatusRequest{})
+	if err != nil {
+		t.Fatalf("status after write: %v", err)
+	}
+	if len(st.GetDbs()) == 0 || st.GetDbs()[0].GetEntries() != 1 {
+		t.Fatalf("expected 1 entry, got %+v", st.GetDbs())
+	}
 	resp, err := client.Read(context.Background(), &ReadRequest{Profile: "p1", Bucket: "b1", Key: "k"})
 	if err != nil {
 		t.Fatalf("read: %v", err)
@@ -38,7 +45,7 @@ func TestWriteRead(t *testing.T) {
 		t.Fatalf("expected empty resp, got %v", resp.GetValues())
 	}
 
-	st, err := client.Status(context.Background(), &StatusRequest{})
+	st, err = client.Status(context.Background(), &StatusRequest{})
 	if err != nil {
 		t.Fatalf("status: %v", err)
 	}
@@ -48,8 +55,8 @@ func TestWriteRead(t *testing.T) {
 	if st.GetClients() < 1 {
 		t.Fatalf("expected at least one client, got %d", st.GetClients())
 	}
-	if len(st.GetDbs()) == 0 {
-		t.Fatalf("expected db info, got %+v", st.GetDbs())
+	if len(st.GetDbs()) == 0 || st.GetDbs()[0].GetEntries() != 0 {
+		t.Fatalf("expected 0 entries, got %+v", st.GetDbs())
 	}
 }
 

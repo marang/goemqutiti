@@ -177,10 +177,22 @@ func (p *Proxy) Status(ctx context.Context, _ *StatusRequest) (*StatusResponse, 
 		lsm, vlog := db.Size()
 		parts := strings.SplitN(k, "|", 2)
 		prof, bucket := parts[0], parts[1]
+		var entries uint64
+		if err := db.View(func(txn *badger.Txn) error {
+			it := txn.NewIterator(badger.DefaultIteratorOptions)
+			defer it.Close()
+			for it.Rewind(); it.Valid(); it.Next() {
+				entries++
+			}
+			return nil
+		}); err != nil {
+			return nil, err
+		}
 		infos = append(infos, &DBInfo{
 			Profile: prof,
 			Bucket:  bucket,
 			Size:    uint64(lsm + vlog),
+			Entries: entries,
 		})
 	}
 	return &StatusResponse{

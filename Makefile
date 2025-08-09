@@ -13,7 +13,7 @@ test: vet
 	go test ./...
 
 proto:
-        $(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. $(PROTO_FILES)
+	$(PROTOC) --go_out=paths=source_relative:. --go-grpc_out=paths=source_relative:. $(PROTO_FILES)
 
 cast:
 	docker build -f docs/scripts/Dockerfile.cast -t emqutiti-cast .

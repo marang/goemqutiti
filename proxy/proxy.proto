@@ -37,6 +37,7 @@ message DBInfo {
   string profile = 1;
   string bucket = 2;
   uint64 size = 3;
+  uint64 entries = 4;
 }
 
 message StatusResponse {

@@ -145,16 +145,26 @@ func Main() {
 func runMain(d *appDeps) {
 	if d.dialProxy != nil {
 		client, err := d.dialProxy(d.proxyAddr)
-		if err != nil {
-			if d.spawnProxy != nil {
-				if lf, lerr := proxy.Acquire(proxy.LockPath()); lerr == nil {
-					if spErr := d.spawnProxy(); spErr == nil {
+		if err != nil && d.spawnProxy != nil {
+			if lf, lerr := proxy.Acquire(proxy.LockPath()); lerr == nil {
+				spErr := d.spawnProxy()
+				_ = proxy.Release(lf)
+				if spErr == nil {
+					for i := 0; i < 10; i++ {
 						client, err = d.dialProxy(d.proxyAddr)
+						if err == nil {
+							break
+						}
+						time.Sleep(100 * time.Millisecond)
 					}
-					_ = proxy.Release(lf)
-				} else {
-					time.Sleep(200 * time.Millisecond)
+				}
+			} else {
+				for i := 0; i < 10; i++ {
+					time.Sleep(100 * time.Millisecond)
 					client, err = d.dialProxy(d.proxyAddr)
+					if err == nil {
+						break
+					}
 				}
 			}
 		}

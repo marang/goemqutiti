@@ -2,8 +2,17 @@ package proxy
 
 import (
 	"os"
+	"path/filepath"
 	"syscall"
 )
+
+const lockFileName = "emqutiti-proxy.lock"
+
+// LockPath returns the location of the proxy lock file. All processes should
+// use this path to coordinate proxy startup.
+func LockPath() string {
+	return filepath.Join(os.TempDir(), lockFileName)
+}
 
 // Acquire obtains an exclusive lock on the given file path and returns the
 // locked file. The caller must call Release to free the lock.

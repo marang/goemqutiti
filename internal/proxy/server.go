@@ -4,31 +4,9 @@ import (
 	"context"
 	"log"
 	"net"
-	"os"
-	"path/filepath"
-	"syscall"
 
 	"google.golang.org/grpc"
 )
-
-// acquireLock ensures that only one proxy instance is running. It returns a
-// function that releases the lock when called.
-func acquireLock() (func(), error) {
-	lockPath := filepath.Join(os.TempDir(), "emqutiti-proxy.lock")
-	f, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0o600)
-	if err != nil {
-		return nil, err
-	}
-	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
-		f.Close()
-		return nil, err
-	}
-	return func() {
-		_ = syscall.Flock(int(f.Fd()), syscall.LOCK_UN)
-		f.Close()
-		_ = os.Remove(lockPath)
-	}, nil
-}
 
 func handleDBWrites(ctx context.Context) {
 	<-ctx.Done()
@@ -41,14 +19,14 @@ func manageBrokerStatus(ctx context.Context) {
 // Run starts the proxy gRPC server on the provided address. It returns the
 // started server and a cleanup function to release resources.
 func Run(addr string) (*grpc.Server, func(), error) {
-	unlock, err := acquireLock()
+	lf, err := Acquire(LockPath())
 	if err != nil {
 		return nil, nil, err
 	}
 
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		unlock()
+		_ = Release(lf)
 		return nil, nil, err
 	}
 
@@ -67,7 +45,7 @@ func Run(addr string) (*grpc.Server, func(), error) {
 
 	cleanup := func() {
 		cancel()
-		unlock()
+		_ = Release(lf)
 	}
 
 	return srv, cleanup, nil

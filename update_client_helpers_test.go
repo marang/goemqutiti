@@ -179,6 +179,7 @@ func TestUpdateClientStatus(t *testing.T) {
 
 func TestHandleTopicToggleActions(t *testing.T) {
 	t.Run("subscribe", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.mqttClient = &MQTTClient{Client: &fakeClient{}}
 		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
@@ -192,6 +193,7 @@ func TestHandleTopicToggleActions(t *testing.T) {
 	})
 
 	t.Run("unsubscribe", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.mqttClient = &MQTTClient{Client: &fakeClient{}}
 		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
@@ -205,6 +207,7 @@ func TestHandleTopicToggleActions(t *testing.T) {
 	})
 
 	t.Run("subscribe error", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.mqttClient = &MQTTClient{Client: &fakeClient{subErr: errors.New("boom")}}
 		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
@@ -218,6 +221,7 @@ func TestHandleTopicToggleActions(t *testing.T) {
 	})
 
 	t.Run("unsubscribe error", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.mqttClient = &MQTTClient{Client: &fakeClient{unsubErr: errors.New("boom")}}
 		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
@@ -231,6 +235,7 @@ func TestHandleTopicToggleActions(t *testing.T) {
 	})
 
 	t.Run("no client", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
 		items := m.history.Items()
@@ -244,6 +249,7 @@ func TestHandleTopicToggleActions(t *testing.T) {
 }
 
 func TestLogTopicActionEmpty(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	m, _ := initialModel(nil)
 	m.logTopicAction("t1", "", nil)
 	items := m.history.Items()

@@ -46,6 +46,7 @@ func (c *failingClient) OptionsReader() mqtt.ClientOptionsReader {
 
 // Test copy behavior when history items are selected.
 func TestHandleClientKeyCopySelected(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	m, _ := initialModel(nil)
 	sel := true
 	hi := history.Item{Timestamp: time.Now(), Topic: "t1", Payload: "msg1", Kind: "pub", Retained: false, IsSelected: &sel}
@@ -66,6 +67,7 @@ func TestHandleClientKeyCopySelected(t *testing.T) {
 
 // Test disconnect behavior clears connection state.
 func TestHandleClientKeyDisconnect(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	conn := connections.NewConnectionsModel()
 	conn.Profiles = []connections.Profile{{Name: "test"}}
 	conn.Statuses["test"] = "connected"
@@ -96,6 +98,7 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 
 // Test that pressing '/' while history is focused starts the filter form.
 func TestHandleClientKeyFilterInitiation(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	m, _ := initialModel(nil)
 	idx := 3 // history index in focus order
 	m.focus.Set(idx)
@@ -113,6 +116,7 @@ func TestHandleClientKeyFilterInitiation(t *testing.T) {
 
 // Test error handling when topic subscription fails.
 func TestHandleTopicToggleSubscribeError(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	m, _ := initialModel(nil)
 	m.mqttClient = &MQTTClient{Client: &failingClient{subErr: errors.New("sub boom")}}
 	m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: true})
@@ -127,6 +131,7 @@ func TestHandleTopicToggleSubscribeError(t *testing.T) {
 
 // Test error handling when topic unsubscription fails.
 func TestHandleTopicToggleUnsubscribeError(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	m, _ := initialModel(nil)
 	m.mqttClient = &MQTTClient{Client: &failingClient{unsubErr: errors.New("unsub boom")}}
 	m.handleTopicToggle(topics.ToggleMsg{Topic: "t1", Subscribed: false})
@@ -142,6 +147,7 @@ func TestHandleTopicToggleUnsubscribeError(t *testing.T) {
 // Test logTopicAction handles empty and valid actions.
 func TestLogTopicAction(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.logTopicAction("t1", "", nil)
 		items := m.history.Items()
@@ -154,6 +160,7 @@ func TestLogTopicAction(t *testing.T) {
 	})
 
 	t.Run("subscribe", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.logTopicAction("t1", "subscribe", nil)
 		items := m.history.Items()
@@ -166,6 +173,7 @@ func TestLogTopicAction(t *testing.T) {
 	})
 
 	t.Run("unsubscribe", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.logTopicAction("t1", "unsubscribe", nil)
 		items := m.history.Items()
@@ -178,6 +186,7 @@ func TestLogTopicAction(t *testing.T) {
 	})
 
 	t.Run("unknown", func(t *testing.T) {
+		t.Setenv("HOME", t.TempDir())
 		m, _ := initialModel(nil)
 		m.logTopicAction("t1", "invalid", nil)
 		items := m.history.Items()

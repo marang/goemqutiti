@@ -11,6 +11,7 @@ import (
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/internal/proxy"
 	"github.com/marang/emqutiti/traces"
 )
 
@@ -123,6 +124,9 @@ func TestMainDispatchImportFlags(t *testing.T) {
 		flag.Parse()
 		called := false
 		d := newAppDeps()
+		d.dialProxy = func(string) (*proxy.Client, error) { return &proxy.Client{}, nil }
+		d.spawnProxy = func() error { return nil }
+		d.canWrite = func(*proxy.Client) (bool, error) { return true, nil }
 		d.runImport = func(ad *appDeps) error {
 			called = true
 			if ad.importFile != "f" || ad.profileName != "pr" {
@@ -147,6 +151,9 @@ func TestMainDispatchTrace(t *testing.T) {
 	flag.Parse()
 	called := false
 	d := newAppDeps()
+	d.dialProxy = func(string) (*proxy.Client, error) { return &proxy.Client{}, nil }
+	d.spawnProxy = func() error { return nil }
+	d.canWrite = func(*proxy.Client) (bool, error) { return true, nil }
 	d.runTrace = func(ad *appDeps) error {
 		called = true
 		if ad.traceKey != "k" || ad.traceTopics != "t" {
@@ -169,6 +176,9 @@ func TestMainDispatchUI(t *testing.T) {
 	flag.Parse()
 	called := false
 	d := newAppDeps()
+	d.dialProxy = func(string) (*proxy.Client, error) { return &proxy.Client{}, nil }
+	d.spawnProxy = func() error { return nil }
+	d.canWrite = func(*proxy.Client) (bool, error) { return true, nil }
 	d.runUI = func(*appDeps) error { called = true; return nil }
 	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
 	d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }

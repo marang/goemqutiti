@@ -37,6 +37,20 @@ func TestWriteRead(t *testing.T) {
 	if len(resp.GetValues()) != 0 {
 		t.Fatalf("expected empty resp, got %v", resp.GetValues())
 	}
+
+	st, err := client.Status(context.Background(), &StatusRequest{})
+	if err != nil {
+		t.Fatalf("status: %v", err)
+	}
+	if st.GetWrites() == 0 || st.GetReads() == 0 || st.GetDeletes() == 0 {
+		t.Fatalf("unexpected counters: %+v", st)
+	}
+	if st.GetClients() < 1 {
+		t.Fatalf("expected at least one client, got %d", st.GetClients())
+	}
+	if len(st.GetDbs()) == 0 {
+		t.Fatalf("expected db info, got %+v", st.GetDbs())
+	}
 }
 
 func TestProxySingleInstance(t *testing.T) {

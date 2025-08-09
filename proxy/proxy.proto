@@ -31,8 +31,25 @@ message DeleteRequest {
 
 message DeleteResponse {}
 
+message StatusRequest {}
+
+message DBInfo {
+  string profile = 1;
+  string bucket = 2;
+  uint64 size = 3;
+}
+
+message StatusResponse {
+  repeated DBInfo dbs = 1;
+  uint64 reads = 2;
+  uint64 writes = 3;
+  uint64 deletes = 4;
+  int64 clients = 5;
+}
+
 service DBProxy {
   rpc Write(WriteRequest) returns (WriteResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
+  rpc Status(StatusRequest) returns (StatusResponse);
 }

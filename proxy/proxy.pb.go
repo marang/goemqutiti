@@ -325,6 +325,178 @@ func (*DeleteResponse) Descriptor() ([]byte, []int) {
 	return file_proxy_proxy_proto_rawDescGZIP(), []int{5}
 }
 
+type StatusRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatusRequest) Reset() {
+	*x = StatusRequest{}
+	mi := &file_proxy_proxy_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatusRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusRequest) ProtoMessage() {}
+
+func (x *StatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_proxy_proxy_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusRequest.ProtoReflect.Descriptor instead.
+func (*StatusRequest) Descriptor() ([]byte, []int) {
+	return file_proxy_proxy_proto_rawDescGZIP(), []int{6}
+}
+
+type DBInfo struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       string                 `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	Bucket        string                 `protobuf:"bytes,2,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	Size          uint64                 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DBInfo) Reset() {
+	*x = DBInfo{}
+	mi := &file_proxy_proxy_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DBInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DBInfo) ProtoMessage() {}
+
+func (x *DBInfo) ProtoReflect() protoreflect.Message {
+	mi := &file_proxy_proxy_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DBInfo.ProtoReflect.Descriptor instead.
+func (*DBInfo) Descriptor() ([]byte, []int) {
+	return file_proxy_proxy_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DBInfo) GetProfile() string {
+	if x != nil {
+		return x.Profile
+	}
+	return ""
+}
+
+func (x *DBInfo) GetBucket() string {
+	if x != nil {
+		return x.Bucket
+	}
+	return ""
+}
+
+func (x *DBInfo) GetSize() uint64 {
+	if x != nil {
+		return x.Size
+	}
+	return 0
+}
+
+type StatusResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Dbs           []*DBInfo              `protobuf:"bytes,1,rep,name=dbs,proto3" json:"dbs,omitempty"`
+	Reads         uint64                 `protobuf:"varint,2,opt,name=reads,proto3" json:"reads,omitempty"`
+	Writes        uint64                 `protobuf:"varint,3,opt,name=writes,proto3" json:"writes,omitempty"`
+	Deletes       uint64                 `protobuf:"varint,4,opt,name=deletes,proto3" json:"deletes,omitempty"`
+	Clients       int64                  `protobuf:"varint,5,opt,name=clients,proto3" json:"clients,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *StatusResponse) Reset() {
+	*x = StatusResponse{}
+	mi := &file_proxy_proxy_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *StatusResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*StatusResponse) ProtoMessage() {}
+
+func (x *StatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_proxy_proxy_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use StatusResponse.ProtoReflect.Descriptor instead.
+func (*StatusResponse) Descriptor() ([]byte, []int) {
+	return file_proxy_proxy_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *StatusResponse) GetDbs() []*DBInfo {
+	if x != nil {
+		return x.Dbs
+	}
+	return nil
+}
+
+func (x *StatusResponse) GetReads() uint64 {
+	if x != nil {
+		return x.Reads
+	}
+	return 0
+}
+
+func (x *StatusResponse) GetWrites() uint64 {
+	if x != nil {
+		return x.Writes
+	}
+	return 0
+}
+
+func (x *StatusResponse) GetDeletes() uint64 {
+	if x != nil {
+		return x.Deletes
+	}
+	return 0
+}
+
+func (x *StatusResponse) GetClients() int64 {
+	if x != nil {
+		return x.Clients
+	}
+	return 0
+}
+
 var File_proxy_proxy_proto protoreflect.FileDescriptor
 
 const file_proxy_proxy_proto_rawDesc = "" +
@@ -346,11 +518,23 @@ const file_proxy_proxy_proto_rawDesc = "" +
 	"\aprofile\x18\x01 \x01(\tR\aprofile\x12\x16\n" +
 	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x10\n" +
 	"\x03key\x18\x03 \x01(\tR\x03key\"\x10\n" +
-	"\x0eDeleteResponse2\xa5\x01\n" +
+	"\x0eDeleteResponse\"\x0f\n" +
+	"\rStatusRequest\"N\n" +
+	"\x06DBInfo\x12\x18\n" +
+	"\aprofile\x18\x01 \x01(\tR\aprofile\x12\x16\n" +
+	"\x06bucket\x18\x02 \x01(\tR\x06bucket\x12\x12\n" +
+	"\x04size\x18\x03 \x01(\x04R\x04size\"\x93\x01\n" +
+	"\x0eStatusResponse\x12\x1f\n" +
+	"\x03dbs\x18\x01 \x03(\v2\r.proxy.DBInfoR\x03dbs\x12\x14\n" +
+	"\x05reads\x18\x02 \x01(\x04R\x05reads\x12\x16\n" +
+	"\x06writes\x18\x03 \x01(\x04R\x06writes\x12\x18\n" +
+	"\adeletes\x18\x04 \x01(\x04R\adeletes\x12\x18\n" +
+	"\aclients\x18\x05 \x01(\x03R\aclients2\xdc\x01\n" +
 	"\aDBProxy\x122\n" +
 	"\x05Write\x12\x13.proxy.WriteRequest\x1a\x14.proxy.WriteResponse\x12/\n" +
 	"\x04Read\x12\x12.proxy.ReadRequest\x1a\x13.proxy.ReadResponse\x125\n" +
-	"\x06Delete\x12\x14.proxy.DeleteRequest\x1a\x15.proxy.DeleteResponseB(Z&github.com/marang/emqutiti/proxy;proxyb\x06proto3"
+	"\x06Delete\x12\x14.proxy.DeleteRequest\x1a\x15.proxy.DeleteResponse\x125\n" +
+	"\x06Status\x12\x14.proxy.StatusRequest\x1a\x15.proxy.StatusResponseB(Z&github.com/marang/emqutiti/proxy;proxyb\x06proto3"
 
 var (
 	file_proxy_proxy_proto_rawDescOnce sync.Once
@@ -364,7 +548,7 @@ func file_proxy_proxy_proto_rawDescGZIP() []byte {
 	return file_proxy_proxy_proto_rawDescData
 }
 
-var file_proxy_proxy_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_proxy_proxy_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_proxy_proxy_proto_goTypes = []any{
 	(*WriteRequest)(nil),   // 0: proxy.WriteRequest
 	(*WriteResponse)(nil),  // 1: proxy.WriteResponse
@@ -372,19 +556,25 @@ var file_proxy_proxy_proto_goTypes = []any{
 	(*ReadResponse)(nil),   // 3: proxy.ReadResponse
 	(*DeleteRequest)(nil),  // 4: proxy.DeleteRequest
 	(*DeleteResponse)(nil), // 5: proxy.DeleteResponse
+	(*StatusRequest)(nil),  // 6: proxy.StatusRequest
+	(*DBInfo)(nil),         // 7: proxy.DBInfo
+	(*StatusResponse)(nil), // 8: proxy.StatusResponse
 }
 var file_proxy_proxy_proto_depIdxs = []int32{
-	0, // 0: proxy.DBProxy.Write:input_type -> proxy.WriteRequest
-	2, // 1: proxy.DBProxy.Read:input_type -> proxy.ReadRequest
-	4, // 2: proxy.DBProxy.Delete:input_type -> proxy.DeleteRequest
-	1, // 3: proxy.DBProxy.Write:output_type -> proxy.WriteResponse
-	3, // 4: proxy.DBProxy.Read:output_type -> proxy.ReadResponse
-	5, // 5: proxy.DBProxy.Delete:output_type -> proxy.DeleteResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7, // 0: proxy.StatusResponse.dbs:type_name -> proxy.DBInfo
+	0, // 1: proxy.DBProxy.Write:input_type -> proxy.WriteRequest
+	2, // 2: proxy.DBProxy.Read:input_type -> proxy.ReadRequest
+	4, // 3: proxy.DBProxy.Delete:input_type -> proxy.DeleteRequest
+	6, // 4: proxy.DBProxy.Status:input_type -> proxy.StatusRequest
+	1, // 5: proxy.DBProxy.Write:output_type -> proxy.WriteResponse
+	3, // 6: proxy.DBProxy.Read:output_type -> proxy.ReadResponse
+	5, // 7: proxy.DBProxy.Delete:output_type -> proxy.DeleteResponse
+	8, // 8: proxy.DBProxy.Status:output_type -> proxy.StatusResponse
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_proxy_proxy_proto_init() }
@@ -398,7 +588,7 @@ func file_proxy_proxy_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proxy_proxy_proto_rawDesc), len(file_proxy_proxy_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

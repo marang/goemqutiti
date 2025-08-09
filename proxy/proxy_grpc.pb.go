@@ -22,6 +22,7 @@ const (
 	DBProxy_Write_FullMethodName  = "/proxy.DBProxy/Write"
 	DBProxy_Read_FullMethodName   = "/proxy.DBProxy/Read"
 	DBProxy_Delete_FullMethodName = "/proxy.DBProxy/Delete"
+	DBProxy_Status_FullMethodName = "/proxy.DBProxy/Status"
 )
 
 // DBProxyClient is the client API for DBProxy service.
@@ -31,6 +32,7 @@ type DBProxyClient interface {
 	Write(ctx context.Context, in *WriteRequest, opts ...grpc.CallOption) (*WriteResponse, error)
 	Read(ctx context.Context, in *ReadRequest, opts ...grpc.CallOption) (*ReadResponse, error)
 	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error)
 }
 
 type dBProxyClient struct {
@@ -71,6 +73,16 @@ func (c *dBProxyClient) Delete(ctx context.Context, in *DeleteRequest, opts ...g
 	return out, nil
 }
 
+func (c *dBProxyClient) Status(ctx context.Context, in *StatusRequest, opts ...grpc.CallOption) (*StatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(StatusResponse)
+	err := c.cc.Invoke(ctx, DBProxy_Status_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DBProxyServer is the server API for DBProxy service.
 // All implementations must embed UnimplementedDBProxyServer
 // for forward compatibility.
@@ -78,6 +90,7 @@ type DBProxyServer interface {
 	Write(context.Context, *WriteRequest) (*WriteResponse, error)
 	Read(context.Context, *ReadRequest) (*ReadResponse, error)
 	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	Status(context.Context, *StatusRequest) (*StatusResponse, error)
 	mustEmbedUnimplementedDBProxyServer()
 }
 
@@ -96,6 +109,9 @@ func (UnimplementedDBProxyServer) Read(context.Context, *ReadRequest) (*ReadResp
 }
 func (UnimplementedDBProxyServer) Delete(context.Context, *DeleteRequest) (*DeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
+}
+func (UnimplementedDBProxyServer) Status(context.Context, *StatusRequest) (*StatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Status not implemented")
 }
 func (UnimplementedDBProxyServer) mustEmbedUnimplementedDBProxyServer() {}
 func (UnimplementedDBProxyServer) testEmbeddedByValue()                 {}
@@ -172,6 +188,24 @@ func _DBProxy_Delete_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DBProxy_Status_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(StatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DBProxyServer).Status(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DBProxy_Status_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DBProxyServer).Status(ctx, req.(*StatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DBProxy_ServiceDesc is the grpc.ServiceDesc for DBProxy service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +224,10 @@ var DBProxy_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Delete",
 			Handler:    _DBProxy_Delete_Handler,
+		},
+		{
+			MethodName: "Status",
+			Handler:    _DBProxy_Status_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

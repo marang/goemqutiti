@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"strings"
 	"sync"
+	"sync/atomic"
 
 	"github.com/dgraph-io/badger/v4"
 	"github.com/marang/emqutiti/internal/files"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/stats"
 )
 
 // Proxy runs a gRPC server mediating database access.
@@ -21,6 +24,11 @@ type Proxy struct {
 
 	mu  sync.Mutex
 	dbs map[string]*badger.DB
+
+	reads   uint64
+	writes  uint64
+	deletes uint64
+	clients int64
 }
 
 var (
@@ -39,7 +47,9 @@ func StartProxy(addr string) (*Proxy, error) {
 	if err != nil {
 		return nil, err
 	}
-	p := &Proxy{srv: grpc.NewServer(), lis: lis, dbs: make(map[string]*badger.DB)}
+	p := &Proxy{dbs: make(map[string]*badger.DB)}
+	p.srv = grpc.NewServer(grpc.StatsHandler(&proxyStats{p: p}))
+	p.lis = lis
 	RegisterDBProxyServer(p.srv, p)
 	proxyRunning = true
 	go p.srv.Serve(lis)
@@ -102,6 +112,7 @@ func (p *Proxy) Write(ctx context.Context, req *WriteRequest) (*WriteResponse, e
 	if err != nil {
 		return nil, err
 	}
+	atomic.AddUint64(&p.writes, 1)
 	return &WriteResponse{}, nil
 }
 
@@ -129,6 +140,7 @@ func (p *Proxy) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, erro
 	if err != nil {
 		return nil, err
 	}
+	atomic.AddUint64(&p.reads, 1)
 	return &ReadResponse{Values: vals}, nil
 }
 
@@ -152,7 +164,46 @@ func (p *Proxy) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse
 	if err != nil {
 		return nil, err
 	}
+	atomic.AddUint64(&p.deletes, 1)
 	return &DeleteResponse{}, nil
+}
+
+// Status reports usage and database size metrics.
+func (p *Proxy) Status(ctx context.Context, _ *StatusRequest) (*StatusResponse, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	infos := make([]*DBInfo, 0, len(p.dbs))
+	for k, db := range p.dbs {
+		lsm, vlog := db.Size()
+		parts := strings.SplitN(k, "|", 2)
+		prof, bucket := parts[0], parts[1]
+		infos = append(infos, &DBInfo{
+			Profile: prof,
+			Bucket:  bucket,
+			Size:    uint64(lsm + vlog),
+		})
+	}
+	return &StatusResponse{
+		Dbs:     infos,
+		Reads:   atomic.LoadUint64(&p.reads),
+		Writes:  atomic.LoadUint64(&p.writes),
+		Deletes: atomic.LoadUint64(&p.deletes),
+		Clients: atomic.LoadInt64(&p.clients),
+	}, nil
+}
+
+type proxyStats struct{ p *Proxy }
+
+func (ps *proxyStats) TagRPC(ctx context.Context, _ *stats.RPCTagInfo) context.Context   { return ctx }
+func (ps *proxyStats) HandleRPC(context.Context, stats.RPCStats)                         {}
+func (ps *proxyStats) TagConn(ctx context.Context, _ *stats.ConnTagInfo) context.Context { return ctx }
+func (ps *proxyStats) HandleConn(ctx context.Context, s stats.ConnStats) {
+	switch s.(type) {
+	case *stats.ConnBegin:
+		atomic.AddInt64(&ps.p.clients, 1)
+	case *stats.ConnEnd:
+		atomic.AddInt64(&ps.p.clients, -1)
+	}
 }
 
 // NewClient returns a client connected to the proxy at addr. Used in tests.

@@ -127,6 +127,9 @@ func Main() {
 }
 
 func runMain(d *appDeps) {
+	stop := startProxyStatusLogger(proxyAddrFromEnv())
+	defer stop()
+
 	if d.traceKey != "" {
 		if err := d.runTrace(d); err != nil {
 			log.Println(err)

@@ -8,8 +8,8 @@ import (
 // TestMessagesToItems verifies conversion from Message slices to history items.
 func TestMessagesToItems(t *testing.T) {
 	msgs := []Message{
-		{Timestamp: time.Unix(0, 1), Topic: "t1", Payload: "p1", Kind: "pub", Archived: false},
-		{Timestamp: time.Unix(0, 2), Topic: "t2", Payload: "p2", Kind: "sub", Archived: true},
+		{Timestamp: time.Unix(0, 1), Topic: "t1", Payload: "p1", Kind: "pub", Archived: false, Retained: true},
+		{Timestamp: time.Unix(0, 2), Topic: "t2", Payload: "p2", Kind: "sub", Archived: true, Retained: false},
 	}
 	hitems, litems := MessagesToItems(msgs)
 	if len(hitems) != len(msgs) {
@@ -20,7 +20,7 @@ func TestMessagesToItems(t *testing.T) {
 	}
 	for i, hi := range hitems {
 		m := msgs[i]
-		if hi.Timestamp != m.Timestamp || hi.Topic != m.Topic || hi.Payload != m.Payload || hi.Kind != m.Kind || hi.Archived != m.Archived {
+		if hi.Timestamp != m.Timestamp || hi.Topic != m.Topic || hi.Payload != m.Payload || hi.Kind != m.Kind || hi.Archived != m.Archived || hi.Retained != m.Retained {
 			t.Fatalf("item %d mismatch: %#v vs %#v", i, hi, m)
 		}
 		if li, ok := litems[i].(Item); ok {

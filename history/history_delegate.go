@@ -51,6 +51,9 @@ func (d historyDelegate) Render(w io.Writer, m list.Model, index int, item list.
 		lblColor = ui.ColGray
 		msgColor = ui.ColGray
 	}
+	if hi.Retained && hi.Kind != "log" {
+		label += " (retained)"
+	}
 	align := lipgloss.Left
 	if hi.Kind == "pub" {
 		align = lipgloss.Right

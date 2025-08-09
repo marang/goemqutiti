@@ -134,7 +134,7 @@ func (m *model) publishMessage(retained bool) {
 		if retained {
 			msg = fmt.Sprintf("Published retained to %s: %s", topic, payload)
 		}
-		m.history.Append(topic, payload, "pub", msg)
+		m.history.Append(topic, payload, "pub", retained, msg)
 		if m.mqttClient != nil {
 			m.mqttClient.Publish(topic, 0, retained, payload)
 		}

@@ -58,7 +58,7 @@ func TestTracerAddError(t *testing.T) {
 	jsonMarshal = func(any) ([]byte, error) { return nil, errors.New("fail") }
 	defer func() { jsonMarshal = old }()
 
-	err := tracerAdd("test", "k1", TracerMessage{Timestamp: time.Now()})
+	err := tracerAdd("test", "k1", TracerMessage{Timestamp: time.Now(), Retained: false})
 	if err == nil {
 		t.Fatalf("expected error")
 	}

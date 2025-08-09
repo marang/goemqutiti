@@ -49,7 +49,7 @@ func (m *model) handleArchiveKey() tea.Cmd {
 					if err := st.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
 						log.Println(msg)
-						m.history.Append("", msg, "log", msg)
+						m.history.Append("", msg, "log", false, msg)
 						continue
 					}
 				}
@@ -66,7 +66,7 @@ func (m *model) handleArchiveKey() tea.Cmd {
 					if err := st.Archive(key); err != nil {
 						msg := fmt.Sprintf("Failed to archive message: %v", err)
 						log.Println(msg)
-						m.history.Append("", msg, "log", msg)
+						m.history.Append("", msg, "log", false, msg)
 					} else {
 						hitems = append(hitems[:idx], hitems[idx+1:]...)
 					}
@@ -126,7 +126,7 @@ func (m *model) handleDeleteHistoryKey() tea.Cmd {
 					if err := st.Delete(key); err != nil {
 						msg := fmt.Sprintf("Failed to delete message: %v", err)
 						log.Println(msg)
-						m.history.Append("", msg, "log", msg)
+						m.history.Append("", msg, "log", false, msg)
 						continue
 					}
 				}

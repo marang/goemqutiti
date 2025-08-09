@@ -16,6 +16,7 @@ type Item struct {
 	Payload             string
 	Kind                string // pub, sub, log
 	Archived            bool
+	Retained            bool
 	IsSelected          *bool
 	IsMarkedForDeletion *bool
 }
@@ -37,6 +38,9 @@ func (h Item) Title() string {
 	default:
 		label = "LOG"
 		color = ui.ColGray
+	}
+	if h.Retained {
+		label += " (retained)"
 	}
 	return lipgloss.NewStyle().Foreground(color).Render(
 		fmt.Sprintf("%s %s: %s", label, h.Topic, h.Payload),

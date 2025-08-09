@@ -11,7 +11,7 @@ import (
 
 // handleStatusMessage processes broker status updates.
 func (m *model) handleStatusMessage(msg connections.StatusMessage) tea.Cmd {
-	m.history.Append("", string(msg), "log", string(msg))
+	m.history.Append("", string(msg), "log", false, string(msg))
 	if strings.HasPrefix(string(msg), "Connected") && m.connections.Active != "" {
 		m.connections.SetConnected(m.connections.Active)
 		m.connections.RefreshConnectionItems()
@@ -25,7 +25,7 @@ func (m *model) handleStatusMessage(msg connections.StatusMessage) tea.Cmd {
 
 // handleMQTTMessage appends received MQTT messages to history.
 func (m *model) handleMQTTMessage(msg MQTTMessage) tea.Cmd {
-	m.history.Append(msg.Topic, msg.Payload, "sub", fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
+	m.history.Append(msg.Topic, msg.Payload, "sub", msg.Retained, fmt.Sprintf("Received on %s: %s", msg.Topic, msg.Payload))
 	return listenMessages(m.mqttClient.MessageChan)
 }
 

@@ -48,7 +48,7 @@ func (c *failingClient) OptionsReader() mqtt.ClientOptionsReader {
 func TestHandleClientKeyCopySelected(t *testing.T) {
 	m, _ := initialModel(nil)
 	sel := true
-	hi := history.Item{Timestamp: time.Now(), Topic: "t1", Payload: "msg1", Kind: "pub", IsSelected: &sel}
+	hi := history.Item{Timestamp: time.Now(), Topic: "t1", Payload: "msg1", Kind: "pub", Retained: false, IsSelected: &sel}
 	m.history.SetItems([]history.Item{hi})
 	m.history.List().SetItems([]list.Item{hi})
 	m.history.List().Select(0)

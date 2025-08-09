@@ -14,6 +14,7 @@ func MessagesToItems(msgs []Message) ([]Item, []list.Item) {
 			Payload:   m.Payload,
 			Kind:      m.Kind,
 			Archived:  m.Archived,
+			Retained:  m.Retained,
 		}
 		hitems[i] = hi
 		litems[i] = hi

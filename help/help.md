@@ -64,6 +64,8 @@
 | Ctrl+F | Clear all history filters |
 | Enter | View full message |
 
+Retained messages are labeled "(retained)".
+
 ## Traces manager
 
 | Key | Action |

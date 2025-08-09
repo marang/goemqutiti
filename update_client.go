@@ -14,7 +14,7 @@ import (
 // An empty action logs a no-op message.
 func (m *model) logTopicAction(topic, action string, err error) {
 	if len(action) == 0 {
-		m.history.Append(topic, "", "log", fmt.Sprintf("No action specified for topic: %s", topic))
+		m.history.Append(topic, "", "log", false, fmt.Sprintf("No action specified for topic: %s", topic))
 		return
 	}
 
@@ -27,16 +27,16 @@ func (m *model) logTopicAction(topic, action string, err error) {
 		label = "Unsubscribe"
 		success = "Unsubscribed from topic: %s"
 	default:
-		m.history.Append(topic, "", "log", fmt.Sprintf("Unknown action for topic: %s", topic))
+		m.history.Append(topic, "", "log", false, fmt.Sprintf("Unknown action for topic: %s", topic))
 		return
 	}
 
 	if err != nil {
-		m.history.Append(topic, "", "log", fmt.Sprintf("%s error for %s: %v", label, topic, err))
+		m.history.Append(topic, "", "log", false, fmt.Sprintf("%s error for %s: %v", label, topic, err))
 		return
 	}
 
-	m.history.Append(topic, "", "log", fmt.Sprintf(success, topic))
+	m.history.Append(topic, "", "log", false, fmt.Sprintf(success, topic))
 }
 
 // handleTopicToggle subscribes or unsubscribes from a topic and logs the action.

@@ -14,8 +14,9 @@ import (
 const defaultTokenTimeout = 5 * time.Second
 
 type MQTTMessage struct {
-	Topic   string
-	Payload string
+	Topic    string
+	Payload  string
+	Retained bool
 }
 
 type MQTTClient struct {
@@ -111,7 +112,7 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 
 	msgChan := make(chan MQTTMessage, 20)
 	opts.SetDefaultPublishHandler(func(client mqtt.Client, m mqtt.Message) {
-		msgChan <- MQTTMessage{Topic: m.Topic(), Payload: string(m.Payload())}
+		msgChan <- MQTTMessage{Topic: m.Topic(), Payload: string(m.Payload()), Retained: m.Retained()}
 	})
 
 	client := mqtt.NewClient(opts)

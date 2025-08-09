@@ -17,7 +17,7 @@ func (t *Component) forceStartTrace(index int) {
 	item := t.items[index]
 	p, err := connections.LoadProfile(item.cfg.Profile, "")
 	if err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 		return
 	}
 	if p.FromEnv {
@@ -27,18 +27,18 @@ func (t *Component) forceStartTrace(index int) {
 	}
 	client, err := t.api.NewClient(*p)
 	if err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 		return
 	}
 	tr := newTracer(item.cfg, client)
 	if err := tr.Start(); err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 		client.Disconnect()
 		return
 	}
 	item.tracer = tr
 	if err := addTrace(item.cfg); err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 	}
 }
 
@@ -49,7 +49,7 @@ func (t *Component) startTrace(index int) {
 	}
 	item := t.items[index]
 	if !item.cfg.End.IsZero() && time.Now().After(item.cfg.End) {
-		t.api.LogHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", fmt.Sprintf("trace '%s' already finished", item.key))
+		t.api.LogHistory("", fmt.Sprintf("trace '%s' already finished", item.key), "log", false, fmt.Sprintf("trace '%s' already finished", item.key))
 		return
 	}
 	exists, err := tracerHasData(item.cfg.Profile, item.key)
@@ -106,7 +106,7 @@ func (t *Component) SavePlannedTraces() {
 		}
 	}
 	if err := saveTraces(data); err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 	}
 }
 
@@ -118,17 +118,17 @@ func (t *Component) loadTraceMessages(index int) {
 	it := t.items[index]
 	msgs, err := tracerMessages(it.cfg.Profile, it.key)
 	if err != nil {
-		t.api.LogHistory("", err.Error(), "log", err.Error())
+		t.api.LogHistory("", err.Error(), "log", false, err.Error())
 		return
 	}
 	histItems := make([]history.Item, len(msgs))
 	listItems := make([]list.Item, len(msgs))
 	hmsgs := make([]history.Message, len(msgs))
 	for i, mmsg := range msgs {
-		hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind}
+		hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Retained: mmsg.Retained}
 		histItems[i] = hi
 		listItems[i] = hi
-		hmsgs[i] = history.Message{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: false}
+		hmsgs[i] = history.Message{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: false, Retained: mmsg.Retained}
 	}
 	t.Component.SetItems(histItems)
 	t.Component.List().SetItems(listItems)

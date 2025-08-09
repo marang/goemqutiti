@@ -8,4 +8,5 @@ type TracerMessage struct {
 	Topic     string
 	Payload   string
 	Kind      string
+	Retained  bool
 }

@@ -127,9 +127,6 @@ func Main() {
 }
 
 func runMain(d *appDeps) {
-	stop := startProxyStatusLogger(proxyAddrFromEnv())
-	defer stop()
-
 	if d.traceKey != "" {
 		if err := d.runTrace(d); err != nil {
 			log.Println(err)
@@ -222,6 +219,8 @@ func runUI(d *appDeps) error {
 		log.Printf("Warning: %v", err)
 	}
 	log.SetOutput(io.MultiWriter(os.Stderr, initial.logs))
+	stop := startProxyStatusLogger(proxyAddrFromEnv())
+	defer stop()
 	_ = initial.SetMode(constants.ModeConnections)
 	p := d.newProgram(initial, tea.WithMouseAllMotion(), tea.WithAltScreen())
 	finalModel, err := p.Run()

@@ -243,10 +243,10 @@ func (t *Component) Update(msg tea.Msg) tea.Cmd {
 						}
 						t.list.SetItems(items)
 						if err := t.store.RemoveTrace(key); err != nil {
-							t.api.LogHistory("", err.Error(), "log", err.Error())
+							t.api.LogHistory("", err.Error(), "log", false, err.Error())
 						}
 						if err := t.store.ClearData(cfg.Profile, key); err != nil {
-							t.api.LogHistory("", err.Error(), "log", err.Error())
+							t.api.LogHistory("", err.Error(), "log", false, err.Error())
 						}
 						if t.anyTraceRunning() {
 							return traceTicker()

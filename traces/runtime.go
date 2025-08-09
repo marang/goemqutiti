@@ -124,7 +124,7 @@ func (t *Tracer) Start() error {
 				if ts.Before(t.cfg.Start) {
 					return
 				}
-				if err := tracerAddDB(db, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace"}); err != nil {
+				if err := tracerAddDB(db, t.cfg.Key, TracerMessage{Timestamp: ts, Topic: m.Topic(), Payload: string(m.Payload()), Kind: "trace", Retained: m.Retained()}); err != nil {
 					t.reportErr(fmt.Errorf("tracerAdd: %w", err))
 					return
 				}

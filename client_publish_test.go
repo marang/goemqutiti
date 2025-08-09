@@ -83,4 +83,8 @@ func TestHandlePublishRetainKey(t *testing.T) {
 	if !fc.retained {
 		t.Fatalf("expected retained publish")
 	}
+	items := m.history.Items()
+	if len(items) == 0 || !items[len(items)-1].Retained {
+		t.Fatalf("expected history item marked retained")
+	}
 }

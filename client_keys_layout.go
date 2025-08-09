@@ -93,7 +93,7 @@ func (m *model) handleModeSwitchKey(msg tea.KeyMsg) tea.Cmd {
 	switch msg.String() {
 	case constants.KeyCtrlB:
 		if err := m.connections.Manager.LoadProfiles(""); err != nil {
-			m.history.Append("", err.Error(), "log", err.Error())
+			m.history.Append("", err.Error(), "log", false, err.Error())
 		}
 		m.connections.RefreshConnectionItems()
 		m.connections.SaveCurrent(m.topics.Snapshot(), m.payloads.Snapshot())

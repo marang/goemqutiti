@@ -20,6 +20,7 @@ type Message struct {
 	Payload   string
 	Kind      string
 	Archived  bool
+	Retained  bool
 }
 
 // store stores messages in memory and optionally persists them to disk.

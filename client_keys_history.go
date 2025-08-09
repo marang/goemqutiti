@@ -29,14 +29,14 @@ func (m *model) copyHistoryItems(items []history.Item) (int, error) {
 		return 0, nil
 	}
 	if err := clipboard.WriteAll(strings.Join(parts, "\n")); err != nil {
-		m.history.Append("", err.Error(), "log", err.Error())
+		m.history.Append("", err.Error(), "log", false, err.Error())
 		return 0, err
 	}
 	msg := "Copied item"
 	if len(parts) > 1 {
 		msg = fmt.Sprintf("Copied %d item(s)", len(parts))
 	}
-	m.history.Append("", msg, "log", msg)
+	m.history.Append("", msg, "log", false, msg)
 	return len(parts), nil
 }
 

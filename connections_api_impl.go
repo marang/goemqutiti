@@ -106,7 +106,7 @@ func (m *model) HandleConnectResult(msg connections.ConnectResult) {
 		hitems := make([]history.Item, len(msgs))
 		items := make([]list.Item, len(msgs))
 		for i, mmsg := range msgs {
-			hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: mmsg.Archived}
+			hi := history.Item{Timestamp: mmsg.Timestamp, Topic: mmsg.Topic, Payload: mmsg.Payload, Kind: mmsg.Kind, Archived: mmsg.Archived, Retained: mmsg.Retained}
 			hitems[i] = hi
 			items[i] = hi
 		}

@@ -138,15 +138,15 @@ func (h *Component) ViewFilter() string {
 func (h *Component) Focusables() map[string]Focusable { return map[string]Focusable{} }
 
 // Append stores a message in the history list and optional store.
-func (h *Component) Append(topic, payload, kind, logText string) {
+func (h *Component) Append(topic, payload, kind string, retained bool, logText string) {
 	ts := time.Now()
 	text := payload
 	if kind == "log" {
 		text = logText
 	}
-	hi := Item{Timestamp: ts, Topic: topic, Payload: text, Kind: kind, Archived: false}
+	hi := Item{Timestamp: ts, Topic: topic, Payload: text, Kind: kind, Archived: false, Retained: retained}
 	if h.store != nil {
-		h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false})
+		h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false, Retained: retained})
 	}
 	if !h.showArchived {
 		if h.filterQuery != "" {

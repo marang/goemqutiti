@@ -9,7 +9,7 @@ import (
 func TestArchiveAndSearch(t *testing.T) {
 	hs := &store{}
 	ts := time.Now()
-	msg := Message{Timestamp: ts, Topic: "t1", Payload: "p1", Kind: "pub"}
+	msg := Message{Timestamp: ts, Topic: "t1", Payload: "p1", Kind: "pub", Retained: false}
 	hs.Append(msg)
 	key := fmt.Sprintf("%s/%020d", msg.Topic, msg.Timestamp.UnixNano())
 	if err := hs.Archive(key); err != nil {

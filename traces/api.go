@@ -28,7 +28,7 @@ type API interface {
 	Profiles() []connections.Profile
 	ActiveConnection() string
 	SubscribedTopics() []string
-	LogHistory(topic, payload, kind, text string)
+	LogHistory(topic, payload, kind string, retained bool, text string)
 	TraceHeight() int
 	SetTraceHeight(int)
 	Width() int

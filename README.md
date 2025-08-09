@@ -145,6 +145,8 @@ Tips:
 | Ctrl+F | Clear all history filters |
 | Enter | View full message |
 
+Retained messages are labeled "(retained)".
+
 ## License
 
 This project is licensed under the terms of the MIT License. See [LICENSE](LICENSE) for details.

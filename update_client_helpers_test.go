@@ -78,9 +78,9 @@ func setupManyTopics(m *model, n int) {
 func TestHandleHistorySelectionShift(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.history.SetItems([]history.Item{
-		{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"},
-		{Timestamp: time.Now(), Topic: "t2", Payload: "p2", Kind: "pub"},
-		{Timestamp: time.Now(), Topic: "t3", Payload: "p3", Kind: "pub"},
+		{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub", Retained: false},
+		{Timestamp: time.Now(), Topic: "t2", Payload: "p2", Kind: "pub", Retained: false},
+		{Timestamp: time.Now(), Topic: "t3", Payload: "p3", Kind: "pub", Retained: false},
 	})
 	items := make([]list.Item, len(m.history.Items()))
 	for i, it := range m.history.Items() {
@@ -109,8 +109,8 @@ func TestFilterHistoryList(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub"})
-	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub"})
+	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
+	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false})
 
 	m.history.List().SetFilteringEnabled(true)
 	m.history.List().SetFilterText("topic=foo")
@@ -130,7 +130,7 @@ func TestFilterHistoryList(t *testing.T) {
 func TestHandleHistoryClick(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
-	m.history.SetItems([]history.Item{{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub"}})
+	m.history.SetItems([]history.Item{{Timestamp: time.Now(), Topic: "t1", Payload: "p1", Kind: "pub", Retained: false}})
 	items := []list.Item{m.history.Items()[0]}
 	m.history.List().SetItems(items)
 	m.viewClient()
@@ -145,7 +145,7 @@ func TestHandleHistoryClick(t *testing.T) {
 func TestHistoryScroll(t *testing.T) {
 	m, _ := initialModel(nil)
 	for i := 0; i < 30; i++ {
-		hi := history.Item{Timestamp: time.Now(), Topic: fmt.Sprintf("t%d", i), Payload: "p", Kind: "pub"}
+		hi := history.Item{Timestamp: time.Now(), Topic: fmt.Sprintf("t%d", i), Payload: "p", Kind: "pub", Retained: false}
 		m.history.SetItems(append(m.history.Items(), hi))
 	}
 	items := make([]list.Item, len(m.history.Items()))

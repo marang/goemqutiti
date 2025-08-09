@@ -30,8 +30,8 @@ func (m *model) SubscribedTopics() []string {
 	return topics
 }
 
-func (m *model) LogHistory(topic, payload, kind, text string) {
-	m.history.Append(topic, payload, kind, text)
+func (m *model) LogHistory(topic, payload, kind string, retained bool, text string) {
+	m.history.Append(topic, payload, kind, retained, text)
 }
 
 func (m *model) TraceHeight() int { return m.layout.trace.height }

@@ -53,7 +53,7 @@ func (c *Component) View() string {
 		}
 	}
 	focused := c.m.FocusedID() == ID
-	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes)", c.m.Width()-2, msgHeight, ui.ColBlue, focused, msgSP)
+	return ui.LegendBox(msgContent, "Message (Ctrl+S publishes, Ctrl+Shift+S retains)", c.m.Width()-2, msgHeight, ui.ColBlue, focused, msgSP)
 }
 
 func (c *Component) Focus() tea.Cmd { return c.TA.Focus() }

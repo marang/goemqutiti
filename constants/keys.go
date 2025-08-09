@@ -43,6 +43,7 @@ const (
 	KeyShiftDown     = "shift+down"
 	KeyCtrlShiftUp   = "ctrl+shift+up"
 	KeyCtrlShiftDown = "ctrl+shift+down"
+	KeyCtrlShiftS    = "ctrl+shift+s"
 	KeyCtrlA         = "ctrl+a"
 	KeyCtrlL         = "ctrl+l"
 	KeyCtrlS         = "ctrl+s"

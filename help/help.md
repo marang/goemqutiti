@@ -11,6 +11,7 @@
 | Ctrl+B | Open broker manager |
 | Ctrl+X | Disconnect from broker |
 | Ctrl+S / Ctrl+Enter | Publish message |
+| Ctrl+Shift+S | Publish retained message |
 | Ctrl+Shift+Up / Ctrl+Shift+Down | Resize panels |
 
 ## Navigation

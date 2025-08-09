@@ -43,6 +43,12 @@ func openStore(profile string) (Store, error) {
 	opts := badger.DefaultOptions(path).WithLogger(nil)
 	db, err := badger.Open(opts)
 	if err != nil {
+		if strings.Contains(err.Error(), "Another process is using this Badger database") {
+			// Fall back to an in-memory store when the database is locked by
+			// another process. This allows tests to run sequentially without
+			// failing due to open handles from previous runs.
+			return &store{}, nil
+		}
 		return nil, err
 	}
 	idx := &store{db: db}

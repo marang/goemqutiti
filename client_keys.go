@@ -61,6 +61,8 @@ func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 		return m.handleScrollKeys(msg.String())
 	case constants.KeyCtrlS, constants.KeyCtrlEnter:
 		return m.handlePublishKey()
+	case constants.KeyCtrlShiftS:
+		return m.handlePublishRetainKey()
 	case constants.KeyEnter:
 		return m.handleEnterKey()
 	case constants.KeyP:
@@ -106,31 +108,48 @@ func (m *model) handleScrollKeys(key string) tea.Cmd {
 	}
 }
 
-// handlePublishKey publishes the current message to flagged topics or the
-// selected topic if none are flagged.
-func (m *model) handlePublishKey() tea.Cmd {
-	if m.ui.focusOrder[m.ui.focusIndex] == idMessage {
-		payload := m.message.Input().Value()
-		var targets []string
-		for _, t := range m.topics.Items {
-			if t.Publish {
-				targets = append(targets, t.Name)
-			}
-		}
-		if len(targets) == 0 {
-			sel := m.topics.Selected()
-			if sel >= 0 && sel < len(m.topics.Items) {
-				targets = append(targets, m.topics.Items[sel].Name)
-			}
-		}
-		for _, topic := range targets {
-			m.payloads.Add(topic, payload)
-			m.history.Append(topic, payload, "pub", fmt.Sprintf("Published to %s: %s", topic, payload))
-			if m.mqttClient != nil {
-				m.mqttClient.Publish(topic, 0, false, payload)
-			}
+// publishMessage publishes the current message to flagged topics or the
+// selected topic if none are flagged. When retained is true, the message is
+// published with the retained flag and noted in history.
+func (m *model) publishMessage(retained bool) {
+	if m.ui.focusOrder[m.ui.focusIndex] != idMessage {
+		return
+	}
+	payload := m.message.Input().Value()
+	var targets []string
+	for _, t := range m.topics.Items {
+		if t.Publish {
+			targets = append(targets, t.Name)
 		}
 	}
+	if len(targets) == 0 {
+		sel := m.topics.Selected()
+		if sel >= 0 && sel < len(m.topics.Items) {
+			targets = append(targets, m.topics.Items[sel].Name)
+		}
+	}
+	for _, topic := range targets {
+		m.payloads.Add(topic, payload)
+		msg := fmt.Sprintf("Published to %s: %s", topic, payload)
+		if retained {
+			msg = fmt.Sprintf("Published retained to %s: %s", topic, payload)
+		}
+		m.history.Append(topic, payload, "pub", msg)
+		if m.mqttClient != nil {
+			m.mqttClient.Publish(topic, 0, retained, payload)
+		}
+	}
+}
+
+// handlePublishKey publishes the current message without the retained flag.
+func (m *model) handlePublishKey() tea.Cmd {
+	m.publishMessage(false)
+	return nil
+}
+
+// handlePublishRetainKey publishes the current message with the retained flag.
+func (m *model) handlePublishRetainKey() tea.Cmd {
+	m.publishMessage(true)
 	return nil
 }
 

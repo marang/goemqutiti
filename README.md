@@ -112,6 +112,7 @@ Tips:
 | Open broker manager | `Ctrl+B` |
 | Disconnect from broker | `Ctrl+X` |
 | Publish message | `Ctrl+S` or `Ctrl+Enter` |
+| Publish retained message | `Ctrl+Shift+S` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 | Scroll view | `Up`/`Down` or `j`/`k` |
 

@@ -138,6 +138,31 @@ func (h *Component) ViewFilter() string {
 // managed externally, so this returns an empty map.
 func (h *Component) Focusables() map[string]Focusable { return map[string]Focusable{} }
 
+// appendItems updates the history list with new items.
+func (h *Component) appendItems(items ...Item) {
+	if h.showArchived {
+		return
+	}
+	if h.filterQuery != "" {
+		var listItems []list.Item
+		h.items, listItems = ApplyFilter(h.filterQuery, h.store, h.showArchived)
+		h.items = append(h.items, items...)
+		for _, it := range items {
+			listItems = append(listItems, it)
+		}
+		h.list.SetItems(listItems)
+		h.list.Select(len(listItems) - 1)
+		return
+	}
+	h.items = append(h.items, items...)
+	listItems := make([]list.Item, len(h.items))
+	for i, it := range h.items {
+		listItems[i] = it
+	}
+	h.list.SetItems(listItems)
+	h.list.Select(len(listItems) - 1)
+}
+
 // Append stores a message in the history list and optional store.
 func (h *Component) Append(topic, payload, kind string, retained bool, logText string) {
 	ts := time.Now()
@@ -146,25 +171,13 @@ func (h *Component) Append(topic, payload, kind string, retained bool, logText s
 		text = logText
 	}
 	hi := Item{Timestamp: ts, Topic: topic, Payload: text, Kind: kind, Archived: false, Retained: retained}
+	items := []Item{hi}
 	if h.store != nil {
 		if err := h.store.Append(Message{Timestamp: ts, Topic: topic, Payload: payload, Kind: kind, Archived: false, Retained: retained}); err != nil {
 			fmt.Printf("history append error: %v\n", err)
+			msg := fmt.Sprintf("history append error: %v", err)
+			items = append(items, Item{Timestamp: ts, Topic: "", Payload: msg, Kind: "log"})
 		}
 	}
-	if !h.showArchived {
-		if h.filterQuery != "" {
-			var items []list.Item
-			h.items, items = ApplyFilter(h.filterQuery, h.store, h.showArchived)
-			h.list.SetItems(items)
-			h.list.Select(len(items) - 1)
-		} else {
-			h.items = append(h.items, hi)
-			items := make([]list.Item, len(h.items))
-			for i, it := range h.items {
-				items[i] = it
-			}
-			h.list.SetItems(items)
-			h.list.Select(len(items) - 1)
-		}
-	}
+	h.appendItems(items...)
 }

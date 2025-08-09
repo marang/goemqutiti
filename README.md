@@ -111,8 +111,8 @@ Tips:
 | Manage traces | `Ctrl+R` |
 | Open broker manager | `Ctrl+B` |
 | Disconnect from broker | `Ctrl+X` |
-| Publish message | `Ctrl+S` or `Ctrl+Enter` |
-| Publish retained message | `Ctrl+Shift+S` |
+| Publish message | `Ctrl+S` |
+| Publish retained message | `Ctrl+E` |
 | Resize panels | `Ctrl+Shift+Up` / `Ctrl+Shift+Down` |
 | Scroll view | `Up`/`Down` or `j`/`k` |
 

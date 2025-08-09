@@ -47,7 +47,6 @@ const (
 	KeyCtrlA         = "ctrl+a"
 	KeyCtrlL         = "ctrl+l"
 	KeyCtrlS         = "ctrl+s"
-	KeyCtrlEnter     = "ctrl+enter"
 	KeyCtrlUp        = "ctrl+up"
 	KeyCtrlK         = "ctrl+k"
 	KeyCtrlDown      = "ctrl+down"

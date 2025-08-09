@@ -61,7 +61,7 @@ func (m *model) HandleClientKey(msg tea.KeyMsg) tea.Cmd {
 		return m.handleScrollKeys(msg.String())
 	case constants.KeyCtrlE:
 		return m.handlePublishRetainKey()
-	case constants.KeyCtrlS, constants.KeyCtrlEnter:
+	case constants.KeyCtrlS:
 		return m.handlePublishKey()
 	case constants.KeyEnter:
 		return m.handleEnterKey()

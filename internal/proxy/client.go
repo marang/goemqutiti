@@ -17,7 +17,7 @@ type Client struct {
 // Connect dials the proxy server at the provided address and returns a Client.
 // The connection uses insecure credentials as it is intended for local use.
 func Connect(addr string) (*Client, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 200*time.Millisecond)
 	defer cancel()
 	conn, err := grpc.DialContext(ctx, addr, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithBlock())
 	if err != nil {

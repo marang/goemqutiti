@@ -150,7 +150,7 @@ func runMain(d *appDeps) {
 				spErr := d.spawnProxy()
 				_ = proxy.Release(lf)
 				if spErr == nil {
-					for i := 0; i < 10; i++ {
+					for i := 0; i < 5; i++ {
 						client, err = d.dialProxy(d.proxyAddr)
 						if err == nil {
 							break
@@ -159,7 +159,7 @@ func runMain(d *appDeps) {
 					}
 				}
 			} else {
-				for i := 0; i < 10; i++ {
+				for i := 0; i < 5; i++ {
 					time.Sleep(100 * time.Millisecond)
 					client, err = d.dialProxy(d.proxyAddr)
 					if err == nil {

@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
+	connections "github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/proxy"
 	"google.golang.org/grpc"
-	"os"
 )
 
 var proxyAddr string
@@ -22,7 +22,7 @@ func addr() string {
 	if proxyAddr != "" {
 		return proxyAddr
 	}
-	return os.Getenv("EMQUTITI_PROXY_ADDR")
+	return connections.LoadProxyAddr()
 }
 
 // Message holds a timestamped MQTT message with optional payload text.

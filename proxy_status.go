@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -63,6 +62,3 @@ func logProxyStatus(addr string) {
 	msg := fmt.Sprintf("%s clients:%d published:%d subscribed:%d deletes:%d %s", time.Now().Format(time.RFC3339), st.GetClients(), st.GetWrites(), st.GetReads(), st.GetDeletes(), strings.Join(infos, " "))
 	log.Println(lipgloss.NewStyle().Foreground(ui.ColCyan).Render(msg))
 }
-
-// proxyAddrFromEnv returns the proxy address, if set.
-func proxyAddrFromEnv() string { return os.Getenv("EMQUTITI_PROXY_ADDR") }

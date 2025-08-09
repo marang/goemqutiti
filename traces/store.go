@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 
+	connections "github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/proxy"
 )
 
@@ -21,7 +21,7 @@ func addr() string {
 	if proxyAddr != "" {
 		return proxyAddr
 	}
-	return os.Getenv("EMQUTITI_PROXY_ADDR")
+	return connections.LoadProxyAddr()
 }
 
 func tracerAddClient(cl proxy.DBProxyClient, profile, key string, msg TracerMessage) error {

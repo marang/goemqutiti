@@ -196,6 +196,10 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	st, err := history.OpenStore("")
 	if err != nil && loadErr == nil {
 		loadErr = err
+  }
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "history store error: %v\n", err)
+		st = nil
 	}
 	ms := initMessage()
 	tr := traces.Init()

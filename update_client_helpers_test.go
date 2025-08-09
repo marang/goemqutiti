@@ -109,8 +109,12 @@ func TestFilterHistoryList(t *testing.T) {
 	hs := &historyStore{}
 	m.history.SetStore(hs)
 	ts := time.Now()
-	hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false})
-	hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false})
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "foo", Payload: "hello", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
+	if err := hs.Append(history.Message{Timestamp: ts, Topic: "bar", Payload: "bye", Kind: "pub", Retained: false}); err != nil {
+		t.Fatalf("Append failed: %v", err)
+	}
 
 	m.history.List().SetFilteringEnabled(true)
 	m.history.List().SetFilterText("topic=foo")

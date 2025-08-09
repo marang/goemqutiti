@@ -12,8 +12,12 @@ func TestHistoryStoreSearch(t *testing.T) {
 
 	t.Run("active", func(t *testing.T) {
 		hs := &store{}
-		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Retained: false})
-		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Retained: false})
+		if err := hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Retained: false}); err != nil {
+			t.Fatalf("Append failed: %v", err)
+		}
+		if err := hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Retained: false}); err != nil {
+			t.Fatalf("Append failed: %v", err)
+		}
 
 		res := hs.Search(false, []string{"a"}, now.Add(-1*time.Hour), now, "")
 		if len(res) != 1 || res[0].Topic != "a" {
@@ -33,8 +37,12 @@ func TestHistoryStoreSearch(t *testing.T) {
 
 	t.Run("archived", func(t *testing.T) {
 		hs := &store{}
-		hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Archived: true, Retained: false})
-		hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Archived: true, Retained: false})
+		if err := hs.Append(Message{Timestamp: now.Add(-30 * time.Minute), Topic: "a", Payload: "foo", Kind: "pub", Archived: true, Retained: false}); err != nil {
+			t.Fatalf("Append failed: %v", err)
+		}
+		if err := hs.Append(Message{Timestamp: now.Add(-2 * time.Hour), Topic: "b", Payload: "bar", Kind: "pub", Archived: true, Retained: false}); err != nil {
+			t.Fatalf("Append failed: %v", err)
+		}
 
 		res := hs.Search(true, []string{"a"}, now.Add(-1*time.Hour), now, "")
 		if len(res) != 1 || res[0].Topic != "a" {

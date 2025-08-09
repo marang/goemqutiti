@@ -99,7 +99,10 @@ func (f historyFilterForm) View() string {
 // historyStore provides an in-memory implementation of history.Store for tests.
 type historyStore struct{ msgs []history.Message }
 
-func (s *historyStore) Append(m history.Message) { s.msgs = append(s.msgs, m) }
+func (s *historyStore) Append(m history.Message) error {
+	s.msgs = append(s.msgs, m)
+	return nil
+}
 
 func (s *historyStore) Search(archived bool, topics []string, start, end time.Time, payload string) []history.Message {
 	var out []history.Message

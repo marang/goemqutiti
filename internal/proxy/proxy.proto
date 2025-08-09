@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package proxy;
+
+option go_package = "github.com/marang/emqutiti/internal/proxy/pb";
+
+service Proxy {
+  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc RegisterClient(RegisterClientRequest) returns (RegisterClientResponse);
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+message WriteRequest {
+  bytes payload = 1;
+}
+
+message WriteResponse {}
+
+message RegisterClientRequest {
+  string id = 1;
+}
+
+message RegisterClientResponse {}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  string status = 1;
+}

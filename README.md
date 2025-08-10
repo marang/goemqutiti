@@ -98,6 +98,7 @@ Tips:
 - More options like TLS and session settings are available; see the `config` package for details.
 - Set `random_id_suffix = true` for unique client IDs.
 - Set `skip_tls_verify = true` to bypass TLS certificate checks (useful for self-signed brokers).
+- Use `ca_cert_path`, `client_cert_path`, and `client_key_path` to specify TLS certificates.
 - Enable **Load from env** to read variables such as `EMQUTITI_LOCAL_SKIP_TLS_VERIFY` or `EMQUTITI_LOCAL_BROKER_PASSWORD`.
 
 - Set `EMQUTITI_DEFAULT_PASSWORD` to override profile passwords when not loading from env.

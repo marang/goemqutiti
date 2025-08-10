@@ -49,7 +49,10 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.SkipTLSVerify = bv
 		}
 	},
-	"mqtt_version": func(p *Profile, v string) { p.MQTTVersion = v },
+	"ca_cert_path":     func(p *Profile, v string) { p.CACertPath = v },
+	"client_cert_path": func(p *Profile, v string) { p.ClientCertPath = v },
+	"client_key_path":  func(p *Profile, v string) { p.ClientKeyPath = v },
+	"mqtt_version":     func(p *Profile, v string) { p.MQTTVersion = v },
 	"connect_timeout": func(p *Profile, v string) {
 		if iv, err := strconv.Atoi(v); err == nil {
 			p.ConnectTimeout = iv

@@ -3,8 +3,10 @@ package emqutiti
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	connections "github.com/marang/emqutiti/connections"
+	"os"
 	"strconv"
 	"time"
 
@@ -97,7 +99,26 @@ func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 	}
 
 	if p.SSL {
-		opts.SetTLSConfig(&tls.Config{InsecureSkipVerify: p.SkipTLSVerify})
+		tlsCfg := &tls.Config{InsecureSkipVerify: p.SkipTLSVerify}
+		if p.CACertPath != "" {
+			caData, err := os.ReadFile(p.CACertPath)
+			if err != nil {
+				return nil, fmt.Errorf("read CA cert: %w", err)
+			}
+			pool := x509.NewCertPool()
+			if !pool.AppendCertsFromPEM(caData) {
+				return nil, fmt.Errorf("invalid CA cert")
+			}
+			tlsCfg.RootCAs = pool
+		}
+		if p.ClientCertPath != "" && p.ClientKeyPath != "" {
+			cert, err := tls.LoadX509KeyPair(p.ClientCertPath, p.ClientKeyPath)
+			if err != nil {
+				return nil, fmt.Errorf("load client cert: %w", err)
+			}
+			tlsCfg.Certificates = []tls.Certificate{cert}
+		}
+		opts.SetTLSConfig(tlsCfg)
 	}
 	opts.OnConnect = func(client mqtt.Client) {
 		if fn != nil {

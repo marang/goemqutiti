@@ -19,6 +19,9 @@ type Profile struct {
 	FromEnv         bool   `toml:"from_env"`
 	SSL             bool   `toml:"ssl_tls" env:"ssl_tls"`
 	SkipTLSVerify   bool   `toml:"skip_tls_verify" env:"skip_tls_verify"`
+	CACertPath      string `toml:"ca_cert_path" env:"ca_cert_path"`
+	ClientCertPath  string `toml:"client_cert_path" env:"client_cert_path"`
+	ClientKeyPath   string `toml:"client_key_path" env:"client_key_path"`
 	MQTTVersion     string `toml:"mqtt_version" env:"mqtt_version"`
 	ConnectTimeout  int    `toml:"connect_timeout" env:"connect_timeout"`
 	KeepAlive       int    `toml:"keep_alive" env:"keep_alive"`

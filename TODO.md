@@ -10,7 +10,7 @@ This file tracks planned improvements for Emqutiti.
 ## Connection Management
 - [x] Secure credentials using the OS keyring
 - [x] Full CRUD operations for broker profiles
-- [ ] TLS/SSL certificate management
+ - [x] TLS/SSL certificate management
 
 ## Importer
 - [x] Interactive wizard for publishing CSV or XLS files

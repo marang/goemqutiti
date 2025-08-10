@@ -15,6 +15,9 @@ func (m *Model) updateReview(msg tea.Msg) tea.Cmd {
 	if km, ok := msg.(tea.KeyMsg); ok {
 		switch km.String() {
 		case constants.KeyP:
+			m.prefs.Mapping = m.mapping()
+			m.prefs.Template = m.tmpl.Value()
+			savePrefs(m.prefs)
 			m.dryRun = false
 			m.index = 0
 			m.published = nil
@@ -23,6 +26,9 @@ func (m *Model) updateReview(msg tea.Msg) tea.Cmd {
 			m.step = stepPublish
 			return tea.Batch(m.progress.SetPercent(0), m.nextPublishCmd())
 		case constants.KeyD:
+			m.prefs.Mapping = m.mapping()
+			m.prefs.Template = m.tmpl.Value()
+			savePrefs(m.prefs)
 			m.dryRun = true
 			m.index = 0
 			m.published = nil

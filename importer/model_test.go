@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/ui"
 )
 
 type mockPublisher struct{}
@@ -23,6 +24,7 @@ func (m *errPublisher) Publish(topic string, qos byte, retained bool, payload in
 
 // Test wizard progresses through file, map, template, and publish steps.
 func TestModelStepProgression(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -77,6 +79,7 @@ func TestModelStepProgression(t *testing.T) {
 }
 
 func TestModelFileStep(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -98,6 +101,7 @@ func TestModelFileStep(t *testing.T) {
 }
 
 func TestModelMapNavigation(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -122,6 +126,7 @@ func TestModelMapNavigation(t *testing.T) {
 }
 
 func TestModelReviewPublish(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -167,6 +172,7 @@ func TestModelReviewPublish(t *testing.T) {
 }
 
 func TestModelPublishError(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
 	f, err := os.CreateTemp("", "wiz-*.csv")
 	if err != nil {
 		t.Fatalf("temp file: %v", err)
@@ -204,5 +210,37 @@ func TestModelPublishError(t *testing.T) {
 	}
 	if !w.finished {
 		t.Fatalf("expected finished after processing rows")
+	}
+}
+
+func TestSettingsRoundTrip(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	f, err := os.CreateTemp("", "wiz-*.csv")
+	if err != nil {
+		t.Fatalf("temp file: %v", err)
+	}
+	defer os.Remove(f.Name())
+	if _, err := f.WriteString("a,b\n1,2\n"); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	f.Close()
+
+	w := New(&mockPublisher{}, f.Name())
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // load file -> stepMap
+	if tf, ok := w.form.Fields[0].(*ui.TextField); ok {
+		tf.SetValue("aa")
+	}
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // to stepTemplate
+	w.tmpl.SetValue("topic/{aa}")
+	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // to stepReview
+	w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
+
+	w2 := New(&mockPublisher{}, f.Name())
+	w2.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if v := w2.form.Fields[0].Value(); v != "aa" {
+		t.Fatalf("expected mapping aa, got %q", v)
+	}
+	if v := w2.tmpl.Value(); v != "topic/{aa}" {
+		t.Fatalf("expected template topic/{aa}, got %q", v)
 	}
 }

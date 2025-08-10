@@ -24,6 +24,27 @@ go install github.com/marang/emqutiti/cmd/emqutiti@latest
 yay -S emqutiti
 ```
 
+### Debian/Ubuntu
+```bash
+git clone https://github.com/marang/emqutiti.git
+cd emqutiti
+dpkg-buildpackage -us -uc
+sudo apt install ../emqutiti_0.4.1_amd64.deb
+```
+
+### Fedora
+```bash
+git clone https://github.com/marang/emqutiti.git
+cd emqutiti
+rpmbuild -ba rpm/emqutiti.spec
+sudo dnf install ~/rpmbuild/RPMS/x86_64/emqutiti-0.4.1-1.x86_64.rpm
+```
+
+### macOS (Homebrew)
+```bash
+brew install --build-from-source homebrew/Formula/emqutiti.rb
+```
+
 ## Usage
 
 ```bash

@@ -9,6 +9,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+const helpReflowWidth = 60
+
 func (m *model) overlayHelp(view string) string {
 	help := ui.HelpStyle.Render("?")
 	if m.help.Focused() {
@@ -18,26 +20,47 @@ func (m *model) overlayHelp(view string) string {
 
 	info := "Switch views: Ctrl+B brokers, Ctrl+T topics, Ctrl+P payloads, Ctrl+R traces, Ctrl+L logs, Ctrl+D quit."
 	pad := lipgloss.Width(ui.InfoStyle.Render(""))
-	available := m.ui.width - lipgloss.Width(help) - pad
-	if available < 0 {
-		available = 0
-	}
-	if runewidth.StringWidth(info) > available {
-		info = runewidth.Truncate(info, available, "")
-	}
-	infoShortcuts := ui.InfoStyle.Render(info)
+
 	lines := []string{}
 	if view != "" {
 		lines = strings.Split(view, "\n")
 	}
-	lines = append([]string{infoShortcuts}, lines...)
+	lines = append([]string{""}, lines...)
 
-	first := lipgloss.NewStyle().Width(available+pad).Render(lines[0]) + help
-	if len(lines) == 1 {
-		return first
+	if m.ui.width < helpReflowWidth {
+		available := m.ui.width - pad
+		if available < 0 {
+			available = 0
+		}
+		if runewidth.StringWidth(info) > available {
+			info = runewidth.Truncate(info, available, "")
+		}
+		lines[0] = lipgloss.NewStyle().Width(available + pad).Render(ui.InfoStyle.Render(info))
+		if len(lines) > 1 {
+			secondAvail := m.ui.width - lipgloss.Width(help)
+			if secondAvail < 0 {
+				secondAvail = 0
+			}
+			second := lipgloss.JoinHorizontal(lipgloss.Top,
+				lipgloss.NewStyle().Width(secondAvail).Render(lines[1]), help)
+			lines[1] = second
+		} else {
+			lines = append(lines, help)
+		}
+	} else {
+		available := m.ui.width - lipgloss.Width(help) - pad
+		if available < 0 {
+			available = 0
+		}
+		if runewidth.StringWidth(info) > available {
+			info = runewidth.Truncate(info, available, "")
+		}
+		first := lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(available+pad).Render(ui.InfoStyle.Render(info)), help)
+		lines[0] = first
 	}
-	lines[0] = first
-	return strings.Join(lines, "\n")
+
+	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
 // OverlayHelp wraps overlayHelp to satisfy component interfaces.

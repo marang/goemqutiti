@@ -41,7 +41,11 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 // handleHelpClick switches to help mode when the icon is clicked.
 func (m *model) handleHelpClick(msg tea.MouseMsg) (tea.Cmd, bool) {
 	helpWidth := lipgloss.Width(ui.HelpStyle.Render("?"))
-	if msg.Y == 0 && msg.X >= m.ui.width-helpWidth {
+	helpY := 0
+	if m.ui.width < helpReflowWidth {
+		helpY = 1
+	}
+	if msg.Y == helpY && msg.X >= m.ui.width-helpWidth {
 		return m.SetMode(constants.ModeHelp), true
 	}
 	return nil, false
@@ -57,7 +61,13 @@ func (m *model) handleMouseLeft(msg tea.MouseMsg) tea.Cmd {
 		m.history.HandleClick(msg, m.ui.elemPos[idHistory], m.ui.viewport.YOffset)
 	}
 	helpWidth := lipgloss.Width(ui.HelpStyle.Render("?"))
-	if msg.Y == 1 && msg.X >= m.ui.width-helpWidth+1 {
+	helpY := 0
+	xOffset := 0
+	if m.ui.width < helpReflowWidth {
+		helpY = 1
+		xOffset = 1
+	}
+	if msg.Y == helpY && msg.X >= m.ui.width-helpWidth+xOffset {
 		m.SetMode(constants.ModeHelp)
 	}
 	return cmd

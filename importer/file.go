@@ -31,6 +31,9 @@ func (m *Model) updateFile(msg tea.Msg) tea.Cmd {
 		for k := range rows[0] {
 			m.headers = append(m.headers, k)
 			fi := ui.NewTextField(k, "")
+			if v, ok := m.prefs.Mapping[k]; ok {
+				fi.SetValue(v)
+			}
 			fields = append(fields, fi)
 		}
 		if len(fields) > 0 {

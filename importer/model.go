@@ -1,12 +1,16 @@
 package importer
 
 import (
+	"bytes"
 	"fmt"
 	"math"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,6 +42,8 @@ type Model struct {
 	height      int
 	history     ui.HistoryView
 	rnd         *rand.Rand
+
+	prefs wizardPrefs
 }
 
 const (
@@ -61,7 +67,11 @@ func New(client Publisher, path string) *Model {
 	tmpl.Placeholder = "Topic template"
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	hv := ui.NewHistoryView(50, 10)
-	return &Model{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv, rnd: r}
+	prefs := loadPrefs()
+	if prefs.Template != "" {
+		tmpl.SetValue(prefs.Template)
+	}
+	return &Model{file: ti, tmpl: tmpl, client: client, progress: progress.New(progress.WithDefaultGradient()), history: hv, rnd: r, prefs: prefs}
 }
 
 func (m *Model) Init() tea.Cmd { return textinput.Blink }
@@ -236,6 +246,52 @@ func sampleSize(total int) int {
 		size = 20
 	}
 	return size
+}
+
+type wizardPrefs struct {
+	Mapping  map[string]string `toml:"mapping"`
+	Template string            `toml:"template"`
+}
+
+func importerConfigFile() (string, error) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(home, ".config", "emqutiti", "importer.toml"), nil
+}
+
+func loadPrefs() wizardPrefs {
+	fp, err := importerConfigFile()
+	if err != nil {
+		return wizardPrefs{Mapping: map[string]string{}}
+	}
+	var cfg wizardPrefs
+	if _, err := toml.DecodeFile(fp, &cfg); err != nil {
+		if cfg.Mapping == nil {
+			cfg.Mapping = map[string]string{}
+		}
+		return cfg
+	}
+	if cfg.Mapping == nil {
+		cfg.Mapping = map[string]string{}
+	}
+	return cfg
+}
+
+func savePrefs(p wizardPrefs) error {
+	fp, err := importerConfigFile()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(fp), os.ModePerm); err != nil {
+		return err
+	}
+	var buf bytes.Buffer
+	if err := toml.NewEncoder(&buf).Encode(p); err != nil {
+		return err
+	}
+	return os.WriteFile(fp, buf.Bytes(), 0o644)
 }
 
 // lineLimit calculates the maximum lines of output based on window height.

@@ -59,7 +59,8 @@ func (m *Model) viewMap(bw, _ int) string {
 		if i == m.form.Focus {
 			label = ui.FocusedStyle.Render(h)
 		}
-		fmt.Fprintf(&b, "%*s : %s\n", colw, label, m.form.Fields[i].View())
+		padding := strings.Repeat(" ", colw-lipgloss.Width(h))
+		fmt.Fprintf(&b, "%s%s : %s\n", padding, label, m.form.Fields[i].View())
 	}
 	b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 	return ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)

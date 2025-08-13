@@ -31,7 +31,8 @@ type historyState struct {
 // model.
 type Component struct {
 	*historyState
-	m Model
+	m  Model
+	sc ui.MouseScroller
 }
 
 // Init performs no initialization and returns nil.

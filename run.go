@@ -1,10 +1,8 @@
 package emqutiti
 
 import (
-	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -13,6 +11,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	cfg "github.com/marang/emqutiti/cmd"
 	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/importer"
 	"github.com/marang/emqutiti/traces"
@@ -86,61 +85,39 @@ func newAppDeps() *appDeps {
 	}
 }
 
-func registerFlags(fs *flag.FlagSet) {
-	fs.StringVar(&importFile, "import", "", "Launch import wizard with optional file path")
-	fs.StringVar(&importFile, "i", "", "(shorthand)")
-	fs.StringVar(&profileName, "profile", "", "Connection profile name to use")
-	fs.StringVar(&profileName, "p", "", "(shorthand)")
-	fs.StringVar(&traceKey, "trace", "", "Trace key name to store messages")
-	fs.StringVar(&traceTopics, "topics", "", "Comma-separated topics to trace")
-	fs.StringVar(&traceStart, "start", "", "Optional RFC3339 trace start time")
-	fs.StringVar(&traceEnd, "end", "", "Optional RFC3339 trace end time")
-
-	fs.Usage = func() {
-		w := fs.Output()
-		fmt.Fprintf(w, "Usage: %s [flags]\n\n", os.Args[0])
-		fmt.Fprintln(w, "General:")
-		fmt.Fprintln(w, "  -i, --import FILE     Launch import wizard with optional file path (e.g., -i data.csv)")
-		fmt.Fprintln(w, "  -p, --profile NAME    Connection profile name to use (e.g., -p local)")
-		fmt.Fprintln(w, "")
-		fmt.Fprintln(w, "Trace:")
-		fmt.Fprintln(w, "      --trace KEY       Trace key name to store messages (e.g., --trace run1)")
-		fmt.Fprintln(w, "      --topics LIST     Comma-separated topics to trace (e.g., --topics \"sensors/#\")")
-		fmt.Fprintln(w, "      --start TIME      Optional RFC3339 trace start time (e.g., --start \"2025-08-05T11:47:00Z\")")
-		fmt.Fprintln(w, "      --end TIME        Optional RFC3339 trace end time (e.g., --end \"2025-08-05T11:49:00Z\")")
-	}
-}
-
-// init registers CLI flags for tracing and import modes.
-func init() { registerFlags(flag.CommandLine) }
-
-// Main parses flags, sets up logging, and launches the UI or other modes.
-
-func Main() {
-	flag.Parse()
+// Main sets up dependencies and launches the UI or other modes based on cfg.
+func Main(c cfg.AppConfig) {
 	d := newAppDeps()
-	d.importFile = importFile
-	d.profileName = profileName
-	d.traceKey = traceKey
-	d.traceTopics = traceTopics
-	d.traceStart = traceStart
-	d.traceEnd = traceEnd
-	runMain(d)
+	runMain(d, c)
 }
 
-func runMain(d *appDeps) {
+func runMain(d *appDeps, c cfg.AppConfig) {
+	importFile = c.ImportFile
+	profileName = c.ProfileName
+	traceKey = c.TraceKey
+	traceTopics = c.TraceTopics
+	traceStart = c.TraceStart
+	traceEnd = c.TraceEnd
+
+	d.importFile = c.ImportFile
+	d.profileName = c.ProfileName
+	d.traceKey = c.TraceKey
+	d.traceTopics = c.TraceTopics
+	d.traceStart = c.TraceStart
+	d.traceEnd = c.TraceEnd
+
 	addr, _ := initProxy()
 	history.SetProxyAddr(addr)
 	traces.SetProxyAddr(addr)
 	d.proxyAddr = addr
-	if d.traceKey != "" {
+	if c.TraceKey != "" {
 		if err := d.runTrace(d); err != nil {
 			log.Println(err)
 		}
 		return
 	}
 
-	if d.importFile != "" {
+	if c.ImportFile != "" {
 		if err := d.runImport(d); err != nil {
 			log.Println(err)
 		}

@@ -1,7 +1,10 @@
 package main
 
-import "github.com/marang/emqutiti"
+import (
+	app "github.com/marang/emqutiti"
+	cfg "github.com/marang/emqutiti/cmd"
+)
 
 func main() {
-	emqutiti.Main()
+	app.Main(cfg.ParseFlags())
 }

@@ -108,9 +108,7 @@ func Run(key, topics, profileName, startStr, endStr string) error {
 	if err != nil {
 		return err
 	}
-	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
-		p.Password = env
-	}
+	connections.ApplyDefaultPassword(p)
 	client, err := newMQTTClient(*p)
 	if err != nil {
 		return fmt.Errorf("connect error: %w", err)

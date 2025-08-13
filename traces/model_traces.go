@@ -2,7 +2,6 @@ package traces
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -22,9 +21,8 @@ func (t *Component) forceStartTrace(index int) {
 	}
 	if p.FromEnv {
 		connections.ApplyEnvVars(p)
-	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-		p.Password = env
 	}
+	connections.ApplyDefaultPassword(p)
 	client, err := t.api.NewClient(*p)
 	if err != nil {
 		t.api.LogHistory("", err.Error(), "log", false, err.Error())

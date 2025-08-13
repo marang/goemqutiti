@@ -2,7 +2,6 @@ package emqutiti
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/charmbracelet/bubbles/list"
@@ -77,9 +76,8 @@ func (m *model) Connect(p connections.Profile) tea.Cmd {
 	m.connections.FlushStatus()
 	if p.FromEnv {
 		connections.ApplyEnvVars(&p)
-	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-		p.Password = env
 	}
+	connections.ApplyDefaultPassword(&p)
 	m.connections.SetConnecting(p.Name)
 	brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
 	m.connections.Connection = "Connecting to " + brokerURL

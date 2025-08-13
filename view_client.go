@@ -25,6 +25,21 @@ func (m *model) clientInfoLine() string {
 	return st.Render(status)
 }
 
+// topicTooltip renders a tooltip for the selected topic when it exceeds the
+// viewport width.
+func (m *model) topicTooltip() string {
+	sel := m.topics.Selected()
+	if sel < 0 || sel >= len(m.topics.Items) || sel >= len(m.topics.ChipBounds) {
+		return ""
+	}
+	b := m.topics.ChipBounds[sel]
+	if b.Width <= m.topics.VP.Width {
+		return ""
+	}
+	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
+	return ui.RenderTooltip(m.topics.Items[sel].Name, b.XPos, b.YPos, focused)
+}
+
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
 	m.ui.elemPos = map[string]int{}
@@ -58,5 +73,10 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, statusLine, view))
+	tip := m.topicTooltip()
+	contentView := lipgloss.JoinVertical(lipgloss.Left, statusLine, view)
+	if tip != "" {
+		contentView = lipgloss.JoinVertical(lipgloss.Left, contentView, tip)
+	}
+	return m.overlayHelp(contentView)
 }

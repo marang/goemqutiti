@@ -26,44 +26,22 @@ func (m *model) clientInfoLine() string {
 	return st.Render(status)
 }
 
-// topicTooltip returns tooltip content and coordinates when the selected topic
-// chip is truncated.
-func (m *model) topicTooltip() (string, int, int) {
+// selectedTopicInfo renders the full topic name when the focused chip is
+// truncated.
+func (m *model) selectedTopicInfo() string {
 	sel := m.topics.Selected()
 	if sel < 0 || sel >= len(m.topics.Items) || sel >= len(m.topics.ChipBounds) {
-		return "", 0, 0
+		return ""
 	}
-	b := m.topics.ChipBounds[sel]
-	if !b.Truncated {
-		return "", 0, 0
+	if !m.topics.ChipBounds[sel].Truncated {
+		return ""
 	}
-	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
-	tip := ui.RenderTooltip(m.topics.Items[sel].Name, 0, 0, focused)
-	return tip, b.XPos, b.YPos
-}
-
-// overlayAt draws top onto base at coordinates x, y, preserving ANSI codes.
-func overlayAt(base, top string, x, y int) string {
-	baseLines := strings.Split(base, "\n")
-	topLines := strings.Split(top, "\n")
-	for i, tl := range topLines {
-		if tl == "" {
-			continue
-		}
-		by := y + i
-		if by >= len(baseLines) {
-			break
-		}
-		line := baseLines[by]
-		prefix := ansi.Cut(line, 0, x)
-		suffixStart := x + ansi.StringWidth(tl)
-		suffix := ""
-		if ansi.StringWidth(line) > suffixStart {
-			suffix = ansi.Cut(line, suffixStart, ansi.StringWidth(line))
-		}
-		baseLines[by] = prefix + tl + suffix
+	w := m.ui.width - 2
+	if w < 0 {
+		w = 0
 	}
-	return strings.Join(baseLines, "\n")
+	name := ansi.Wrap(m.topics.Items[sel].Name, w, " ")
+	return ui.InfoStyle.Render(name)
 }
 
 // viewClient renders the main client view.
@@ -74,9 +52,27 @@ func (m *model) viewClient() string {
 	messageBox := m.message.View()
 	messagesBox := m.renderHistorySection()
 
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
+	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
+	for i, b := range bounds {
+		m.topics.ChipBounds[i] = topics.ChipBound{
+			XPos:      b.XPos,
+			YPos:      b.YPos,
+			Width:     b.Width,
+			Height:    b.Height,
+			Truncated: b.Truncated,
+		}
+	}
 
+	infoLine := m.selectedTopicInfo()
+	var content string
 	y := 1
+	if infoLine != "" {
+		content = lipgloss.JoinVertical(lipgloss.Left, infoLine, topicsBox, topicBox, messageBox, messagesBox)
+		y += lipgloss.Height(infoLine)
+	} else {
+		content = lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
+	}
+
 	m.ui.elemPos[idTopics] = y
 	y += lipgloss.Height(topicsBox)
 	m.ui.elemPos[idTopic] = y
@@ -87,15 +83,9 @@ func (m *model) viewClient() string {
 
 	startX := 2
 	startY := m.ui.elemPos[idTopics] + 1
-	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
-	for i, b := range bounds {
-		m.topics.ChipBounds[i] = topics.ChipBound{
-			XPos:      startX + b.XPos,
-			YPos:      startY + b.YPos,
-			Width:     b.Width,
-			Height:    b.Height,
-			Truncated: b.Truncated,
-		}
+	for i := range m.topics.ChipBounds {
+		m.topics.ChipBounds[i].XPos += startX
+		m.topics.ChipBounds[i].YPos += startY
 	}
 
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)
@@ -105,11 +95,6 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	tip, tx, ty := m.topicTooltip()
 	contentView := lipgloss.JoinVertical(lipgloss.Left, statusLine, view)
-	finalView := m.overlayHelp(contentView)
-	if tip != "" {
-		finalView = overlayAt(finalView, tip, tx, ty+1)
-	}
-	return finalView
+	return m.overlayHelp(contentView)
 }

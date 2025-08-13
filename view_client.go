@@ -25,19 +25,47 @@ func (m *model) clientInfoLine() string {
 	return st.Render(status)
 }
 
-// topicTooltip renders a tooltip for the selected topic when it is truncated
-// in the viewport.
-func (m *model) topicTooltip() string {
+// topicTooltip returns tooltip content and coordinates when the selected topic
+// chip is truncated.
+func (m *model) topicTooltip() (string, int, int) {
 	sel := m.topics.Selected()
 	if sel < 0 || sel >= len(m.topics.Items) || sel >= len(m.topics.ChipBounds) {
-		return ""
+		return "", 0, 0
 	}
 	b := m.topics.ChipBounds[sel]
 	if !b.Truncated {
-		return ""
+		return "", 0, 0
 	}
-	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
-	return ui.RenderTooltip(m.topics.Items[sel].Name, b.XPos, b.YPos, focused)
+	style := ui.TooltipStyle
+	if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
+		style = ui.TooltipFocused
+	}
+	tip := ui.Tooltip{Text: m.topics.Items[sel].Name, Width: lipgloss.Width(m.topics.Items[sel].Name), Style: &style}.View(0, 0)
+	return tip, b.XPos, b.YPos
+}
+
+// overlayAt draws top onto base at coordinates x, y.
+func overlayAt(base, top string, x, y int) string {
+	baseLines := strings.Split(base, "\n")
+	topLines := strings.Split(top, "\n")
+	for i, tl := range topLines {
+		by := y + i
+		if by >= len(baseLines) {
+			break
+		}
+		line := []rune(baseLines[by])
+		tip := []rune(strings.Repeat(" ", x) + tl)
+		if len(line) < len(tip) {
+			line = append(line, make([]rune, len(tip)-len(line))...)
+		}
+		for j, r := range tip {
+			if r != ' ' {
+				line[j] = r
+			}
+		}
+		baseLines[by] = string(line)
+	}
+	return strings.Join(baseLines, "\n")
 }
 
 // viewClient renders the main client view.
@@ -79,10 +107,11 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	tip := m.topicTooltip()
+	tip, tx, ty := m.topicTooltip()
 	contentView := lipgloss.JoinVertical(lipgloss.Left, statusLine, view)
+	finalView := m.overlayHelp(contentView)
 	if tip != "" {
-		contentView = lipgloss.JoinVertical(lipgloss.Left, contentView, tip)
+		finalView = overlayAt(finalView, tip, tx, ty+1)
 	}
-	return m.overlayHelp(contentView)
+	return finalView
 }

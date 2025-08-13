@@ -15,14 +15,23 @@ func TestTopicTooltipLong(t *testing.T) {
 	longName := strings.Repeat("x", 50)
 	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
 	m.topics.SetSelected(0)
-	m.viewClient()
+	view := m.viewClient()
 	if !strings.Contains(m.topics.VP.View(), "…") {
 		t.Fatalf("expected truncated chip")
 	}
-	tip := m.topicTooltip()
-	plain := strings.ReplaceAll(ansi.Strip(tip), "\n", "")
-	if !strings.Contains(plain, longName[:10]) {
+	tip, _, _ := m.topicTooltip()
+	plainTip := ansi.Strip(tip)
+	if strings.Count(plainTip, "x") != len(longName) {
 		t.Fatalf("expected tooltip to include full topic name")
+	}
+	plain := ansi.Strip(view)
+	idx := strings.Index(plain, longName[:10])
+	if idx < 0 {
+		t.Fatalf("expected view to include tooltip text")
+	}
+	line := strings.Count(plain[:idx], "\n")
+	if line >= m.ui.height {
+		t.Fatalf("tooltip rendered outside viewport")
 	}
 }
 
@@ -32,14 +41,23 @@ func TestTopicTooltipLongWide(t *testing.T) {
 	longName := strings.Repeat("x", maxTopicChipWidth+10)
 	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
 	m.topics.SetSelected(0)
-	m.viewClient()
+	view := m.viewClient()
 	if !strings.Contains(m.topics.VP.View(), "…") {
 		t.Fatalf("expected truncated chip")
 	}
-	tip := m.topicTooltip()
-	plain := strings.ReplaceAll(ansi.Strip(tip), "\n", "")
-	if !strings.Contains(plain, longName[:10]) {
+	tip, _, _ := m.topicTooltip()
+	plainTip := ansi.Strip(tip)
+	if strings.Count(plainTip, "x") != len(longName) {
 		t.Fatalf("expected tooltip to include full topic name")
+	}
+	plain := ansi.Strip(view)
+	idx := strings.Index(plain, longName[:10])
+	if idx < 0 {
+		t.Fatalf("expected view to include tooltip text")
+	}
+	line := strings.Count(plain[:idx], "\n")
+	if line >= m.ui.height {
+		t.Fatalf("tooltip rendered outside viewport")
 	}
 }
 
@@ -52,7 +70,7 @@ func TestTopicTooltipShort(t *testing.T) {
 	if strings.Contains(m.topics.VP.View(), "…") {
 		t.Fatalf("expected no truncation for short topic")
 	}
-	tip := m.topicTooltip()
+	tip, _, _ := m.topicTooltip()
 	if tip != "" {
 		t.Fatalf("expected no tooltip for short topic")
 	}

@@ -46,6 +46,8 @@ type mqttClient interface {
 	Disconnect()
 }
 
+type ModeRunner func(*appDeps) error
+
 type appDeps struct {
 	importFile  string
 	profileName string
@@ -63,15 +65,14 @@ type appDeps struct {
 	initialModel  func(*connections.Connections) (*model, error)
 	newProgram    func(tea.Model, ...tea.ProgramOption) program
 
-	runTrace  func(context.Context, *appDeps) error
-	runImport func(*appDeps) error
-	runUI     func(*appDeps) error
+	runners map[string]ModeRunner
 
 	proxyAddr string
+	timeout   time.Duration
 }
 
 func newAppDeps() *appDeps {
-	return &appDeps{
+	d := &appDeps{
 		traceStore:    traces.FileStore{},
 		traceRun:      traces.Run,
 		loadProfile:   connections.LoadProfile,
@@ -81,10 +82,13 @@ func newAppDeps() *appDeps {
 		newProgram: func(m tea.Model, opts ...tea.ProgramOption) program {
 			return tea.NewProgram(m, opts...)
 		},
-		runTrace:  runTrace,
-		runImport: runImport,
-		runUI:     runUI,
 	}
+	d.runners = map[string]ModeRunner{
+		"trace":  runTrace,
+		"import": runImport,
+		"ui":     runUI,
+	}
+	return d
 }
 
 // Main sets up dependencies and launches the UI or other modes based on cfg.
@@ -107,37 +111,37 @@ func runMain(d *appDeps, c cfg.AppConfig) {
 	d.traceTopics = c.TraceTopics
 	d.traceStart = c.TraceStart
 	d.traceEnd = c.TraceEnd
+	d.timeout = c.Timeout
 
 	addr, _ := initProxy()
 	history.SetProxyAddr(addr)
 	traces.SetProxyAddr(addr)
 	d.proxyAddr = addr
-	if c.TraceKey != "" {
-		ctx := context.Background()
-		if c.Timeout > 0 {
-			var cancel context.CancelFunc
-			ctx, cancel = context.WithTimeout(ctx, c.Timeout)
-			defer cancel()
-		}
-		if err := d.runTrace(ctx, d); err != nil {
-			log.Println(err)
-		}
-		return
+
+	mode := "ui"
+	if d.traceKey != "" {
+		mode = "trace"
+	} else if d.importFile != "" {
+		mode = "import"
 	}
 
-	if c.ImportFile != "" {
-		if err := d.runImport(d); err != nil {
+	if runner, ok := d.runners[mode]; ok {
+		if err := runner(d); err != nil {
+			if mode == "ui" {
+				log.Fatalf("Error running program: %v", err)
+			}
 			log.Println(err)
 		}
-		return
-	}
-
-	if err := d.runUI(d); err != nil {
-		log.Fatalf("Error running program: %v", err)
 	}
 }
 
-func runTrace(ctx context.Context, d *appDeps) error {
+func runTrace(d *appDeps) error {
+	ctx := context.Background()
+	if d.timeout > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, d.timeout)
+		defer cancel()
+	}
 	tlist := strings.Split(d.traceTopics, ",")
 	for i := range tlist {
 		tlist[i] = strings.TrimSpace(tlist[i])

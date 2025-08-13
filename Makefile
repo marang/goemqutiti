@@ -4,7 +4,7 @@ PROTOC ?= protoc
 .PHONY: build test vet proto cast
 
 build:
-	go build -o emqutiti ./cmd/emqutiti
+	go build -trimpath -ldflags="-s -w" -o emqutiti ./cmd/emqutiti
 
 vet:
 	go vet ./...

@@ -13,7 +13,6 @@ require (
 	github.com/dgraph-io/badger/v4 v4.8.0
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/mattn/go-runewidth v0.0.16
-	github.com/xuri/excelize/v2 v2.9.1
 	github.com/zalando/go-keyring v0.2.6
 	google.golang.org/grpc v1.74.2
 	google.golang.org/protobuf v1.36.6
@@ -50,21 +49,15 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.16.0 // indirect
-	github.com/richardlehane/mscfb v1.0.4 // indirect
-	github.com/richardlehane/msoleps v1.0.4 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/sahilm/fuzzy v0.1.1 // indirect
-	github.com/tiendc/go-deepcopy v1.6.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
-	github.com/xuri/efp v0.0.1 // indirect
-	github.com/xuri/nfp v0.0.1 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
 	go.opentelemetry.io/otel/metric v1.37.0 // indirect
 	go.opentelemetry.io/otel/trace v1.37.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
 	golang.org/x/net v0.41.0 // indirect
 	golang.org/x/sync v0.15.0 // indirect
 	golang.org/x/sys v0.34.0 // indirect

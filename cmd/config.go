@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"time"
 )
 
 type AppConfig struct {
@@ -13,6 +14,7 @@ type AppConfig struct {
 	TraceTopics string
 	TraceStart  string
 	TraceEnd    string
+	Timeout     time.Duration
 }
 
 func ParseFlags() AppConfig {
@@ -26,6 +28,7 @@ func ParseFlags() AppConfig {
 	fs.StringVar(&cfg.TraceTopics, "topics", "", "Comma-separated topics to trace")
 	fs.StringVar(&cfg.TraceStart, "start", "", "Optional RFC3339 trace start time")
 	fs.StringVar(&cfg.TraceEnd, "end", "", "Optional RFC3339 trace end time")
+	fs.DurationVar(&cfg.Timeout, "timeout", 0, "Optional overall runtime limit (e.g., 30s)")
 	fs.Usage = func() {
 		w := fs.Output()
 		fmt.Fprintf(w, "Usage: %s [flags]\n\n", os.Args[0])

@@ -1,6 +1,7 @@
 package emqutiti
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"strings"
@@ -53,7 +54,7 @@ type appDeps struct {
 	traceEnd    string
 
 	traceStore traces.Store
-	traceRun   func(string, string, string, string, string) error
+	traceRun   func(context.Context, string, string, string, string, string) error
 
 	loadProfile   func(string, string) (*connections.Profile, error)
 	newMQTTClient func(connections.Profile, statusFunc) (mqttClient, error)
@@ -61,7 +62,7 @@ type appDeps struct {
 	initialModel  func(*connections.Connections) (*model, error)
 	newProgram    func(tea.Model, ...tea.ProgramOption) program
 
-	runTrace  func(*appDeps) error
+	runTrace  func(context.Context, *appDeps) error
 	runImport func(*appDeps) error
 	runUI     func(*appDeps) error
 
@@ -111,7 +112,13 @@ func runMain(d *appDeps, c cfg.AppConfig) {
 	traces.SetProxyAddr(addr)
 	d.proxyAddr = addr
 	if c.TraceKey != "" {
-		if err := d.runTrace(d); err != nil {
+		ctx := context.Background()
+		if c.Timeout > 0 {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(ctx, c.Timeout)
+			defer cancel()
+		}
+		if err := d.runTrace(ctx, d); err != nil {
 			log.Println(err)
 		}
 		return
@@ -129,7 +136,7 @@ func runMain(d *appDeps, c cfg.AppConfig) {
 	}
 }
 
-func runTrace(d *appDeps) error {
+func runTrace(ctx context.Context, d *appDeps) error {
 	tlist := strings.Split(d.traceTopics, ",")
 	for i := range tlist {
 		tlist[i] = strings.TrimSpace(tlist[i])
@@ -168,7 +175,7 @@ func runTrace(d *appDeps) error {
 	if err := d.traceStore.AddTrace(cfg); err != nil {
 		return err
 	}
-	return d.traceRun(d.traceKey, d.traceTopics, d.profileName, d.traceStart, d.traceEnd)
+	return d.traceRun(ctx, d.traceKey, d.traceTopics, d.profileName, d.traceStart, d.traceEnd)
 }
 
 // runImport launches the interactive import wizard using the provided file

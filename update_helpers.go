@@ -27,7 +27,7 @@ func calcConnectionsSize(width, height int) (int, int) {
 
 // calcTopicsInputWidth returns the width for the topics input.
 func calcTopicsInputWidth(width int) int {
-	return width - 7
+	return calcMessageWidth(width)
 }
 
 // calcTraceHeight returns the height for trace views, defaulting if zero.

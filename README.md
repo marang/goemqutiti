@@ -180,6 +180,14 @@ Additional notes for repository contributors are available in [AGENTS.md](AGENTS
 
 ## Development
 
+### Building
+
+`make build` compiles the `emqutiti` binary using:
+
+```bash
+go build -trimpath -ldflags="-s -w" -o emqutiti ./cmd/emqutiti
+```
+
 ### Common tasks
 
 - `make build` – compile the `emqutiti` binary

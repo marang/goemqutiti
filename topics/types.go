@@ -29,7 +29,6 @@ func (t Item) Description() string {
 type ChipBound struct {
 	XPos, YPos    int
 	Width, Height int
-	Truncated     bool
 }
 
 type paneManager interface{ SetActivePane(int) }

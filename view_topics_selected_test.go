@@ -4,53 +4,39 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/ansi"
 	"github.com/marang/emqutiti/topics"
 )
 
-func TestSelectedTopicInfoLong(t *testing.T) {
-	m, _ := initialModel(nil)
-	m.Update(tea.WindowSizeMsg{Width: 20, Height: 10})
+func TestSelectedTopicWrapsLongName(t *testing.T) {
 	longName := strings.Repeat("x", 50)
-	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
-	m.topics.SetSelected(0)
-	m.viewClient()
-	if !strings.Contains(m.topics.VP.View(), "…") {
-		t.Fatalf("expected truncated chip")
+	chips := renderTopicChips([]topics.Item{{Name: longName, Subscribed: true}}, 0, 20)
+	stripped := ansi.Strip(chips[0])
+	if strings.Contains(stripped, "…") {
+		t.Fatalf("expected no ellipsis for selected topic")
 	}
-	info := ansi.Strip(m.selectedTopicInfo())
-	if strings.Count(info, "x") != len(longName) {
-		t.Fatalf("expected info line to include full topic name")
+	if strings.Count(stripped, "x") != len(longName) {
+		t.Fatalf("expected full topic name rendered")
 	}
 }
 
-func TestSelectedTopicInfoLongWide(t *testing.T) {
-	m, _ := initialModel(nil)
-	m.Update(tea.WindowSizeMsg{Width: 120, Height: 10})
+func TestUnselectedTopicTruncated(t *testing.T) {
+	longName := strings.Repeat("x", 50)
+	items := []topics.Item{{Name: "short", Subscribed: true}, {Name: longName, Subscribed: true}}
+	chips := renderTopicChips(items, 0, 20)
+	if !strings.Contains(ansi.Strip(chips[1]), "…") {
+		t.Fatalf("expected truncated chip for unselected topic")
+	}
+}
+
+func TestSelectedTopicWrapsWide(t *testing.T) {
 	longName := strings.Repeat("x", maxTopicChipWidth+10)
-	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
-	m.topics.SetSelected(0)
-	m.viewClient()
-	if !strings.Contains(m.topics.VP.View(), "…") {
-		t.Fatalf("expected truncated chip")
+	chips := renderTopicChips([]topics.Item{{Name: longName, Subscribed: true}}, 0, 120)
+	stripped := ansi.Strip(chips[0])
+	if strings.Contains(stripped, "…") {
+		t.Fatalf("expected no ellipsis for selected topic")
 	}
-	info := ansi.Strip(m.selectedTopicInfo())
-	if strings.Count(info, "x") != len(longName) {
-		t.Fatalf("expected info line to include full topic name")
-	}
-}
-
-func TestSelectedTopicInfoShort(t *testing.T) {
-	m, _ := initialModel(nil)
-	m.Update(tea.WindowSizeMsg{Width: 80, Height: 10})
-	m.topics.Items = []topics.Item{{Name: "short", Subscribed: true}}
-	m.topics.SetSelected(0)
-	m.viewClient()
-	if strings.Contains(m.topics.VP.View(), "…") {
-		t.Fatalf("expected no truncation for short topic")
-	}
-	if m.selectedTopicInfo() != "" {
-		t.Fatalf("expected no info line for short topic")
+	if strings.Count(stripped, "x") != len(longName) {
+		t.Fatalf("expected full topic name rendered")
 	}
 }

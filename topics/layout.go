@@ -5,8 +5,6 @@ import (
 	"unicode"
 
 	"github.com/charmbracelet/lipgloss"
-
-	"github.com/marang/emqutiti/ui"
 )
 
 // LayoutChips lays out chips horizontally wrapping within width.
@@ -16,21 +14,25 @@ func LayoutChips(chips []string, width int) ([]string, []ChipBound) {
 	var bounds []ChipBound
 	curX := 0
 	rowTop := 0
-	chipH := lipgloss.Height(ui.Chip.Render("test"))
-	rowSpacing := chipH
+	rowHeight := 0
 	for _, c := range chips {
 		cw := lipgloss.Width(c)
+		ch := lipgloss.Height(c)
 		if curX+cw > width && len(row) > 0 {
 			line := lipgloss.JoinHorizontal(lipgloss.Top, row...)
 			line = strings.TrimRightFunc(line, unicode.IsSpace)
 			lines = append(lines, line)
 			row = []string{}
 			curX = 0
-			rowTop += rowSpacing
+			rowTop += rowHeight
+			rowHeight = 0
 		}
 		row = append(row, c)
-		bounds = append(bounds, ChipBound{XPos: curX, YPos: rowTop, Width: cw, Height: chipH})
+		bounds = append(bounds, ChipBound{XPos: curX, YPos: rowTop, Width: cw, Height: ch})
 		curX += cw
+		if ch > rowHeight {
+			rowHeight = ch
+		}
 	}
 	if len(row) > 0 {
 		line := lipgloss.JoinHorizontal(lipgloss.Top, row...)

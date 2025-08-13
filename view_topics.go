@@ -13,11 +13,11 @@ import (
 // maxTopicChipWidth caps the width of a rendered topic name before truncation.
 const maxTopicChipWidth = 40
 
-// renderTopicChips builds styled topic chips, truncating names that exceed
-// the viewport width and tracking whether truncation occurred.
-func renderTopicChips(items []topics.Item, selected, width int) ([]string, []bool) {
+// renderTopicChips builds styled topic chips, expanding the selected chip to
+// show the full topic name by wrapping it within the viewport width. Other
+// chips are truncated with an ellipsis.
+func renderTopicChips(items []topics.Item, selected, width int) []string {
 	chips := make([]string, 0, len(items))
-	truncated := make([]bool, len(items))
 	for i, t := range items {
 		st := ui.ChipInactive
 		switch {
@@ -44,13 +44,25 @@ func renderTopicChips(items []topics.Item, selected, width int) ([]string, []boo
 		if contentWidth > maxTopicChipWidth {
 			contentWidth = maxTopicChipWidth
 		}
-		if lipgloss.Width(t.Name) > contentWidth {
-			truncated[i] = true
+		if i == selected && lipgloss.Width(t.Name) > contentWidth {
+			wrapped := ansi.Hardwrap(t.Name, contentWidth, false)
+			lines := strings.Split(wrapped, "\n")
+			for j, line := range lines {
+				lw := lipgloss.Width(line)
+				if lw < contentWidth {
+					lines[j] = line + strings.Repeat(" ", contentWidth-lw)
+				}
+			}
+			chips = append(chips, st.Render(strings.Join(lines, "\n")))
+			continue
 		}
-		name := ansi.Truncate(t.Name, contentWidth, "…")
+		name := t.Name
+		if lipgloss.Width(name) > contentWidth {
+			name = ansi.Truncate(name, contentWidth, "…")
+		}
 		chips = append(chips, st.Render(name))
 	}
-	return chips, truncated
+	return chips
 }
 
 // layoutTopicViewport sets up the topic viewport and returns visible chip bounds.
@@ -112,13 +124,8 @@ func (m *model) buildTopicBoxes(content string, boxHeight, infoHeight int, scrol
 // renderTopicsSection renders topics and topic input boxes.
 func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
 	width := m.ui.width - 4
-	chips, trunc := renderTopicChips(m.topics.Items, m.topics.Selected(), width)
+	chips := renderTopicChips(m.topics.Items, m.topics.Selected(), width)
 	content, bounds, boxHeight, infoHeight, scroll := m.layoutTopicViewport(chips)
-	for i := range bounds {
-		if i < len(trunc) {
-			bounds[i].Truncated = trunc[i]
-		}
-	}
 	topicsBox, topicBox := m.buildTopicBoxes(content, boxHeight, infoHeight, scroll)
 	return topicsBox, topicBox, bounds
 }

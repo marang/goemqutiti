@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/charmbracelet/x/ansi"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
@@ -26,24 +25,6 @@ func (m *model) clientInfoLine() string {
 	return st.Render(status)
 }
 
-// selectedTopicInfo renders the full topic name when the focused chip is
-// truncated.
-func (m *model) selectedTopicInfo() string {
-	sel := m.topics.Selected()
-	if sel < 0 || sel >= len(m.topics.Items) || sel >= len(m.topics.ChipBounds) {
-		return ""
-	}
-	if !m.topics.ChipBounds[sel].Truncated {
-		return ""
-	}
-	w := m.ui.width - 2
-	if w < 0 {
-		w = 0
-	}
-	name := ansi.Wrap(m.topics.Items[sel].Name, w, " ")
-	return ui.InfoStyle.Render(name)
-}
-
 // viewClient renders the main client view.
 func (m *model) viewClient() string {
 	m.ui.elemPos = map[string]int{}
@@ -55,23 +36,15 @@ func (m *model) viewClient() string {
 	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
 	for i, b := range bounds {
 		m.topics.ChipBounds[i] = topics.ChipBound{
-			XPos:      b.XPos,
-			YPos:      b.YPos,
-			Width:     b.Width,
-			Height:    b.Height,
-			Truncated: b.Truncated,
+			XPos:   b.XPos,
+			YPos:   b.YPos,
+			Width:  b.Width,
+			Height: b.Height,
 		}
 	}
 
-	infoLine := m.selectedTopicInfo()
-	var content string
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 	y := 1
-	if infoLine != "" {
-		content = lipgloss.JoinVertical(lipgloss.Left, infoLine, topicsBox, topicBox, messageBox, messagesBox)
-		y += lipgloss.Height(infoLine)
-	} else {
-		content = lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
-	}
 
 	m.ui.elemPos[idTopics] = y
 	y += lipgloss.Height(topicsBox)

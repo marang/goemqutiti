@@ -42,7 +42,7 @@ type Base struct {
 
 func NewBase(client Publisher, path string) *Base {
 	ti := textinput.New()
-	ti.Placeholder = "CSV or XLS file"
+	ti.Placeholder = "CSV file"
 	ti.Focus()
 	ti.SetValue(path)
 	tmpl := textinput.New()

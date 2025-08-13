@@ -9,18 +9,14 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-
-	"github.com/xuri/excelize/v2"
 )
 
-// ReadFile reads a CSV or Excel file and returns rows as maps keyed by header name.
+// ReadFile reads a CSV file and returns rows as maps keyed by header name.
 func ReadFile(path string) ([]map[string]string, error) {
 	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".csv":
 		return readCSV(path)
-	case ".xls", ".xlsx":
-		return readXLS(path)
 	default:
 		return nil, fmt.Errorf("unsupported file type: %s", ext)
 	}
@@ -57,39 +53,6 @@ func readCSV(path string) ([]map[string]string, error) {
 		rows = append(rows, row)
 	}
 	return rows, nil
-}
-
-func readXLS(path string) ([]map[string]string, error) {
-	f, err := excelize.OpenFile(path)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	sheet := f.GetSheetName(0)
-	if sheet == "" {
-		return nil, fmt.Errorf("no sheets found")
-	}
-	rows, err := f.GetRows(sheet)
-	if err != nil {
-		return nil, err
-	}
-	if len(rows) == 0 {
-		return nil, nil
-	}
-	headers := rows[0]
-	var result []map[string]string
-	for _, rec := range rows[1:] {
-		row := map[string]string{}
-		for i, h := range headers {
-			if i < len(rec) {
-				row[h] = rec[i]
-			} else {
-				row[h] = ""
-			}
-		}
-		result = append(result, row)
-	}
-	return result, nil
 }
 
 var placeholder = regexp.MustCompile(`\{([^}]+)\}`)

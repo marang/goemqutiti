@@ -6,6 +6,7 @@ import (
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
+	mqttoptions "github.com/marang/emqutiti/mqttclient"
 )
 
 type fakeToken struct {
@@ -48,5 +49,37 @@ func TestWaitTokenTimeout(t *testing.T) {
 	err := waitToken(tok, to, "subscribe")
 	if err == nil || !strings.Contains(err.Error(), "subscribe timeout") {
 		t.Fatalf("expected timeout error, got %v", err)
+	}
+}
+
+func TestWithAuthOption(t *testing.T) {
+	opts := mqtt.NewClientOptions()
+	mqttoptions.WithAuth("user", "pass")(opts)
+	if opts.Username != "user" || opts.Password != "pass" {
+		t.Fatalf("auth option not applied")
+	}
+}
+
+func TestWithAuthDefaults(t *testing.T) {
+	opts := mqtt.NewClientOptions()
+	mqttoptions.WithAuth("", "")(opts)
+	if opts.Username != "" || opts.Password != "" {
+		t.Fatalf("expected defaults for username and password")
+	}
+}
+
+func TestWithTimeouts(t *testing.T) {
+	opts := mqtt.NewClientOptions()
+	mqttoptions.WithTimeouts(10, 20)(opts)
+	if opts.ConnectTimeout != 10*time.Second || opts.KeepAlive != 20 {
+		t.Fatalf("timeouts not applied: got %v and %d", opts.ConnectTimeout, opts.KeepAlive)
+	}
+}
+
+func TestWithTimeoutsDefaults(t *testing.T) {
+	opts := mqtt.NewClientOptions()
+	mqttoptions.WithTimeouts(0, 0)(opts)
+	if opts.ConnectTimeout != 30*time.Second || opts.KeepAlive != 30 {
+		t.Fatalf("expected default timeouts, got %v and %d", opts.ConnectTimeout, opts.KeepAlive)
 	}
 }

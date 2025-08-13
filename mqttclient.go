@@ -1,12 +1,9 @@
 package emqutiti
 
 import (
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	connections "github.com/marang/emqutiti/connections"
-	"os"
-	"strconv"
+	mqttclient "github.com/marang/emqutiti/mqttclient"
 	"time"
 
 	mqtt "github.com/eclipse/paho.mqtt.golang"
@@ -49,65 +46,33 @@ func waitToken(token mqtt.Token, timeout time.Duration, action string) error {
 // details. Status updates are delivered via the provided callback.
 func NewMQTTClient(p connections.Profile, fn statusFunc) (*MQTTClient, error) {
 	opts := mqtt.NewClientOptions()
-	opts.AddBroker(p.BrokerURL())
-	cid := p.ClientID
-	if p.RandomIDSuffix {
-		cid = fmt.Sprintf("%s-%d", cid, time.Now().UnixNano())
-	}
-	opts.SetClientID(cid)
-	opts.SetUsername(p.Username)
 
-	if len(p.Password) > 0 {
-		opts.SetPassword(p.Password)
+	// Build option list from profile.
+	optionFns := []mqttclient.ClientOption{
+		mqttclient.WithBroker(p.BrokerURL()),
+		mqttclient.WithClientID(p.ClientID, p.RandomIDSuffix),
+		mqttclient.WithAuth(p.Username, p.Password),
+		mqttclient.WithTimeouts(p.ConnectTimeout, p.KeepAlive),
+		mqttclient.WithSession(p.AutoReconnect, p.CleanStart),
+		mqttclient.WithWill(p.LastWillEnabled, p.LastWillTopic, p.LastWillPayload, p.LastWillQos, p.LastWillRetain),
 	}
 
-	if p.MQTTVersion != "" {
-		ver, err := strconv.Atoi(p.MQTTVersion)
-		if err != nil {
-			return nil, fmt.Errorf("invalid MQTT version %q: %w", p.MQTTVersion, err)
-		}
-		if ver != 0 {
-			opts.SetProtocolVersion(uint(ver))
-		}
-	}
-	if p.ConnectTimeout > 0 {
-		opts.SetConnectTimeout(time.Duration(p.ConnectTimeout) * time.Second)
-	}
-	if p.KeepAlive > 0 {
-		opts.SetKeepAlive(time.Duration(p.KeepAlive) * time.Second)
-	}
-	opts.SetAutoReconnect(p.AutoReconnect)
-	if p.CleanStart {
-		opts.SetCleanSession(true)
+	if opt, err := mqttclient.WithVersion(p.MQTTVersion); err != nil {
+		return nil, err
 	} else {
-		opts.SetCleanSession(false)
-	}
-	if p.LastWillEnabled && p.LastWillTopic != "" {
-		opts.SetWill(p.LastWillTopic, p.LastWillPayload, byte(p.LastWillQos), p.LastWillRetain)
+		optionFns = append(optionFns, opt)
 	}
 
-	if p.SSL {
-		tlsCfg := &tls.Config{InsecureSkipVerify: p.SkipTLSVerify}
-		if p.CACertPath != "" {
-			caData, err := os.ReadFile(p.CACertPath)
-			if err != nil {
-				return nil, fmt.Errorf("read CA cert: %w", err)
-			}
-			pool := x509.NewCertPool()
-			if !pool.AppendCertsFromPEM(caData) {
-				return nil, fmt.Errorf("invalid CA cert")
-			}
-			tlsCfg.RootCAs = pool
-		}
-		if p.ClientCertPath != "" && p.ClientKeyPath != "" {
-			cert, err := tls.LoadX509KeyPair(p.ClientCertPath, p.ClientKeyPath)
-			if err != nil {
-				return nil, fmt.Errorf("load client cert: %w", err)
-			}
-			tlsCfg.Certificates = []tls.Certificate{cert}
-		}
-		opts.SetTLSConfig(tlsCfg)
+	if opt, err := mqttclient.WithTLS(p.SSL, p.SkipTLSVerify, p.CACertPath, p.ClientCertPath, p.ClientKeyPath); err != nil {
+		return nil, err
+	} else {
+		optionFns = append(optionFns, opt)
 	}
+
+	for _, opt := range optionFns {
+		opt(opts)
+	}
+
 	opts.OnConnect = func(client mqtt.Client) {
 		if fn != nil {
 			fn("Connected to MQTT broker")

@@ -4,6 +4,9 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	mapstructure "github.com/go-viper/mapstructure/v2"
+	"github.com/spf13/viper"
 )
 
 // sanitizeEnvName converts a profile name to a valid environment variable name
@@ -27,18 +30,14 @@ func EnvPrefix(name string) string { return "EMQUTITI_" + sanitizeEnvName(name) 
 
 type profileEnvSetter func(*Profile, string)
 
+// profileEnvSetters handles bespoke conversions where default decoding is not
+// sufficient. Most fields are handled directly by mapstructure.
 var profileEnvSetters = map[string]profileEnvSetter{
-	"name":   func(p *Profile, v string) { p.Name = v },
-	"schema": func(p *Profile, v string) { p.Schema = v },
-	"host":   func(p *Profile, v string) { p.Host = v },
 	"port": func(p *Profile, v string) {
 		if iv, err := strconv.Atoi(v); err == nil {
 			p.Port = iv
 		}
 	},
-	"client_id": func(p *Profile, v string) { p.ClientID = v },
-	"username":  func(p *Profile, v string) { p.Username = v },
-	"password":  func(p *Profile, v string) { p.Password = v },
 	"ssl_tls": func(p *Profile, v string) {
 		if bv, err := strconv.ParseBool(v); err == nil {
 			p.SSL = bv
@@ -49,10 +48,6 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.SkipTLSVerify = bv
 		}
 	},
-	"ca_cert_path":     func(p *Profile, v string) { p.CACertPath = v },
-	"client_cert_path": func(p *Profile, v string) { p.ClientCertPath = v },
-	"client_key_path":  func(p *Profile, v string) { p.ClientKeyPath = v },
-	"mqtt_version":     func(p *Profile, v string) { p.MQTTVersion = v },
 	"connect_timeout": func(p *Profile, v string) {
 		if iv, err := strconv.Atoi(v); err == nil {
 			p.ConnectTimeout = iv
@@ -133,7 +128,6 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.LastWillEnabled = bv
 		}
 	},
-	"last_will_topic": func(p *Profile, v string) { p.LastWillTopic = v },
 	"last_will_qos": func(p *Profile, v string) {
 		if iv, err := strconv.Atoi(v); err == nil {
 			p.LastWillQos = iv
@@ -144,7 +138,6 @@ var profileEnvSetters = map[string]profileEnvSetter{
 			p.LastWillRetain = bv
 		}
 	},
-	"last_will_payload": func(p *Profile, v string) { p.LastWillPayload = v },
 	"random_id_suffix": func(p *Profile, v string) {
 		if bv, err := strconv.ParseBool(v); err == nil {
 			p.RandomIDSuffix = bv
@@ -161,19 +154,36 @@ func ApplyEnvVars(p *Profile) {
 	if !p.FromEnv {
 		return
 	}
+
+	v := viper.New()
+	v.SetEnvPrefix(EnvPrefix(p.Name))
+	v.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	v.AutomaticEnv()
+
 	prefix := EnvPrefix(p.Name)
-	// For a limited time, also check the old GOEMQUTITI_ prefix for
-	// backward compatibility.
-	oldPrefix := "GO" + prefix
-	for tag, setter := range profileEnvSetters {
-		key := strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
-		envName := prefix + key
-		if val, ok := os.LookupEnv(envName); ok {
-			setter(p, val)
-			continue
+	for _, env := range os.Environ() {
+		switch {
+		case strings.HasPrefix(env, prefix):
+			kv := strings.SplitN(env[len(prefix):], "=", 2)
+			if len(kv) == 2 {
+				v.Set(strings.ToLower(kv[0]), kv[1])
+			}
+		case strings.HasPrefix(env, "GO"+prefix):
+			kv := strings.SplitN(env[len(prefix)+2:], "=", 2)
+			if len(kv) == 2 {
+				v.Set(strings.ToLower(kv[0]), kv[1])
+			}
 		}
-		if val, ok := os.LookupEnv(oldPrefix + key); ok {
-			setter(p, val)
+	}
+
+	_ = v.Unmarshal(p, func(dc *mapstructure.DecoderConfig) {
+		dc.TagName = "env"
+		dc.ZeroFields = false
+	})
+
+	for tag, setter := range profileEnvSetters {
+		if v.IsSet(tag) {
+			setter(p, v.GetString(tag))
 		}
 	}
 }

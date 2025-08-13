@@ -1,6 +1,7 @@
 package traces
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	connections "github.com/marang/emqutiti/connections"
@@ -86,7 +87,7 @@ func (m *mqttClient) Disconnect() {
 }
 
 // Run executes the tracer headlessly using configuration from config.toml.
-func Run(key, topics, profileName, startStr, endStr string) error {
+func Run(ctx context.Context, key, topics, profileName, startStr, endStr string) error {
 	if key == "" || topics == "" {
 		return fmt.Errorf("-trace and -topics are required")
 	}
@@ -138,6 +139,9 @@ func Run(key, topics, profileName, startStr, endStr string) error {
 		select {
 		case <-sig:
 			tr.Stop()
+		case <-ctx.Done():
+			tr.Stop()
+			return ctx.Err()
 		case <-time.After(500 * time.Millisecond):
 		}
 	}

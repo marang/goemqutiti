@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
@@ -36,34 +37,31 @@ func (m *model) topicTooltip() (string, int, int) {
 	if !b.Truncated {
 		return "", 0, 0
 	}
-	style := ui.TooltipStyle
-	if m.ui.focusOrder[m.ui.focusIndex] == idTopics {
-		style = ui.TooltipFocused
-	}
-	tip := ui.Tooltip{Text: m.topics.Items[sel].Name, Width: lipgloss.Width(m.topics.Items[sel].Name), Style: &style}.View(0, 0)
+	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
+	tip := ui.RenderTooltip(m.topics.Items[sel].Name, 0, 0, focused)
 	return tip, b.XPos, b.YPos
 }
 
-// overlayAt draws top onto base at coordinates x, y.
+// overlayAt draws top onto base at coordinates x, y, preserving ANSI codes.
 func overlayAt(base, top string, x, y int) string {
 	baseLines := strings.Split(base, "\n")
 	topLines := strings.Split(top, "\n")
 	for i, tl := range topLines {
+		if tl == "" {
+			continue
+		}
 		by := y + i
 		if by >= len(baseLines) {
 			break
 		}
-		line := []rune(baseLines[by])
-		tip := []rune(strings.Repeat(" ", x) + tl)
-		if len(line) < len(tip) {
-			line = append(line, make([]rune, len(tip)-len(line))...)
+		line := baseLines[by]
+		prefix := ansi.Cut(line, 0, x)
+		suffixStart := x + ansi.StringWidth(tl)
+		suffix := ""
+		if ansi.StringWidth(line) > suffixStart {
+			suffix = ansi.Cut(line, suffixStart, ansi.StringWidth(line))
 		}
-		for j, r := range tip {
-			if r != ' ' {
-				line[j] = r
-			}
-		}
-		baseLines[by] = string(line)
+		baseLines[by] = prefix + tl + suffix
 	}
 	return strings.Join(baseLines, "\n")
 }

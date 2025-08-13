@@ -15,6 +15,7 @@ import (
 	cfg "github.com/marang/emqutiti/cmd"
 	"github.com/marang/emqutiti/constants"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/importer/steps"
 	"github.com/marang/emqutiti/traces"
 )
 
@@ -41,7 +42,7 @@ var (
 type program interface{ Run() (tea.Model, error) }
 
 type mqttClient interface {
-	importer.Publisher
+	steps.Publisher
 	Disconnect()
 }
 
@@ -58,7 +59,7 @@ type appDeps struct {
 
 	loadProfile   func(string, string) (*connections.Profile, error)
 	newMQTTClient func(connections.Profile, statusFunc) (mqttClient, error)
-	newImporter   func(importer.Publisher, string) *importer.Model
+	newImporter   func(steps.Publisher, string) *importer.Model
 	initialModel  func(*connections.Connections) (*model, error)
 	newProgram    func(tea.Model, ...tea.ProgramOption) program
 

@@ -1,4 +1,4 @@
-package importer
+package steps
 
 import (
 	"fmt"
@@ -11,56 +11,58 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
-// updateMap handles mapping columns to fields.
-func (m *Model) updateMap(msg tea.Msg) tea.Cmd {
-	if len(m.form.Fields) == 0 {
-		return nil
+// MapStep handles mapping columns to fields.
+type MapStep struct{ *Base }
+
+func NewMapStep(b *Base) *MapStep {
+	b.Current = Map
+	return &MapStep{Base: b}
+}
+
+func (s *MapStep) Update(msg tea.Msg) (Step, tea.Cmd) {
+	if len(s.Form.Fields) == 0 {
+		return s, nil
 	}
 	switch ev := msg.(type) {
 	case tea.KeyMsg:
 		switch ev.String() {
 		case constants.KeyTab, constants.KeyShiftTab, constants.KeyUp, constants.KeyDown, constants.KeyK, constants.KeyJ:
-			m.form.CycleFocus(ev)
+			s.Form.CycleFocus(ev)
 		case constants.KeyCtrlN:
-			m.step = stepTemplate
-			m.tmpl.Focus()
-			return nil
+			return NewTemplateStep(s.Base), nil
 		case constants.KeyCtrlP:
-			m.step = stepFile
-			return nil
+			return NewFileStep(s.Base), nil
 		}
 	case tea.MouseMsg:
 		if ev.Action == tea.MouseActionPress && ev.Button == tea.MouseButtonLeft {
-			if ev.Y >= 1 && ev.Y-1 < len(m.form.Fields) {
-				m.form.Focus = ev.Y - 1
+			if ev.Y >= 1 && ev.Y-1 < len(s.Form.Fields) {
+				s.Form.Focus = ev.Y - 1
 			}
 		}
 	}
-	m.form.ApplyFocus()
-	cmd := m.form.Fields[m.form.Focus].Update(msg)
+	s.Form.ApplyFocus()
+	cmd := s.Form.Fields[s.Form.Focus].Update(msg)
 	if km, ok := msg.(tea.KeyMsg); ok && km.Type == tea.KeyEnter {
-		m.step = stepTemplate
-		m.tmpl.Focus()
+		return NewTemplateStep(s.Base), cmd
 	}
-	return cmd
+	return s, cmd
 }
 
-// viewMap renders the column mapping step.
-func (m *Model) viewMap(bw, _ int) string {
+func (s *MapStep) View(bw, _ int) string {
 	colw := 0
-	for _, h := range m.headers {
+	for _, h := range s.Headers {
 		if w := lipgloss.Width(h); w > colw {
 			colw = w
 		}
 	}
 	var b strings.Builder
-	for i, h := range m.headers {
+	for i, h := range s.Headers {
 		label := h
-		if i == m.form.Focus {
+		if i == s.Form.Focus {
 			label = ui.FocusedStyle.Render(h)
 		}
 		padding := strings.Repeat(" ", colw-lipgloss.Width(h))
-		fmt.Fprintf(&b, "%s%s : %s\n", padding, label, m.form.Fields[i].View())
+		fmt.Fprintf(&b, "%s%s : %s\n", padding, label, s.Form.Fields[i].View())
 	}
 	b.WriteString("\nUse a.b to nest fields\n[enter] continue  [ctrl+n] next  [ctrl+p] back")
 	return ui.LegendBox(b.String(), "Map Columns", bw, 0, ui.ColBlue, true, -1)

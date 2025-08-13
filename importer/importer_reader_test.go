@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/marang/emqutiti/importer/steps"
 )
 
 func TestReadCSVBuildTopic(t *testing.T) {
@@ -14,14 +16,14 @@ func TestReadCSVBuildTopic(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rows, err := ReadFile(file)
+	rows, err := steps.ReadFile(file)
 	if err != nil {
 		t.Fatalf("read failed: %v", err)
 	}
 	if len(rows) != 1 {
 		t.Fatalf("expected 1 row, got %d", len(rows))
 	}
-	topic := BuildTopic("device/{serial_number}/status", rows[0])
+	topic := steps.BuildTopic("device/{serial_number}/status", rows[0])
 	if topic != "device/123/status" {
 		t.Fatalf("got topic %s", topic)
 	}
@@ -33,7 +35,7 @@ func TestReadCSVBuildTopic(t *testing.T) {
 func TestRowToJSON(t *testing.T) {
 	row := map[string]string{"A": "1", "B": "2"}
 	mapping := map[string]string{"A": "alpha", "B": ""}
-	data, err := RowToJSON(row, mapping)
+	data, err := steps.RowToJSON(row, mapping)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -52,7 +54,7 @@ func TestRowToJSON(t *testing.T) {
 func TestRowToJSONNested(t *testing.T) {
 	row := map[string]string{"lat": "1", "lon": "2"}
 	mapping := map[string]string{"lat": "location.latitude", "lon": "location.longitude"}
-	data, err := RowToJSON(row, mapping)
+	data, err := steps.RowToJSON(row, mapping)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

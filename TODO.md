@@ -13,7 +13,7 @@ This file tracks planned improvements for Emqutiti.
  - [x] TLS/SSL certificate management
 
 ## Importer
-- [x] Interactive wizard for publishing CSV or XLS files
+- [x] Interactive wizard for publishing CSV files
 - [ ] Persist import wizard settings for reuse
 
 ## Testing

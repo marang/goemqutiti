@@ -12,7 +12,7 @@ short demo below shows the app in action.
 - Slick interface for publishing and subscribing
 - Manage multiple brokers with one config file
 - Credentials stored securely via the OS keyring
-- Import CSV or XLS files with a friendly wizard
+- Import CSV files with a friendly wizard
 - Persistent history and trace recording, even headless
 
 ## Installation
@@ -34,7 +34,7 @@ emqutiti
 
 If a profile is marked as default, the app connects to it automatically on start.
 
-### Importing from CSV or XLS
+### Importing from CSV
 
 Launch `emqutiti -i data.csv -p local` (or `--import data.csv --profile local`) to map columns to JSON and publish them. The wizard supports dry runs and will remember settings in future versions.
 

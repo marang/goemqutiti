@@ -83,7 +83,7 @@ Retained messages are labeled "(retained)".
 
 **General**
 
-- `-i, --import FILE` Launch import wizard with optional file path (e.g., `-i data.csv`)
+- `-i, --import FILE` Launch CSV import wizard with optional file path (e.g., `-i data.csv`)
 - `-p, --profile NAME` Connection profile name to use (e.g., `-p local`)
 
 **Trace**

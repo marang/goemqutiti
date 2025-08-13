@@ -33,9 +33,19 @@ func (m *model) viewClient() string {
 	messageBox := m.message.View()
 	messagesBox := m.renderHistorySection()
 
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
+	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
+	for i, b := range bounds {
+		m.topics.ChipBounds[i] = topics.ChipBound{
+			XPos:   b.XPos,
+			YPos:   b.YPos,
+			Width:  b.Width,
+			Height: b.Height,
+		}
+	}
 
+	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
 	y := 1
+
 	m.ui.elemPos[idTopics] = y
 	y += lipgloss.Height(topicsBox)
 	m.ui.elemPos[idTopic] = y
@@ -46,9 +56,9 @@ func (m *model) viewClient() string {
 
 	startX := 2
 	startY := m.ui.elemPos[idTopics] + 1
-	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
-	for i, b := range bounds {
-		m.topics.ChipBounds[i] = topics.ChipBound{XPos: startX + b.XPos, YPos: startY + b.YPos, Width: b.Width, Height: b.Height}
+	for i := range m.topics.ChipBounds {
+		m.topics.ChipBounds[i].XPos += startX
+		m.topics.ChipBounds[i].YPos += startY
 	}
 
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)
@@ -58,5 +68,6 @@ func (m *model) viewClient() string {
 	m.ui.viewport.Height = m.ui.height - 2
 
 	view := m.ui.viewport.View()
-	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, statusLine, view))
+	contentView := lipgloss.JoinVertical(lipgloss.Left, statusLine, view)
+	return m.overlayHelp(contentView)
 }

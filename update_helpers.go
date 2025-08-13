@@ -26,8 +26,14 @@ func calcConnectionsSize(width, height int) (int, int) {
 }
 
 // calcTopicsInputWidth returns the width for the topics input.
+// It subtracts space for the prompt and cursor so the surrounding box
+// stays on a single line.
 func calcTopicsInputWidth(width int) int {
-	return calcMessageWidth(width)
+	w := calcMessageWidth(width) - 3
+	if w < 0 {
+		return 0
+	}
+	return w
 }
 
 // calcTraceHeight returns the height for trace views, defaulting if zero.

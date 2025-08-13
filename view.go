@@ -11,6 +11,43 @@ import (
 
 const helpReflowWidth = 60
 
+func (m *model) availableInfoWidth(helpWidth, pad int, stacked bool) int {
+	available := m.ui.width - pad
+	if !stacked {
+		available -= helpWidth
+	}
+	if available < 0 {
+		available = 0
+	}
+	return available
+}
+
+func (m *model) renderFirstLine(info, help string, available, pad int, stacked bool) string {
+	if stacked {
+		return lipgloss.NewStyle().Width(available + pad).Render(ui.InfoStyle.Render(info))
+	}
+	return lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.NewStyle().Width(available+pad).Render(ui.InfoStyle.Render(info)), help)
+}
+
+func (m *model) renderSecondLine(lines []string, help string, stacked bool) []string {
+	if !stacked {
+		return lines
+	}
+	if len(lines) > 1 {
+		secondAvail := m.ui.width - lipgloss.Width(help)
+		if secondAvail < 0 {
+			secondAvail = 0
+		}
+		second := lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(secondAvail).Render(lines[1]), help)
+		lines[1] = second
+	} else {
+		lines = append(lines, help)
+	}
+	return lines
+}
+
 func (m *model) overlayHelp(view string) string {
 	help := ui.HelpStyle.Render("?")
 	if m.help.Focused() {
@@ -27,38 +64,13 @@ func (m *model) overlayHelp(view string) string {
 	}
 	lines = append([]string{""}, lines...)
 
-	if m.ui.width < helpReflowWidth {
-		available := m.ui.width - pad
-		if available < 0 {
-			available = 0
-		}
-		if runewidth.StringWidth(info) > available {
-			info = runewidth.Truncate(info, available, "")
-		}
-		lines[0] = lipgloss.NewStyle().Width(available + pad).Render(ui.InfoStyle.Render(info))
-		if len(lines) > 1 {
-			secondAvail := m.ui.width - lipgloss.Width(help)
-			if secondAvail < 0 {
-				secondAvail = 0
-			}
-			second := lipgloss.JoinHorizontal(lipgloss.Top,
-				lipgloss.NewStyle().Width(secondAvail).Render(lines[1]), help)
-			lines[1] = second
-		} else {
-			lines = append(lines, help)
-		}
-	} else {
-		available := m.ui.width - lipgloss.Width(help) - pad
-		if available < 0 {
-			available = 0
-		}
-		if runewidth.StringWidth(info) > available {
-			info = runewidth.Truncate(info, available, "")
-		}
-		first := lipgloss.JoinHorizontal(lipgloss.Top,
-			lipgloss.NewStyle().Width(available+pad).Render(ui.InfoStyle.Render(info)), help)
-		lines[0] = first
+	stacked := m.ui.width < helpReflowWidth
+	available := m.availableInfoWidth(lipgloss.Width(help), pad, stacked)
+	if runewidth.StringWidth(info) > available {
+		info = runewidth.Truncate(info, available, "")
 	}
+	lines[0] = m.renderFirstLine(info, help, available, pad, stacked)
+	lines = m.renderSecondLine(lines, help, stacked)
 
 	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }

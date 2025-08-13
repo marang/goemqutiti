@@ -40,6 +40,14 @@ rpmbuild -ba rpm/emqutiti.spec
 sudo dnf install ~/rpmbuild/RPMS/x86_64/emqutiti-0.4.1-1.x86_64.rpm
 ```
 
+### openSUSE
+```bash
+git clone https://github.com/marang/emqutiti.git
+cd emqutiti
+rpmbuild -ba suse/emqutiti.spec
+sudo zypper install ~/rpmbuild/RPMS/x86_64/emqutiti-0.4.1-1.x86_64.rpm
+```
+
 ### macOS (Homebrew)
 ```bash
 brew install --build-from-source homebrew/Formula/emqutiti.rb

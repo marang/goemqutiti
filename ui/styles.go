@@ -26,6 +26,10 @@ var (
 	HelpHeader  = lipgloss.NewStyle().Foreground(ColCyan).Bold(true).Underline(true)
 	HelpKey     = lipgloss.NewStyle().Foreground(ColGreen).Width(20)
 
+	// Tooltip styles
+	TooltipStyle   = lipgloss.NewStyle().BorderStyle(lipgloss.RoundedBorder()).BorderForeground(ColGray).Background(ColBlack).Foreground(ColWhite).Padding(0, 1)
+	TooltipFocused = TooltipStyle.BorderForeground(ColPink)
+
 	// Form field styles
 	FormLabel        = lipgloss.NewStyle().Foreground(ColBlue).Bold(true)
 	FormLabelFocused = lipgloss.NewStyle().Foreground(ColPink).Bold(true)

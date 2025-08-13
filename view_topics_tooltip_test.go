@@ -26,6 +26,23 @@ func TestTopicTooltipLong(t *testing.T) {
 	}
 }
 
+func TestTopicTooltipLongWide(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.Update(tea.WindowSizeMsg{Width: 120, Height: 10})
+	longName := strings.Repeat("x", maxTopicChipWidth+10)
+	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
+	m.topics.SetSelected(0)
+	m.viewClient()
+	if !strings.Contains(m.topics.VP.View(), "…") {
+		t.Fatalf("expected truncated chip")
+	}
+	tip := m.topicTooltip()
+	plain := strings.ReplaceAll(ansi.Strip(tip), "\n", "")
+	if !strings.Contains(plain, longName[:10]) {
+		t.Fatalf("expected tooltip to include full topic name")
+	}
+}
+
 func TestTopicTooltipShort(t *testing.T) {
 	m, _ := initialModel(nil)
 	m.Update(tea.WindowSizeMsg{Width: 80, Height: 10})

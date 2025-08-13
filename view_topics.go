@@ -10,6 +10,9 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+// maxTopicChipWidth caps the width of a rendered topic name before truncation.
+const maxTopicChipWidth = 40
+
 // renderTopicChips builds styled topic chips, truncating names that exceed
 // the viewport width and tracking whether truncation occurred.
 func renderTopicChips(items []topics.Item, selected, width int) ([]string, []bool) {
@@ -37,6 +40,9 @@ func renderTopicChips(items []topics.Item, selected, width int) ([]string, []boo
 		contentWidth := width - base
 		if contentWidth < 0 {
 			contentWidth = 0
+		}
+		if contentWidth > maxTopicChipWidth {
+			contentWidth = maxTopicChipWidth
 		}
 		if lipgloss.Width(t.Name) > contentWidth {
 			truncated[i] = true

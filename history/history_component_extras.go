@@ -2,11 +2,27 @@ package history
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// Scroll forwards scroll events to the history list.
+const mouseWheelDelta = 3
+
+// Scroll moves the history list in response to mouse wheel events.
+// It scrolls a fixed number of rows per wheel tick.
 func (h *Component) Scroll(msg tea.MouseMsg) tea.Cmd {
-	var cmd tea.Cmd
-	h.list, cmd = h.list.Update(msg)
-	return cmd
+	switch msg.Button {
+	case tea.MouseButtonWheelDown:
+		for i := 0; i < mouseWheelDelta; i++ {
+			h.list.CursorDown()
+		}
+	case tea.MouseButtonWheelUp:
+		for i := 0; i < mouseWheelDelta; i++ {
+			h.list.CursorUp()
+		}
+	}
+	return nil
+}
+
+// CanScroll reports whether the history list overflows its visible area.
+func (h *Component) CanScroll() bool {
+	return len(h.list.Items()) > h.list.Paginator.PerPage
 }
 
 // HandleSelection updates history selection based on index and shift key.

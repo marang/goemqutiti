@@ -39,7 +39,7 @@ func (m *model) updateViewport(msg tea.Msg) tea.Cmd {
 				skipVP = true
 			}
 		case tea.MouseMsg:
-			if mt.Action == tea.MouseActionPress && (mt.Button == tea.MouseButtonWheelUp || mt.Button == tea.MouseButtonWheelDown) {
+			if mt.Action == tea.MouseActionPress && (mt.Button == tea.MouseButtonWheelUp || mt.Button == tea.MouseButtonWheelDown) && m.history.CanScroll() {
 				skipVP = true
 			}
 		}

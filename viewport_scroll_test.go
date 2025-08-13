@@ -21,3 +21,20 @@ func TestViewportScrollCtrlJ(t *testing.T) {
 		t.Fatalf("expected viewport to scroll down")
 	}
 }
+
+func TestViewportScrollMouseNoFocus(t *testing.T) {
+	m, _ := initialModel(nil)
+	m.Update(tea.WindowSizeMsg{Width: 40, Height: 10})
+	for i := 0; i < 50; i++ {
+		m.history.Append("t", "msg", "pub", false, "")
+	}
+	m.viewClient()
+	m.SetFocus(idHelp)
+	if m.ui.viewport.YOffset != 0 {
+		t.Fatalf("expected initial offset 0")
+	}
+	m.Update(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
+	if m.ui.viewport.YOffset == 0 {
+		t.Fatalf("expected viewport to scroll down")
+	}
+}

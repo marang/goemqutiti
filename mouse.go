@@ -33,7 +33,7 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 			m.topics.Scroll(delta)
 			return nil, true
 		}
-		return nil, true
+		return nil, false
 	}
 	return nil, false
 }
@@ -83,8 +83,17 @@ func (m *model) handleMouse(msg tea.MouseMsg) tea.Cmd {
 
 // handleClientMouse processes mouse events in client mode.
 func (m *model) handleClientMouse(msg tea.MouseMsg) tea.Cmd {
-	if cmd, handled := m.handleMouseScroll(msg); handled {
+	cmd, handled := m.handleMouseScroll(msg)
+	if handled {
 		return cmd
+	}
+	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
+		if msg.Button == tea.MouseButtonWheelUp {
+			m.ui.viewport.ScrollUp(1)
+		} else {
+			m.ui.viewport.ScrollDown(1)
+		}
+		return nil
 	}
 	var cmds []tea.Cmd
 	if msg.Type == tea.MouseLeft {

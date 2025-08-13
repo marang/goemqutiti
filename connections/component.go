@@ -12,6 +12,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+type KeyAction func(tea.KeyMsg) tea.Cmd
+
 // connectionItem represents a single broker profile in the list.
 type connectionItem struct {
 	title  string
@@ -99,12 +101,75 @@ func (c *State) RestoreState(name string) ([]TopicSnapshot, []PayloadSnapshot) {
 
 // Component implements the Component interface for managing brokers.
 type Component struct {
-	nav Navigator
-	api API
+	nav     Navigator
+	api     API
+	actions map[string]KeyAction
 }
 
 func NewComponent(nav Navigator, api API) *Component {
-	return &Component{nav: nav, api: api}
+	c := &Component{nav: nav, api: api}
+	c.actions = map[string]KeyAction{
+		constants.KeyCtrlD: func(tea.KeyMsg) tea.Cmd { return tea.Quit },
+		constants.KeyCtrlR: func(tea.KeyMsg) tea.Cmd {
+			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
+			return c.nav.SetMode(constants.ModeTracer)
+		},
+		constants.KeyCtrlO: func(tea.KeyMsg) tea.Cmd {
+			mgr := c.api.Manager()
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 {
+				if mgr.DefaultProfileName == mgr.Profiles[i].Name {
+					mgr.ClearDefault()
+				} else {
+					mgr.SetDefault(i)
+				}
+			}
+			return nil
+		},
+		constants.KeyA: func(tea.KeyMsg) tea.Cmd {
+			c.api.BeginAdd()
+			return c.nav.SetMode(constants.ModeEditConnection)
+		},
+		constants.KeyE: func(tea.KeyMsg) tea.Cmd {
+			mgr := c.api.Manager()
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 && i < len(mgr.Profiles) {
+				c.api.BeginEdit(i)
+				return c.nav.SetMode(constants.ModeEditConnection)
+			}
+			return nil
+		},
+		constants.KeyEnter: func(tea.KeyMsg) tea.Cmd {
+			mgr := c.api.Manager()
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 && i < len(mgr.Profiles) {
+				p := mgr.Profiles[i]
+				if p.Name == c.api.Active() && mgr.Statuses[p.Name] == "connected" {
+					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
+					c.api.SetConnectionMessage("Connected to " + brokerURL)
+					c.api.SetConnected(p.Name)
+					c.api.RefreshConnectionItems()
+					return c.nav.SetMode(constants.ModeClient)
+				}
+				return c.api.Connect(p)
+			}
+			return nil
+		},
+		constants.KeyDelete: func(tea.KeyMsg) tea.Cmd {
+			mgr := c.api.Manager()
+			i := mgr.ConnectionsList.Index()
+			if i >= 0 {
+				c.api.BeginDelete(i)
+				return c.api.ListenStatus()
+			}
+			return nil
+		},
+		constants.KeyX: func(tea.KeyMsg) tea.Cmd {
+			c.api.DisconnectActive()
+			return nil
+		},
+	}
+	return c
 }
 
 func (c *Component) Init() tea.Cmd { return nil }
@@ -122,69 +187,11 @@ func (c *Component) Update(msg tea.Msg) tea.Cmd {
 		return c.api.ListenStatus()
 	case tea.KeyMsg:
 		mgr := c.api.Manager()
-		if mgr.ConnectionsList.FilterState() == list.Filtering {
-			switch msg.String() {
-			case constants.KeyEnter:
-				i := mgr.ConnectionsList.Index()
-				if i >= 0 && i < len(mgr.Profiles) {
-					p := mgr.Profiles[i]
-					if p.Name == c.api.Active() && mgr.Statuses[p.Name] == "connected" {
-						brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-						c.api.SetConnectionMessage("Connected to " + brokerURL)
-						c.api.SetConnected(p.Name)
-						c.api.RefreshConnectionItems()
-						return c.nav.SetMode(constants.ModeClient)
-					}
-					return c.api.Connect(p)
-				}
-			}
+		if mgr.ConnectionsList.FilterState() == list.Filtering && msg.String() != constants.KeyEnter {
 			break
 		}
-		switch msg.String() {
-		case constants.KeyCtrlD:
-			return tea.Quit
-		case constants.KeyCtrlR:
-			c.api.ResizeTraces(c.nav.Width()-4, c.nav.Height()-4)
-			return c.nav.SetMode(constants.ModeTracer)
-		case constants.KeyCtrlO:
-			i := mgr.ConnectionsList.Index()
-			if i >= 0 {
-				if mgr.DefaultProfileName == mgr.Profiles[i].Name {
-					mgr.ClearDefault()
-				} else {
-					mgr.SetDefault(i)
-				}
-			}
-		case constants.KeyA:
-			c.api.BeginAdd()
-			return c.nav.SetMode(constants.ModeEditConnection)
-		case constants.KeyE:
-			i := mgr.ConnectionsList.Index()
-			if i >= 0 && i < len(mgr.Profiles) {
-				c.api.BeginEdit(i)
-				return c.nav.SetMode(constants.ModeEditConnection)
-			}
-		case constants.KeyEnter:
-			i := mgr.ConnectionsList.Index()
-			if i >= 0 && i < len(mgr.Profiles) {
-				p := mgr.Profiles[i]
-				if p.Name == c.api.Active() && mgr.Statuses[p.Name] == "connected" {
-					brokerURL := fmt.Sprintf("%s://%s:%d", p.Schema, p.Host, p.Port)
-					c.api.SetConnectionMessage("Connected to " + brokerURL)
-					c.api.SetConnected(p.Name)
-					c.api.RefreshConnectionItems()
-					return c.nav.SetMode(constants.ModeClient)
-				}
-				return c.api.Connect(p)
-			}
-		case constants.KeyDelete:
-			i := mgr.ConnectionsList.Index()
-			if i >= 0 {
-				c.api.BeginDelete(i)
-				return c.api.ListenStatus()
-			}
-		case constants.KeyX:
-			c.api.DisconnectActive()
+		if act, ok := c.actions[msg.String()]; ok {
+			return act(msg)
 		}
 	}
 	mgr := c.api.Manager()

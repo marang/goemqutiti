@@ -16,6 +16,8 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+type KeyAction func(tea.KeyMsg) tea.Cmd
+
 // traceItem represents a single trace configuration and its runtime tracer.
 type traceItem struct {
 	key    string
@@ -83,8 +85,9 @@ type State struct {
 // root model.
 type Component struct {
 	*State
-	api   API
-	store Store
+	api     API
+	store   Store
+	actions map[string]KeyAction
 }
 
 type histModel struct {
@@ -128,7 +131,99 @@ func NewComponent(api API, ts State, store Store) *Component {
 	hm := &histModel{api: api, cur: constants.ModeViewTrace, prev: constants.ModeTracer}
 	ts.Component = history.NewComponent(hm, nil)
 	ts.hmodel = hm
-	return &Component{State: &ts, api: api, store: store}
+	c := &Component{State: &ts, api: api, store: store}
+	c.actions = map[string]KeyAction{
+		constants.KeyCtrlD: func(tea.KeyMsg) tea.Cmd {
+			c.SavePlannedTraces()
+			return tea.Quit
+		},
+		constants.KeyEsc: func(tea.KeyMsg) tea.Cmd {
+			c.SavePlannedTraces()
+			return c.api.SetModeClient()
+		},
+		constants.KeyA: func(tea.KeyMsg) tea.Cmd {
+			profs := c.api.Profiles()
+			opts := make([]string, len(profs))
+			for i, p := range profs {
+				opts[i] = p.Name
+			}
+			topics := c.api.SubscribedTopics()
+			f := newTraceForm(opts, c.api.ActiveConnection(), topics)
+			c.form = &f
+			return tea.Batch(
+				c.api.SetModeEditTrace(),
+				c.api.SetFocus(IDForm),
+				textinput.Blink,
+			)
+		},
+		constants.KeyEnter: func(msg tea.KeyMsg) tea.Cmd {
+			i := c.list.Index()
+			if i >= 0 && i < len(c.items) {
+				it := c.items[i]
+				if it.tracer != nil && (it.tracer.Running() || it.tracer.Planned()) {
+					c.stopTrace(i)
+				} else {
+					c.startTrace(i)
+				}
+			}
+			return c.listUpdate(msg)
+		},
+		constants.KeyV: func(tea.KeyMsg) tea.Cmd {
+			i := c.list.Index()
+			if i >= 0 && i < len(c.items) {
+				c.loadTraceMessages(i)
+			}
+			return nil
+		},
+		constants.KeyDelete: func(tea.KeyMsg) tea.Cmd {
+			i := c.list.Index()
+			if i >= 0 && i < len(c.items) {
+				it := c.items[i]
+				key := it.key
+				cfg := it.cfg
+				rf := func() tea.Cmd { return c.api.SetFocus(c.api.FocusedID()) }
+				c.api.StartConfirm(
+					fmt.Sprintf("Delete trace '%s'? [y/n]", key),
+					"This also removes all stored data of this trace",
+					rf,
+					func() tea.Cmd {
+						c.stopTrace(i)
+						c.items = append(c.items[:i], c.items[i+1:]...)
+						items := make([]list.Item, len(c.items))
+						for idx, itm := range c.items {
+							items[idx] = itm
+						}
+						c.list.SetItems(items)
+						if err := c.store.RemoveTrace(key); err != nil {
+							c.api.LogHistory("", err.Error(), "log", false, err.Error())
+						}
+						if err := c.store.ClearData(cfg.Profile, key); err != nil {
+							c.api.LogHistory("", err.Error(), "log", false, err.Error())
+						}
+						if c.anyTraceRunning() {
+							return traceTicker()
+						}
+						return nil
+					},
+					nil,
+				)
+			}
+			return nil
+		},
+		constants.KeyCtrlShiftUp: func(msg tea.KeyMsg) tea.Cmd {
+			if c.api.TraceHeight() > 1 {
+				c.api.SetTraceHeight(c.api.TraceHeight() - 1)
+				c.list.SetSize(c.api.Width()-4, c.api.Height()-4)
+			}
+			return nil
+		},
+		constants.KeyCtrlShiftDown: func(msg tea.KeyMsg) tea.Cmd {
+			c.api.SetTraceHeight(c.api.TraceHeight() + 1)
+			c.list.SetSize(c.api.Width()-4, c.api.Height()-4)
+			return nil
+		},
+	}
+	return c
 }
 
 func (t *Component) Init() tea.Cmd { return nil }
@@ -180,92 +275,19 @@ func (t *Component) startFilter() tea.Cmd {
 
 // Update manages the traces list and responds to key presses.
 func (t *Component) Update(msg tea.Msg) tea.Cmd {
-	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case traceTickMsg:
 		// refresh
 	case tea.KeyMsg:
-		switch msg.String() {
-		case constants.KeyCtrlD:
-			t.SavePlannedTraces()
-			return tea.Quit
-		case constants.KeyEsc:
-			t.SavePlannedTraces()
-			return t.api.SetModeClient()
-		case constants.KeyA:
-			profs := t.api.Profiles()
-			opts := make([]string, len(profs))
-			for i, p := range profs {
-				opts[i] = p.Name
-			}
-			topics := t.api.SubscribedTopics()
-			f := newTraceForm(opts, t.api.ActiveConnection(), topics)
-			t.form = &f
-			return tea.Batch(
-				t.api.SetModeEditTrace(),
-				t.api.SetFocus(IDForm),
-				textinput.Blink,
-			)
-		case constants.KeyEnter:
-			i := t.list.Index()
-			if i >= 0 && i < len(t.items) {
-				it := t.items[i]
-				if it.tracer != nil && (it.tracer.Running() || it.tracer.Planned()) {
-					t.stopTrace(i)
-				} else {
-					t.startTrace(i)
-				}
-			}
-		case constants.KeyV:
-			i := t.list.Index()
-			if i >= 0 && i < len(t.items) {
-				t.loadTraceMessages(i)
-				return nil
-			}
-		case constants.KeyDelete:
-			i := t.list.Index()
-			if i >= 0 && i < len(t.items) {
-				it := t.items[i]
-				key := it.key
-				cfg := it.cfg
-				rf := func() tea.Cmd { return t.api.SetFocus(t.api.FocusedID()) }
-				t.api.StartConfirm(
-					fmt.Sprintf("Delete trace '%s'? [y/n]", key),
-					"This also removes all stored data of this trace",
-					rf,
-					func() tea.Cmd {
-						t.stopTrace(i)
-						t.items = append(t.items[:i], t.items[i+1:]...)
-						items := make([]list.Item, len(t.items))
-						for idx, itm := range t.items {
-							items[idx] = itm
-						}
-						t.list.SetItems(items)
-						if err := t.store.RemoveTrace(key); err != nil {
-							t.api.LogHistory("", err.Error(), "log", false, err.Error())
-						}
-						if err := t.store.ClearData(cfg.Profile, key); err != nil {
-							t.api.LogHistory("", err.Error(), "log", false, err.Error())
-						}
-						if t.anyTraceRunning() {
-							return traceTicker()
-						}
-						return nil
-					},
-					nil,
-				)
-			}
-			return nil
-		case constants.KeyCtrlShiftUp:
-			if t.api.TraceHeight() > 1 {
-				t.api.SetTraceHeight(t.api.TraceHeight() - 1)
-				t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
-			}
-		case constants.KeyCtrlShiftDown:
-			t.api.SetTraceHeight(t.api.TraceHeight() + 1)
-			t.list.SetSize(t.api.Width()-4, t.api.Height()-4)
+		if act, ok := t.actions[msg.String()]; ok {
+			return act(msg)
 		}
 	}
+	return t.listUpdate(msg)
+}
+
+func (t *Component) listUpdate(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
 	t.list, cmd = t.list.Update(msg)
 	if t.anyTraceRunning() {
 		return tea.Batch(cmd, traceTicker())

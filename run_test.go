@@ -81,7 +81,7 @@ func TestRunTrace(t *testing.T) {
 			return nil
 		},
 	}
-	if err := runTrace(context.Background(), d); err != nil {
+	if err := runTrace(d); err != nil {
 		t.Fatalf("runTrace error: %v", err)
 	}
 	if !called {
@@ -102,15 +102,13 @@ func TestRunTraceEndPast(t *testing.T) {
 		traceStore:  &stubTraceStore{},
 		traceRun:    func(context.Context, string, string, string, string, string) error { return nil },
 	}
-	if err := runTrace(context.Background(), d); err == nil {
+	if err := runTrace(d); err == nil {
 		t.Fatalf("expected error for past end time")
 	}
 }
 
 func TestRunTraceTimeout(t *testing.T) {
 	st := &stubTraceStore{}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
-	defer cancel()
 	d := &appDeps{
 		traceKey:    "k",
 		traceTopics: "t",
@@ -120,8 +118,9 @@ func TestRunTraceTimeout(t *testing.T) {
 			<-ctx.Done()
 			return ctx.Err()
 		},
+		timeout: 10 * time.Millisecond,
 	}
-	err := runTrace(ctx, d)
+	err := runTrace(d)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("expected deadline exceeded, got %v", err)
 	}
@@ -132,15 +131,15 @@ func TestMainDispatchImportFlags(t *testing.T) {
 	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
 	d := newAppDeps()
-	d.runImport = func(ad *appDeps) error {
+	d.runners["import"] = func(ad *appDeps) error {
 		called = true
 		if ad.importFile != "f" || ad.profileName != "pr" {
 			t.Fatalf("unexpected params %v %v", ad.importFile, ad.profileName)
 		}
 		return nil
 	}
-	d.runTrace = func(context.Context, *appDeps) error { t.Fatalf("runTrace called"); return nil }
-	d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
+	d.runners["trace"] = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
+	d.runners["ui"] = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
 	runMain(d, cfg.AppConfig{ImportFile: "f", ProfileName: "pr"})
 	if !called {
 		t.Fatalf("runImport not called")
@@ -153,15 +152,15 @@ func TestMainDispatchTrace(t *testing.T) {
 	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
 	d := newAppDeps()
-	d.runTrace = func(ctx context.Context, ad *appDeps) error {
+	d.runners["trace"] = func(ad *appDeps) error {
 		called = true
 		if ad.traceKey != "k" || ad.traceTopics != "t" {
 			t.Fatalf("unexpected params %v %v", ad.traceKey, ad.traceTopics)
 		}
 		return nil
 	}
-	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
-	d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
+	d.runners["import"] = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
+	d.runners["ui"] = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
 	runMain(d, cfg.AppConfig{TraceKey: "k", TraceTopics: "t"})
 	if !called {
 		t.Fatalf("runTrace not called")
@@ -174,9 +173,9 @@ func TestMainDispatchUI(t *testing.T) {
 	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
 	d := newAppDeps()
-	d.runUI = func(*appDeps) error { called = true; return nil }
-	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
-	d.runTrace = func(context.Context, *appDeps) error { t.Fatalf("runTrace called"); return nil }
+	d.runners["ui"] = func(*appDeps) error { called = true; return nil }
+	d.runners["import"] = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
+	d.runners["trace"] = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
 	runMain(d, cfg.AppConfig{})
 	if !called {
 		t.Fatalf("runUI not called")

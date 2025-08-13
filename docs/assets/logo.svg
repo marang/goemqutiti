@@ -1,0 +1,5 @@
+<svg width="256" height="64" viewBox="0 0 256 64" xmlns="http://www.w3.org/2000/svg">
+  <text x="8" y="48" font-family="monospace" font-size="48" fill="#ff66cc">Emqutiti</text>
+  <line x1="92" y1="24" x2="92" y2="8" stroke="#ff66cc" stroke-width="3"/>
+  <circle cx="92" cy="8" r="4" fill="#ff66cc"/>
+</svg>

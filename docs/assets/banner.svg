@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="320" viewBox="0 0 1280 320">
+  <rect width="1280" height="320" fill="#1b1b1b"/>
+  <text x="80" y="210" font-family="monospace" font-size="160" fill="#ff66cc">Emqutiti</text>
+  <line x1="495" y1="150" x2="495" y2="80" stroke="#ff66cc" stroke-width="8"/>
+  <circle cx="495" cy="80" r="12" fill="#ff66cc"/>
+  <text x="620" y="210" font-family="sans-serif" font-size="64" fill="#ffffff">Polished MQTT client for the terminal</text>
+</svg>

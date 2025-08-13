@@ -1,7 +1,6 @@
 package emqutiti
 
 import (
-	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
@@ -37,24 +36,13 @@ func waitToken(token mqtt.Token, timeout time.Duration, action string) error {
 	if timeout <= 0 {
 		timeout = defaultTokenTimeout
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	done := make(chan struct{})
-	go func() {
-		token.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		if err := token.Error(); err != nil {
-			return fmt.Errorf("%s failed: %w", action, err)
-		}
-		return nil
-	case <-ctx.Done():
+	if !token.WaitTimeout(timeout) {
 		return fmt.Errorf("%s timeout after %v", action, timeout)
 	}
+	if err := token.Error(); err != nil {
+		return fmt.Errorf("%s failed: %w", action, err)
+	}
+	return nil
 }
 
 // NewMQTTClient creates and configures a new MQTT client based on the profile

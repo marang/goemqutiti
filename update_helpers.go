@@ -6,6 +6,11 @@ import (
 	"github.com/marang/emqutiti/constants"
 )
 
+const (
+	focusNext = 1
+	focusPrev = -1
+)
+
 // calcHistorySize returns the width and height for the history list.
 // It defaults the height when the current value is zero.
 func calcHistorySize(width, height, currentHeight int) (int, int) {
@@ -96,6 +101,38 @@ func (m *model) handleWindowSize(msg tea.WindowSizeMsg) tea.Cmd {
 	return nil
 }
 
+// cycleFocus moves focus forward or backward through the focus order.
+// It updates the focus index and ensures the topics list selection is valid.
+// A non-zero return indicates the focus changed.
+func (m *model) cycleFocus(direction int) (tea.Cmd, bool) {
+	if len(m.ui.focusOrder) == 0 {
+		return nil, false
+	}
+	switch direction {
+	case focusNext:
+		m.focus.Next()
+	case focusPrev:
+		m.focus.Prev()
+	default:
+		return nil, false
+	}
+	m.ui.focusIndex = m.focus.Index()
+	id := m.ui.focusOrder[m.ui.focusIndex]
+	cmd := m.SetFocus(id)
+	if id == idTopics {
+		if len(m.topics.Items) > 0 {
+			sel := m.topics.Selected()
+			if sel < 0 || sel >= len(m.topics.Items) {
+				m.topics.SetSelected(0)
+			}
+			m.topics.EnsureVisible(m.ui.width - 4)
+		} else {
+			m.topics.SetSelected(-1)
+		}
+	}
+	return cmd, true
+}
+
 // handleKeyNav processes global navigation key presses.
 func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 	key := msg.String()
@@ -110,45 +147,15 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
-		if len(m.ui.focusOrder) > 0 {
-			m.focus.Next()
-			m.ui.focusIndex = m.focus.Index()
-			id := m.ui.focusOrder[m.ui.focusIndex]
-			m.SetFocus(id)
-			if id == idTopics {
-				if len(m.topics.Items) > 0 {
-					sel := m.topics.Selected()
-					if sel < 0 || sel >= len(m.topics.Items) {
-						m.topics.SetSelected(0)
-					}
-					m.topics.EnsureVisible(m.ui.width - 4)
-				} else {
-					m.topics.SetSelected(-1)
-				}
-			}
-			return nil, true
+		if cmd, ok := m.cycleFocus(focusNext); ok {
+			return cmd, true
 		}
 	case constants.KeyShiftTab:
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
-		if len(m.ui.focusOrder) > 0 {
-			m.focus.Prev()
-			m.ui.focusIndex = m.focus.Index()
-			id := m.ui.focusOrder[m.ui.focusIndex]
-			m.SetFocus(id)
-			if id == idTopics {
-				if len(m.topics.Items) > 0 {
-					sel := m.topics.Selected()
-					if sel < 0 || sel >= len(m.topics.Items) {
-						m.topics.SetSelected(0)
-					}
-					m.topics.EnsureVisible(m.ui.width - 4)
-				} else {
-					m.topics.SetSelected(-1)
-				}
-			}
-			return nil, true
+		if cmd, ok := m.cycleFocus(focusPrev); ok {
+			return cmd, true
 		}
 	}
 

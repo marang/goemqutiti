@@ -37,10 +37,9 @@ func TestFocusablesExposeID(t *testing.T) {
 	}
 }
 
-func TestRenderHelpGroupsSections(t *testing.T) {
-	txt := renderHelp()
+func TestHelpTextGroupsSections(t *testing.T) {
 	ansi := regexp.MustCompile("\x1b\\[[0-9;]*m")
-	plain := ansi.ReplaceAllString(txt, "")
+	plain := ansi.ReplaceAllString(helpText, "")
 	expected := []string{
 		"Global",
 		"Broker Manager",

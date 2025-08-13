@@ -201,9 +201,7 @@ func runImport(d *appDeps) error {
 	if err != nil {
 		return fmt.Errorf("error loading profile: %w", err)
 	}
-	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
-		p.Password = env
-	}
+	connections.ApplyDefaultPassword(p)
 
 	client, err := d.newMQTTClient(*p, nil)
 	if err != nil {

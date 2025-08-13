@@ -2,7 +2,6 @@ package traces
 
 import (
 	"fmt"
-	"os"
 	"strings"
 	"time"
 
@@ -319,9 +318,8 @@ func (t *Component) UpdateForm(msg tea.Msg) tea.Cmd {
 			}
 			if p.FromEnv {
 				connections.ApplyEnvVars(p)
-			} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-				p.Password = env
 			}
+			connections.ApplyDefaultPassword(p)
 			client, err := t.api.NewClient(*p)
 			if err != nil {
 				t.form.errMsg = err.Error()

@@ -249,14 +249,30 @@ func TestPersistProfileChangeWriteError(t *testing.T) {
 		t.Fatal("expected error")
 	}
 }
-func TestDefaultPasswordEnvOverride(t *testing.T) {
-	p := Profile{Password: "orig", FromEnv: false}
-	os.Setenv("EMQUTITI_DEFAULT_PASSWORD", "envpw")
-	t.Cleanup(func() { os.Unsetenv("EMQUTITI_DEFAULT_PASSWORD") })
-	if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" && !p.FromEnv {
-		p.Password = env
-	}
-	if p.Password != "envpw" {
-		t.Fatalf("expected override, got %q", p.Password)
-	}
+func TestApplyDefaultPassword(t *testing.T) {
+	t.Setenv("EMQUTITI_DEFAULT_PASSWORD", "envpw")
+
+	t.Run("sets password when empty", func(t *testing.T) {
+		p := Profile{}
+		ApplyDefaultPassword(&p)
+		if p.Password != "envpw" {
+			t.Fatalf("expected envpw, got %q", p.Password)
+		}
+	})
+
+	t.Run("does not override existing password", func(t *testing.T) {
+		p := Profile{Password: "orig"}
+		ApplyDefaultPassword(&p)
+		if p.Password != "orig" {
+			t.Fatalf("expected orig, got %q", p.Password)
+		}
+	})
+
+	t.Run("ignores env when from env", func(t *testing.T) {
+		p := Profile{FromEnv: true}
+		ApplyDefaultPassword(&p)
+		if p.Password != "" {
+			t.Fatalf("expected empty password, got %q", p.Password)
+		}
+	})
 }

@@ -176,9 +176,8 @@ func initImporter(m *model) error {
 	cfg := *p
 	if cfg.FromEnv {
 		connections.ApplyEnvVars(&cfg)
-	} else if env := os.Getenv("EMQUTITI_DEFAULT_PASSWORD"); env != "" {
-		cfg.Password = env
 	}
+	connections.ApplyDefaultPassword(&cfg)
 	client, err := NewMQTTClient(cfg, nil)
 	if err != nil {
 		return fmt.Errorf("connect error: %w", err)

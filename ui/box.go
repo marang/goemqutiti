@@ -56,7 +56,11 @@ func legendStyledBox(content, label string, width, height int, color lipgloss.Co
 	}
 
 	for i, l := range lines {
-		l = strings.TrimRightFunc(l, unicode.IsSpace)
+		trimmed := strings.TrimRightFunc(l, unicode.IsSpace)
+		if len(l) > len(trimmed) {
+			trimmed += " "
+		}
+		l = trimmed
 		side := color
 		if i == len(lines)-1 && height > 1 {
 			side = cy

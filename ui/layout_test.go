@@ -69,3 +69,26 @@ func TestLegendBoxLayouts(t *testing.T) {
 		})
 	}
 }
+
+func TestLegendBoxTextFieldFocused(t *testing.T) {
+	tf := NewTextField("", "")
+	tf.Model.Width = 5
+	tf.Focus()
+	view := tf.View()
+	width := lipgloss.Width(view) + 2
+	box := LegendBox(view, "Lbl", width, 0, ColGreen, true, -1)
+	lines := strings.Split(box, "\n")
+	if len(lines) != 3 {
+		t.Fatalf("box height=%d want=3", len(lines))
+	}
+	content := lines[1]
+	b := lipgloss.RoundedBorder()
+	left := lipgloss.NewStyle().Foreground(ColGreen).Render(b.Left)
+	if !strings.HasPrefix(content, left) {
+		t.Fatalf("missing left border: %q", content)
+	}
+	right := lipgloss.NewStyle().Foreground(ColGreen).Render(b.Right)
+	if !strings.HasSuffix(content, right) {
+		t.Fatalf("missing right border: %q", content)
+	}
+}

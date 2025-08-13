@@ -5,13 +5,16 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/charmbracelet/x/ansi"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/ui"
 )
 
-// renderTopicChips builds styled topic chips and applies selection state.
-func renderTopicChips(items []topics.Item, selected int) []string {
-	var chips []string
+// renderTopicChips builds styled topic chips, truncating names that exceed
+// the viewport width and tracking whether truncation occurred.
+func renderTopicChips(items []topics.Item, selected, width int) ([]string, []bool) {
+	chips := make([]string, 0, len(items))
+	truncated := make([]bool, len(items))
 	for i, t := range items {
 		st := ui.ChipInactive
 		switch {
@@ -30,9 +33,18 @@ func renderTopicChips(items []topics.Item, selected int) []string {
 				st = ui.ChipInactiveFocused
 			}
 		}
-		chips = append(chips, st.Render(t.Name))
+		base := lipgloss.Width(st.Render(""))
+		contentWidth := width - base
+		if contentWidth < 0 {
+			contentWidth = 0
+		}
+		if lipgloss.Width(t.Name) > contentWidth {
+			truncated[i] = true
+		}
+		name := ansi.Truncate(t.Name, contentWidth, "…")
+		chips = append(chips, st.Render(name))
 	}
-	return chips
+	return chips, truncated
 }
 
 // layoutTopicViewport sets up the topic viewport and returns visible chip bounds.
@@ -93,8 +105,14 @@ func (m *model) buildTopicBoxes(content string, boxHeight, infoHeight int, scrol
 
 // renderTopicsSection renders topics and topic input boxes.
 func (m *model) renderTopicsSection() (string, string, []topics.ChipBound) {
-	chips := renderTopicChips(m.topics.Items, m.topics.Selected())
+	width := m.ui.width - 4
+	chips, trunc := renderTopicChips(m.topics.Items, m.topics.Selected(), width)
 	content, bounds, boxHeight, infoHeight, scroll := m.layoutTopicViewport(chips)
+	for i := range bounds {
+		if i < len(trunc) {
+			bounds[i].Truncated = trunc[i]
+		}
+	}
 	topicsBox, topicBox := m.buildTopicBoxes(content, boxHeight, infoHeight, scroll)
 	return topicsBox, topicBox, bounds
 }

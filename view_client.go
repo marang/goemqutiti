@@ -25,15 +25,15 @@ func (m *model) clientInfoLine() string {
 	return st.Render(status)
 }
 
-// topicTooltip renders a tooltip for the selected topic when it exceeds the
-// viewport width.
+// topicTooltip renders a tooltip for the selected topic when it is truncated
+// in the viewport.
 func (m *model) topicTooltip() string {
 	sel := m.topics.Selected()
 	if sel < 0 || sel >= len(m.topics.Items) || sel >= len(m.topics.ChipBounds) {
 		return ""
 	}
 	b := m.topics.ChipBounds[sel]
-	if b.Width <= m.topics.VP.Width {
+	if !b.Truncated {
 		return ""
 	}
 	focused := m.ui.focusOrder[m.ui.focusIndex] == idTopics
@@ -63,7 +63,13 @@ func (m *model) viewClient() string {
 	startY := m.ui.elemPos[idTopics] + 1
 	m.topics.ChipBounds = make([]topics.ChipBound, len(bounds))
 	for i, b := range bounds {
-		m.topics.ChipBounds[i] = topics.ChipBound{XPos: startX + b.XPos, YPos: startY + b.YPos, Width: b.Width, Height: b.Height}
+		m.topics.ChipBounds[i] = topics.ChipBound{
+			XPos:      startX + b.XPos,
+			YPos:      startY + b.YPos,
+			Width:     b.Width,
+			Height:    b.Height,
+			Truncated: b.Truncated,
+		}
 	}
 
 	box := lipgloss.NewStyle().Width(m.ui.width).Padding(0, 1, 1, 1).Render(content)

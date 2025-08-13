@@ -254,13 +254,9 @@ type wizardPrefs struct {
 }
 
 func importerConfigFile() (string, error) {
-	home := os.Getenv("HOME")
-	if home == "" {
-		var err error
-		home, err = os.UserHomeDir()
-		if err != nil {
-			return "", err
-		}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
 	}
 	return filepath.Join(home, ".config", "emqutiti", "importer.toml"), nil
 }

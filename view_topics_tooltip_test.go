@@ -16,6 +16,9 @@ func TestTopicTooltipLong(t *testing.T) {
 	m.topics.Items = []topics.Item{{Name: longName, Subscribed: true}}
 	m.topics.SetSelected(0)
 	m.viewClient()
+	if !strings.Contains(m.topics.VP.View(), "…") {
+		t.Fatalf("expected truncated chip")
+	}
 	tip := m.topicTooltip()
 	plain := strings.ReplaceAll(ansi.Strip(tip), "\n", "")
 	if !strings.Contains(plain, longName[:10]) {
@@ -29,6 +32,9 @@ func TestTopicTooltipShort(t *testing.T) {
 	m.topics.Items = []topics.Item{{Name: "short", Subscribed: true}}
 	m.topics.SetSelected(0)
 	m.viewClient()
+	if strings.Contains(m.topics.VP.View(), "…") {
+		t.Fatalf("expected no truncation for short topic")
+	}
 	tip := m.topicTooltip()
 	if tip != "" {
 		t.Fatalf("expected no tooltip for short topic")

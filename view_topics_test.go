@@ -9,9 +9,12 @@ import (
 )
 
 func TestRenderTopicChipsEmpty(t *testing.T) {
-	chips := renderTopicChips(nil, 0)
+	chips, trunc := renderTopicChips(nil, 0, 80)
 	if len(chips) != 0 {
 		t.Fatalf("expected 0 chips, got %d", len(chips))
+	}
+	if len(trunc) != 0 {
+		t.Fatalf("expected 0 truncation flags, got %d", len(trunc))
 	}
 }
 
@@ -20,7 +23,7 @@ func TestRenderTopicChipsLarge(t *testing.T) {
 	for i := range items {
 		items[i] = topics.Item{Name: fmt.Sprintf("t%d", i)}
 	}
-	chips := renderTopicChips(items, 50)
+	chips, _ := renderTopicChips(items, 50, 80)
 	if len(chips) != len(items) {
 		t.Fatalf("expected %d chips, got %d", len(items), len(chips))
 	}
@@ -51,7 +54,7 @@ func TestLayoutTopicViewportLarge(t *testing.T) {
 	for i := range items {
 		items[i] = topics.Item{Name: fmt.Sprintf("t%d", i), Subscribed: true}
 	}
-	chips := renderTopicChips(items, 0)
+	chips, _ := renderTopicChips(items, 0, m.ui.width-4)
 	content, bounds, _, _, scroll := m.layoutTopicViewport(chips)
 	if content == "" {
 		t.Fatalf("expected content for large list")

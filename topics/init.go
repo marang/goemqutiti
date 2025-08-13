@@ -11,13 +11,13 @@ import (
 func initTopics() state {
 	ti := textinput.New()
 	ti.Placeholder = "Enter Topic"
-	ti.CharLimit = 32
+	ti.CharLimit = 128
 	ti.Prompt = "> "
 	ti.PromptStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
 	ti.PlaceholderStyle = lipgloss.NewStyle().Foreground(ui.ColGray)
 	ti.Cursor.Style = ui.CursorStyle
 	ti.TextStyle = ui.FocusedStyle
-	ti.Width = 0
+	ti.Width = 40
 	topicsList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	topicsList.DisableQuitKeybindings()
 	topicsList.SetShowTitle(false)

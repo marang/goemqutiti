@@ -5,24 +5,20 @@ import (
 	"os"
 
 	"github.com/charmbracelet/bubbles/textarea"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/marang/emqutiti/confirm"
+	"github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/constants"
-	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
-	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/logs"
 	"github.com/marang/emqutiti/message"
+	"github.com/marang/emqutiti/payloads"
 	"github.com/marang/emqutiti/topics"
 	"github.com/marang/emqutiti/traces"
 	"github.com/marang/emqutiti/ui"
-
-	"github.com/marang/emqutiti/connections"
-	"github.com/marang/emqutiti/history"
-	"github.com/marang/emqutiti/payloads"
 )
 
 type navAdapter struct{ navigator }
@@ -31,38 +27,6 @@ func (n navAdapter) SetMode(mode constants.AppMode) tea.Cmd { return n.navigator
 func (n navAdapter) Width() int                             { return n.navigator.Width() }
 func (n navAdapter) Height() int                            { return n.navigator.Height() }
 func (n navAdapter) PreviousMode() constants.AppMode        { return n.navigator.PreviousMode() }
-
-func initConnections(conns *connections.Connections) (connections.State, error) {
-	var connModel connections.Connections
-	var loadErr error
-	if conns != nil {
-		connModel = *conns
-	} else {
-		connModel = connections.NewConnectionsModel()
-		if err := connModel.LoadProfiles(""); err != nil {
-			loadErr = err
-		}
-	}
-	connModel.ConnectionsList.SetShowStatusBar(false)
-	for _, p := range connModel.Profiles {
-		if _, ok := connModel.Statuses[p.Name]; !ok {
-			connModel.Statuses[p.Name] = "disconnected"
-		}
-	}
-	statusChan := make(chan string, 10)
-	saved := connections.LoadState()
-	cs := connections.State{
-		Connection:  "",
-		Active:      "",
-		Manager:     connModel,
-		Form:        nil,
-		DeleteIndex: 0,
-		StatusChan:  statusChan,
-		Saved:       saved,
-	}
-	cs.RefreshConnectionItems()
-	return cs, loadErr
-}
 
 func initMessage() message.State {
 	ta := textarea.New()
@@ -85,109 +49,6 @@ func initMessage() message.State {
 		TA: ta,
 	}
 	return ms
-}
-
-func initUI(order []string) uiState {
-	vp := viewport.New(0, 0)
-	fm := make(map[string]int, len(order))
-	for i, id := range order {
-		fm[id] = i
-	}
-	return uiState{
-		focusIndex: 0,
-		modeStack:  []constants.AppMode{constants.ModeClient},
-		width:      0,
-		height:     0,
-		viewport:   vp,
-		elemPos:    map[string]int{},
-		focusOrder: order,
-		focusMap:   fm,
-	}
-}
-
-func initLayout() layoutConfig {
-	return layoutConfig{
-		message: boxConfig{height: 6},
-		history: boxConfig{height: 10},
-		topics:  boxConfig{height: 1},
-		trace:   boxConfig{height: 10},
-	}
-}
-
-// initComponents registers focusable elements and mode components.
-func initComponents(m *model, order []string, connComp Component) {
-	providers := []focus.FocusableSet{m, m.topics, m.message, m.payloads, m.traces, m.help}
-	m.focusables = map[string]focus.Focusable{}
-	for _, p := range providers {
-		for id, f := range p.Focusables() {
-			m.focusables[id] = f
-		}
-	}
-	fitems := make([]focus.Focusable, len(order))
-	for i, id := range order {
-		fitems[i] = m.focusables[id]
-	}
-	m.focus = focus.NewFocusMap(fitems)
-	m.components = map[constants.AppMode]Component{
-		constants.ModeClient:         component{update: m.updateClient, view: m.viewClient},
-		constants.ModeConnections:    connComp,
-		constants.ModeEditConnection: component{update: m.updateConnectionForm, view: m.viewForm},
-		constants.ModeConfirmDelete:  m.confirm,
-		constants.ModeTopics:         m.topics,
-		constants.ModePayloads:       m.payloads,
-		constants.ModeTracer:         m.traces,
-		constants.ModeEditTrace:      component{update: m.traces.UpdateForm, view: m.traces.ViewForm},
-		constants.ModeViewTrace:      component{update: m.traces.UpdateView, view: m.traces.ViewMessages},
-		constants.ModeTraceFilter:    component{update: m.traces.UpdateFilter, view: m.traces.ViewFilter},
-		constants.ModeHistoryFilter:  component{update: m.history.UpdateFilter, view: m.history.ViewFilter},
-		constants.ModeHistoryDetail:  component{update: m.history.UpdateDetail, view: m.history.ViewDetail},
-		constants.ModeHelp:           m.help,
-		constants.ModeLogs:           m.logs,
-	}
-}
-
-// initImporter bootstraps the importer for a selected profile.
-func initImporter(m *model) error {
-	if importFile == "" {
-		return nil
-	}
-	var p *connections.Profile
-	if profileName != "" {
-		for i := range m.connections.Manager.Profiles {
-			if m.connections.Manager.Profiles[i].Name == profileName {
-				p = &m.connections.Manager.Profiles[i]
-				break
-			}
-		}
-	} else if m.connections.Manager.DefaultProfileName != "" {
-		for i := range m.connections.Manager.Profiles {
-			if m.connections.Manager.Profiles[i].Name == m.connections.Manager.DefaultProfileName {
-				p = &m.connections.Manager.Profiles[i]
-				break
-			}
-		}
-	}
-	if p == nil && len(m.connections.Manager.Profiles) > 0 {
-		p = &m.connections.Manager.Profiles[0]
-	}
-	if p == nil {
-		return nil
-	}
-	cfg := *p
-	if cfg.FromEnv {
-		connections.ApplyEnvVars(&cfg)
-	}
-	connections.ApplyDefaultPassword(&cfg)
-	client, err := NewMQTTClient(cfg, nil)
-	if err != nil {
-		return fmt.Errorf("connect error: %w", err)
-	}
-	m.mqttClient = client
-	m.connections.Active = cfg.Name
-	m.importer = importer.New(client, importFile)
-	m.components[constants.ModeImporter] = m.importer
-	m.SetMode(constants.ModeImporter)
-	return nil
 }
 
 // initialModel creates the main program model with optional connection data.

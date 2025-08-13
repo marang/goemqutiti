@@ -1,12 +1,11 @@
 package emqutiti
 
 import (
-	"flag"
-	"os"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	cfg "github.com/marang/emqutiti/cmd"
 	connections "github.com/marang/emqutiti/connections"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
@@ -105,50 +104,28 @@ func TestRunTraceEndPast(t *testing.T) {
 	}
 }
 
-func resetFlags(args []string) func() {
-	origArgs := os.Args
-	origFS := flag.CommandLine
-	os.Args = append([]string{"cmd"}, args...)
-	flag.CommandLine = flag.NewFlagSet("test", flag.ContinueOnError)
-	registerFlags(flag.CommandLine)
-	return func() {
-		os.Args = origArgs
-		flag.CommandLine = origFS
-	}
-}
-
 func TestMainDispatchImportFlags(t *testing.T) {
-	cases := [][]string{{"-i", "f", "-p", "pr"}, {"--import", "f", "--profile", "pr"}}
-	for _, c := range cases {
-		undo := resetFlags(c)
-		flag.Parse()
-		orig := initProxy
-		initProxy = func() (string, *proxy.Proxy) { return "", nil }
-		called := false
-		d := newAppDeps()
-		d.runImport = func(ad *appDeps) error {
-			called = true
-			if ad.importFile != "f" || ad.profileName != "pr" {
-				t.Fatalf("unexpected params %v %v", ad.importFile, ad.profileName)
-			}
-			return nil
+	orig := initProxy
+	initProxy = func() (string, *proxy.Proxy) { return "", nil }
+	called := false
+	d := newAppDeps()
+	d.runImport = func(ad *appDeps) error {
+		called = true
+		if ad.importFile != "f" || ad.profileName != "pr" {
+			t.Fatalf("unexpected params %v %v", ad.importFile, ad.profileName)
 		}
-		d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
-		d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
-		d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
-		runMain(d)
-		if !called {
-			t.Fatalf("runImport not called")
-		}
-		initProxy = orig
-		undo()
+		return nil
 	}
+	d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
+	d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
+	runMain(d, cfg.AppConfig{ImportFile: "f", ProfileName: "pr"})
+	if !called {
+		t.Fatalf("runImport not called")
+	}
+	initProxy = orig
 }
 
 func TestMainDispatchTrace(t *testing.T) {
-	undo := resetFlags([]string{"--trace", "k", "--topics", "t"})
-	defer undo()
-	flag.Parse()
 	orig := initProxy
 	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
@@ -162,8 +139,7 @@ func TestMainDispatchTrace(t *testing.T) {
 	}
 	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
 	d.runUI = func(*appDeps) error { t.Fatalf("runUI called"); return nil }
-	d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
-	runMain(d)
+	runMain(d, cfg.AppConfig{TraceKey: "k", TraceTopics: "t"})
 	if !called {
 		t.Fatalf("runTrace not called")
 	}
@@ -171,9 +147,6 @@ func TestMainDispatchTrace(t *testing.T) {
 }
 
 func TestMainDispatchUI(t *testing.T) {
-	undo := resetFlags(nil)
-	defer undo()
-	flag.Parse()
 	orig := initProxy
 	initProxy = func() (string, *proxy.Proxy) { return "", nil }
 	called := false
@@ -181,8 +154,7 @@ func TestMainDispatchUI(t *testing.T) {
 	d.runUI = func(*appDeps) error { called = true; return nil }
 	d.runImport = func(*appDeps) error { t.Fatalf("runImport called"); return nil }
 	d.runTrace = func(*appDeps) error { t.Fatalf("runTrace called"); return nil }
-	d.importFile, d.profileName, d.traceKey, d.traceTopics, d.traceStart, d.traceEnd = importFile, profileName, traceKey, traceTopics, traceStart, traceEnd
-	runMain(d)
+	runMain(d, cfg.AppConfig{})
 	if !called {
 		t.Fatalf("runUI not called")
 	}

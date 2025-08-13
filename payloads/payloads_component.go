@@ -10,14 +10,17 @@ import (
 	"github.com/marang/emqutiti/ui"
 )
 
+type KeyAction func(tea.KeyMsg) tea.Cmd
+
 // LoadMsg requests that the model load a payload for editing.
 type LoadMsg struct{ Topic, Payload string }
 
 type Component struct {
-	m      Model
-	status StatusListener
-	items  []Item
-	list   list.Model
+	m       Model
+	status  StatusListener
+	items   []Item
+	list    list.Model
+	actions map[string]KeyAction
 }
 
 // New creates a payload management component.
@@ -25,21 +28,11 @@ func New(m Model, s StatusListener) *Component {
 	l := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	l.DisableQuitKeybindings()
 	l.SetShowTitle(false)
-	return &Component{m: m, status: s, list: l}
-}
-
-func (p *Component) Init() tea.Cmd { return nil }
-
-func (p *Component) Update(msg tea.Msg) tea.Cmd {
-	var cmd tea.Cmd
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		switch msg.String() {
-		case constants.KeyCtrlD:
-			return tea.Quit
-		case constants.KeyEsc:
-			return p.m.SetClientMode()
-		case constants.KeyDelete:
+	p := &Component{m: m, status: s, list: l}
+	p.actions = map[string]KeyAction{
+		constants.KeyCtrlD: func(tea.KeyMsg) tea.Cmd { return tea.Quit },
+		constants.KeyEsc:   func(tea.KeyMsg) tea.Cmd { return p.m.SetClientMode() },
+		constants.KeyDelete: func(tea.KeyMsg) tea.Cmd {
 			i := p.list.Index()
 			if i >= 0 {
 				items := p.list.Items()
@@ -50,7 +43,8 @@ func (p *Component) Update(msg tea.Msg) tea.Cmd {
 				}
 			}
 			return p.status.ListenStatus()
-		case constants.KeyEnter:
+		},
+		constants.KeyEnter: func(tea.KeyMsg) tea.Cmd {
 			i := p.list.Index()
 			if i >= 0 {
 				items := p.list.Items()
@@ -63,6 +57,20 @@ func (p *Component) Update(msg tea.Msg) tea.Cmd {
 					)
 				}
 			}
+			return nil
+		},
+	}
+	return p
+}
+
+func (p *Component) Init() tea.Cmd { return nil }
+
+func (p *Component) Update(msg tea.Msg) tea.Cmd {
+	var cmd tea.Cmd
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		if act, ok := p.actions[msg.String()]; ok {
+			return act(msg)
 		}
 		p.list, cmd = p.list.Update(msg)
 		return tea.Batch(cmd, p.status.ListenStatus())

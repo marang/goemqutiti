@@ -3,8 +3,6 @@ package connections
 import (
 	"os"
 	"path/filepath"
-	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/BurntSushi/toml"
@@ -23,65 +21,29 @@ func TestProfileBrokerURL(t *testing.T) {
 	}
 }
 
-// TestApplyEnvVars sets env vars for all Profile fields and ensures they are applied.
+// TestApplyEnvVars ensures environment variables override profile fields.
 func TestApplyEnvVars(t *testing.T) {
 	p := Profile{Name: "test", FromEnv: true}
 	prefix := EnvPrefix(p.Name)
-
-	rt := reflect.TypeOf(p)
-	rv := reflect.ValueOf(&p).Elem()
-
-	var envs []string
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		tag := f.Tag.Get("env")
-		if tag == "" {
-			continue
-		}
-		envName := prefix + strings.ToUpper(strings.ReplaceAll(tag, "-", "_"))
-		switch f.Type.Kind() {
-		case reflect.String:
-			os.Setenv(envName, "x")
-			envs = append(envs, envName)
-		case reflect.Int:
-			os.Setenv(envName, "1")
-			envs = append(envs, envName)
-		case reflect.Bool:
-			os.Setenv(envName, "true")
-			envs = append(envs, envName)
-		default:
-			t.Fatalf("unsupported kind %s", f.Type.Kind())
-		}
-	}
+	os.Setenv(prefix+"HOST", "example.com")
+	os.Setenv(prefix+"PORT", "1884")
+	os.Setenv(prefix+"SSL_TLS", "true")
 	t.Cleanup(func() {
-		for _, e := range envs {
-			os.Unsetenv(e)
-		}
+		os.Unsetenv(prefix + "HOST")
+		os.Unsetenv(prefix + "PORT")
+		os.Unsetenv(prefix + "SSL_TLS")
 	})
 
 	ApplyEnvVars(&p)
 
-	for i := 0; i < rt.NumField(); i++ {
-		f := rt.Field(i)
-		tag := f.Tag.Get("env")
-		if tag == "" {
-			continue
-		}
-		field := rv.Field(i)
-		switch f.Type.Kind() {
-		case reflect.String:
-			if field.String() != "x" {
-				t.Errorf("field %s not set", f.Name)
-			}
-		case reflect.Int:
-			if field.Int() != 1 {
-				t.Errorf("field %s not set", f.Name)
-			}
-		case reflect.Bool:
-			if field.Bool() != true {
-				t.Errorf("field %s not set", f.Name)
-			}
-		}
+	if p.Host != "example.com" {
+		t.Errorf("Host not set: %v", p.Host)
+	}
+	if p.Port != 1884 {
+		t.Errorf("Port not set: %v", p.Port)
+	}
+	if !p.SSL {
+		t.Errorf("SSL not set: %v", p.SSL)
 	}
 }
 

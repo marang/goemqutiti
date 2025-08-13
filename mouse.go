@@ -22,7 +22,7 @@ func (m *model) isTopicsFocused() bool {
 // It returns a command and a boolean indicating if the event was handled.
 func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 	if msg.Action == tea.MouseActionPress && (msg.Button == tea.MouseButtonWheelUp || msg.Button == tea.MouseButtonWheelDown) {
-		if m.isHistoryFocused() && !m.history.ShowArchived() {
+		if m.isHistoryFocused() && m.history.CanScroll() {
 			return m.history.Scroll(msg), true
 		}
 		if m.isTopicsFocused() {
@@ -33,7 +33,7 @@ func (m *model) handleMouseScroll(msg tea.MouseMsg) (tea.Cmd, bool) {
 			m.topics.Scroll(delta)
 			return nil, true
 		}
-		return nil, true
+		return nil, false
 	}
 	return nil, false
 }

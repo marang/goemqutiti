@@ -2,12 +2,11 @@ package history
 
 import tea "github.com/charmbracelet/bubbletea"
 
-// Scroll forwards scroll events to the history list.
-func (h *Component) Scroll(msg tea.MouseMsg) tea.Cmd {
-	var cmd tea.Cmd
-	h.list, cmd = h.list.Update(msg)
-	return cmd
-}
+// Scroll delegates mouse wheel handling to the configured scroller.
+func (h *Component) Scroll(msg tea.MouseMsg) tea.Cmd { return h.sc.Scroll(msg) }
+
+// CanScroll reports whether the configured scroller can scroll.
+func (h *Component) CanScroll() bool { return h.sc.CanScroll() }
 
 // HandleSelection updates history selection based on index and shift key.
 func (h *Component) HandleSelection(idx int, shift bool) {

@@ -6,6 +6,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/ui"
 )
 
 // Mode represents an application mode from the parent model.
@@ -63,7 +64,8 @@ func NewComponent(m Model, st Store) *Component {
 		hs.items, items = MessagesToItems(msgs)
 		hs.list.SetItems(items)
 	}
-	return &Component{historyState: &hs, m: m}
+	sc := ui.NewListMouseScroller(&hs.list, 3)
+	return &Component{historyState: &hs, m: m, sc: sc}
 }
 
 // OpenStore opens or creates a persistent history store for the given profile.

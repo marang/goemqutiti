@@ -87,7 +87,7 @@ func (m *model) buildTopicBoxes(content string, boxHeight, infoHeight int, scrol
 	topicsBox := ui.LegendBox(content, label, m.ui.width-2, boxHeight+infoHeight, ui.ColBlue, topicsFocused, scroll)
 
 	topicFocused := m.ui.focusOrder[m.ui.focusIndex] == idTopic
-	topicBox := ui.LegendBox(m.topics.Input.View(), "Topic", m.ui.width-2, 0, ui.ColBlue, topicFocused, -1)
+	topicBox := ui.LegendBox(m.topics.Input.View(), "Topic", m.ui.width-2, 1, ui.ColBlue, topicFocused, -1)
 	return topicsBox, topicBox
 }
 

@@ -1,5 +1,7 @@
 # Emqutiti
 
+![Emqutiti Banner](docs/assets/emqutiti-satellite-gopher-banner.png)
+
 Emqutiti is a polished MQTT client for the terminal built on
 [Bubble Tea](https://github.com/charmbracelet/bubbletea). Profiles live in
 `~/.config/emqutiti/config.toml` so you can switch brokers with a few key presses. The
@@ -192,3 +194,4 @@ Additional notes for repository contributors are available in [AGENTS.md](AGENTS
 Run `make cast` to build the helper image and execute
 `docs/scripts/record_casts.sh`. Cast and GIF files are written to `docs/`.
 You'll interact with the TUI inside the container just like running it locally.
+

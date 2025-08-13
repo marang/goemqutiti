@@ -69,7 +69,7 @@ func renderTopicChips(items []topics.Item, selected, width int) []string {
 func (m *model) layoutTopicViewport(chips []string) (string, []topics.ChipBound, int, int, float64) {
 	chipRows, bounds := topics.LayoutChips(chips, m.ui.width-4)
 	rowH := lipgloss.Height(ui.Chip.Render("test"))
-	maxRows := m.layout.topics.height
+	maxRows := m.layout.Topics.Height
 	if maxRows <= 0 {
 		maxRows = 1
 	}

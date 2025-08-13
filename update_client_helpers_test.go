@@ -55,7 +55,7 @@ func TestHandleMouseScrollTopics(t *testing.T) {
 	m.Update(tea.WindowSizeMsg{Width: 40, Height: 20})
 	setupManyTopics(m, 10)
 	rowH := lipgloss.Height(ui.Chip.Render("t"))
-	m.layout.topics.height = rowH
+	m.layout.Topics.Height = rowH
 	m.viewClient()
 	m.SetFocus(idTopics)
 	_, handled := m.handleMouseScroll(tea.MouseMsg{Action: tea.MouseActionPress, Button: tea.MouseButtonWheelDown})
@@ -72,7 +72,7 @@ func setupManyTopics(m *model, n int) {
 		title := fmt.Sprintf("topic-%d", i)
 		m.topics.Items = append(m.topics.Items, topics.Item{Name: title, Subscribed: true})
 	}
-	m.layout.topics.height = n
+	m.layout.Topics.Height = n
 }
 
 func TestHandleHistorySelectionShift(t *testing.T) {

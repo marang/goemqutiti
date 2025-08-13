@@ -10,6 +10,7 @@ import (
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/layout"
 	"github.com/marang/emqutiti/logs"
 	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/payloads"
@@ -77,17 +78,6 @@ func (c component) Blur() {
 	}
 }
 
-type boxConfig struct {
-	height int
-}
-
-type layoutConfig struct {
-	message boxConfig
-	history boxConfig
-	topics  boxConfig
-	trace   boxConfig
-}
-
 // uiState groups general UI information such as current focus and layout.
 type uiState struct {
 	focusIndex int                 // index of the currently focused element
@@ -117,7 +107,7 @@ type model struct {
 
 	confirm *confirm.Dialog
 
-	layout layoutConfig
+	layout layout.Manager
 
 	// components maps each application mode to its corresponding component
 	// implementation. These components handle mode-specific update and view

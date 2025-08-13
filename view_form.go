@@ -14,7 +14,7 @@ func (m *model) viewForm() string {
 	if m.connections.Form == nil {
 		return ""
 	}
-	cw, ch := calcConnectionsSize(m.ui.width/2, m.ui.height)
+	cw, ch := m.layout.ConnectionsSize(m.ui.width/2, m.ui.height)
 	m.connections.Manager.ConnectionsList.SetSize(cw, ch)
 	listView := ui.LegendBox(m.connections.Manager.ConnectionsList.View(), "Brokers", m.ui.width/2-2, 0, ui.ColBlue, false, -1)
 	formLabel := "Add Broker"

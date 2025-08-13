@@ -55,18 +55,18 @@ func (m *model) handleResizeUpKey() tea.Cmd {
 	id := m.ui.focusOrder[m.ui.focusIndex]
 	switch id {
 	case idMessage:
-		if m.layout.message.height > 1 {
-			m.layout.message.height--
-			m.message.Input().SetHeight(m.layout.message.height)
+		if m.layout.Message.Height > 1 {
+			m.layout.Message.Height--
+			m.message.Input().SetHeight(m.layout.Message.Height)
 		}
 	case idHistory:
-		if m.layout.history.height > 1 {
-			m.layout.history.height--
-			m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
+		if m.layout.History.Height > 1 {
+			m.layout.History.Height--
+			m.history.List().SetSize(m.ui.width-4, m.layout.History.Height)
 		}
 	case idTopics:
-		if m.layout.topics.height > 1 {
-			m.layout.topics.height--
+		if m.layout.Topics.Height > 1 {
+			m.layout.Topics.Height--
 		}
 	}
 	return nil
@@ -77,13 +77,13 @@ func (m *model) handleResizeDownKey() tea.Cmd {
 	id := m.ui.focusOrder[m.ui.focusIndex]
 	switch id {
 	case idMessage:
-		m.layout.message.height++
-		m.message.Input().SetHeight(m.layout.message.height)
+		m.layout.Message.Height++
+		m.message.Input().SetHeight(m.layout.Message.Height)
 	case idHistory:
-		m.layout.history.height++
-		m.history.List().SetSize(m.ui.width-4, m.layout.history.height)
+		m.layout.History.Height++
+		m.history.List().SetSize(m.ui.width-4, m.layout.History.Height)
 	case idTopics:
-		m.layout.topics.height++
+		m.layout.Topics.Height++
 	}
 	return nil
 }

@@ -29,7 +29,7 @@ func (m *model) renderHistorySection() string {
 	if m.history.FilterQuery() != "" && shown != total {
 		histLabel = fmt.Sprintf("History (%d/%d messages \u2013 Ctrl+C copy)", shown, total)
 	}
-	listHeight := m.layout.history.height
+	listHeight := m.layout.History.Height
 	if m.history.FilterQuery() != "" && listHeight > 0 {
 		listHeight--
 	}
@@ -42,5 +42,5 @@ func (m *model) renderHistorySection() string {
 		histContent = fmt.Sprintf("%s\n%s", filterLine, histContent)
 	}
 	historyFocused := m.ui.focusOrder[m.ui.focusIndex] == idHistory
-	return ui.LegendBox(histContent, histLabel, m.ui.width-2, m.layout.history.height, ui.ColGreen, historyFocused, histSP)
+	return ui.LegendBox(histContent, histLabel, m.ui.width-2, m.layout.History.Height, ui.ColGreen, historyFocused, histSP)
 }

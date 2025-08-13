@@ -34,9 +34,9 @@ func (m *model) LogHistory(topic, payload, kind string, retained bool, text stri
 	m.history.Append(topic, payload, kind, retained, text)
 }
 
-func (m *model) TraceHeight() int { return m.layout.trace.height }
+func (m *model) TraceHeight() int { return m.layout.Trace.Height }
 
-func (m *model) SetTraceHeight(h int) { m.layout.trace.height = h }
+func (m *model) SetTraceHeight(h int) { m.layout.Trace.Height = h }
 
 func (m *model) NewClient(p connections.Profile) (traces.Client, error) {
 	return NewMQTTClient(p, nil)

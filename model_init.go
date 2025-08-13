@@ -14,6 +14,7 @@ import (
 	"github.com/marang/emqutiti/focus"
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/layout"
 	"github.com/marang/emqutiti/logs"
 	"github.com/marang/emqutiti/message"
 	"github.com/marang/emqutiti/topics"
@@ -105,12 +106,12 @@ func initUI(order []string) uiState {
 	}
 }
 
-func initLayout() layoutConfig {
-	return layoutConfig{
-		message: boxConfig{height: 6},
-		history: boxConfig{height: 10},
-		topics:  boxConfig{height: 1},
-		trace:   boxConfig{height: 10},
+func initLayout() layout.Manager {
+	return layout.Manager{
+		Message: layout.Box{Height: 6},
+		History: layout.Box{Height: 10},
+		Topics:  layout.Box{Height: 1},
+		Trace:   layout.Box{Height: 10},
 	}
 }
 

@@ -134,7 +134,7 @@ func (m *model) SetPreviousMode() tea.Cmd { return m.SetMode(m.PreviousMode()) }
 func (m *model) Width() int { return m.ui.width }
 
 // MessageHeight returns the configured message box height.
-func (m *model) MessageHeight() int { return m.layout.message.height }
+func (m *model) MessageHeight() int { return m.layout.Message.Height }
 
 // Height returns the current UI height.
 func (m *model) Height() int { return m.ui.height }

@@ -12,6 +12,7 @@ import (
 	"github.com/marang/emqutiti/help"
 	"github.com/marang/emqutiti/history"
 	"github.com/marang/emqutiti/importer"
+	"github.com/marang/emqutiti/importer/steps"
 	"github.com/marang/emqutiti/proxy"
 	"github.com/marang/emqutiti/traces"
 )
@@ -202,7 +203,7 @@ func TestRunImport(t *testing.T) {
 			}
 			return client, nil
 		},
-		newImporter: func(cl importer.Publisher, path string) *importer.Model {
+		newImporter: func(cl steps.Publisher, path string) *importer.Model {
 			if cl != client || path != "file" {
 				t.Fatalf("unexpected importer args")
 			}

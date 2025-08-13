@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/marang/emqutiti/importer/steps"
 	"github.com/marang/emqutiti/ui"
 )
 
@@ -37,25 +38,25 @@ func TestModelStepProgression(t *testing.T) {
 
 	w := New(&mockPublisher{}, f.Name())
 
-	if w.step != stepFile {
-		t.Fatalf("expected stepFile, got %d", w.step)
+	if _, ok := w.current.(*steps.FileStep); !ok {
+		t.Fatalf("expected FileStep")
 	}
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if w.step != stepMap {
-		t.Fatalf("expected stepMap, got %d", w.step)
+	if _, ok := w.current.(*steps.MapStep); !ok {
+		t.Fatalf("expected MapStep")
 	}
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if w.step != stepTemplate {
-		t.Fatalf("expected stepTemplate, got %d", w.step)
+	if _, ok := w.current.(*steps.TemplateStep); !ok {
+		t.Fatalf("expected TemplateStep")
 	}
-	w.tmpl.SetValue("topic/{a}")
+	w.Base.Tmpl.SetValue("topic/{a}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if w.step != stepReview {
-		t.Fatalf("expected stepReview, got %d", w.step)
+	if _, ok := w.current.(*steps.ReviewStep); !ok {
+		t.Fatalf("expected ReviewStep")
 	}
 	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
-	if w.step != stepPublish {
-		t.Fatalf("expected stepPublish, got %d", w.step)
+	if _, ok := w.current.(*steps.PublishStep); !ok {
+		t.Fatalf("expected PublishStep")
 	}
 	if cmd != nil {
 		if msg := cmd(); msg != nil {
@@ -73,8 +74,8 @@ func TestModelStepProgression(t *testing.T) {
 			}
 		}
 	}
-	if w.index != 1 {
-		t.Fatalf("expected index 1 after first publish, got %d", w.index)
+	if w.Base.Index != 1 {
+		t.Fatalf("expected index 1 after first publish, got %d", w.Base.Index)
 	}
 }
 
@@ -92,11 +93,11 @@ func TestModelFileStep(t *testing.T) {
 
 	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if w.step != stepMap {
-		t.Fatalf("expected stepMap, got %d", w.step)
+	if _, ok := w.current.(*steps.MapStep); !ok {
+		t.Fatalf("expected MapStep")
 	}
-	if len(w.headers) != 2 {
-		t.Fatalf("expected 2 headers, got %d", len(w.headers))
+	if len(w.Base.Headers) != 2 {
+		t.Fatalf("expected 2 headers, got %d", len(w.Base.Headers))
 	}
 }
 
@@ -115,13 +116,13 @@ func TestModelMapNavigation(t *testing.T) {
 	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyCtrlP})
-	if w.step != stepFile {
-		t.Fatalf("expected stepFile, got %d", w.step)
+	if _, ok := w.current.(*steps.FileStep); !ok {
+		t.Fatalf("expected FileStep")
 	}
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyCtrlN})
-	if w.step != stepTemplate {
-		t.Fatalf("expected stepTemplate, got %d", w.step)
+	if _, ok := w.current.(*steps.TemplateStep); !ok {
+		t.Fatalf("expected TemplateStep")
 	}
 }
 
@@ -140,11 +141,11 @@ func TestModelReviewPublish(t *testing.T) {
 	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	w.tmpl.SetValue("topic/{a}")
+	w.Base.Tmpl.SetValue("topic/{a}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
-	if w.step != stepPublish || !w.dryRun {
-		t.Fatalf("expected dry run publish, got step %d dry %v", w.step, w.dryRun)
+	if _, ok := w.current.(*steps.PublishStep); !ok || !w.Base.DryRun {
+		t.Fatalf("expected dry run publish, got %T dry %v", w.current, w.Base.DryRun)
 	}
 	if cmd != nil {
 		if msg := cmd(); msg != nil {
@@ -162,12 +163,12 @@ func TestModelReviewPublish(t *testing.T) {
 			}
 		}
 	}
-	if !w.finished {
+	if !w.Base.Finished {
 		t.Fatalf("expected finished after publishing rows")
 	}
 	w.Update(tea.KeyMsg{Type: tea.KeyCtrlN})
-	if w.step != stepDone {
-		t.Fatalf("expected stepDone, got %d", w.step)
+	if _, ok := w.current.(*steps.DoneStep); !ok {
+		t.Fatalf("expected DoneStep")
 	}
 }
 
@@ -186,7 +187,7 @@ func TestModelPublishError(t *testing.T) {
 	w := New(&errPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	w.tmpl.SetValue("topic/{a}")
+	w.Base.Tmpl.SetValue("topic/{a}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter})
 	cmd := w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}})
 	if cmd != nil {
@@ -205,10 +206,10 @@ func TestModelPublishError(t *testing.T) {
 			}
 		}
 	}
-	if len(w.published) == 0 || !strings.Contains(w.published[0], "error") {
-		t.Fatalf("expected error message, got %v", w.published)
+	if len(w.Base.Published) == 0 || !strings.Contains(w.Base.Published[0], "error") {
+		t.Fatalf("expected error message, got %v", w.Base.Published)
 	}
-	if !w.finished {
+	if !w.Base.Finished {
 		t.Fatalf("expected finished after processing rows")
 	}
 }
@@ -227,20 +228,20 @@ func TestSettingsRoundTrip(t *testing.T) {
 
 	w := New(&mockPublisher{}, f.Name())
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // load file -> stepMap
-	if tf, ok := w.form.Fields[0].(*ui.TextField); ok {
+	if tf, ok := w.Base.Form.Fields[0].(*ui.TextField); ok {
 		tf.SetValue("aa")
 	}
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // to stepTemplate
-	w.tmpl.SetValue("topic/{aa}")
+	w.Base.Tmpl.SetValue("topic/{aa}")
 	w.Update(tea.KeyMsg{Type: tea.KeyEnter}) // to stepReview
 	w.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'d'}})
 
 	w2 := New(&mockPublisher{}, f.Name())
 	w2.Update(tea.KeyMsg{Type: tea.KeyEnter})
-	if v := w2.form.Fields[0].Value(); v != "aa" {
+	if v := w2.Base.Form.Fields[0].Value(); v != "aa" {
 		t.Fatalf("expected mapping aa, got %q", v)
 	}
-	if v := w2.tmpl.Value(); v != "topic/{aa}" {
+	if v := w2.Base.Tmpl.Value(); v != "topic/{aa}" {
 		t.Fatalf("expected template topic/{aa}, got %q", v)
 	}
 }

@@ -1,4 +1,4 @@
-package importer
+package steps
 
 import (
 	"encoding/csv"
@@ -26,7 +26,6 @@ func ReadFile(path string) ([]map[string]string, error) {
 	}
 }
 
-// readCSV parses a CSV file and returns records as maps keyed by header.
 func readCSV(path string) ([]map[string]string, error) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -60,7 +59,6 @@ func readCSV(path string) ([]map[string]string, error) {
 	return rows, nil
 }
 
-// readXLS parses the first sheet of an Excel file and returns records.
 func readXLS(path string) ([]map[string]string, error) {
 	f, err := excelize.OpenFile(path)
 	if err != nil {
@@ -120,7 +118,6 @@ func RowToJSON(row map[string]string, mapping map[string]string) ([]byte, error)
 	return json.Marshal(out)
 }
 
-// setNested writes value into m at the nested path creating maps as needed.
 func setNested(m map[string]interface{}, path []string, value string) {
 	for i, p := range path {
 		if i == len(path)-1 {

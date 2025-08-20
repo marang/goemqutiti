@@ -4,8 +4,16 @@
 
 Emqutiti is a polished MQTT client for the terminal built on
 [Bubble Tea](https://github.com/charmbracelet/bubbletea). Profiles live in
-`~/.config/emqutiti/config.toml` so you can switch brokers with a few key presses. The
-short demo below shows the app in action.
+`~/.config/emqutiti/config.toml` so you can switch brokers with a few key presses.
+
+## The short demo below shows the app in action.
+
+### Add a new connection
+![Create Connection](docs/assets/create_connection.gif)
+
+### Connect to broker, add new topic, create message
+![Connect, add topic, create message](docs/assets/client_view.gif)
+
 
 ## Features
 

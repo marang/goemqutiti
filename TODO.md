@@ -29,6 +29,6 @@ This file tracks planned improvements for Emqutiti.
 - [x] Include an Asciinema GIF in the README
 - [x] Document GIF generation using `asciinema-agg`
 - [x] Provide a Dockerfile for cast recording to avoid host installs
-- [ ] Add screenshots to the README
+- [x] Add screenshots to the README
 
 Remember to update this file as tasks are completed.

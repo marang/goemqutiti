@@ -23,6 +23,5 @@ func (m *model) viewForm() string {
 	}
 	formView := ui.LegendBox(m.connections.Form.View(), formLabel, m.ui.width/2-2, 0, ui.ColBlue, true, -1)
 	view := lipgloss.JoinHorizontal(lipgloss.Top, listView, formView)
-	tip := ui.RenderTooltip("Tab to move between fields", m.ui.width/2+1, 0, m.connections.Form.IsFocused(m.connections.Form.Focus))
-	return m.overlayHelp(lipgloss.JoinVertical(lipgloss.Left, view, tip))
+	return m.overlayHelp(view)
 }

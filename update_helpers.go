@@ -147,12 +147,18 @@ func (m *model) handleKeyNav(msg tea.KeyMsg) (tea.Cmd, bool) {
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
 		}
+		if m.CurrentMode() == constants.ModeEditConnection {
+			return nil, false
+		}
 		if cmd, ok := m.cycleFocus(focusNext); ok {
 			return cmd, true
 		}
 	case constants.KeyShiftTab:
 		if m.CurrentMode() == constants.ModeHistoryFilter {
 			return m.history.UpdateFilter(msg), true
+		}
+		if m.CurrentMode() == constants.ModeEditConnection {
+			return nil, false
 		}
 		if cmd, ok := m.cycleFocus(focusPrev); ok {
 			return cmd, true

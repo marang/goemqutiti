@@ -164,7 +164,7 @@ func NewComponent(nav Navigator, api API) *Component {
 			}
 			return nil
 		},
-		constants.KeyX: func(tea.KeyMsg) tea.Cmd {
+		constants.KeyCtrlX: func(tea.KeyMsg) tea.Cmd {
 			c.api.DisconnectActive()
 			return nil
 		},
@@ -207,7 +207,7 @@ func (c *Component) View() string {
 	ch := c.nav.Height() - 6
 	c.api.Manager().ConnectionsList.SetSize(cw, ch)
 	listView := c.api.Manager().ConnectionsList.View()
-	help := ui.InfoStyle.Render("[enter] connect/open client  [x] disconnect  [a]dd [e]dit [del] delete  Ctrl+O default  Ctrl+R traces")
+	help := ui.InfoStyle.Render("[enter] connect/open client  Ctrl+X disconnect  [a]dd [e]dit [del] delete  Ctrl+O default  Ctrl+R traces")
 	content := lipgloss.JoinVertical(lipgloss.Left, listView, help)
 	view := ui.LegendBox(content, "Brokers", c.nav.Width()-2, 0, ui.ColBlue, true, -1)
 	return c.api.OverlayHelp(view)

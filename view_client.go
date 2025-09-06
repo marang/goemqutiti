@@ -43,13 +43,13 @@ func (m *model) viewClient() string {
 		}
 	}
 
-	content := lipgloss.JoinVertical(lipgloss.Left, topicsBox, topicBox, messageBox, messagesBox)
+	content := lipgloss.JoinVertical(lipgloss.Left, topicBox, topicsBox, messageBox, messagesBox)
 	y := 1
 
-	m.ui.elemPos[idTopics] = y
-	y += lipgloss.Height(topicsBox)
 	m.ui.elemPos[idTopic] = y
 	y += lipgloss.Height(topicBox)
+	m.ui.elemPos[idTopics] = y
+	y += lipgloss.Height(topicsBox)
 	m.ui.elemPos[idMessage] = y
 	y += lipgloss.Height(messageBox)
 	m.ui.elemPos[idHistory] = y

@@ -9,7 +9,7 @@
 | Ctrl+T | Manage topics |
 | Ctrl+R | Manage traces |
 | Ctrl+B | Open broker manager |
-| Ctrl+X | Disconnect from broker |
+| Ctrl+X | Disconnect from broker after confirmation; offers immediate reconnect or opens broker manager |
 | Ctrl+S | Publish message |
 | Ctrl+E | Publish retained message |
 | Ctrl+L | Open log viewer |
@@ -29,7 +29,7 @@
 | Key | Action |
 | --- | ------ |
 | Enter | Connect or open client |
-| x | Disconnect selected profile |
+| Ctrl+X | Disconnect selected profile |
 | a | Add profile |
 | e | Edit selected profile |
 | Delete | Remove selected profile |

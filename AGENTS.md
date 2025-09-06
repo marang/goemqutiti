@@ -77,6 +77,6 @@ changes.
 - Describe the problem and solution clearly in commit messages.
 - Keep commits small and avoid mixing unrelated changes.
 - Record TUI demos with `vhs` and keep the `.tape` files under `docs/`.
-- Generate GIF previews locally using `vhs docs/demo.tape > docs/assets/demo.gif` but do not commit them.
+- Generate GIF previews locally using `vhs -o docs/assets/demo.gif docs/demo.tape` but do not commit them.
 - Example `.tape` files in `docs/` drive recording; run `docs/scripts/record_tapes.sh` to rebuild GIFs.
 - See the README for using `Dockerfile.vhs` if you prefer not to install VHS.

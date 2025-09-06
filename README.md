@@ -212,7 +212,7 @@ Run `make tape` to build the helper image and execute
 You can regenerate individual GIFs with:
 
 ```bash
-vhs docs/create_connection.tape > docs/assets/create_connection.gif
+vhs -o docs/assets/create_connection.gif docs/create_connection.tape
 ```
 You'll interact with the TUI inside the container just like running it locally.
 

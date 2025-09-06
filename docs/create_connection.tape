@@ -1,4 +1,3 @@
-Output "Create connection demo"
 Type "./emqutiti -p HiveMQ"
 Enter
 Sleep 2s

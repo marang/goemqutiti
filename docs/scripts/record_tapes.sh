@@ -5,7 +5,7 @@ render_tape() {
     local tape_file=$1
     local gif_file=$2
     echo "Rendering $tape_file to $gif_file..."
-    vhs "docs/$tape_file" > "docs/assets/$gif_file"
+    vhs -o "docs/assets/$gif_file" "docs/$tape_file"
 }
 
 render_tape create_connection.tape create_connection.gif

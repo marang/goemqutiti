@@ -20,7 +20,7 @@ const (
 )
 
 var focusByMode = map[constants.AppMode][]string{
-	constants.ModeClient:         {idTopics, idTopic, idMessage, idHistory, idHelp},
+	constants.ModeClient:         {idTopic, idTopics, idMessage, idHistory, idHelp},
 	constants.ModeConnections:    {constants.IDConnList, idHelp},
 	constants.ModeEditConnection: {constants.IDConnList, idHelp},
 	constants.ModeConfirmDelete:  {},

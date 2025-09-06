@@ -83,6 +83,7 @@ func initialModel(conns *connections.Connections) (*model, error) {
 	m.payloads = payloads.New(m, &m.connections)
 	m.traces = traces.NewComponent(m, tr, m.tracesStore())
 	initComponents(m, order, connComp)
+	m.SetFocus(idTopics)
 	if err := initImporter(m); err != nil {
 		return nil, err
 	}

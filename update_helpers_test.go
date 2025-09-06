@@ -18,13 +18,14 @@ func TestCycleFocusNext(t *testing.T) {
 	if _, ok := m.cycleFocus(focusNext); !ok {
 		t.Fatalf("cycleFocus next should return true")
 	}
-	if m.focus.Index() != 1 {
-		t.Fatalf("focus index got %d, want 1", m.focus.Index())
+	if m.focus.Index() != 2 {
+		t.Fatalf("focus index got %d, want 2", m.focus.Index())
 	}
 }
 
 func TestCycleFocusPrevWraps(t *testing.T) {
 	m, _ := initialModel(nil)
+	m.SetFocus(idTopic)
 	if _, ok := m.cycleFocus(focusPrev); !ok {
 		t.Fatalf("cycleFocus prev should return true")
 	}

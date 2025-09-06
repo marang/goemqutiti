@@ -88,6 +88,25 @@ func (m *model) handleClientMsg(msg tea.Msg) (tea.Cmd, bool) {
 		return m.handleStatusMessage(t), true
 	case MQTTMessage:
 		return m.handleMQTTMessage(t), true
+	case reconnectPromptMsg:
+		m.SetMode(constants.ModeConnections)
+		var p connections.Profile
+		for _, pr := range m.connections.Manager.Profiles {
+			if pr.Name == string(t) {
+				p = pr
+				break
+			}
+		}
+		if p.Name != "" {
+			m.StartConfirm(
+				fmt.Sprintf("Reconnect to '%s'? [y/n]", p.Name),
+				"",
+				nil,
+				func() tea.Cmd { return m.Connect(p) },
+				nil,
+			)
+		}
+		return nil, true
 	case tea.KeyMsg:
 		return HandleClientKey(m, t), false
 	case tea.MouseMsg:

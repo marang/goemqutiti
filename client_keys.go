@@ -8,6 +8,8 @@ import (
 	"github.com/marang/emqutiti/constants"
 )
 
+type reconnectPromptMsg string
+
 // Handler processes keyboard input in client mode.
 type Handler interface {
 	// HandleClientKey reacts to a key message and optionally returns a Tea command.
@@ -81,16 +83,27 @@ func (m *model) handleQuitKey() tea.Cmd {
 	return tea.Quit
 }
 
-// handleDisconnectKey disconnects from the active broker.
+// handleDisconnectKey disconnects from the active broker after confirmation.
 func (m *model) handleDisconnectKey() tea.Cmd {
-	if m.mqttClient != nil {
-		m.mqttClient.Disconnect()
-		m.connections.SetDisconnected(m.connections.Active, "")
-		m.connections.RefreshConnectionItems()
-		m.connections.Connection = ""
-		m.connections.Active = ""
-		m.mqttClient = nil
+	if m.mqttClient == nil {
+		return m.SetMode(constants.ModeConnections)
 	}
+	name := m.connections.Active
+	m.StartConfirm(
+		fmt.Sprintf("Disconnect from '%s'? [y/n]", name),
+		"You'll return to the broker manager where you can reconnect.",
+		nil,
+		func() tea.Cmd {
+			m.mqttClient.Disconnect()
+			m.connections.SetDisconnected(name, "")
+			m.connections.RefreshConnectionItems()
+			m.connections.Connection = ""
+			m.connections.Active = ""
+			m.mqttClient = nil
+			return func() tea.Msg { return reconnectPromptMsg(name) }
+		},
+		nil,
+	)
 	return nil
 }
 

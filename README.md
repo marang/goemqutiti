@@ -125,7 +125,7 @@ Tips:
 | Manage topics | `Ctrl+T` |
 | Manage traces | `Ctrl+R` |
 | Open broker manager | `Ctrl+B` |
-| Disconnect from broker | `Ctrl+X` |
+| Disconnect from broker after confirmation and offer to reconnect immediately or return to the broker manager | `Ctrl+X` |
 | Publish message | `Ctrl+S` |
 | Publish retained message | `Ctrl+E` |
 | Open log viewer | `Ctrl+L` |
@@ -143,7 +143,7 @@ Tips:
 
 #### Broker Manager
 
-- `x` disconnects the selected profile
+- `Ctrl+X` disconnects the selected profile
 - `Ctrl+O` toggles the default profile
 
 #### History View

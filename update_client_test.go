@@ -81,6 +81,24 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 	m.connections.Manager.Errors["test"] = "boom"
 
 	HandleClientKey(m, tea.KeyMsg{Type: tea.KeyCtrlX})
+	if m.CurrentMode() != constants.ModeConfirmDelete {
+		t.Fatalf("expected confirm mode, got %v", m.CurrentMode())
+	}
+	m.connections.StatusChan = nil
+	cmd := m.confirm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd == nil {
+		t.Fatalf("expected command after confirm")
+	}
+	cmd()
+	m.updateClient(reconnectPromptMsg("test"))
+	if m.CurrentMode() != constants.ModeConfirmDelete {
+		t.Fatalf("expected reconnect confirm mode, got %v", m.CurrentMode())
+	}
+	cmd = m.confirm.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}})
+	if cmd == nil {
+		t.Fatalf("expected command after reconnect prompt")
+	}
+	cmd()
 
 	if m.mqttClient != nil {
 		t.Fatalf("expected mqttClient nil after disconnect")
@@ -93,6 +111,9 @@ func TestHandleClientKeyDisconnect(t *testing.T) {
 	}
 	if err := m.connections.Manager.Errors["test"]; err != "" {
 		t.Fatalf("expected error cleared, got %q", err)
+	}
+	if m.CurrentMode() != constants.ModeConnections {
+		t.Fatalf("expected mode %v, got %v", constants.ModeConnections, m.CurrentMode())
 	}
 }
 

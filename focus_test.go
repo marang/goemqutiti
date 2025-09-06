@@ -17,16 +17,19 @@ func TestSetFocusMessage(t *testing.T) {
 	}
 }
 
-// Test that pressing Tab cycles focus from topic to message
-// Test that pressing Tab cycles focus from topics to topic input
-func TestTabCyclesToTopic(t *testing.T) {
+// Test that pressing Tab cycles focus from topic input to topics list
+func TestTabCyclesFromTopicInput(t *testing.T) {
 	m, _ := initialModel(nil)
-	if m.focus.Index() != 0 {
-		t.Fatalf("initial focus index should be 0")
+	if m.focus.Index() != 1 {
+		t.Fatalf("initial focus index should be 1")
+	}
+	m.SetFocus(idTopic)
+	if !m.topics.Input.Focused() {
+		t.Fatalf("topic input should be focused after SetFocus")
 	}
 	m.focus.Next()
-	if !m.topics.Input.Focused() {
-		t.Fatalf("topic input should be focused after tab")
+	if m.topics.Input.Focused() {
+		t.Fatalf("topic input should be blurred after tab")
 	}
 	if m.focus.Index() != 1 {
 		t.Fatalf("focus index should be 1 after tab, got %d", m.focus.Index())

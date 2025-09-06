@@ -17,4 +17,8 @@ proto:
 
 tape:
 	docker build -f docs/scripts/Dockerfile.vhs -t emqutiti-tape docs/scripts
-	docker run --rm -it -v "$(CURDIR)":/work -w /work emqutiti-tape docs/scripts/record_tapes.sh
+	docker run --rm -it \
+		--user $(shell id -u):$(shell id -g) \
+		-e HOME=/tmp \
+		-v "$(CURDIR)":/work -w /work \
+		emqutiti-tape docs/scripts/record_tapes.sh

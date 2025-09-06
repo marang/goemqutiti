@@ -208,8 +208,8 @@ go build -trimpath -ldflags="-s -w" -o emqutiti ./cmd/emqutiti
 #### Recording demos for new features and howtos
 
 Run `make tape` to build the helper image and execute
-`docs/scripts/record_tapes.sh`. The image bundles `ffmpeg`, which VHS uses
-to render GIFs. Tape and GIF files are written to `docs/`. You can
+`docs/scripts/record_tapes.sh`. The image bundles `ffmpeg` and `ttyd`, which
+VHS uses to render GIFs. Tape and GIF files are written to `docs/`. You can
 regenerate individual GIFs with:
 
 ```bash

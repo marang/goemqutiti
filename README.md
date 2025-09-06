@@ -201,13 +201,18 @@ go build -trimpath -ldflags="-s -w" -o emqutiti ./cmd/emqutiti
 - `make build` – compile the `emqutiti` binary
 - `make test` – run `go vet` and unit tests
 - `make proto` – regenerate gRPC code from `proxy/proxy.proto`
-- `make cast` – record demos via `docs/scripts/Dockerfile.cast`
+- `make tape` – record demos via `docs/scripts/Dockerfile.vhs`
 
 ### Creating documentation
 
 #### Recording demos for new features and howtos
 
-Run `make cast` to build the helper image and execute
-`docs/scripts/record_casts.sh`. Cast and GIF files are written to `docs/`.
+Run `make tape` to build the helper image and execute
+`docs/scripts/record_tapes.sh`. Tape and GIF files are written to `docs/`.
+You can regenerate individual GIFs with:
+
+```bash
+vhs docs/create_connection.tape > docs/assets/create_connection.gif
+```
 You'll interact with the TUI inside the container just like running it locally.
 
